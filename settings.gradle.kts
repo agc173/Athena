@@ -32,3 +32,7 @@ dependencyResolutionManagement {
 }
 
 include(":composeApp")
+include(":shared:domain")
+include(":shared:data")
+include(":shared:presentation")
+include(":shared:di")
