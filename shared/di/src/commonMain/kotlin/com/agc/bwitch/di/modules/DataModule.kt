@@ -1,8 +1,6 @@
 package com.agc.bwitch.di.modules
 
+import com.agc.bwitch.data.di.dataKoinModule
 import org.koin.core.module.Module
-import org.koin.dsl.module
 
-val dataModule: Module = module {
-    // bindings futuros
-}
+val dataModule: Module = dataKoinModule
