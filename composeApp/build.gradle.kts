@@ -49,6 +49,9 @@ kotlin {
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation(libs.koin.compose)
             implementation(project(":shared:di"))
+            implementation(project(":shared:domain"))
+            implementation(project(":shared:presentation"))
+
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

@@ -32,6 +32,7 @@ class HoroscopeViewModelTest {
         assertEquals(ZodiacSign.aries, state.selectedSign)
         assertNotNull(state.horoscope)
         assertNull(state.errorMessage)
+        assertEquals(false, state.isLoading)
     }
 
     @Test
@@ -42,13 +43,19 @@ class HoroscopeViewModelTest {
             dispatcher = dispatcher,
         )
 
+        // Espera a que termine la carga inicial (aries)
+        advanceUntilIdle()
+
         viewModel.onSelectSign(ZodiacSign.leo)
         advanceUntilIdle()
 
         val state = viewModel.uiState.value
         assertEquals(ZodiacSign.leo, state.selectedSign)
         assertEquals(ZodiacSign.leo, state.horoscope?.sign)
+        assertNull(state.errorMessage)
     }
+
+
 
     @Test
     fun returnsErrorMessageWhenUseCaseFails() = runTest {
@@ -60,8 +67,11 @@ class HoroscopeViewModelTest {
 
         advanceUntilIdle()
 
-        assertNotNull(viewModel.uiState.value.errorMessage)
+        val state = viewModel.uiState.value
+        assertNotNull(state.errorMessage)
+        assertNull(state.horoscope)
     }
+
 
     private class SuccessRepo : HoroscopeRepository {
         override suspend fun getDaily(sign: ZodiacSign, dateIso: String?): ApiResult<DailyHoroscope> {
