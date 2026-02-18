@@ -1,0 +1,401 @@
+openapi: 3.1.0
+info:
+  title: BWitch API
+  version: 0.1.0
+  description: >
+    Contrato API para BWitch. Source of truth para clientes y agentes.
+servers:
+  - url: https://api.example.com
+    description: Placeholder (cambiar por entorno real)
+
+tags:
+  - name: Auth
+  - name: Profile
+  - name: Astrology
+  - name: Divination
+  - name: Community
+
+paths:
+  /v1/auth/anonymous:
+    post:
+      tags: [Auth]
+      summary: Login anónimo / bootstrap de sesión
+      operationId: authAnonymous
+      responses:
+        "200":
+          description: Sesión creada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthSession"
+
+  /v1/profile/me:
+    get:
+      tags: [Profile]
+      summary: Obtener perfil del usuario actual
+      operationId: getMyProfile
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Perfil
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+    put:
+      tags: [Profile]
+      summary: Actualizar perfil del usuario actual
+      operationId: updateMyProfile
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserProfileUpdate"
+      responses:
+        "200":
+          description: Perfil actualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /v1/astrology/horoscope/daily:
+    get:
+      tags: [Astrology]
+      summary: Horóscopo diario por signo
+      operationId: getDailyHoroscope
+      parameters:
+        - name: sign
+          in: query
+          required: true
+          schema:
+            $ref: "#/components/schemas/ZodiacSign"
+        - name: date
+          in: query
+          required: false
+          description: Fecha ISO (YYYY-MM-DD). Si no se envía, usa "hoy" del servidor.
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Horóscopo diario
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DailyHoroscope"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /v1/divination/tarot/daily:
+    get:
+      tags: [Divination]
+      summary: Carta del día
+      operationId: getDailyTarot
+      parameters:
+        - name: date
+          in: query
+          required: false
+          description: Fecha ISO (YYYY-MM-DD). Si no se envía, usa "hoy" del servidor.
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Carta del día + interpretación
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DailyTarot"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /v1/community/posts:
+    get:
+      tags: [Community]
+      summary: Listar posts (feed)
+      operationId: listPosts
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 50, default: 20 }
+        - name: cursor
+          in: query
+          required: false
+          description: Cursor opaco para paginación
+          schema: { type: string }
+      responses:
+        "200":
+          description: Página de posts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PostPage"
+
+    post:
+      tags: [Community]
+      summary: Crear post
+      operationId: createPost
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PostCreate"
+      responses:
+        "201":
+          description: Post creado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Post"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /v1/community/posts/{postId}/comments:
+    get:
+      tags: [Community]
+      summary: Listar comentarios de un post
+      operationId: listComments
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema: { type: string }
+        - name: limit
+          in: query
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 100, default: 30 }
+        - name: cursor
+          in: query
+          required: false
+          schema: { type: string }
+      responses:
+        "200":
+          description: Página de comentarios
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommentPage"
+
+    post:
+      tags: [Community]
+      summary: Crear comentario
+      operationId: createComment
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommentCreate"
+      responses:
+        "201":
+          description: Comentario creado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Comment"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    BadRequest:
+      description: Petición inválida
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Unauthorized:
+      description: No autorizado
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+  schemas:
+    ErrorResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: string, examples: ["bad_request"] }
+        message: { type: string, examples: ["Invalid parameter"] }
+        details:
+          type: object
+          additionalProperties: true
+
+    AuthSession:
+      type: object
+      required: [token, userId]
+      properties:
+        token: { type: string, description: "Bearer token" }
+        userId: { type: string }
+
+    ZodiacSign:
+      type: string
+      enum:
+        - aries
+        - taurus
+        - gemini
+        - cancer
+        - leo
+        - virgo
+        - libra
+        - scorpio
+        - sagittarius
+        - capricorn
+        - aquarius
+        - pisces
+
+    DailyHoroscope:
+      type: object
+      required: [sign, date, text, mood, luckyNumber, luckyColor]
+      properties:
+        sign: { $ref: "#/components/schemas/ZodiacSign" }
+        date: { type: string, format: date }
+        text: { type: string, description: "Texto del horóscopo" }
+        mood: { type: string, description: "Estado/mood sugerido" }
+        luckyNumber: { type: integer }
+        luckyColor: { type: string }
+        shareText:
+          type: string
+          description: "Texto optimizado para compartir (opcional)"
+
+    DailyTarot:
+      type: object
+      required: [date, card, orientation, interpretation]
+      properties:
+        date: { type: string, format: date }
+        card: { type: string, examples: ["The Fool"] }
+        orientation:
+          type: string
+          enum: [upright, reversed]
+        interpretation: { type: string }
+        keywords:
+          type: array
+          items: { type: string }
+
+    UserProfile:
+      type: object
+      required: [id, username, createdAt]
+      properties:
+        id: { type: string }
+        username: { type: string }
+        zodiacSign: { $ref: "#/components/schemas/ZodiacSign" }
+        birthDate: { type: string, format: date }
+        birthTime: { type: string, description: "HH:mm (opcional)" }
+        birthPlace:
+          type: object
+          properties:
+            city: { type: string }
+            country: { type: string }
+            lat: { type: number }
+            lon: { type: number }
+        level: { type: integer, minimum: 1, default: 1 }
+        xp: { type: integer, minimum: 0, default: 0 }
+        createdAt: { type: string, format: date-time }
+
+    UserProfileUpdate:
+      type: object
+      properties:
+        username: { type: string }
+        zodiacSign: { $ref: "#/components/schemas/ZodiacSign" }
+        birthDate: { type: string, format: date }
+        birthTime: { type: string }
+        birthPlace:
+          type: object
+          properties:
+            city: { type: string }
+            country: { type: string }
+            lat: { type: number }
+            lon: { type: number }
+
+    Post:
+      type: object
+      required: [id, authorId, createdAt, text]
+      properties:
+        id: { type: string }
+        authorId: { type: string }
+        createdAt: { type: string, format: date-time }
+        text: { type: string }
+        topic:
+          type: string
+          description: "etiqueta opcional (astrology, tarot, energy, etc.)"
+        likeCount: { type: integer, default: 0 }
+        commentCount: { type: integer, default: 0 }
+
+    PostCreate:
+      type: object
+      required: [text]
+      properties:
+        text: { type: string, minLength: 1, maxLength: 4000 }
+        topic: { type: string }
+
+    PostPage:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Post" }
+        nextCursor:
+          type: string
+          nullable: true
+
+    Comment:
+      type: object
+      required: [id, postId, authorId, createdAt, text]
+      properties:
+        id: { type: string }
+        postId: { type: string }
+        authorId: { type: string }
+        createdAt: { type: string, format: date-time }
+        text: { type: string }
+
+    CommentCreate:
+      type: object
+      required: [text]
+      properties:
+        text: { type: string, minLength: 1, maxLength: 2000 }
+
+    CommentPage:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Comment" }
+        nextCursor:
+          type: string
+          nullable: true

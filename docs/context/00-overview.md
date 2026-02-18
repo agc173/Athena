@@ -1,0 +1,21 @@
+# Overview (BWitch)
+
+BWitch es una app de misticismo/esoterismo con módulos como astrología, brujería, energía y comunidad.
+Este repo está preparado con arquitectura limpia para escalar features sin acoplar UI/infra.
+
+## Objetivos de arquitectura
+- Escalar features por módulos
+- Compartir lógica y UI en KMP
+- Mantener domain puro y testeable
+- Networking uniforme (BaseApi + ApiResult)
+- DI limpia por capa (Koin)
+
+## Módulos
+- Astrología (horóscopo, carta astral, compatibilidades)
+- Brujería (tarot, oráculo, lectura de manos)
+- Energía (chakras, rituales, prácticas)
+- Comunidad (foro, posts, reacciones, moderación)
+
+## Principio clave
+Las features se implementan como vertical slices:
+Domain → Data → Presentation → UI

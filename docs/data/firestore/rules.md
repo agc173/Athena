@@ -1,0 +1,29 @@
+# Firestore Security Rules (starter)
+
+Objetivo:
+- Usuarios solo pueden modificar su perfil (/users/{uid})
+- Posts/comentarios: crear si autenticado, editar/borrar solo autor (o moderación)
+- Reacciones: 1 por usuario por post
+
+NOTA: Estas reglas son un borrador; deben revisarse antes de producción.
+
+## Reglas (pseudo)
+- /users/{uid}
+    - read: authenticated
+    - write: request.auth.uid == uid
+
+- /posts/{postId}
+    - read: true (o authenticated si quieres)
+    - create: authenticated
+    - update/delete: authenticated && request.auth.uid == resource.data.authorId
+    - validar tamaño de texto y campos permitidos
+
+- /posts/{postId}/comments/{commentId}
+    - read: true
+    - create: authenticated
+    - update/delete: authenticated && request.auth.uid == resource.data.authorId
+
+- /posts/{postId}/reactions/{uid}
+    - read: true
+    - create/delete: authenticated && request.auth.uid == uid
+    - update: false
