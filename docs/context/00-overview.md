@@ -19,3 +19,6 @@ Este repo está preparado con arquitectura limpia para escalar features sin acop
 ## Principio clave
 Las features se implementan como vertical slices:
 Domain → Data → Presentation → UI
+
+## Estado actual
+- Vertical slice MVP implementado: **Horóscopo diario mock** (domain/data/presentation/UI) con tests básicos de use case y ViewModel.

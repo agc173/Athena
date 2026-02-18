@@ -25,11 +25,14 @@ dependencyResolutionManagement {
                 includeGroupAndSubgroups("androidx")
                 includeGroupAndSubgroups("com.android")
                 includeGroupAndSubgroups("com.google")
+                includeGroupAndSubgroups("android.arch.lifecycle")
+                includeGroupAndSubgroups("android.arch.core")
             }
         }
         mavenCentral()
     }
 }
+
 
 include(":composeApp")
 include(":shared:domain")

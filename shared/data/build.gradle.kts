@@ -26,6 +26,8 @@ kotlin {
         commonMain.dependencies {
             implementation(project(":shared:domain"))
 
+            implementation(libs.koin.core)
+
             // Networking / JSON
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.content.negotiation)

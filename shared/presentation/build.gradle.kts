@@ -25,12 +25,15 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(project(":shared:domain"))
+            implementation(libs.kotlinx.coroutines.core)
+
 
             // Coroutines/Flow (si lo tienes en catálogo)
             // implementation(libs.kotlinx.coroutines.core)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+            implementation(libs.kotlinx.coroutines.test)
         }
     }
 }
