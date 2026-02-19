@@ -17,6 +17,25 @@ class Navigator(
         _current.value = backStack.last()
     }
 
+    fun replace(to: Destination) {
+        if (backStack.isEmpty()) {
+            backStack.add(to)
+        } else {
+            backStack.removeLast()
+            backStack.add(to)
+        }
+        _current.value = backStack.last()
+    }
+
+    fun popToRoot() {
+        if (backStack.isEmpty()) return
+        val root = backStack.first()
+        backStack.clear()
+        backStack.add(root)
+        _current.value = backStack.last()
+    }
+
+
     fun canGoBack(): Boolean = backStack.size > 1
 
     fun goBack(): Boolean {

@@ -8,16 +8,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.agc.bwitch.presentation.navigation.Destination
 import com.agc.bwitch.ui.common.AppScaffold
+import androidx.compose.foundation.layout.PaddingValues
+
+
 
 @Composable
 fun PortalScreen(
+    contentPadding: PaddingValues,
     onNavigate: (Destination) -> Unit
 ) {
     val items = listOf(
         PortalItemConfig(
             title = "Horóscopo diario",
             subtitle = "Tu guía del día según tu signo",
-            destination = Destination.HoroscopeDaily,
+            destination = Destination.HoroscopeDaily(),
             enabled = true
         ),
         PortalItemConfig(
@@ -31,8 +35,9 @@ fun PortalScreen(
             subtitle = "Fases y rituales",
             destination = null,
             enabled = false
-        )
+        ),
     )
+
 
     AppScaffold(
         title = "BWitch",
@@ -41,7 +46,7 @@ fun PortalScreen(
     ) { padding ->
         Column(
             modifier = Modifier
-                .padding(padding)
+                .padding(contentPadding)
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {

@@ -11,32 +11,28 @@ import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
 import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeUiState
 import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeViewModel
 import org.koin.compose.koinInject
-import androidx.compose.material3.ExperimentalMaterial3Api
-import com.agc.bwitch.ui.common.AppScaffold
 
-
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HoroscopeScreen(
-    onBack: () -> Unit,
+    contentPadding: PaddingValues,
+    preselectedSign: ZodiacSign? = null,
     modifier: Modifier = Modifier,
     viewModel: HoroscopeViewModel = koinInject()
 ) {
     val state by viewModel.uiState.collectAsState()
 
-    AppScaffold(
-        title = "Horóscopo diario",
-        canGoBack = true,
-        onBack = onBack
-    ) { padding ->
-        HoroscopeScreenContent(
-            modifier = modifier.padding(padding),
-            state = state,
-            onSelectSign = viewModel::onSelectSign,
-            onRefresh = viewModel::onRefresh
-        )
+    LaunchedEffect(preselectedSign) {
+        preselectedSign?.let { sign ->
+            viewModel.onSelectSign(sign)
+        }
     }
+
+    HoroscopeScreenContent(
+        modifier = modifier.padding(contentPadding),
+        state = state,
+        onSelectSign = viewModel::onSelectSign,
+        onRefresh = viewModel::onRefresh
+    )
 }
 
 
@@ -54,7 +50,6 @@ private fun HoroscopeScreenContent(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-
         SignSelector(
             selected = state.selectedSign,
             onSelected = onSelectSign
@@ -73,7 +68,10 @@ private fun HoroscopeScreenContent(
 
         state.horoscope?.let { h ->
             Card {
-                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     Text("Fecha: ${h.dateIso}", style = MaterialTheme.typography.labelLarge)
                     Text(h.text, style = MaterialTheme.typography.bodyLarge)
                     Text("Mood: ${h.mood}")
