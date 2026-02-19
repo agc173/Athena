@@ -12,6 +12,8 @@ import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeUiState
 import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeViewModel
 import org.koin.compose.koinInject
 import androidx.compose.material3.ExperimentalMaterial3Api
+import com.agc.bwitch.ui.common.AppScaffold
+
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -23,17 +25,10 @@ fun HoroscopeScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Horóscopo diario") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Text("←")
-                    }
-                }
-            )
-        }
+    AppScaffold(
+        title = "Horóscopo diario",
+        canGoBack = true,
+        onBack = onBack
     ) { padding ->
         HoroscopeScreenContent(
             modifier = modifier.padding(padding),
