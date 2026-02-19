@@ -11,20 +11,39 @@ import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
 import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeUiState
 import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeViewModel
 import org.koin.compose.koinInject
+import androidx.compose.material3.ExperimentalMaterial3Api
 
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HoroscopeScreen(
+    onBack: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HoroscopeViewModel = koinInject()
 ) {
     val state by viewModel.uiState.collectAsState()
-    HoroscopeScreenContent(
-        modifier = modifier,
-        state = state,
-        onSelectSign = viewModel::onSelectSign,
-        onRefresh = viewModel::onRefresh
-    )
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Horóscopo diario") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Text("←")
+                    }
+                }
+            )
+        }
+    ) { padding ->
+        HoroscopeScreenContent(
+            modifier = modifier.padding(padding),
+            state = state,
+            onSelectSign = viewModel::onSelectSign,
+            onRefresh = viewModel::onRefresh
+        )
+    }
 }
+
 
 @Composable
 private fun HoroscopeScreenContent(
@@ -40,7 +59,6 @@ private fun HoroscopeScreenContent(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text("Horóscopo diario", style = MaterialTheme.typography.headlineMedium)
 
         SignSelector(
             selected = state.selectedSign,
