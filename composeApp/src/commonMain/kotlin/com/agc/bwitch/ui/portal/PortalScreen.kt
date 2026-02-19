@@ -1,20 +1,39 @@
 package com.agc.bwitch.ui.portal
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.material3.ExperimentalMaterial3Api
+import com.agc.bwitch.presentation.navigation.Destination
 import com.agc.bwitch.ui.common.AppScaffold
 
-
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PortalScreen(
-    onOpenDailyHoroscope: () -> Unit
+    onNavigate: (Destination) -> Unit
 ) {
+    val items = listOf(
+        PortalItemConfig(
+            title = "Horóscopo diario",
+            subtitle = "Tu guía del día según tu signo",
+            destination = Destination.HoroscopeDaily,
+            enabled = true
+        ),
+        PortalItemConfig(
+            title = "Tarot",
+            subtitle = "Tiradas y lecturas",
+            destination = null,
+            enabled = false
+        ),
+        PortalItemConfig(
+            title = "Luna",
+            subtitle = "Fases y rituales",
+            destination = null,
+            enabled = false
+        )
+    )
+
     AppScaffold(
         title = "BWitch",
         canGoBack = false,
@@ -29,27 +48,18 @@ fun PortalScreen(
             Text("Portal", style = MaterialTheme.typography.headlineSmall)
             Text("Elige un módulo", style = MaterialTheme.typography.bodyMedium)
 
-            PortalSection(title = "Astrología") {
-                PortalItem(
-                    title = "Horóscopo diario",
-                    subtitle = "Tu guía del día según tu signo",
-                    onClick = onOpenDailyHoroscope
-                )
-            }
-
-            PortalSection(title = "Próximamente") {
-                PortalItem(
-                    title = "Tarot",
-                    subtitle = "Tiradas y lecturas",
-                    onClick = { /* no-op */ },
-                    enabled = false
-                )
-                PortalItem(
-                    title = "Luna",
-                    subtitle = "Fases y rituales",
-                    onClick = { /* no-op */ },
-                    enabled = false
-                )
+            PortalSection(title = "Módulos") {
+                items.forEach { item ->
+                    PortalItem(
+                        title = item.title,
+                        subtitle = item.subtitle,
+                        enabled = item.enabled && item.destination != null,
+                        onClick = {
+                            val dest = item.destination ?: return@PortalItem
+                            onNavigate(dest)
+                        }
+                    )
+                }
             }
         }
     }
@@ -73,7 +83,7 @@ private fun PortalItem(
     onClick: () -> Unit,
     enabled: Boolean = true
 ) {
-    Card(
+    androidx.compose.material3.Card(
         onClick = onClick,
         enabled = enabled
     ) {
@@ -83,3 +93,4 @@ private fun PortalItem(
         }
     }
 }
+

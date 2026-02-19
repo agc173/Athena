@@ -13,9 +13,12 @@ fun AppRoot() {
     val destination by navigator.current.collectAsState()
 
     when (destination) {
-        Destination.Portal -> PortalScreen(
-            onOpenDailyHoroscope = { navigator.navigate(Destination.HoroscopeDaily) }
-        )
+        Destination.Portal -> {
+            PortalScreen(
+                onNavigate = { dest -> navigator.navigate(dest) }
+            )
+        }
+
 
         Destination.HoroscopeDaily -> HoroscopeScreen(
             onBack = { navigator.goBack() }
