@@ -7,13 +7,21 @@ import org.koin.core.module.Module
 import org.koin.dsl.module
 import com.agc.bwitch.domain.astrology.birthchart.BirthChartRepository
 import com.agc.bwitch.data.astrology.birthchart.SettingsBirthChartRepository
+import com.agc.bwitch.data.auth.FirebaseAuthRepository
+import com.agc.bwitch.domain.auth.AuthRepository
+import com.agc.bwitch.data.astrology.birthchart.SyncBirthChartRepository
 
 
 
 
 val dataKoinModule: Module = module {
     single<HoroscopeRepository> { HoroscopeRepositoryImpl() }
-    single<BirthChartRepository> { SettingsBirthChartRepository(get()) }
+    single<BirthChartRepository> {
+        val local = SettingsBirthChartRepository(get())
+        SyncBirthChartRepository(local = local, authRepository = get())
+    }
+
+    single<AuthRepository> { FirebaseAuthRepository() }
 
 
 }

@@ -9,6 +9,9 @@ import com.agc.bwitch.ui.portal.PortalScreen
 import com.agc.bwitch.ui.astrology.HoroscopeScreen
 import com.agc.bwitch.ui.astrology.AstrologyScreen
 import com.agc.bwitch.ui.astrology.BirthChartScreen
+import com.agc.bwitch.presentation.auth.SessionViewModel
+import com.agc.bwitch.ui.auth.AuthScreen
+
 
 
 
@@ -17,6 +20,14 @@ fun AppRoot() {
     val navigator: Navigator = koinInject()
     val destination by navigator.current.collectAsState()
     val dest = destination
+    val sessionVm: SessionViewModel = koinInject()
+    val session by sessionVm.uiState.collectAsState()
+
+    if (!session.isLoggedIn) {
+        AuthScreen()
+        return
+    }
+
 
     AppScaffold(
         title = dest.title,

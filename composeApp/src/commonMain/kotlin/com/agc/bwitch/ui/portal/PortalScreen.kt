@@ -1,22 +1,25 @@
 package com.agc.bwitch.ui.portal
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.PaddingValues
+import com.agc.bwitch.presentation.auth.SessionViewModel
 import com.agc.bwitch.presentation.navigation.Destination
 import com.agc.bwitch.ui.common.AppScaffold
-import androidx.compose.foundation.layout.PaddingValues
-
-
+import org.koin.compose.koinInject
 
 @Composable
 fun PortalScreen(
     contentPadding: PaddingValues,
     onNavigate: (Destination) -> Unit
 ) {
+    val sessionVm: SessionViewModel = koinInject()
+
     val items = listOf(
         PortalItemConfig(
             title = "Astrología",
@@ -30,7 +33,6 @@ fun PortalScreen(
             destination = null,
             enabled = false
         ),
-
         PortalItemConfig(
             title = "Luna",
             subtitle = "Fases y rituales",
@@ -39,20 +41,31 @@ fun PortalScreen(
         )
     )
 
-
     AppScaffold(
         title = "BWitch",
         canGoBack = false,
         onBack = {}
-    ) { padding ->
+    ) { scaffoldPadding ->
         Column(
             modifier = Modifier
+                .padding(scaffoldPadding)
                 .padding(contentPadding)
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text("Portal", style = MaterialTheme.typography.headlineSmall)
-            Text("Elige un módulo", style = MaterialTheme.typography.bodyMedium)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column {
+                    Text("Portal", style = MaterialTheme.typography.headlineSmall)
+                    Text("Elige un módulo", style = MaterialTheme.typography.bodyMedium)
+                }
+
+                Button(onClick = sessionVm::signOut) {
+                    Text("Cerrar sesión")
+                }
+            }
 
             PortalSection(title = "Módulos") {
                 items.forEach { item ->
@@ -99,4 +112,5 @@ private fun PortalItem(
         }
     }
 }
+
 
