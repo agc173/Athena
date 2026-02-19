@@ -7,6 +7,7 @@ import com.agc.bwitch.di.platformModule
 class BWitchApplication : Application() {
     override fun onCreate() {
         super.onCreate()
-        initKoin(additionalModules = listOf(platformModule))
+        initKoin(additionalModules = listOf(platformModule(this)))
+
     }
 }

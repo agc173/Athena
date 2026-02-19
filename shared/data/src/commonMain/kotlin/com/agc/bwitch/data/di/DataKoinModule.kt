@@ -6,10 +6,14 @@ import com.agc.bwitch.domain.astrology.horoscope.HoroscopeRepository
 import org.koin.core.module.Module
 import org.koin.dsl.module
 import com.agc.bwitch.domain.astrology.birthchart.BirthChartRepository
+import com.agc.bwitch.data.astrology.birthchart.SettingsBirthChartRepository
+
+
 
 
 val dataKoinModule: Module = module {
     single<HoroscopeRepository> { HoroscopeRepositoryImpl() }
-    single<BirthChartRepository> { InMemoryBirthChartRepository() }
+    single<BirthChartRepository> { SettingsBirthChartRepository(get()) }
+
 
 }

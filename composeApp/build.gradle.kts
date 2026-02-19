@@ -51,6 +51,8 @@ kotlin {
             implementation(project(":shared:di"))
             implementation(project(":shared:domain"))
             implementation(project(":shared:presentation"))
+            implementation(project(":shared:data"))
+
 
         }
         commonTest.dependencies {

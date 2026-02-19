@@ -3,7 +3,9 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
+    alias(libs.plugins.kotlinSerialization)
 }
+
 
 kotlin {
     androidTarget {
@@ -39,6 +41,12 @@ kotlin {
 
             // Coroutines si lo tienes en el catalog:
             implementation(libs.kotlinx.coroutines.core)
+
+            implementation(libs.multiplatform.settings)
+            implementation(libs.kotlinx.serialization.json)
+            implementation(libs.kotlinx.datetime)
+
+
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
