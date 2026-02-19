@@ -26,6 +26,8 @@ kotlin {
         commonMain.dependencies {
             implementation(project(":shared:domain"))
             implementation(libs.kotlinx.coroutines.core)
+            implementation(libs.kotlinx.datetime)
+
 
 
             // Coroutines/Flow (si lo tienes en catálogo)

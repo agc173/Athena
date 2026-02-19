@@ -30,8 +30,8 @@ fun AstrologyScreen(
         FeatureItem(
             title = "Carta astral",
             subtitle = "Tu mapa natal (nacimiento)",
-            enabled = false,
-            onClick = { }
+            enabled = true,
+            onClick = { onNavigate(Destination.BirthChart) }
         )
 
         FeatureItem(

@@ -27,6 +27,8 @@ kotlin {
             // Domain debe ser lo más puro posible.
             // Si necesitas fechas en modelos, puedes añadir:
             // implementation(libs.kotlinx.datetime)
+            implementation(libs.kotlinx.datetime)
+
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
