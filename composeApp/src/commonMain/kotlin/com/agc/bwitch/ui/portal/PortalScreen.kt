@@ -19,9 +19,9 @@ fun PortalScreen(
 ) {
     val items = listOf(
         PortalItemConfig(
-            title = "Horóscopo diario",
-            subtitle = "Tu guía del día según tu signo",
-            destination = Destination.HoroscopeDaily(),
+            title = "Astrología",
+            subtitle = "Horóscopo, carta astral, compatibilidad…",
+            destination = Destination.Astrology,
             enabled = true
         ),
         PortalItemConfig(
@@ -30,12 +30,13 @@ fun PortalScreen(
             destination = null,
             enabled = false
         ),
+
         PortalItemConfig(
             title = "Luna",
             subtitle = "Fases y rituales",
             destination = null,
             enabled = false
-        ),
+        )
     )
 
 

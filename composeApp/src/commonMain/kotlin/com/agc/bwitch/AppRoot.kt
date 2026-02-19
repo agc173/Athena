@@ -7,6 +7,8 @@ import com.agc.bwitch.presentation.navigation.Navigator
 import com.agc.bwitch.ui.common.AppScaffold
 import com.agc.bwitch.ui.portal.PortalScreen
 import com.agc.bwitch.ui.astrology.HoroscopeScreen
+import com.agc.bwitch.ui.astrology.AstrologyScreen
+
 
 @Composable
 fun AppRoot() {
@@ -24,6 +26,11 @@ fun AppRoot() {
                 contentPadding = padding,
                 onNavigate = { navigator.navigate(it) }
             )
+            Destination.Astrology -> AstrologyScreen(
+                contentPadding = padding,
+                onNavigate = { navigator.navigate(it) }
+            )
+
 
             is Destination.HoroscopeDaily -> HoroscopeScreen(
                 contentPadding = padding,
