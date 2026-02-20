@@ -40,10 +40,6 @@ class SessionViewModel(
         }
     }
 
-    fun signInAnonymously() = scope.launch {
-        runCatching { authRepository.signInAnonymously() }
-            .onFailure { e -> _uiState.update { it.copy(error = e.message) } }
-    }
 
     fun signInWithEmail(email: String, password: String) = scope.launch {
         runCatching { authRepository.signInWithEmail(email, password) }

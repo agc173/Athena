@@ -41,6 +41,11 @@ fun AppRoot() {
         }
     }
 
+    if (session.isLoggedIn && session.isAnonymous) {
+        AuthScreen()
+        return
+    }
+
     AppScaffold(
         title = dest.title,
         canGoBack = navigator.canGoBack(),

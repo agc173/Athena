@@ -30,9 +30,6 @@ class FirebaseAuthRepository : AuthRepository {
         auth.signInWithCredential(credential)
     }
 
-    override suspend fun signInAnonymously() {
-        auth.signInAnonymously()
-    }
 
     override suspend fun signInWithEmail(email: String, password: String) {
         auth.signInWithEmailAndPassword(email, password)
