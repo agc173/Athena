@@ -13,6 +13,10 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
+        // Opcional: solo para verificar / debug
+        val clientId = getString(R.string.default_web_client_id)
+        // println("default_web_client_id=$clientId")
+
         setContent {
             val navigator: Navigator = koinInject()
 

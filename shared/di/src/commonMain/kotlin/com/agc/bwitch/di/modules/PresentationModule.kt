@@ -11,7 +11,7 @@ val presentationModule: Module = module {
     single { Navigator() }
     factory { HoroscopeViewModel(get()) }
     factory { BirthChartViewModel(get(), get(), get()) }
-    factory { SessionViewModel(get()) }
+    single { SessionViewModel(get()) }
 }
 
 

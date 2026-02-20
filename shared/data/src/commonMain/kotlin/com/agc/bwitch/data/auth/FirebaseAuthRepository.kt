@@ -8,6 +8,7 @@ import dev.gitlive.firebase.auth.FirebaseUser
 import dev.gitlive.firebase.auth.auth
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import dev.gitlive.firebase.auth.GoogleAuthProvider
 
 class FirebaseAuthRepository : AuthRepository {
 
@@ -23,6 +24,11 @@ class FirebaseAuthRepository : AuthRepository {
                 )
             }
         }
+
+    override suspend fun signInWithGoogleIdToken(idToken: String) {
+        val credential = GoogleAuthProvider.credential(idToken, null)
+        auth.signInWithCredential(credential)
+    }
 
     override suspend fun signInAnonymously() {
         auth.signInAnonymously()

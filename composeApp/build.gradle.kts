@@ -32,6 +32,12 @@ kotlin {
             implementation(libs.androidx.activity.compose)
             implementation(libs.ktor.client.okhttp)
 
+
+            // Google Sign-In (Credential Manager)
+            implementation("androidx.credentials:credentials:1.5.0")
+            implementation("androidx.credentials:credentials-play-services-auth:1.5.0")
+            implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
+            implementation("io.insert-koin:koin-android:3.5.6")
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)

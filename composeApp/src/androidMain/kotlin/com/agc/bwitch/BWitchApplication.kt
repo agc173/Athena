@@ -8,6 +8,5 @@ class BWitchApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         initKoin(additionalModules = listOf(platformModule(this)))
-
     }
 }
