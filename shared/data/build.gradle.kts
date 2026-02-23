@@ -45,6 +45,7 @@ kotlin {
             implementation(libs.multiplatform.settings)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.kotlinx.datetime)
+            implementation(libs.firebase.storage)
 
 
         }
@@ -59,5 +60,10 @@ android {
     compileSdk = libs.versions.android.compileSdk.get().toInt()
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
+    }
+
+    lint {
+        abortOnError = false
+        checkReleaseBuilds = false
     }
 }

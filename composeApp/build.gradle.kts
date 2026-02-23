@@ -31,6 +31,8 @@ kotlin {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.androidx.activity.compose)
             implementation(libs.ktor.client.okhttp)
+            implementation(libs.kamel.image.default)
+            implementation(libs.ktor.client.okhttp)
 
 
             // Google Sign-In (Credential Manager)
@@ -38,6 +40,7 @@ kotlin {
             implementation("androidx.credentials:credentials-play-services-auth:1.5.0")
             implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
             implementation("io.insert-koin:koin-android:3.5.6")
+
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
@@ -58,11 +61,23 @@ kotlin {
             implementation(project(":shared:domain"))
             implementation(project(":shared:presentation"))
             implementation(project(":shared:data"))
+            implementation(libs.kamel.image.default)
+            implementation(libs.ktor.client.core)
+
 
 
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+        }
+    }
+}
+
+configurations.configureEach {
+    resolutionStrategy.eachDependency {
+        if (requested.group == "io.ktor") {
+            useVersion("2.3.7")
+            because("Evitar mezcla Ktor 2.x/3.x que rompe Kamel (HttpTimeout NoClassDefFoundError)")
         }
     }
 }

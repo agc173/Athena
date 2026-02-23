@@ -18,6 +18,7 @@ import com.agc.bwitch.ui.common.AppScaffold
 import com.agc.bwitch.ui.portal.PortalScreen
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
+import com.agc.bwitch.ui.userprofile.UserProfileScreen
 
 @Composable
 fun AppRoot() {
@@ -96,6 +97,10 @@ fun AppRoot() {
 
             // Cuando lo tengas, lo enchufamos aquí:
             // Destination.UserProfile -> UserProfileScreen(contentPadding = padding, onBack = { navigator.goBack() })
+            Destination.UserProfile -> UserProfileScreen(
+                contentPadding = padding,
+                onBack = { navigator.goBack() }
+            )
         }
     }
 }

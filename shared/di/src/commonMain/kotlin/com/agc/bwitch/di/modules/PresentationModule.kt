@@ -7,6 +7,7 @@ import com.agc.bwitch.presentation.navigation.Destination
 import com.agc.bwitch.presentation.navigation.Navigator
 import org.koin.core.module.Module
 import org.koin.dsl.module
+import com.agc.bwitch.presentation.userprofile.UserProfileViewModel
 
 val presentationModule: Module = module {
 
@@ -42,10 +43,16 @@ val presentationModule: Module = module {
         )
     }
 
-    /**
-     * UserProfile (añadiremos luego)
-     */
-    // factory { UserProfileViewModel(get(), get(), get()) }
+
+    factory {
+        UserProfileViewModel(
+            observe = get(),
+            get = get(),
+            save = get(),
+            sessionVm = get(),
+            uploadAvatar = get()
+        )
+    }
 
 }
 

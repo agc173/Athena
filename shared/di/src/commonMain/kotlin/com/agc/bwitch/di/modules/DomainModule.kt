@@ -6,6 +6,10 @@ import com.agc.bwitch.domain.astrology.birthchart.SaveBirthDataUseCase
 import com.agc.bwitch.domain.astrology.horoscope.GetDailyHoroscopeUseCase
 import org.koin.core.module.Module
 import org.koin.dsl.module
+import com.agc.bwitch.domain.userprofile.GetUserProfileUseCase
+import com.agc.bwitch.domain.userprofile.ObserveUserProfileUseCase
+import com.agc.bwitch.domain.userprofile.SaveUserProfileUseCase
+import com.agc.bwitch.domain.userprofile.UploadAvatarUseCase
 
 val domainModule: Module = module {
 
@@ -17,8 +21,9 @@ val domainModule: Module = module {
     factory { SaveBirthDataUseCase(get()) }
     factory { ObserveBirthDataUseCase(get()) }
 
-    // UserProfile (lo añadimos cuando creemos el módulo)
-    // factory { GetUserProfileUseCase(get()) }
-    // factory { SaveUserProfileUseCase(get()) }
-    // factory { ObserveUserProfileUseCase(get()) }
+    factory { ObserveUserProfileUseCase(get()) }
+    factory { GetUserProfileUseCase(get()) }
+    factory { SaveUserProfileUseCase(get()) }
+    factory { com.agc.bwitch.domain.userprofile.UploadAvatarUseCase(get()) }
+    factory { UploadAvatarUseCase(get()) }
 }

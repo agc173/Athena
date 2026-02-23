@@ -33,6 +33,8 @@ class SessionViewModel(
                             isLoggedIn = user != null,
                             uid = user?.uid,
                             email = user?.email,
+                            displayName = user?.displayName,
+                            photoUrl = user?.photoUrl,
                             isAnonymous = user?.isAnonymous ?: false,
                             error = null
                         )
