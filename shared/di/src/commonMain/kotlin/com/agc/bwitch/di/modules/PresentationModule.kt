@@ -1,17 +1,52 @@
 package com.agc.bwitch.di.modules
 
+import com.agc.bwitch.presentation.astrology.birthchart.BirthChartViewModel
 import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeViewModel
+import com.agc.bwitch.presentation.auth.SessionViewModel
+import com.agc.bwitch.presentation.navigation.Destination
 import com.agc.bwitch.presentation.navigation.Navigator
 import org.koin.core.module.Module
 import org.koin.dsl.module
-import com.agc.bwitch.presentation.astrology.birthchart.BirthChartViewModel
-import com.agc.bwitch.presentation.auth.SessionViewModel
 
 val presentationModule: Module = module {
-    single { Navigator() }
-    factory { HoroscopeViewModel(get()) }
-    factory { BirthChartViewModel(get(), get(), get()) }
-    single { SessionViewModel(get()) }
+
+    /**
+     * Navigator global (single source of truth de navegación)
+     */
+    single {
+        Navigator(start = Destination.AuthGate)
+    }
+
+    /**
+     * Session global
+     */
+    single {
+        SessionViewModel(get())
+    }
+
+    /**
+     * Horoscope
+     */
+    factory {
+        HoroscopeViewModel(get())
+    }
+
+    /**
+     * BirthChart
+     */
+    factory {
+        BirthChartViewModel(
+            get(), // ObserveBirthDataUseCase
+            get(), // SaveBirthDataUseCase
+            get()  // GetBirthDataUseCase
+        )
+    }
+
+    /**
+     * UserProfile (añadiremos luego)
+     */
+    // factory { UserProfileViewModel(get(), get(), get()) }
+
 }
 
 

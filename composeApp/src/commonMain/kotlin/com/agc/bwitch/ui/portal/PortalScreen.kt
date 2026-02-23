@@ -1,13 +1,18 @@
 package com.agc.bwitch.ui.portal
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.layout.PaddingValues
 import com.agc.bwitch.presentation.auth.SessionViewModel
 import com.agc.bwitch.presentation.navigation.Destination
 import com.agc.bwitch.ui.common.AppScaffold
@@ -25,6 +30,12 @@ fun PortalScreen(
             title = "Astrología",
             subtitle = "Horóscopo, carta astral, compatibilidad…",
             destination = Destination.Astrology,
+            enabled = true
+        ),
+        PortalItemConfig(
+            title = "Perfil",
+            subtitle = "Nombre, foto y sincronización",
+            destination = Destination.UserProfile,
             enabled = true
         ),
         PortalItemConfig(

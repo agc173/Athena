@@ -16,7 +16,7 @@ class SettingsBirthChartRepository(
     settingsFactory: SettingsFactory
 ) : BirthChartRepository {
 
-    private val settings: Settings = settingsFactory.create("bwitch_user_profile")
+    private val settings: Settings = settingsFactory.create("bwitch_birth_chart")
     private val json = Json { ignoreUnknownKeys = true }
 
     private val keyV2 = "birth_data_v2"

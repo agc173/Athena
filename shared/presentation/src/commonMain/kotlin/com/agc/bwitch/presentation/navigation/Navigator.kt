@@ -5,36 +5,34 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 class Navigator(
-    start: Destination = Destination.Portal
+    start: Destination = Destination.AuthGate
 ) {
-    private val backStack = ArrayDeque<Destination>().apply { add(start) }
+    private val backStack = ArrayDeque<Destination>().apply { addLast(start) }
 
     private val _current = MutableStateFlow(backStack.last())
     val current: StateFlow<Destination> = _current.asStateFlow()
 
     fun navigate(to: Destination) {
-        backStack.add(to)
+        backStack.addLast(to)
         _current.value = backStack.last()
     }
 
     fun replace(to: Destination) {
-        if (backStack.isEmpty()) {
-            backStack.add(to)
-        } else {
-            backStack.removeLast()
-            backStack.add(to)
-        }
+        if (backStack.isNotEmpty()) backStack.removeLast()
+        backStack.addLast(to)
         _current.value = backStack.last()
     }
 
+    /**
+     * Vuelve al root ACTUAL (sin cambiar cuál es).
+     */
     fun popToRoot() {
         if (backStack.isEmpty()) return
         val root = backStack.first()
         backStack.clear()
-        backStack.add(root)
+        backStack.addLast(root)
         _current.value = backStack.last()
     }
-
 
     fun canGoBack(): Boolean = backStack.size > 1
 
@@ -45,9 +43,12 @@ class Navigator(
         return true
     }
 
+    /**
+     * Cambia el root (AuthGate/Portal/etc) y resetea el stack.
+     */
     fun resetToRoot(root: Destination = Destination.Portal) {
         backStack.clear()
-        backStack.add(root)
+        backStack.addLast(root)
         _current.value = backStack.last()
     }
 }

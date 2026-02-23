@@ -4,12 +4,13 @@ import com.agc.bwitch.domain.auth.AuthRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.cancel
 
 class SessionViewModel(
     private val authRepository: AuthRepository
@@ -17,7 +18,7 @@ class SessionViewModel(
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     private val _uiState = MutableStateFlow(SessionUiState())
-    val uiState: StateFlow<SessionUiState> = _uiState
+    val uiState: StateFlow<SessionUiState> = _uiState.asStateFlow()
 
     init {
         scope.launch {
@@ -40,7 +41,6 @@ class SessionViewModel(
         }
     }
 
-
     fun signInWithEmail(email: String, password: String) = scope.launch {
         runCatching { authRepository.signInWithEmail(email, password) }
             .onFailure { e -> _uiState.update { it.copy(error = e.message) } }
@@ -51,18 +51,17 @@ class SessionViewModel(
             .onFailure { e -> _uiState.update { it.copy(error = e.message) } }
     }
 
+    fun signInWithGoogle(idToken: String) = scope.launch {
+        runCatching { authRepository.signInWithGoogleIdToken(idToken) }
+            .onFailure { e -> _uiState.update { it.copy(error = e.message) } }
+    }
+
     fun signOut() = scope.launch {
         runCatching { authRepository.signOut() }
             .onFailure { e -> _uiState.update { it.copy(error = e.message) } }
     }
 
-    /** Llamable si algún día quieres liberar recursos explícitamente. */
     fun clear() {
         scope.cancel()
-    }
-
-    fun signInWithGoogle(idToken: String) = scope.launch {
-        runCatching { authRepository.signInWithGoogleIdToken(idToken) }
-            .onFailure { e -> _uiState.update { it.copy(error = e.message) } }
     }
 }

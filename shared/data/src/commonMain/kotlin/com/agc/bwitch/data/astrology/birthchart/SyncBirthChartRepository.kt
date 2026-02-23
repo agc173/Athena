@@ -5,13 +5,16 @@ import com.agc.bwitch.domain.astrology.birthchart.BirthData
 import com.agc.bwitch.domain.auth.AuthRepository
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.firestore.firestore
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.serialization.Serializable
 
 class SyncBirthChartRepository(
-    private val local: BirthChartRepository, // tu SettingsBirthChartRepository
+    private val local: SettingsBirthChartRepository,
     private val authRepository: AuthRepository
 ) : BirthChartRepository {
 
@@ -20,56 +23,72 @@ class SyncBirthChartRepository(
 
     override suspend fun getBirthData(): BirthData? {
         val localValue = local.getBirthData()
-
-        // Sync en background (no bloquea la UI)
-        scope.launch { syncPullAndMaybeMerge(localValue) }
-
+        scope.launch { syncPullAndMaybeMerge() }
         return localValue
     }
 
+    override fun observeBirthData() = local.observeBirthData()
+
     override suspend fun saveBirthData(data: BirthData) {
+        // guarda local con updatedAt NOW
         local.saveBirthData(data)
 
-        val updatedAt = readLocalUpdatedAtEpochMillisOrNull()
+        val updatedAt = local.getLocalUpdatedAtEpochMillisOrNull()
             ?: Clock.System.now().toEpochMilliseconds()
 
         scope.launch { pushLocalToRemote(data, updatedAt) }
     }
 
+    /**
+     * Útil para disparar tras login o refresh manual.
+     */
+    fun pull() {
+        scope.launch { syncPullAndMaybeMerge() }
+    }
 
-    override fun observeBirthData() = local.observeBirthData()
-
-
-    private suspend fun syncPullAndMaybeMerge(localValue: BirthData?) {
+    private suspend fun syncPullAndMaybeMerge() {
         val uid = currentUidOrNull() ?: return
 
         val remote = runCatching { fetchRemote(uid) }.getOrNull() ?: return
         val remoteData = remote.toBirthData()
 
-        // Si no quieres conflictos por campos, hacemos replace por updatedAt
-        // Como tu domain no tiene meta, usamos esta regla simple:
-        // - si local es null -> guardar remoto en local
-        // - si local existe -> si remoto es "más nuevo" que el local guardado en Settings V2
-        // Para esto, lo correcto es guardar updatedAt también en Settings (paso 3)
-        val localUpdated = readLocalUpdatedAtEpochMillisOrNull()
+        // re-leer local para comparar con el estado real actual
+        val localValue = local.getBirthData()
+        val localUpdated = local.getLocalUpdatedAtEpochMillisOrNull()
         val remoteUpdated = remote.updatedAtEpochMillis
 
         when {
-            localValue == null -> saveRemoteAsLocal(remoteData, remote.updatedAtEpochMillis)
-            localUpdated == null -> { /* si aún estás en V1, no machacamos; o migramos */ }
-            remoteUpdated > localUpdated -> saveRemoteAsLocal(remoteData, remote.updatedAtEpochMillis)
-            remoteUpdated < localUpdated -> pushLocalToRemote(localValue, localUpdated)
+            localValue == null -> {
+                saveRemoteAsLocal(remoteData, remoteUpdated)
+            }
 
+            localUpdated == null -> {
+                // estado raro (o V1 sin timestamp): normalizamos y pusheamos local
+                val now = Clock.System.now().toEpochMilliseconds()
+                local.saveBirthDataWithUpdatedAt(localValue, now)
+                pushLocalToRemote(localValue, now)
+            }
+
+            remoteUpdated > localUpdated -> {
+                saveRemoteAsLocal(remoteData, remoteUpdated)
+            }
+
+            remoteUpdated < localUpdated -> {
+                pushLocalToRemote(localValue, localUpdated)
+            }
+
+            else -> {
+                // iguales -> no-op
+            }
         }
     }
 
     private suspend fun pushLocalToRemote(data: BirthData, updatedAtEpochMillis: Long) {
         val uid = currentUidOrNull() ?: return
-        val dto = BirthDataRemoteDto.fromBirthData(data, updatedAtEpochMillis = updatedAtEpochMillis)
+        val dto = BirthDataRemoteDto.fromBirthData(data, updatedAtEpochMillis)
         runCatching { setRemote(uid, dto) }
             .onFailure { println("BirthChart push failed: ${it.message}") }
     }
-
 
     private suspend fun currentUidOrNull(): String? =
         authRepository.authState.first()?.uid
@@ -91,21 +110,8 @@ class SyncBirthChartRepository(
     }
 
     private suspend fun saveRemoteAsLocal(data: BirthData, updatedAtEpochMillis: Long) {
-        val settingsRepo = local as? SettingsBirthChartRepository
-        if (settingsRepo != null) {
-            settingsRepo.saveBirthDataWithUpdatedAt(data, updatedAtEpochMillis)
-        } else {
-            // fallback si algún día cambias el local repo
-            local.saveBirthData(data)
-        }
+        local.saveBirthDataWithUpdatedAt(data, updatedAtEpochMillis)
     }
-
-
-    private fun readLocalUpdatedAtEpochMillisOrNull(): Long? =
-        (local as? SettingsBirthChartRepository)?.getLocalUpdatedAtEpochMillisOrNull()
-
-
-
 }
 
 @Serializable

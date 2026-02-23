@@ -15,12 +15,14 @@ class FirebaseAuthRepository : AuthRepository {
     private val auth: FirebaseAuth = Firebase.auth
 
     override val authState: Flow<AuthUser?> =
-        auth.authStateChanged.map { user: FirebaseUser? ->
+        auth.authStateChanged.map { user ->
             user?.let {
                 AuthUser(
                     uid = it.uid,
                     email = it.email,
-                    isAnonymous = it.isAnonymous
+                    isAnonymous = it.isAnonymous,
+                    displayName = it.displayName,
+                    photoUrl = it.photoURL // o it.photoUrl según SDK
                 )
             }
         }
