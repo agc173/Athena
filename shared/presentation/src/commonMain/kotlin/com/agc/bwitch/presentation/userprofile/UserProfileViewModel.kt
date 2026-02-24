@@ -158,13 +158,16 @@ class UserProfileViewModel(
         _uiState.update { it.copy(isUploadingAvatar = true, error = null) }
 
         runCatching {
-            val url = uploadAvatar(fileUri, mimeType)
-
             val current = uiState.value.profile
+            val previousUrl = current?.photoUrl
+
+            val url = uploadAvatar(fileUri, mimeType, previousUrl)
+
             val updated = UserProfile(
                 displayName = current?.displayName,
                 photoUrl = url,
-                email = current?.email ?: sessionVm.uiState.value.email?.trim().takeUnless { it.isNullOrBlank() }
+                email = current?.email
+                    ?: sessionVm.uiState.value.email?.trim().takeUnless { it.isNullOrBlank() }
             )
 
             save(updated)

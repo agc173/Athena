@@ -3,6 +3,7 @@ package com.agc.bwitch.domain.userprofile
 interface AvatarRepository {
     suspend fun uploadAvatar(
         fileUri: String,
-        mimeType: String? = null
+        mimeType: String? = null,
+        previousUrl: String? = null
     ): String
 }
