@@ -16,6 +16,9 @@ import com.agc.bwitch.domain.userprofile.AvatarRepository
 import com.agc.bwitch.domain.userprofile.UserProfileRepository
 import org.koin.core.module.Module
 import org.koin.dsl.module
+import com.agc.bwitch.domain.astrology.birthchart.BirthChartSyncController
+import com.agc.bwitch.domain.userprofile.UserProfileSyncController
+
 
 val dataKoinModule: Module = module {
 
@@ -37,7 +40,9 @@ val dataKoinModule: Module = module {
     /**
      * BirthChart - SYNC (source of truth del dominio)
      */
-    single<BirthChartRepository> { SyncBirthChartRepository(get(), get()) }
+    single { SyncBirthChartRepository(get(), get()) }
+    single<BirthChartRepository> { get<SyncBirthChartRepository>() }
+    single<BirthChartSyncController> { get<SyncBirthChartRepository>() }
 
     /**
      * UserProfile - LOCAL
@@ -47,7 +52,9 @@ val dataKoinModule: Module = module {
     /**
      * UserProfile - SYNC (source of truth del dominio)
      */
-    single<UserProfileRepository> { SyncUserProfileRepository(get(), get()) }
+    single { SyncUserProfileRepository(get(), get()) }
+    single<UserProfileRepository> { get<SyncUserProfileRepository>() }
+    single<UserProfileSyncController> { get<SyncUserProfileRepository>() }
 
     /**
      * Avatar upload (Storage)

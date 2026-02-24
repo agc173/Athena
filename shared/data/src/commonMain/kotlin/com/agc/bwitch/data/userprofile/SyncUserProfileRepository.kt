@@ -7,6 +7,7 @@ import com.agc.bwitch.data.sync.Timestamped
 import com.agc.bwitch.domain.auth.AuthRepository
 import com.agc.bwitch.domain.userprofile.UserProfile
 import com.agc.bwitch.domain.userprofile.UserProfileRepository
+import com.agc.bwitch.domain.userprofile.UserProfileSyncController
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.firestore.firestore
 import kotlinx.coroutines.CoroutineScope
@@ -21,7 +22,7 @@ import kotlinx.serialization.Serializable
 class SyncUserProfileRepository(
     private val localRepo: SettingsUserProfileRepository,
     private val authRepository: AuthRepository
-) : UserProfileRepository {
+) : UserProfileRepository, UserProfileSyncController {
 
     private val firestore = Firebase.firestore
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -73,7 +74,9 @@ class SyncUserProfileRepository(
         }
     }
 
-    fun pull() = engine.pullAsync()
+    override suspend fun pull() {
+        engine.pull()
+    }
 
     private suspend fun currentUidOrNull(): String? =
         withTimeoutOrNull(2_000) {
