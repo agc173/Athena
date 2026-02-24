@@ -1,32 +1,39 @@
 package com.agc.bwitch.ui.userprofile
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.agc.bwitch.presentation.userprofile.UserProfileViewModel
-import org.koin.compose.koinInject
-import androidx.compose.foundation.background
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.ui.draw.clip
-import androidx.compose.foundation.layout.size
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.ui.graphics.painter.Painter
-import io.kamel.core.Resource
 import io.kamel.image.KamelImage
 import io.kamel.image.asyncPainterResource
+import org.koin.compose.koinInject
 
 @Composable
 fun UserProfileScreen(
@@ -38,7 +45,6 @@ fun UserProfileScreen(
 
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // ✅ Escucha eventos y muestra snackbar
     LaunchedEffect(Unit) {
         vm.snackbarEvents.collect { message ->
             snackbarHostState.showSnackbar(message)
@@ -49,66 +55,54 @@ fun UserProfileScreen(
     var photoUrl by remember(state.profile) { mutableStateOf(state.profile?.photoUrl.orEmpty()) }
     var email by remember(state.profile) { mutableStateOf(state.profile?.email.orEmpty()) }
 
+    val isBusy = state.isSaving || state.isUploadingAvatar
+    val inputsEnabled = !state.isInitialLoading && !isBusy
+    val avatarUrl = photoUrl.trim().takeIf { it.isNotBlank() }
+
+    val overlayMessage = when {
+        state.isUploadingAvatar -> "Subiendo avatar…"
+        state.isSaving -> "Guardando…"
+        state.isInitialLoading -> "Cargando perfil…"
+        else -> null
+    }
+
     Box(
         modifier = Modifier
             .padding(contentPadding)
-            .fillMaxWidth()
+            .fillMaxSize()
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text("Perfil")
 
-            val avatarUrl = state.profile?.photoUrl
-
-            if (!avatarUrl.isNullOrBlank()) {
+            // Avatar
+            if (avatarUrl != null) {
                 KamelImage(
-                    resource = asyncPainterResource(data = avatarUrl),
+                    resource = asyncPainterResource(avatarUrl),
                     contentDescription = "Avatar",
                     modifier = Modifier
                         .size(96.dp)
                         .clip(CircleShape),
-                    onLoading = {
-                        Box(
-                            modifier = Modifier
-                                .size(96.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.surfaceVariant),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator()
-                        }
-                    },
+                    contentScale = ContentScale.Crop,
+                    onLoading = { AvatarPlaceholder(isLoading = true) },
                     onFailure = { error ->
-                        // Nunca crashear: mostramos placeholder
-                        Box(
-                            modifier = Modifier
-                                .size(96.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.surfaceVariant),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text("👤")
-                        }
                         println("Kamel avatar load failed: ${error.message}")
+                        error.printStackTrace()
+                        AvatarPlaceholder(isLoading = false)
                     }
                 )
             } else {
-                Box(
-                    modifier = Modifier
-                        .size(96.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.surfaceVariant),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("👤")
-                }
+                AvatarPlaceholder(isLoading = false)
             }
 
             OutlinedTextField(
                 value = displayName,
                 onValueChange = { displayName = it },
+                enabled = inputsEnabled,
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("Nombre") }
             )
@@ -116,6 +110,7 @@ fun UserProfileScreen(
             OutlinedTextField(
                 value = photoUrl,
                 onValueChange = { photoUrl = it },
+                enabled = inputsEnabled,
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("Photo URL") }
             )
@@ -128,7 +123,9 @@ fun UserProfileScreen(
                 label = { Text("Email") }
             )
 
-            AvatarPickerButton { uriString, mimeType ->
+            AvatarPickerButton(
+                enabled = inputsEnabled
+            ) { uriString, mimeType ->
                 vm.uploadAvatarAndSave(uriString, mimeType)
             }
 
@@ -140,14 +137,16 @@ fun UserProfileScreen(
                         email = email.ifBlank { null }
                     )
                 },
-                enabled = !state.isLoading
+                enabled = !state.isInitialLoading && !isBusy
             ) {
-                Text("Guardar")
+                Text(if (state.isSaving) "Guardando..." else "Guardar")
             }
 
-            Button(onClick = onBack) { Text("Volver") }
+            Button(
+                onClick = onBack,
+                enabled = !isBusy
+            ) { Text("Volver") }
 
-            // Opcional: si quieres mantener el error también en pantalla
             state.error?.let { Text("Error: $it") }
         }
 
@@ -157,5 +156,40 @@ fun UserProfileScreen(
                 .align(Alignment.BottomCenter)
                 .padding(16.dp)
         )
+
+        // Overlay global con mensaje
+        if (overlayMessage != null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.35f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    CircularProgressIndicator()
+                    Text(overlayMessage)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AvatarPlaceholder(isLoading: Boolean) {
+    Box(
+        modifier = Modifier
+            .size(96.dp)
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.surfaceVariant),
+        contentAlignment = Alignment.Center
+    ) {
+        if (isLoading) {
+            CircularProgressIndicator()
+        } else {
+            Text("👤", textAlign = TextAlign.Center)
+        }
     }
 }

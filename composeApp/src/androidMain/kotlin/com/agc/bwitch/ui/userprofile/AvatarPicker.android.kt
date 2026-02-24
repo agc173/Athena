@@ -11,6 +11,7 @@ import androidx.compose.ui.platform.LocalContext
 
 @Composable
 actual fun AvatarPickerButton(
+    enabled: Boolean,
     onPicked: (uriString: String, mimeType: String?) -> Unit
 ) {
     val context: Context = LocalContext.current
@@ -23,7 +24,10 @@ actual fun AvatarPickerButton(
         onPicked(uri.toString(), mime)
     }
 
-    Button(onClick = { launcher.launch("image/*") }) {
+    Button(
+        onClick = { launcher.launch("image/*") },
+        enabled = enabled
+    ) {
         Text("Seleccionar avatar")
     }
 }

@@ -62,7 +62,6 @@ kotlin {
             implementation(project(":shared:presentation"))
             implementation(project(":shared:data"))
             implementation(libs.kamel.image.default)
-            implementation(libs.ktor.client.core)
 
 
 
@@ -73,14 +72,6 @@ kotlin {
     }
 }
 
-configurations.configureEach {
-    resolutionStrategy.eachDependency {
-        if (requested.group == "io.ktor") {
-            useVersion("2.3.7")
-            because("Evitar mezcla Ktor 2.x/3.x que rompe Kamel (HttpTimeout NoClassDefFoundError)")
-        }
-    }
-}
 
 android {
     namespace = "com.agc.bwitch"

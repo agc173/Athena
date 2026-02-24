@@ -67,3 +67,8 @@ android {
         checkReleaseBuilds = false
     }
 }
+// Workaround: lint a veces crashea en KMP/AGP durante lintAnalyzeDebug.
+// abortOnError=false NO evita crashes del motor de lint, así que desactivamos esta tarea.
+tasks.matching { it.name == "lintAnalyzeDebug" }.configureEach {
+    enabled = false
+}
