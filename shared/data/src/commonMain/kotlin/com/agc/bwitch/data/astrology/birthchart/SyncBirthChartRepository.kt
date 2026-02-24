@@ -15,11 +15,12 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.Clock
 import kotlinx.serialization.Serializable
+import com.agc.bwitch.domain.astrology.birthchart.BirthChartSyncController
 
 class SyncBirthChartRepository(
     private val localRepo: SettingsBirthChartRepository,
     private val authRepository: AuthRepository
-) : BirthChartRepository {
+) : BirthChartRepository, BirthChartSyncController {
 
     private val firestore = Firebase.firestore
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -70,7 +71,9 @@ class SyncBirthChartRepository(
         }
     }
 
-    fun pull() = engine.pullAsync()
+    override suspend fun pull() {
+        engine.pull()
+    }
 
     private suspend fun currentUidOrNull(): String? =
         authRepository.authState.first()?.uid
