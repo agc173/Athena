@@ -3,7 +3,10 @@ package com.agc.bwitch
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.agc.bwitch.domain.astrology.birthchart.BirthChartRepository
@@ -16,9 +19,8 @@ import com.agc.bwitch.ui.astrology.HoroscopeScreen
 import com.agc.bwitch.ui.auth.AuthScreen
 import com.agc.bwitch.ui.common.AppScaffold
 import com.agc.bwitch.ui.portal.PortalScreen
-import kotlinx.coroutines.launch
-import org.koin.compose.koinInject
 import com.agc.bwitch.ui.userprofile.UserProfileScreen
+import org.koin.compose.koinInject
 
 @Composable
 fun AppRoot() {
@@ -28,7 +30,7 @@ fun AppRoot() {
     val sessionVm: SessionViewModel = koinInject()
     val session by sessionVm.uiState.collectAsState()
 
-    // Repo para “warm up” sync post-login (BirthChart hoy, UserProfile luego)
+    // Repo para “warm up” sync post-login
     val birthChartRepository: BirthChartRepository = koinInject()
 
     // 1) Splash mientras Firebase emite el primer authState
@@ -44,12 +46,10 @@ fun AppRoot() {
     // 2) Mantener el root coherente con auth state
     LaunchedEffect(isAuthenticated) {
         if (isAuthenticated) {
-            // Si ya estás en AuthGate/Login, salta al Portal
             if (dest == Destination.AuthGate) {
                 navigator.resetToRoot(Destination.Portal)
             }
         } else {
-            // Si pierdes sesión, vuelves al gate
             navigator.resetToRoot(Destination.AuthGate)
         }
     }
@@ -59,12 +59,7 @@ fun AppRoot() {
         val uid = session.uid ?: return@LaunchedEffect
         if (!isAuthenticated) return@LaunchedEffect
 
-        // Opción B (sin tocar repos): esto ya dispara pull en background en tu SyncBirthChartRepository actual
         runCatching { birthChartRepository.getBirthData() }
-
-        // Opción A (recomendada si expones pull()):
-        // (birthChartRepository as? SyncBirthChartRepository)?.pull()
-        // y luego replicamos igual con UserProfileRepository
     }
 
     AppScaffold(
@@ -73,10 +68,7 @@ fun AppRoot() {
         onBack = { navigator.goBack() }
     ) { padding ->
         when (dest) {
-            Destination.AuthGate -> {
-                // Gate simple: si no hay sesión, AuthScreen. Si hay sesión, LaunchedEffect ya te manda a Portal.
-                AuthScreen()
-            }
+            Destination.AuthGate -> AuthScreen()
 
             Destination.Portal -> PortalScreen(
                 contentPadding = padding,
@@ -95,8 +87,6 @@ fun AppRoot() {
                 preselectedSign = (dest as Destination.HoroscopeDaily).preselectedSign
             )
 
-            // Cuando lo tengas, lo enchufamos aquí:
-            // Destination.UserProfile -> UserProfileScreen(contentPadding = padding, onBack = { navigator.goBack() })
             Destination.UserProfile -> UserProfileScreen(
                 contentPadding = padding,
                 onBack = { navigator.goBack() }

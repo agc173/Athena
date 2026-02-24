@@ -8,6 +8,7 @@ import dev.gitlive.firebase.storage.storage
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.datetime.Clock
 
 class FirebaseAvatarRepository(
     private val authRepository: AuthRepository
@@ -24,10 +25,10 @@ class FirebaseAvatarRepository(
             else -> "jpg"
         }
 
-        val ref = storage.reference.child("users/$uid/profile/avatar.$ext")
+        val version = Clock.System.now().toEpochMilliseconds()
+        val ref = storage.reference.child("users/$uid/profile/avatar_$version.$ext")
 
         val file = storageFileFromUri(fileUri)
-
         ref.putFile(file)
 
         return ref.getDownloadUrl()
