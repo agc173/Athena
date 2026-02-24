@@ -35,13 +35,7 @@ val presentationModule: Module = module {
     /**
      * BirthChart
      */
-    factory {
-        BirthChartViewModel(
-            get(), // ObserveBirthDataUseCase
-            get(), // SaveBirthDataUseCase
-            get()  // GetBirthDataUseCase
-        )
-    }
+    factory { BirthChartViewModel(get(), get(), get(), get()) }
 
 
     factory { UserProfileViewModel(get(), get(), get(), get(), get(), get()) }

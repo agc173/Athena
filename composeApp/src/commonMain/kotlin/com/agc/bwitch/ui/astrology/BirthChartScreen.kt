@@ -1,11 +1,19 @@
 package com.agc.bwitch.ui.astrology
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.layout.PaddingValues
 import com.agc.bwitch.presentation.astrology.birthchart.BirthChartViewModel
 import org.koin.compose.koinInject
 
@@ -16,6 +24,8 @@ fun BirthChartScreen(
     viewModel: BirthChartViewModel = koinInject()
 ) {
     val state by viewModel.uiState.collectAsState()
+
+    val inputsEnabled = !state.isLoading && !state.isBusy
 
     Column(
         modifier = modifier
@@ -30,7 +40,7 @@ fun BirthChartScreen(
             onValueChange = viewModel::onDateChange,
             label = { Text("Fecha (YYYY-MM-DD)") },
             singleLine = true,
-            enabled = !state.isLoading,
+            enabled = inputsEnabled,
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -39,7 +49,7 @@ fun BirthChartScreen(
             onValueChange = viewModel::onTimeChange,
             label = { Text("Hora (HH:MM)") },
             singleLine = true,
-            enabled = !state.isLoading,
+            enabled = inputsEnabled,
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -48,16 +58,24 @@ fun BirthChartScreen(
             onValueChange = viewModel::onPlaceChange,
             label = { Text("Lugar (ciudad/país)") },
             singleLine = true,
-            enabled = !state.isLoading,
+            enabled = inputsEnabled,
             modifier = Modifier.fillMaxWidth()
         )
 
         Button(
-            onClick = viewModel::onSave,
-            enabled = !state.isLoading,
+            onClick = viewModel::refresh,
+            enabled = !state.isLoading && !state.isBusy,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(if (state.isLoading) "Guardando..." else "Guardar")
+            Text(if (state.isRefreshing) "Refrescando..." else "Refrescar")
+        }
+
+        Button(
+            onClick = viewModel::onSave,
+            enabled = !state.isLoading && !state.isBusy,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(if (state.isSaving) "Guardando..." else "Guardar")
         }
 
         state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }

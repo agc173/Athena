@@ -4,6 +4,7 @@ import com.agc.bwitch.domain.astrology.birthchart.BirthData
 import com.agc.bwitch.domain.astrology.birthchart.GetBirthDataUseCase
 import com.agc.bwitch.domain.astrology.birthchart.ObserveBirthDataUseCase
 import com.agc.bwitch.domain.astrology.birthchart.SaveBirthDataUseCase
+import com.agc.bwitch.domain.astrology.birthchart.PullBirthChartUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,7 +18,8 @@ import kotlinx.datetime.LocalTime
 class BirthChartViewModel(
     private val observeBirthData: ObserveBirthDataUseCase,
     private val getBirthData: GetBirthDataUseCase,
-    private val saveBirthData: SaveBirthDataUseCase
+    private val saveBirthData: SaveBirthDataUseCase,
+    private val pullBirthChart: PullBirthChartUseCase
 ) {
     private val scope = CoroutineScope(Dispatchers.Main)
 
@@ -39,8 +41,21 @@ class BirthChartViewModel(
             }
         }
 
-        // 2) Forzar lectura inicial (y dispara sync pull en SyncBirthChartRepository)
+        // 2) Lectura inicial (puede disparar pull en sync repo)
         scope.launch { getBirthData() }
+    }
+
+    fun refresh() = scope.launch {
+        val s = _uiState.value
+        if (s.isBusy) return@launch
+
+        _uiState.update { it.copy(isRefreshing = true, error = null, savedMessage = null) }
+
+        runCatching { pullBirthChart() }
+            .onSuccess { _uiState.update { it.copy(savedMessage = "Actualizado ✅") } }
+            .onFailure { e -> _uiState.update { it.copy(error = e.message ?: "Error refrescando") } }
+
+        _uiState.update { it.copy(isRefreshing = false) }
     }
 
     fun onDateChange(v: String) =
@@ -54,6 +69,8 @@ class BirthChartViewModel(
 
     fun onSave() {
         val s = _uiState.value
+        if (s.isBusy) return
+
         val parsed = parse(s.dateText, s.timeText, s.placeText)
         if (parsed == null) {
             _uiState.update {
@@ -66,9 +83,11 @@ class BirthChartViewModel(
         }
 
         scope.launch {
-            _uiState.update { it.copy(isLoading = true, error = null, savedMessage = null) }
-            saveBirthData(parsed)
-            _uiState.update { it.copy(isLoading = false, savedMessage = "Guardado ✅") }
+            _uiState.update { it.copy(isSaving = true, error = null, savedMessage = null) }
+            runCatching { saveBirthData(parsed) }
+                .onSuccess { _uiState.update { it.copy(savedMessage = "Guardado ✅") } }
+                .onFailure { e -> _uiState.update { it.copy(error = e.message ?: "Error guardando") } }
+            _uiState.update { it.copy(isSaving = false) }
         }
     }
 
