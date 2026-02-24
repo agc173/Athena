@@ -1,93 +1,79 @@
 package com.agc.bwitch.data.userprofile
 
+import com.agc.bwitch.data.sync.LocalStore
+import com.agc.bwitch.data.sync.RemoteStore
+import com.agc.bwitch.data.sync.SyncEngine
+import com.agc.bwitch.data.sync.Timestamped
 import com.agc.bwitch.domain.auth.AuthRepository
 import com.agc.bwitch.domain.userprofile.UserProfile
 import com.agc.bwitch.domain.userprofile.UserProfileRepository
+import dev.gitlive.firebase.Firebase
+import dev.gitlive.firebase.firestore.firestore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
-import dev.gitlive.firebase.Firebase
-import dev.gitlive.firebase.firestore.firestore
-import kotlinx.serialization.Serializable
-import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.datetime.Clock
+import kotlinx.serialization.Serializable
 
 class SyncUserProfileRepository(
-    private val local: SettingsUserProfileRepository,
+    private val localRepo: SettingsUserProfileRepository,
     private val authRepository: AuthRepository
 ) : UserProfileRepository {
 
     private val firestore = Firebase.firestore
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
-    override fun observeUserProfile() = local.observeUserProfile()
-
-    override suspend fun getUserProfile(): UserProfile? {
-        val localValue = local.getUserProfile()
-        scope.launch { syncPullAndMaybeMerge() }
-        return localValue
+    private val localStore = object : LocalStore<UserProfile> {
+        override fun observe() = localRepo.observeUserProfile()
+        override suspend fun get() = localRepo.getUserProfile()
+        override suspend fun save(value: UserProfile, updatedAtEpochMillis: Long) {
+            localRepo.saveUserProfileWithUpdatedAt(value, updatedAtEpochMillis)
+        }
+        override fun localUpdatedAtEpochMillisOrNull(): Long? = localRepo.getLocalUpdatedAtEpochMillisOrNull()
     }
 
-    override suspend fun saveUserProfile(profile: UserProfile) {
-        local.saveUserProfile(profile)
+    private val remoteStore = object : RemoteStore<UserProfile> {
+        override suspend fun fetch(): Timestamped<UserProfile> {
+            val uid = currentUidOrNull() ?: return Timestamped(null, null)
+            val dto = fetchRemote(uid) ?: return Timestamped(null, null)
+            return Timestamped(dto.toUserProfile(), dto.updatedAtEpochMillis)
+        }
 
-        val updatedAt = local.getLocalUpdatedAtEpochMillisOrNull()
-            ?: Clock.System.now().toEpochMilliseconds()
-
-        scope.launch { pushLocalToRemote(profile, updatedAt) }
-    }
-
-    fun pull() {
-        scope.launch { syncPullAndMaybeMerge() }
-    }
-
-    private suspend fun syncPullAndMaybeMerge() {
-        val uid = currentUidOrNull() ?: return
-
-        val remote = runCatching { fetchRemote(uid) }.getOrNull() ?: return
-        val remoteProfile = remote.toUserProfile()
-
-        val localValue = local.getUserProfile()
-        val localUpdated = local.getLocalUpdatedAtEpochMillisOrNull()
-        val remoteUpdated = remote.updatedAtEpochMillis
-
-        when {
-            localValue == null -> {
-                local.saveUserProfileWithUpdatedAt(remoteProfile, remoteUpdated)
-            }
-
-            localUpdated == null -> {
-                val now = Clock.System.now().toEpochMilliseconds()
-                local.saveUserProfileWithUpdatedAt(localValue, now)
-                pushLocalToRemote(localValue, now)
-            }
-
-            remoteUpdated > localUpdated -> {
-                local.saveUserProfileWithUpdatedAt(remoteProfile, remoteUpdated)
-            }
-
-            remoteUpdated < localUpdated -> {
-                pushLocalToRemote(localValue, localUpdated)
-            }
-
-            else -> Unit
+        override suspend fun push(value: UserProfile, updatedAtEpochMillis: Long) {
+            val uid = currentUidOrNull() ?: return
+            val dto = UserProfileRemoteDto.fromUserProfile(value, updatedAtEpochMillis)
+            runCatching { setRemote(uid, dto) }
         }
     }
 
-    private suspend fun pushLocalToRemote(profile: UserProfile, updatedAtEpochMillis: Long) {
-        val uid = currentUidOrNull()
-        println("UserProfile push uid=$uid updatedAt=$updatedAtEpochMillis profile=$profile")
-        if (uid == null) return
+    private val engine = SyncEngine(
+        scope = scope,
+        local = localStore,
+        remote = remoteStore
+    )
 
-        val dto = UserProfileRemoteDto.fromUserProfile(profile, updatedAtEpochMillis)
-        runCatching { setRemote(uid, dto) }
-            .onSuccess { println("UserProfile push OK -> users/$uid/profile/current") }
-            .onFailure { it.printStackTrace() }
+    override fun observeUserProfile() = engine.observe()
+
+    override suspend fun getUserProfile(): UserProfile? = engine.get()
+
+    override suspend fun saveUserProfile(profile: UserProfile) {
+        // Guardas local con ts “now” (igual que antes, solo que ahora lo hacemos explícito)
+        val now = Clock.System.now().toEpochMilliseconds()
+        engine.save(profile, now)
+
+        // Si por cualquier motivo local no tuviera ts (estado raro), lo normalizamos como hacías:
+        val localUpdated = localRepo.getLocalUpdatedAtEpochMillisOrNull()
+        if (localUpdated == null) {
+            val normalizedNow = Clock.System.now().toEpochMilliseconds()
+            localRepo.saveUserProfileWithUpdatedAt(profile, normalizedNow)
+            runCatching { remoteStore.push(profile, normalizedNow) }
+        }
     }
+
+    fun pull() = engine.pullAsync()
 
     private suspend fun currentUidOrNull(): String? =
         withTimeoutOrNull(2_000) {

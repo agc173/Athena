@@ -1,5 +1,9 @@
 package com.agc.bwitch.data.astrology.birthchart
 
+import com.agc.bwitch.data.sync.LocalStore
+import com.agc.bwitch.data.sync.RemoteStore
+import com.agc.bwitch.data.sync.SyncEngine
+import com.agc.bwitch.data.sync.Timestamped
 import com.agc.bwitch.domain.astrology.birthchart.BirthChartRepository
 import com.agc.bwitch.domain.astrology.birthchart.BirthData
 import com.agc.bwitch.domain.auth.AuthRepository
@@ -9,86 +13,64 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.serialization.Serializable
 
 class SyncBirthChartRepository(
-    private val local: SettingsBirthChartRepository,
+    private val localRepo: SettingsBirthChartRepository,
     private val authRepository: AuthRepository
 ) : BirthChartRepository {
 
     private val firestore = Firebase.firestore
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
-    override suspend fun getBirthData(): BirthData? {
-        val localValue = local.getBirthData()
-        scope.launch { syncPullAndMaybeMerge() }
-        return localValue
+    private val localStore = object : LocalStore<BirthData> {
+        override fun observe() = localRepo.observeBirthData()
+        override suspend fun get() = localRepo.getBirthData()
+        override suspend fun save(value: BirthData, updatedAtEpochMillis: Long) {
+            localRepo.saveBirthDataWithUpdatedAt(value, updatedAtEpochMillis)
+        }
+        override fun localUpdatedAtEpochMillisOrNull(): Long? = localRepo.getLocalUpdatedAtEpochMillisOrNull()
     }
 
-    override fun observeBirthData() = local.observeBirthData()
+    private val remoteStore = object : RemoteStore<BirthData> {
+        override suspend fun fetch(): Timestamped<BirthData> {
+            val uid = currentUidOrNull() ?: return Timestamped(null, null)
+            val dto = fetchRemote(uid) ?: return Timestamped(null, null)
+            return Timestamped(dto.toBirthData(), dto.updatedAtEpochMillis)
+        }
 
-    override suspend fun saveBirthData(data: BirthData) {
-        // guarda local con updatedAt NOW
-        local.saveBirthData(data)
-
-        val updatedAt = local.getLocalUpdatedAtEpochMillisOrNull()
-            ?: Clock.System.now().toEpochMilliseconds()
-
-        scope.launch { pushLocalToRemote(data, updatedAt) }
-    }
-
-    /**
-     * Útil para disparar tras login o refresh manual.
-     */
-    fun pull() {
-        scope.launch { syncPullAndMaybeMerge() }
-    }
-
-    private suspend fun syncPullAndMaybeMerge() {
-        val uid = currentUidOrNull() ?: return
-
-        val remote = runCatching { fetchRemote(uid) }.getOrNull() ?: return
-        val remoteData = remote.toBirthData()
-
-        // re-leer local para comparar con el estado real actual
-        val localValue = local.getBirthData()
-        val localUpdated = local.getLocalUpdatedAtEpochMillisOrNull()
-        val remoteUpdated = remote.updatedAtEpochMillis
-
-        when {
-            localValue == null -> {
-                saveRemoteAsLocal(remoteData, remoteUpdated)
-            }
-
-            localUpdated == null -> {
-                // estado raro (o V1 sin timestamp): normalizamos y pusheamos local
-                val now = Clock.System.now().toEpochMilliseconds()
-                local.saveBirthDataWithUpdatedAt(localValue, now)
-                pushLocalToRemote(localValue, now)
-            }
-
-            remoteUpdated > localUpdated -> {
-                saveRemoteAsLocal(remoteData, remoteUpdated)
-            }
-
-            remoteUpdated < localUpdated -> {
-                pushLocalToRemote(localValue, localUpdated)
-            }
-
-            else -> {
-                // iguales -> no-op
-            }
+        override suspend fun push(value: BirthData, updatedAtEpochMillis: Long) {
+            val uid = currentUidOrNull() ?: return
+            val dto = BirthDataRemoteDto.fromBirthData(value, updatedAtEpochMillis)
+            runCatching { setRemote(uid, dto) }
         }
     }
 
-    private suspend fun pushLocalToRemote(data: BirthData, updatedAtEpochMillis: Long) {
-        val uid = currentUidOrNull() ?: return
-        val dto = BirthDataRemoteDto.fromBirthData(data, updatedAtEpochMillis)
-        runCatching { setRemote(uid, dto) }
-            .onFailure { println("BirthChart push failed: ${it.message}") }
+    private val engine = SyncEngine(
+        scope = scope,
+        local = localStore,
+        remote = remoteStore
+    )
+
+    override fun observeBirthData() = engine.observe()
+
+    override suspend fun getBirthData(): BirthData? = engine.get()
+
+    override suspend fun saveBirthData(data: BirthData) {
+        val now = Clock.System.now().toEpochMilliseconds()
+        engine.save(data, now)
+
+        // Normalización equivalente a tu caso localUpdated == null
+        val localUpdated = localRepo.getLocalUpdatedAtEpochMillisOrNull()
+        if (localUpdated == null) {
+            val normalizedNow = Clock.System.now().toEpochMilliseconds()
+            localRepo.saveBirthDataWithUpdatedAt(data, normalizedNow)
+            runCatching { remoteStore.push(data, normalizedNow) }
+        }
     }
+
+    fun pull() = engine.pullAsync()
 
     private suspend fun currentUidOrNull(): String? =
         authRepository.authState.first()?.uid
@@ -107,10 +89,6 @@ class SyncBirthChartRepository(
 
     private suspend fun setRemote(uid: String, dto: BirthDataRemoteDto) {
         doc(uid).set(dto)
-    }
-
-    private suspend fun saveRemoteAsLocal(data: BirthData, updatedAtEpochMillis: Long) {
-        local.saveBirthDataWithUpdatedAt(data, updatedAtEpochMillis)
     }
 }
 
