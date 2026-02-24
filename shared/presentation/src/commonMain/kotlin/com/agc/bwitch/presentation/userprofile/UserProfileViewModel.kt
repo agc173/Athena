@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import com.agc.bwitch.domain.userprofile.PullUserProfileUseCase
 
 data class UserProfileUiState(
     // Carga inicial (observer + warm-up)
@@ -29,11 +30,12 @@ data class UserProfileUiState(
     // Operaciones de usuario
     val isSaving: Boolean = false,
     val isUploadingAvatar: Boolean = false,
+    val isRefreshing: Boolean = false,
 
     val profile: UserProfile? = null,
     val error: String? = null
 ) {
-    val isBusy: Boolean get() = isSaving || isUploadingAvatar
+    val isBusy: Boolean get() = isSaving || isUploadingAvatar || isRefreshing
 }
 
 class UserProfileViewModel(
@@ -41,7 +43,8 @@ class UserProfileViewModel(
     private val get: GetUserProfileUseCase,
     private val save: SaveUserProfileUseCase,
     private val sessionVm: SessionViewModel,
-    private val uploadAvatar: UploadAvatarUseCase
+    private val uploadAvatar: UploadAvatarUseCase,
+    private val pull: PullUserProfileUseCase
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
@@ -172,6 +175,21 @@ class UserProfileViewModel(
         }
 
         _uiState.update { it.copy(isUploadingAvatar = false) }
+    }
+
+    fun refresh() = scope.launch {
+        if (uiState.value.isBusy) return@launch
+
+        _uiState.update { it.copy(isRefreshing = true, error = null) }
+
+        runCatching { pull() }
+            .onSuccess { _snackbarEvents.tryEmit("Perfil actualizado") }
+            .onFailure { e ->
+                _uiState.update { it.copy(error = e.message) }
+                _snackbarEvents.tryEmit(e.message ?: "Error refrescando perfil")
+            }
+
+        _uiState.update { it.copy(isRefreshing = false) }
     }
 
     private fun UserProfile?.isNullOrBlankProfile(): Boolean {

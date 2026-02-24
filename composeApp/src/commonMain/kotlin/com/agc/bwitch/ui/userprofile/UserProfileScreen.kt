@@ -143,6 +143,13 @@ fun UserProfileScreen(
             }
 
             Button(
+                onClick = { vm.refresh() },
+                enabled = !state.isInitialLoading && !state.isBusy
+            ) {
+                Text(if (state.isRefreshing) "Refrescando..." else "Refrescar")
+            }
+
+            Button(
                 onClick = onBack,
                 enabled = !isBusy
             ) { Text("Volver") }

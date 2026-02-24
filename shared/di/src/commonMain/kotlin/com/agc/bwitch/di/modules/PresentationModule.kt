@@ -44,15 +44,7 @@ val presentationModule: Module = module {
     }
 
 
-    factory {
-        UserProfileViewModel(
-            observe = get(),
-            get = get(),
-            save = get(),
-            sessionVm = get(),
-            uploadAvatar = get()
-        )
-    }
+    factory { UserProfileViewModel(get(), get(), get(), get(), get(), get()) }
 
 }
 
