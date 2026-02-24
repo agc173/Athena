@@ -64,11 +64,32 @@ android {
 
     lint {
         abortOnError = false
-        checkReleaseBuilds = false
+        checkReleaseBuilds = true
     }
 }
-// Workaround: lint a veces crashea en KMP/AGP durante lintAnalyzeDebug.
-// abortOnError=false NO evita crashes del motor de lint, así que desactivamos esta tarea.
-tasks.matching { it.name == "lintAnalyzeDebug" }.configureEach {
+// ---------------------------------------------------------------------------------------------
+// LINT WORKAROUND (Compose Multiplatform + AGP bug)
+//
+// Context:
+// Android Lint crashes with "Unexpected failure during lint analysis"
+// when analyzing KMP expect/actual code (e.g., SettingsFactory.android.kt).
+//
+// This is a known issue in Android Gradle Plugin / Lint with Kotlin Multiplatform.
+//
+// We disable only the crashing analysis tasks for this module to keep builds stable,
+// while preserving lint functionality in other modules.
+//
+// Safe because:
+// - Does not affect runtime
+// - Does not affect release builds
+// - Only skips lint analysis for this module
+//
+// Remove when upgrading AGP/Kotlin if lint becomes stable.
+// ---------------------------------------------------------------------------------------------
+
+tasks.matching {
+    it.name == "lintAnalyzeDebug" ||
+            it.name == "lintDebug"
+}.configureEach {
     enabled = false
 }
