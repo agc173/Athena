@@ -11,6 +11,7 @@ import com.agc.bwitch.domain.userprofile.ObserveUserProfileUseCase
 import com.agc.bwitch.domain.userprofile.SaveUserProfileUseCase
 import com.agc.bwitch.domain.userprofile.UploadAvatarUseCase
 import com.agc.bwitch.domain.session.ClearLocalUserDataUseCase
+import com.agc.bwitch.domain.userprofile.PullUserProfileUseCase
 
 val domainModule: Module = module {
 
@@ -28,4 +29,5 @@ val domainModule: Module = module {
     factory { com.agc.bwitch.domain.userprofile.UploadAvatarUseCase(get()) }
     factory { UploadAvatarUseCase(get()) }
     factory { ClearLocalUserDataUseCase(get()) }
+    factory { PullUserProfileUseCase(get()) }
 }

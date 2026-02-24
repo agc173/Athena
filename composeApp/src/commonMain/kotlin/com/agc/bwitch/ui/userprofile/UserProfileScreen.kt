@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -35,6 +36,8 @@ import io.kamel.image.KamelImage
 import io.kamel.image.asyncPainterResource
 import org.koin.compose.koinInject
 
+private const val MAX_NAME_LEN = 40
+
 @Composable
 fun UserProfileScreen(
     contentPadding: PaddingValues,
@@ -51,19 +54,46 @@ fun UserProfileScreen(
         }
     }
 
-    var displayName by remember(state.profile) { mutableStateOf(state.profile?.displayName.orEmpty()) }
-    var photoUrl by remember(state.profile) { mutableStateOf(state.profile?.photoUrl.orEmpty()) }
-    var email by remember(state.profile) { mutableStateOf(state.profile?.email.orEmpty()) }
+    var isDirty by remember { mutableStateOf(false) }
 
-    val isBusy = state.isSaving || state.isUploadingAvatar
+    var displayName by remember { mutableStateOf("") }
+    var photoUrl by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+
+    val isBusy = state.isSaving || state.isUploadingAvatar || state.isRefreshing
     val inputsEnabled = !state.isInitialLoading && !isBusy
-    val avatarUrl = photoUrl.trim().takeIf { it.isNotBlank() }
+
+    val trimmedName = displayName.trim()
+    val trimmedUrl = photoUrl.trim()
+
+    val nameTooLong = trimmedName.length > MAX_NAME_LEN
+    val normalizedName = if (nameTooLong) trimmedName.take(MAX_NAME_LEN) else trimmedName
+
+    val urlLooksValid = trimmedUrl.isBlank() ||
+            trimmedUrl.startsWith("https://", ignoreCase = true) ||
+            trimmedUrl.startsWith("http://", ignoreCase = true)
+
+    val canSave = !state.isInitialLoading &&
+            !isBusy &&
+            !nameTooLong &&
+            urlLooksValid
+
+    val avatarUrl = trimmedUrl.takeIf { it.isNotBlank() }
 
     val overlayMessage = when {
         state.isUploadingAvatar -> "Subiendo avatar…"
         state.isSaving -> "Guardando…"
+        state.isRefreshing -> "Actualizando…"
         state.isInitialLoading -> "Cargando perfil…"
         else -> null
+    }
+
+    LaunchedEffect(state.profile) {
+        if (!isDirty) {
+            displayName = state.profile?.displayName.orEmpty()
+            photoUrl = state.profile?.photoUrl.orEmpty()
+            email = state.profile?.email.orEmpty()
+        }
     }
 
     Box(
@@ -79,40 +109,63 @@ fun UserProfileScreen(
         ) {
             Text("Perfil")
 
-            // Avatar
-            if (avatarUrl != null) {
+            // Avatar (solo intentamos cargar si es http(s))
+            val canLoadRemoteAvatar = avatarUrl != null &&
+                    (avatarUrl.startsWith("https://", ignoreCase = true) || avatarUrl.startsWith("http://", ignoreCase = true))
+
+            if (canLoadRemoteAvatar) {
                 KamelImage(
-                    resource = asyncPainterResource(avatarUrl),
+                    resource = asyncPainterResource(avatarUrl!!),
                     contentDescription = "Avatar",
                     modifier = Modifier
                         .size(96.dp)
                         .clip(CircleShape),
                     contentScale = ContentScale.Crop,
-                    onLoading = { AvatarPlaceholder(isLoading = true) },
-                    onFailure = { error ->
-                        println("Kamel avatar load failed: ${error.message}")
-                        error.printStackTrace()
-                        AvatarPlaceholder(isLoading = false)
+                    onLoading = { AvatarPlaceholder(isLoading = true, displayName = normalizedName) },
+                    onFailure = {
+                        AvatarPlaceholder(isLoading = false, displayName = normalizedName)
                     }
                 )
             } else {
-                AvatarPlaceholder(isLoading = false)
+                AvatarPlaceholder(isLoading = false, displayName = normalizedName)
             }
 
             OutlinedTextField(
                 value = displayName,
-                onValueChange = { displayName = it },
+                onValueChange = {
+                    displayName = it
+                    isDirty = true
+                },
                 enabled = inputsEnabled,
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("Nombre") }
+                label = { Text("Nombre") },
+                isError = nameTooLong,
+                supportingText = {
+                    val count = trimmedName.length
+                    val text = if (nameTooLong) {
+                        "Máximo $MAX_NAME_LEN caracteres ($count)"
+                    } else {
+                        "$count / $MAX_NAME_LEN"
+                    }
+                    Text(text)
+                }
             )
 
             OutlinedTextField(
                 value = photoUrl,
-                onValueChange = { photoUrl = it },
+                onValueChange = {
+                    photoUrl = it
+                    isDirty = true
+                },
                 enabled = inputsEnabled,
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("Photo URL") }
+                label = { Text("Photo URL") },
+                isError = !urlLooksValid,
+                supportingText = {
+                    if (!urlLooksValid) {
+                        Text("Debe empezar por http:// o https:// (o dejarlo vacío)")
+                    }
+                }
             )
 
             OutlinedTextField(
@@ -123,38 +176,53 @@ fun UserProfileScreen(
                 label = { Text("Email") }
             )
 
-            AvatarPickerButton(
-                enabled = inputsEnabled
-            ) { uriString, mimeType ->
-                vm.uploadAvatarAndSave(uriString, mimeType)
+            // Avatar picker (si está busy, mostramos botón deshabilitado con feedback)
+            Box(modifier = Modifier.fillMaxWidth()) {
+                if (inputsEnabled) {
+                    AvatarPickerButton(enabled = inputsEnabled) { uriString, mimeType ->
+                        vm.uploadAvatarAndSave(uriString, mimeType)
+                    }
+                } else {
+                    Button(
+                        onClick = {},
+                        enabled = false,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        if (state.isUploadingAvatar) SmallSpinnerWithText("Subiendo…") else Text("Seleccionar avatar")
+                    }
+                }
             }
 
             Button(
                 onClick = {
+                    isDirty = false
                     vm.updateAndSave(
-                        displayName = displayName.ifBlank { null },
-                        photoUrl = photoUrl.ifBlank { null },
-                        email = email.ifBlank { null }
+                        displayName = normalizedName.ifBlank { null },
+                        photoUrl = trimmedUrl.ifBlank { null },
+                        email = email.trim().ifBlank { null }
                     )
                 },
-                enabled = !state.isInitialLoading && !isBusy
+                enabled = canSave,
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Text(if (state.isSaving) "Guardando..." else "Guardar")
+                if (state.isSaving) SmallSpinnerWithText("Guardando…") else Text("Guardar")
             }
 
             Button(
                 onClick = { vm.refresh() },
-                enabled = !state.isInitialLoading && !state.isBusy
+                enabled = !state.isInitialLoading && !isBusy,
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Text(if (state.isRefreshing) "Refrescando..." else "Refrescar")
+                if (state.isRefreshing) SmallSpinnerWithText("Refrescando…") else Text("Refrescar")
             }
 
             Button(
                 onClick = onBack,
-                enabled = !isBusy
+                enabled = !isBusy,
+                modifier = Modifier.fillMaxWidth()
             ) { Text("Volver") }
 
-            state.error?.let { Text("Error: $it") }
+            state.error?.let { Text("Error: $it", color = MaterialTheme.colorScheme.error) }
         }
 
         SnackbarHost(
@@ -164,7 +232,6 @@ fun UserProfileScreen(
                 .padding(16.dp)
         )
 
-        // Overlay global con mensaje
         if (overlayMessage != null) {
             Box(
                 modifier = Modifier
@@ -185,7 +252,23 @@ fun UserProfileScreen(
 }
 
 @Composable
-private fun AvatarPlaceholder(isLoading: Boolean) {
+private fun SmallSpinnerWithText(text: String) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+        Text(text)
+    }
+}
+
+@Composable
+private fun AvatarPlaceholder(
+    isLoading: Boolean,
+    displayName: String
+) {
+    val initial = displayName.trim().firstOrNull()?.uppercaseChar()?.toString() ?: "👤"
+
     Box(
         modifier = Modifier
             .size(96.dp)
@@ -196,7 +279,11 @@ private fun AvatarPlaceholder(isLoading: Boolean) {
         if (isLoading) {
             CircularProgressIndicator()
         } else {
-            Text("👤", textAlign = TextAlign.Center)
+            Text(
+                initial,
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.headlineMedium
+            )
         }
     }
 }
