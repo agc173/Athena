@@ -36,6 +36,11 @@ class SettingsUserProfileRepository(
         saveUserProfileWithUpdatedAt(profile, now)
     }
 
+    suspend fun clear() {
+        settings.remove(keyV1)
+        _profile.value = null
+    }
+
     internal suspend fun saveUserProfileWithUpdatedAt(
         profile: UserProfile,
         updatedAtEpochMillis: Long

@@ -17,6 +17,9 @@ import com.agc.bwitch.presentation.auth.SessionViewModel
 import com.agc.bwitch.presentation.navigation.Destination
 import com.agc.bwitch.ui.common.AppScaffold
 import org.koin.compose.koinInject
+import com.agc.bwitch.domain.session.ClearLocalUserDataUseCase
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
 
 @Composable
 fun PortalScreen(
@@ -24,6 +27,9 @@ fun PortalScreen(
     onNavigate: (Destination) -> Unit
 ) {
     val sessionVm: SessionViewModel = koinInject()
+
+    val clearLocalUserData: ClearLocalUserDataUseCase = koinInject()
+    val scope = rememberCoroutineScope()
 
     val items = listOf(
         PortalItemConfig(
@@ -73,7 +79,15 @@ fun PortalScreen(
                     Text("Elige un módulo", style = MaterialTheme.typography.bodyMedium)
                 }
 
-                Button(onClick = sessionVm::signOut) {
+                Button(
+                    onClick = {
+                        scope.launch {
+                            // Orden recomendado: signOut primero y limpiamos local sí o sí
+                            runCatching { sessionVm.signOut() }
+                            runCatching { clearLocalUserData() }
+                        }
+                    }
+                ) {
                     Text("Cerrar sesión")
                 }
             }

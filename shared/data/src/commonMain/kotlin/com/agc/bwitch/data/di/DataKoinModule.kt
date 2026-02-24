@@ -14,6 +14,8 @@ import org.koin.core.module.Module
 import org.koin.dsl.module
 import com.agc.bwitch.domain.userprofile.AvatarRepository
 import com.agc.bwitch.data.userprofile.FirebaseAvatarRepository
+import com.agc.bwitch.data.session.LocalUserDataRepositoryImpl
+import com.agc.bwitch.domain.session.LocalUserDataRepository
 
 val dataKoinModule: Module = module {
 
@@ -63,4 +65,6 @@ val dataKoinModule: Module = module {
     single<AvatarRepository> {
         FirebaseAvatarRepository(get())
     }
+
+    single<LocalUserDataRepository> { LocalUserDataRepositoryImpl(get(), get()) }
 }

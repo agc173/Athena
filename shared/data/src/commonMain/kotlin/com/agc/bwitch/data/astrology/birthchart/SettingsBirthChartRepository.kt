@@ -79,6 +79,12 @@ class SettingsBirthChartRepository(
         return migrated
     }
 
+    suspend fun clear() {
+        settings.remove(keyV2)
+        settings.remove(keyV1) // por si había datos legacy
+        _birthData.value = null
+    }
+
     internal suspend fun saveBirthDataWithUpdatedAt(
         data: BirthData,
         updatedAtEpochMillis: Long
