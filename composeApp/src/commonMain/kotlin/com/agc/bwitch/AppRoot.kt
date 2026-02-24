@@ -21,6 +21,7 @@ import com.agc.bwitch.ui.common.AppScaffold
 import com.agc.bwitch.ui.portal.PortalScreen
 import com.agc.bwitch.ui.userprofile.UserProfileScreen
 import org.koin.compose.koinInject
+import com.agc.bwitch.domain.userprofile.GetUserProfileUseCase
 
 @Composable
 fun AppRoot() {
@@ -32,6 +33,8 @@ fun AppRoot() {
 
     // Repo para “warm up” sync post-login
     val birthChartRepository: BirthChartRepository = koinInject()
+
+    val getUserProfile: GetUserProfileUseCase = koinInject()
 
     // 1) Splash mientras Firebase emite el primer authState
     if (session.isLoading) {
@@ -60,6 +63,7 @@ fun AppRoot() {
         if (!isAuthenticated) return@LaunchedEffect
 
         runCatching { birthChartRepository.getBirthData() }
+        runCatching { getUserProfile() }
     }
 
     AppScaffold(
