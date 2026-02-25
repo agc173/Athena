@@ -14,6 +14,8 @@ import com.agc.bwitch.domain.session.ClearLocalUserDataUseCase
 import com.agc.bwitch.domain.userprofile.PullUserProfileUseCase
 import com.agc.bwitch.domain.astrology.horoscope.ObserveDailyHoroscopeUseCase
 import com.agc.bwitch.domain.astrology.horoscope.PullDailyHoroscopeUseCase
+import com.agc.bwitch.domain.astrology.horoscope.PrefetchDailyHoroscopeUseCase
+import kotlinx.datetime.Clock
 
 val domainModule: Module = module {
 
@@ -35,4 +37,11 @@ val domainModule: Module = module {
     factory { GetDailyHoroscopeUseCase(get()) }
     factory { ObserveDailyHoroscopeUseCase(get()) }
     factory { PullDailyHoroscopeUseCase(get()) }
+    factory {
+        PrefetchDailyHoroscopeUseCase(
+            syncController = get(),
+            clock = Clock.System
+        )
+    }
+
 }

@@ -2,11 +2,12 @@ package com.agc.bwitch.presentation.astrology.horoscope
 
 import com.agc.bwitch.domain.astrology.horoscope.DailyHoroscope
 import com.agc.bwitch.domain.astrology.horoscope.GetDailyHoroscopeUseCase
+import com.agc.bwitch.domain.astrology.horoscope.HoroscopeDailySyncController
 import com.agc.bwitch.domain.astrology.horoscope.HoroscopeRepository
 import com.agc.bwitch.domain.astrology.horoscope.ObserveDailyHoroscopeUseCase
+import com.agc.bwitch.domain.astrology.horoscope.PrefetchDailyHoroscopeUseCase
 import com.agc.bwitch.domain.astrology.horoscope.PullDailyHoroscopeUseCase
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
-import com.agc.bwitch.domain.astrology.horoscope.HoroscopeDailySyncController
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -18,6 +19,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import kotlinx.datetime.Clock
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class HoroscopeViewModelTest {
@@ -30,6 +32,11 @@ class HoroscopeViewModelTest {
         val observeUseCase = ObserveDailyHoroscopeUseCase(repo)
         val getUseCase = GetDailyHoroscopeUseCase(repo)
         val pullUseCase = PullDailyHoroscopeUseCase(FakeSync())
+
+        val prefetchUseCase = PrefetchDailyHoroscopeUseCase(
+            syncController = FakeSync(),
+            clock = Clock.System
+        )
 
         // Pre-cargamos el valor que emitirá observe()
         repo.emit(
@@ -47,6 +54,7 @@ class HoroscopeViewModelTest {
             observeDailyHoroscopeUseCase = observeUseCase,
             getDailyHoroscopeUseCase = getUseCase,
             pullDailyHoroscopeUseCase = pullUseCase,
+            prefetchDailyHoroscopeUseCase = prefetchUseCase,
             dispatcher = dispatcher,
         )
 
@@ -67,6 +75,11 @@ class HoroscopeViewModelTest {
         val getUseCase = GetDailyHoroscopeUseCase(repo)
         val pullUseCase = PullDailyHoroscopeUseCase(FakeSync())
 
+        val prefetchUseCase = PrefetchDailyHoroscopeUseCase(
+            syncController = FakeSync(),
+            clock = Clock.System
+        )
+
         // Inicial: aries
         repo.emit(
             DailyHoroscope(
@@ -83,6 +96,7 @@ class HoroscopeViewModelTest {
             observeDailyHoroscopeUseCase = observeUseCase,
             getDailyHoroscopeUseCase = getUseCase,
             pullDailyHoroscopeUseCase = pullUseCase,
+            prefetchDailyHoroscopeUseCase = prefetchUseCase,
             dispatcher = dispatcher,
         )
 
@@ -110,29 +124,34 @@ class HoroscopeViewModelTest {
     }
 
     @Test
-    fun errorMessageRemainsNullIfPullFailsSilently() = runTest {
+    fun errorMessageRemainsNullIfPrefetchFailsSilently() = runTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
 
         val repo = FakeRepo()
         val observeUseCase = ObserveDailyHoroscopeUseCase(repo)
         val getUseCase = GetDailyHoroscopeUseCase(repo)
 
-        // Sync que falla: el VM captura excepción y pone errorMessage.
-        // Si quieres testear ese caso, dejamos explícito el expected.
-        val pullUseCase = PullDailyHoroscopeUseCase(FailingSync())
+        // Pull manual (onRefresh) no se llama en este test, pero lo dejamos no-op
+        val pullUseCase = PullDailyHoroscopeUseCase(FakeSync())
+
+        // Prefetch que falla (init), pero en el VM lo tratamos "silencioso"
+        val prefetchUseCase = PrefetchDailyHoroscopeUseCase(
+            syncController = FailingSync(),
+            clock = Clock.System
+        )
 
         val viewModel = HoroscopeViewModel(
             observeDailyHoroscopeUseCase = observeUseCase,
             getDailyHoroscopeUseCase = getUseCase,
             pullDailyHoroscopeUseCase = pullUseCase,
+            prefetchDailyHoroscopeUseCase = prefetchUseCase,
             dispatcher = dispatcher,
         )
 
         advanceUntilIdle()
 
         val state = viewModel.uiState.value
-        // En tu VM actual, si pull falla -> errorMessage = "No se pudo actualizar..."
-        assertNotNull(state.errorMessage)
+        assertNull(state.errorMessage)
     }
 
     private class FakeRepo : HoroscopeRepository {
