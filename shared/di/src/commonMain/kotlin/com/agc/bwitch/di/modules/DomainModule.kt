@@ -12,6 +12,8 @@ import com.agc.bwitch.domain.userprofile.SaveUserProfileUseCase
 import com.agc.bwitch.domain.userprofile.UploadAvatarUseCase
 import com.agc.bwitch.domain.session.ClearLocalUserDataUseCase
 import com.agc.bwitch.domain.userprofile.PullUserProfileUseCase
+import com.agc.bwitch.domain.astrology.horoscope.ObserveDailyHoroscopeUseCase
+import com.agc.bwitch.domain.astrology.horoscope.PullDailyHoroscopeUseCase
 
 val domainModule: Module = module {
 
@@ -26,8 +28,11 @@ val domainModule: Module = module {
     factory { ObserveUserProfileUseCase(get()) }
     factory { GetUserProfileUseCase(get()) }
     factory { SaveUserProfileUseCase(get()) }
-    factory { com.agc.bwitch.domain.userprofile.UploadAvatarUseCase(get()) }
     factory { UploadAvatarUseCase(get()) }
     factory { ClearLocalUserDataUseCase(get()) }
     factory { PullUserProfileUseCase(get()) }
+    // Horoscope
+    factory { GetDailyHoroscopeUseCase(get()) }
+    factory { ObserveDailyHoroscopeUseCase(get()) }
+    factory { PullDailyHoroscopeUseCase(get()) }
 }

@@ -2,7 +2,6 @@ package com.agc.bwitch.data.di
 
 import com.agc.bwitch.data.astrology.birthchart.SettingsBirthChartRepository
 import com.agc.bwitch.data.astrology.birthchart.SyncBirthChartRepository
-import com.agc.bwitch.data.astrology.horoscope.HoroscopeRepositoryImpl
 import com.agc.bwitch.data.auth.FirebaseAuthRepository
 import com.agc.bwitch.data.session.LocalUserDataRepositoryImpl
 import com.agc.bwitch.data.userprofile.FirebaseAvatarRepository
@@ -18,9 +17,13 @@ import org.koin.core.module.Module
 import org.koin.dsl.module
 import com.agc.bwitch.domain.astrology.birthchart.BirthChartSyncController
 import com.agc.bwitch.domain.userprofile.UserProfileSyncController
+import com.agc.bwitch.data.astrology.horoscope.SettingsHoroscopeDailyRepository
+import com.agc.bwitch.data.astrology.horoscope.SyncHoroscopeDailyRepository
+import com.agc.bwitch.domain.astrology.horoscope.HoroscopeDailySyncController
 
 
 val dataKoinModule: Module = module {
+
 
     /**
      * Auth
@@ -30,7 +33,11 @@ val dataKoinModule: Module = module {
     /**
      * Horoscope
      */
-    single<HoroscopeRepository> { HoroscopeRepositoryImpl() }
+    single { SettingsHoroscopeDailyRepository(get()) }
+    single { SyncHoroscopeDailyRepository(get()) }
+
+    single<HoroscopeRepository> { get<SyncHoroscopeDailyRepository>() }
+    single<HoroscopeDailySyncController> { get<SyncHoroscopeDailyRepository>() }
 
     /**
      * BirthChart - LOCAL

@@ -4,8 +4,9 @@ import com.agc.bwitch.domain.astrology.horoscope.DailyHoroscope
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
 
 data class HoroscopeUiState(
-    val selectedSign: ZodiacSign = ZodiacSign.aries,
+    val selectedSign: ZodiacSign = ZodiacSign.entries.first(),
     val isLoading: Boolean = false,
-    val errorMessage: String? = null,
+    val isRefreshing: Boolean = false,
     val horoscope: DailyHoroscope? = null,
+    val errorMessage: String? = null,
 )

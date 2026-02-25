@@ -1,82 +1,59 @@
 package com.agc.bwitch.domain.astrology.horoscope
 
-import com.agc.bwitch.domain.model.ApiResult
-import kotlin.coroutines.Continuation
-import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.EmptyCoroutineContext
-import kotlin.coroutines.startCoroutine
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertIs
+import kotlin.test.assertNull
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.runBlocking
 
 class GetDailyHoroscopeUseCaseTest {
 
+    private val repo = FakeHoroscopeRepository()
+    private val useCase = GetDailyHoroscopeUseCase(repo)
+
     @Test
-    fun returnsSuccessWhenRepositoryReturnsSuccess() {
+    fun returns_null_when_repo_has_no_value() = runBlocking {
+        repo.value = null
+
+        val result = useCase(
+            dateIso = "2026-02-25",
+            sign = ZodiacSign.aries,
+        )
+
+        assertNull(result)
+    }
+
+    @Test
+    fun returns_value_when_repo_has_value() = runBlocking {
         val expected = DailyHoroscope(
             sign = ZodiacSign.aries,
-            dateIso = "2026-02-18",
-            text = "Hoy es un gran día para iniciar algo nuevo.",
-            mood = "Energético",
+            dateIso = "2026-02-25",
+            text = "Hola",
+            mood = "Bien",
             luckyNumber = 7,
             luckyColor = "Rojo",
             shareText = null,
         )
-        val useCase = GetDailyHoroscopeUseCase(
-            repository = FakeHoroscopeRepository(
-                result = ApiResult.Success(expected),
-            ),
+        repo.value = expected
+
+        val result = useCase(
+            dateIso = "2026-02-25",
+            sign = ZodiacSign.aries,
         )
 
-        val result = runSuspend { useCase(sign = ZodiacSign.aries) }
-
-        val success = assertIs<ApiResult.Success<DailyHoroscope>>(result)
-        assertEquals(expected, success.data)
+        assertEquals(expected, result)
     }
 
-    @Test
-    fun propagatesSignToRepository() {
-        val fakeRepository = FakeHoroscopeRepository(
-            result = ApiResult.Success(
-                DailyHoroscope(
-                    sign = ZodiacSign.pisces,
-                    dateIso = "2026-02-18",
-                    text = "Confía en tu intuición.",
-                    mood = "Reflexivo",
-                    luckyNumber = 12,
-                    luckyColor = "Turquesa",
-                ),
-            ),
-        )
-        val useCase = GetDailyHoroscopeUseCase(repository = fakeRepository)
+    private class FakeHoroscopeRepository : HoroscopeRepository {
+        var value: DailyHoroscope? = null
 
-        runSuspend { useCase(sign = ZodiacSign.pisces) }
-
-        assertEquals(ZodiacSign.pisces, fakeRepository.lastSign)
-    }
-
-    private class FakeHoroscopeRepository(
-        private val result: ApiResult<DailyHoroscope>,
-    ) : HoroscopeRepository {
-        var lastSign: ZodiacSign? = null
-            private set
-
-        override suspend fun getDaily(sign: ZodiacSign, dateIso: String?): ApiResult<DailyHoroscope> {
-            lastSign = sign
-            return result
+        override fun observeDaily(dateIso: String, sign: ZodiacSign): Flow<DailyHoroscope?> {
+            return flowOf(value)
         }
-    }
 
-    private fun <T> runSuspend(block: suspend () -> T): T {
-        var completed: Result<T>? = null
-        block.startCoroutine(object : Continuation<T> {
-            override val context: CoroutineContext = EmptyCoroutineContext
-
-            override fun resumeWith(result: Result<T>) {
-                completed = result
-            }
-        })
-        val finalResult = checkNotNull(completed) { "Suspend block did not complete" }
-        return finalResult.getOrThrow()
+        override suspend fun getDaily(dateIso: String, sign: ZodiacSign): DailyHoroscope? {
+            return value
+        }
     }
 }

@@ -1,7 +1,8 @@
 package com.agc.bwitch.domain.astrology.horoscope
 
-import com.agc.bwitch.domain.model.ApiResult
+import kotlinx.coroutines.flow.Flow
 
 interface HoroscopeRepository {
-    suspend fun getDaily(sign: ZodiacSign, dateIso: String? = null): ApiResult<DailyHoroscope>
+    fun observeDaily(dateIso: String, sign: ZodiacSign): Flow<DailyHoroscope?>
+    suspend fun getDaily(dateIso: String, sign: ZodiacSign): DailyHoroscope?
 }

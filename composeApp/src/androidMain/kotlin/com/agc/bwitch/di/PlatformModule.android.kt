@@ -10,11 +10,13 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import org.koin.core.module.Module
 import org.koin.dsl.module
+import com.russhwolf.settings.Settings
 
 fun platformModule(app: Application): Module = module {
     single<CoroutineDispatcher> { Dispatchers.IO }
     single { OkHttp.create() }
     single { SettingsFactory(app) }
+    single<Settings> { get<SettingsFactory>().create("bwitch") }
 
     // Needs Activity context (passed from Compose via parametersOf(context))
     factory<GoogleIdTokenProvider> { (ctx: Context) ->

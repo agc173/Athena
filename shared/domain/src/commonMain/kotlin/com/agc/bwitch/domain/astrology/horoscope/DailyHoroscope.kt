@@ -1,5 +1,8 @@
 package com.agc.bwitch.domain.astrology.horoscope
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class DailyHoroscope(
     val sign: ZodiacSign,
     val dateIso: String,
@@ -8,4 +11,5 @@ data class DailyHoroscope(
     val luckyNumber: Int,
     val luckyColor: String,
     val shareText: String? = null,
+    val updatedAtEpochMillis: Long = 0L,
 )

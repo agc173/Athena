@@ -57,9 +57,15 @@ private fun HoroscopeScreenContent(
 
         Button(
             onClick = onRefresh,
-            enabled = !state.isLoading
+            enabled = !state.isRefreshing
         ) {
-            Text(if (state.isLoading) "Cargando..." else "Actualizar")
+            Text(
+                when {
+                    state.isRefreshing -> "Actualizando..."
+                    state.isLoading -> "Cargando..."
+                    else -> "Actualizar"
+                }
+            )
         }
 
         state.errorMessage?.let { msg ->

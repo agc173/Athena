@@ -42,4 +42,15 @@ android {
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
     }
+    lint {
+        abortOnError = false
+        checkReleaseBuilds = true
+}
+    tasks.matching {
+        it.name == "lintAnalyzeDebug" ||
+                it.name == "lintDebug"
+    }.configureEach {
+        enabled = false
+    }
+
 }

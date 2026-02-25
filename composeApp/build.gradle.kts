@@ -33,6 +33,7 @@ kotlin {
             implementation(libs.ktor.client.okhttp)
             implementation(libs.kamel.image.default)
             implementation(libs.ktor.client.okhttp)
+            implementation(libs.multiplatform.settings)
 
 
             // Google Sign-In (Credential Manager)

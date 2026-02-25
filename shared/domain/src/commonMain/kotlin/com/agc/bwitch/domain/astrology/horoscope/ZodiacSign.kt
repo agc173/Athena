@@ -1,5 +1,8 @@
 package com.agc.bwitch.domain.astrology.horoscope
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 enum class ZodiacSign {
     aries,
     taurus,
