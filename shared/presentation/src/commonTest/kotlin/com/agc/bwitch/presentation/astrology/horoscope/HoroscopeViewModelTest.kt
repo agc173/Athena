@@ -3,9 +3,9 @@ package com.agc.bwitch.presentation.astrology.horoscope
 import com.agc.bwitch.domain.astrology.horoscope.DailyHoroscope
 import com.agc.bwitch.domain.astrology.horoscope.GetDailyHoroscopeUseCase
 import com.agc.bwitch.domain.astrology.horoscope.HoroscopeDailySyncController
+import com.agc.bwitch.domain.astrology.horoscope.HoroscopePullMarker
 import com.agc.bwitch.domain.astrology.horoscope.HoroscopeRepository
 import com.agc.bwitch.domain.astrology.horoscope.ObserveDailyHoroscopeUseCase
-import com.agc.bwitch.domain.astrology.horoscope.PrefetchDailyHoroscopeUseCase
 import com.agc.bwitch.domain.astrology.horoscope.PullDailyHoroscopeUseCase
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
 import kotlin.test.Test
@@ -19,7 +19,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
-import kotlinx.datetime.Clock
+import kotlinx.datetime.toLocalDateTime
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class HoroscopeViewModelTest {
@@ -33,10 +33,7 @@ class HoroscopeViewModelTest {
         val getUseCase = GetDailyHoroscopeUseCase(repo)
         val pullUseCase = PullDailyHoroscopeUseCase(FakeSync())
 
-        val prefetchUseCase = PrefetchDailyHoroscopeUseCase(
-            syncController = FakeSync(),
-            clock = Clock.System
-        )
+        val pullMarker = FakePullMarker(lastPulledDateIso = null) // fuerza pull (pero FakeSync no falla)
 
         // Pre-cargamos el valor que emitirá observe()
         repo.emit(
@@ -54,7 +51,7 @@ class HoroscopeViewModelTest {
             observeDailyHoroscopeUseCase = observeUseCase,
             getDailyHoroscopeUseCase = getUseCase,
             pullDailyHoroscopeUseCase = pullUseCase,
-            prefetchDailyHoroscopeUseCase = prefetchUseCase,
+            pullMarker = pullMarker,
             dispatcher = dispatcher,
         )
 
@@ -75,10 +72,7 @@ class HoroscopeViewModelTest {
         val getUseCase = GetDailyHoroscopeUseCase(repo)
         val pullUseCase = PullDailyHoroscopeUseCase(FakeSync())
 
-        val prefetchUseCase = PrefetchDailyHoroscopeUseCase(
-            syncController = FakeSync(),
-            clock = Clock.System
-        )
+        val pullMarker = FakePullMarker(lastPulledDateIso = null)
 
         // Inicial: aries
         repo.emit(
@@ -96,7 +90,7 @@ class HoroscopeViewModelTest {
             observeDailyHoroscopeUseCase = observeUseCase,
             getDailyHoroscopeUseCase = getUseCase,
             pullDailyHoroscopeUseCase = pullUseCase,
-            prefetchDailyHoroscopeUseCase = prefetchUseCase,
+            pullMarker = pullMarker,
             dispatcher = dispatcher,
         )
 
@@ -124,33 +118,39 @@ class HoroscopeViewModelTest {
     }
 
     @Test
-    fun errorMessageRemainsNullIfPrefetchFailsSilently() = runTest {
+    fun initDoesNotPullIfAlreadyPulledToday_evenIfSyncWouldFail() = runTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
 
         val repo = FakeRepo()
         val observeUseCase = ObserveDailyHoroscopeUseCase(repo)
         val getUseCase = GetDailyHoroscopeUseCase(repo)
 
-        // Pull manual (onRefresh) no se llama en este test, pero lo dejamos no-op
-        val pullUseCase = PullDailyHoroscopeUseCase(FakeSync())
+        // Este sync fallaría si se llamase pull()
+        val pullUseCase = PullDailyHoroscopeUseCase(FailingSync())
 
-        // Prefetch que falla (init), pero en el VM lo tratamos "silencioso"
-        val prefetchUseCase = PrefetchDailyHoroscopeUseCase(
-            syncController = FailingSync(),
-            clock = Clock.System
-        )
+        // Marcamos "ya se pulleó hoy" para que el init NO intente tirar de red
+        // OJO: esto depende de la fecha real del sistema en el test. Para evitar flakiness,
+        // el FakePullMarker se inicializa con el valor que el VM vaya a comparar:
+        // como el VM usa todayIso() internamente, aquí lo dejamos null y comprobamos que el test NO
+        // falle por pull si pre-cargamos el marker con el mismo todayIso (ver mejora abajo).
+        //
+        // Versión estable: calculamos hoy como lo hace el VM (simplemente no lo tenemos aquí).
+        // Para que sea 100% estable, lo ideal es inyectar Clock al VM, pero por ahora hacemos un truco:
+        val todayIso = currentSystemTodayIsoForTests()
+        val pullMarker = FakePullMarker(lastPulledDateIso = todayIso)
 
         val viewModel = HoroscopeViewModel(
             observeDailyHoroscopeUseCase = observeUseCase,
             getDailyHoroscopeUseCase = getUseCase,
             pullDailyHoroscopeUseCase = pullUseCase,
-            prefetchDailyHoroscopeUseCase = prefetchUseCase,
+            pullMarker = pullMarker,
             dispatcher = dispatcher,
         )
 
         advanceUntilIdle()
 
         val state = viewModel.uiState.value
+        // Si no se llamó pull(), no debe haber error aunque el sync sea failing
         assertNull(state.errorMessage)
     }
 
@@ -162,7 +162,7 @@ class HoroscopeViewModelTest {
         }
 
         override fun observeDaily(dateIso: String, sign: ZodiacSign): Flow<DailyHoroscope?> {
-            // Para simplificar el test, ignoramos filtros (date/sign) y emitimos lo que toque.
+            // Simplificación: ignoramos filtros (date/sign) y emitimos lo que toque.
             return state.asStateFlow()
         }
 
@@ -182,4 +182,25 @@ class HoroscopeViewModelTest {
             throw RuntimeException("boom")
         }
     }
+
+    private class FakePullMarker(
+        private var lastPulledDateIso: String?
+    ) : HoroscopePullMarker {
+
+        override fun getLastPulledDateIso(): String? = lastPulledDateIso
+
+        override fun setLastPulledDateIso(dateIso: String) {
+            lastPulledDateIso = dateIso
+        }
+    }
+}
+
+/**
+ * Helper de test para obtener yyyy-MM-dd igual que el VM (Clock.System + TimeZone.currentSystemDefault()).
+ * Mantenerlo aquí evita meter Clock como dependencia del ViewModel solo por tests.
+ */
+private fun currentSystemTodayIsoForTests(): String {
+    val now = kotlinx.datetime.Clock.System.now()
+        .toLocalDateTime(kotlinx.datetime.TimeZone.currentSystemDefault())
+    return now.date.toString()
 }

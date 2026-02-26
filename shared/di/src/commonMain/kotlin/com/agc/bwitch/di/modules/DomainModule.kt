@@ -37,11 +37,5 @@ val domainModule: Module = module {
     factory { GetDailyHoroscopeUseCase(get()) }
     factory { ObserveDailyHoroscopeUseCase(get()) }
     factory { PullDailyHoroscopeUseCase(get()) }
-    factory {
-        PrefetchDailyHoroscopeUseCase(
-            syncController = get(),
-            clock = Clock.System
-        )
-    }
 
 }

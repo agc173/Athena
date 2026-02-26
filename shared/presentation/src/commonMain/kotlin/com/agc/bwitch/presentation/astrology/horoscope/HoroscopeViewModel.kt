@@ -1,8 +1,8 @@
 package com.agc.bwitch.presentation.astrology.horoscope
 
 import com.agc.bwitch.domain.astrology.horoscope.GetDailyHoroscopeUseCase
+import com.agc.bwitch.domain.astrology.horoscope.HoroscopePullMarker
 import com.agc.bwitch.domain.astrology.horoscope.ObserveDailyHoroscopeUseCase
-import com.agc.bwitch.domain.astrology.horoscope.PrefetchDailyHoroscopeUseCase
 import com.agc.bwitch.domain.astrology.horoscope.PullDailyHoroscopeUseCase
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
 import kotlinx.coroutines.CoroutineDispatcher
@@ -24,7 +24,7 @@ class HoroscopeViewModel(
     private val observeDailyHoroscopeUseCase: ObserveDailyHoroscopeUseCase,
     private val getDailyHoroscopeUseCase: GetDailyHoroscopeUseCase,
     private val pullDailyHoroscopeUseCase: PullDailyHoroscopeUseCase,
-    private val prefetchDailyHoroscopeUseCase: PrefetchDailyHoroscopeUseCase,
+    private val pullMarker: HoroscopePullMarker,
     private val dispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + dispatcher)
@@ -35,12 +35,10 @@ class HoroscopeViewModel(
     private var observeJob: Job? = null
 
     init {
-        // 1) Arranca observación del día actual para el signo seleccionado
         start(sign = _uiState.value.selectedSign)
 
-        // 2) Prefetch optimizado: hoy + próximos 7 días (incluye hoy)
         scope.launch {
-            safePrefetch(daysAhead = 7)
+            pullTodayIfNeeded()
         }
     }
 
@@ -50,8 +48,33 @@ class HoroscopeViewModel(
     }
 
     fun onRefresh() {
-        // Refresca solo el día actual (lo típico en pull-to-refresh)
-        scope.launch { safePull(currentDateIso()) }
+        scope.launch {
+            val today = currentDateIso()
+            val lastPulled = pullMarker.getLastPulledDateIso()
+
+            // Limpia mensajes previos
+            _uiState.update { it.copy(errorMessage = null, infoMessage = null) }
+
+            if (lastPulled == today) {
+                _uiState.update { it.copy(infoMessage = "Ya está actualizado") }
+                return@launch
+            }
+
+            safePull(today)
+
+            if (_uiState.value.errorMessage == null) {
+                pullMarker.setLastPulledDateIso(today)
+                _uiState.update { it.copy(infoMessage = "Actualizado") }
+            }
+        }
+    }
+
+    fun onInfoShown() {
+        _uiState.update { it.copy(infoMessage = null) }
+    }
+
+    fun onErrorShown() {
+        _uiState.update { it.copy(errorMessage = null) }
     }
 
     private fun start(sign: ZodiacSign) {
@@ -60,6 +83,7 @@ class HoroscopeViewModel(
         observeJob?.cancel()
         observeJob = scope.launch {
             observeDailyHoroscopeUseCase(dateIso = dateIso, sign = sign).collect { cached ->
+
                 _uiState.update {
                     it.copy(
                         isLoading = false,
@@ -67,24 +91,25 @@ class HoroscopeViewModel(
                         errorMessage = null,
                     )
                 }
+
+                // Opcional (si quieres ver lo que queda en state)
+                // println("STATE_DATE sign=$sign stateDate=${_uiState.value.horoscope?.dateIso}")
             }
         }
 
-        // Warmup local (no bloquea, útil para cargar rápido si ya estaba cacheado)
         scope.launch { getDailyHoroscopeUseCase(dateIso = dateIso, sign = sign) }
-
-        // OJO: aquí ya NO hacemos pull inicial.
-        // El prefetch del init ya incluye "hoy".
     }
 
-    private suspend fun safePrefetch(daysAhead: Int) {
-        try {
-            prefetchDailyHoroscopeUseCase(daysAhead = daysAhead)
-        } catch (t: Throwable) {
-            // Yo lo dejo silencioso para que un fallo puntual de red
-            // no pinte error al arrancar la app.
-            println("🔥 Horoscope prefetch failed: ${t.message}")
-            t.printStackTrace()
+    private suspend fun pullTodayIfNeeded() {
+        val today = todayIso()
+        val lastPulled = pullMarker.getLastPulledDateIso()
+
+        if (lastPulled == today) return
+
+        safePull(today)
+
+        if (_uiState.value.errorMessage == null) {
+            pullMarker.setLastPulledDateIso(today)
         }
     }
 
@@ -103,7 +128,7 @@ class HoroscopeViewModel(
 
     private fun todayIso(): String {
         val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
-        return now.date.toString() // yyyy-MM-dd
+        return now.date.toString()
     }
 
     private fun currentDateIso(): String = todayIso()

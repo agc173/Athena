@@ -9,4 +9,5 @@ data class HoroscopeUiState(
     val isRefreshing: Boolean = false,
     val horoscope: DailyHoroscope? = null,
     val errorMessage: String? = null,
+    val infoMessage: String? = null,
 )

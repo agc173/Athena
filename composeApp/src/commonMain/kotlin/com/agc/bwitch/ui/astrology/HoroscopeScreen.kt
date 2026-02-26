@@ -21,18 +21,39 @@ fun HoroscopeScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
 
+    val snackbarHostState = remember { SnackbarHostState() }
+
     LaunchedEffect(preselectedSign) {
         preselectedSign?.let { sign ->
             viewModel.onSelectSign(sign)
         }
     }
 
-    HoroscopeScreenContent(
-        modifier = modifier.padding(contentPadding),
-        state = state,
-        onSelectSign = viewModel::onSelectSign,
-        onRefresh = viewModel::onRefresh
-    )
+    // Info snackbar
+    LaunchedEffect(state.infoMessage) {
+        val msg = state.infoMessage ?: return@LaunchedEffect
+        snackbarHostState.showSnackbar(message = msg)
+        viewModel.onInfoShown()
+    }
+
+    // Error snackbar
+    LaunchedEffect(state.errorMessage) {
+        val msg = state.errorMessage ?: return@LaunchedEffect
+        snackbarHostState.showSnackbar(message = msg)
+        viewModel.onErrorShown()
+    }
+
+    Scaffold(
+        modifier = modifier,
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { innerPadding ->
+        HoroscopeScreenContent(
+            modifier = Modifier.padding(contentPadding).padding(innerPadding),
+            state = state,
+            onSelectSign = viewModel::onSelectSign,
+            onRefresh = viewModel::onRefresh
+        )
+    }
 }
 
 
@@ -68,9 +89,6 @@ private fun HoroscopeScreenContent(
             )
         }
 
-        state.errorMessage?.let { msg ->
-            Text(msg, color = MaterialTheme.colorScheme.error)
-        }
 
         state.horoscope?.let { h ->
             Card {

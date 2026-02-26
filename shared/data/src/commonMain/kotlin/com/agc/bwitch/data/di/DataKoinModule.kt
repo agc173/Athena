@@ -20,6 +20,8 @@ import com.agc.bwitch.domain.userprofile.UserProfileSyncController
 import com.agc.bwitch.data.astrology.horoscope.SettingsHoroscopeDailyRepository
 import com.agc.bwitch.data.astrology.horoscope.SyncHoroscopeDailyRepository
 import com.agc.bwitch.domain.astrology.horoscope.HoroscopeDailySyncController
+import com.agc.bwitch.data.astrology.horoscope.SettingsHoroscopePullMarkerRepository
+import com.agc.bwitch.domain.astrology.horoscope.HoroscopePullMarker
 
 
 val dataKoinModule: Module = module {
@@ -38,6 +40,7 @@ val dataKoinModule: Module = module {
 
     single<HoroscopeRepository> { get<SyncHoroscopeDailyRepository>() }
     single<HoroscopeDailySyncController> { get<SyncHoroscopeDailyRepository>() }
+    single<HoroscopePullMarker> { SettingsHoroscopePullMarkerRepository(get()) }
 
     /**
      * BirthChart - LOCAL
@@ -72,4 +75,5 @@ val dataKoinModule: Module = module {
      * Local user data cleanup (logout)
      */
     single<LocalUserDataRepository> { LocalUserDataRepositoryImpl(get(), get()) }
+
 }
