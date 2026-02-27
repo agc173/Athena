@@ -1,9 +1,9 @@
 import {ENV, type Lang} from '../config/env';
 import type {ZodiacSign} from '../firestore/paths';
-import {horoscopeLangDocPath} from '../firestore/paths';
 import {createDocIfAbsent} from '../firestore/writeOnce';
 import type {LLMRouter} from '../llm/LLMRouter';
 import {horoscopeSystemPrompt, horoscopeUserPrompt} from '../llm/prompts/horoscopePrompt';
+import {horoscopeSignDocPath} from '../firestore/paths';
 
 export type HoroscopeDoc = {
   text: string;
@@ -57,8 +57,8 @@ export class HoroscopeGenerator {
         {role: 'system', content: horoscopeSystemPrompt(lang)},
         {role: 'user', content: horoscopeUserPrompt(dateIso, sign, lang)},
       ],
-      temperature: 0.85,
-      maxTokens: 500,
+      temperature: ENV.LLM_TEMPERATURE,
+      maxTokens: ENV.LLM_MAX_TOKENS,
     });
 
     const parsed = normalize(safeParseJson(res.text));
@@ -71,7 +71,7 @@ export class HoroscopeGenerator {
       llmProvider: res.provider,
     };
 
-    const path = horoscopeLangDocPath(dateIso, sign, lang);
+    const path = horoscopeSignDocPath(dateIso, sign);
     const result = await createDocIfAbsent(path, doc);
     return {result, path, provider: res.provider};
   }

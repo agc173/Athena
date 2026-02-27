@@ -10,7 +10,7 @@ function isRetryableError(e: unknown): boolean {
   const code = anyE?.code ?? anyE?.cause?.code;
   const status = anyE?.status ?? anyE?.response?.status;
 
-  if ((anyE?.name ?? "") === "AbortError") return true;
+  if ((anyE?.name ?? '') === 'AbortError') return true;
 
   // Network transient errors
   if (code === 'ETIMEDOUT' || code === 'ECONNRESET' || code === 'EAI_AGAIN') {
@@ -36,12 +36,12 @@ function isRetryableError(e: unknown): boolean {
 }
 
 export async function withRetry<T>(
-  fn: () => Promise<T>,
-  maxRetries: number
+    fn: () => Promise<T>,
+    maxRetries: number
 ): Promise<T> {
   let attempt = 0;
 
-  while (true) {
+  for (;;) {
     try {
       return await fn();
     } catch (e) {

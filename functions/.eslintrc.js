@@ -25,7 +25,7 @@ module.exports = {
     '@typescript-eslint',
     'import',
   ],
-  rules: {A
+  rules: {
     'import/no-unresolved': 'off',
     'require-jsdoc': 'off',
     'valid-jsdoc': 'off',

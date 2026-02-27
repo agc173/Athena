@@ -15,9 +15,9 @@ function optNum(name: string, fallback: number): number {
 
 function parseCsv(name: string, fallback: string): string[] {
   return opt(name, fallback)
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean);
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
 }
 
 function toLangList(values: string[], fallback: Lang[]): Lang[] {
@@ -32,12 +32,17 @@ export const ENV = {
     (process.env.USE_MOCK_LLM ?? '').toLowerCase() === '1' ||
     (process.env.USE_MOCK_LLM ?? '').toLowerCase() === 'true',
 
+  // Se mantienen todos para futuro multi-idioma, pero NO lo activamos aÃºn.
   SUPPORTED_LANGS: toLangList(parseCsv('SUPPORTED_LANGS', 'es,en,pt,ru,fr,it,de'), ALL_LANGS),
 
   // ACTIVE_LANGS se rellena abajo para poder filtrar contra SUPPORTED_LANGS
   ACTIVE_LANGS: [] as Lang[],
 
   GENERATOR_VERSION: optNum('GENERATOR_VERSION', 1),
+
+  // LLM tuning (control de coste/calidad)
+  LLM_TEMPERATURE: optNum('LLM_TEMPERATURE', 0.3),
+  LLM_MAX_TOKENS: optNum('LLM_MAX_TOKENS', 500),
 
   LLM_TIMEOUT_MS: optNum('LLM_TIMEOUT_MS', 25000),
   LLM_MAX_RETRIES: optNum('LLM_MAX_RETRIES', 2),
@@ -46,7 +51,8 @@ export const ENV = {
 };
 
 // ACTIVE_LANGS: parse + validate + filtrar contra SUPPORTED_LANGS
-ENV.ACTIVE_LANGS = toLangList(parseCsv('ACTIVE_LANGS', 'es,en,pt'), ['es', 'en', 'pt']).filter((l) =>
+// âœ… Paso 3: por defecto SOLO 'es' (single-language) hasta estabilizar DeepSeek.
+ENV.ACTIVE_LANGS = toLangList(parseCsv('ACTIVE_LANGS', 'es'), ['es']).filter((l) =>
   ENV.SUPPORTED_LANGS.includes(l)
 );
 
