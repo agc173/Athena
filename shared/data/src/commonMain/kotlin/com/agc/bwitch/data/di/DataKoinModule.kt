@@ -23,9 +23,7 @@ import com.agc.bwitch.domain.astrology.horoscope.HoroscopeDailySyncController
 import com.agc.bwitch.data.astrology.horoscope.SettingsHoroscopePullMarkerRepository
 import com.agc.bwitch.domain.astrology.horoscope.HoroscopePullMarker
 
-
 val dataKoinModule: Module = module {
-
 
     /**
      * Auth
@@ -36,10 +34,19 @@ val dataKoinModule: Module = module {
      * Horoscope
      */
     single { SettingsHoroscopeDailyRepository(get()) }
-    single { SyncHoroscopeDailyRepository(get()) }
 
+    // ✅ Registra la implementación concreta (con authRepository)
+    single {
+        SyncHoroscopeDailyRepository(
+            local = get(),
+            authRepository = get()
+        )
+    }
+
+    // ✅ Expón la misma instancia como interfaces
     single<HoroscopeRepository> { get<SyncHoroscopeDailyRepository>() }
     single<HoroscopeDailySyncController> { get<SyncHoroscopeDailyRepository>() }
+
     single<HoroscopePullMarker> { SettingsHoroscopePullMarkerRepository(get()) }
 
     /**
@@ -75,5 +82,4 @@ val dataKoinModule: Module = module {
      * Local user data cleanup (logout)
      */
     single<LocalUserDataRepository> { LocalUserDataRepositoryImpl(get(), get()) }
-
 }

@@ -52,10 +52,12 @@ class HoroscopeViewModel(
             val today = currentDateIso()
             val lastPulled = pullMarker.getLastPulledDateIso()
 
-            // Limpia mensajes previos
             _uiState.update { it.copy(errorMessage = null, infoMessage = null) }
 
-            if (lastPulled == today) {
+            // ✅ NUEVO: si no hay horóscopo cargado, NO confíes en el marker
+            val hasCached = _uiState.value.horoscope != null
+
+            if (lastPulled == today && hasCached) {
                 _uiState.update { it.copy(infoMessage = "Ya está actualizado") }
                 return@launch
             }
