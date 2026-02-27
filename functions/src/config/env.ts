@@ -2,9 +2,15 @@ export type Lang = 'es' | 'en' | 'pt' | 'ru' | 'fr' | 'it' | 'de';
 
 const ALL_LANGS: Lang[] = ['es', 'en', 'pt', 'ru', 'fr', 'it', 'de'];
 
-
 function opt(name: string, fallback: string): string {
   return process.env[name] ?? fallback;
+}
+
+function optNum(name: string, fallback: number): number {
+  const raw = process.env[name];
+  if (raw == null || raw.trim() === '') return fallback;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : fallback;
 }
 
 function parseCsv(name: string, fallback: string): string[] {
@@ -21,36 +27,36 @@ function toLangList(values: string[], fallback: Lang[]): Lang[] {
 
 export const ENV = {
   DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY ?? '',
+  REQUIRE_DEEPSEEK: (process.env.REQUIRE_DEEPSEEK ?? '').toLowerCase() === 'true',
   USE_MOCK_LLM:
     (process.env.USE_MOCK_LLM ?? '').toLowerCase() === '1' ||
     (process.env.USE_MOCK_LLM ?? '').toLowerCase() === 'true',
 
-  // Parse + validate (no casts)
-  SUPPORTED_LANGS: toLangList(
-    parseCsv('SUPPORTED_LANGS', 'es,en,pt,ru,fr,it,de'),
-    ALL_LANGS
-  ),
+  SUPPORTED_LANGS: toLangList(parseCsv('SUPPORTED_LANGS', 'es,en,pt,ru,fr,it,de'), ALL_LANGS),
 
   // ACTIVE_LANGS se rellena abajo para poder filtrar contra SUPPORTED_LANGS
   ACTIVE_LANGS: [] as Lang[],
 
-  GENERATOR_VERSION: Number(opt('GENERATOR_VERSION', '1')),
-  LLM_TIMEOUT_MS: Number(opt('LLM_TIMEOUT_MS', '25000')),
-  LLM_MAX_RETRIES: Number(opt('LLM_MAX_RETRIES', '2')),
+  GENERATOR_VERSION: optNum('GENERATOR_VERSION', 1),
+
+  LLM_TIMEOUT_MS: optNum('LLM_TIMEOUT_MS', 25000),
+  LLM_MAX_RETRIES: optNum('LLM_MAX_RETRIES', 2),
+  DATE_OFFSET_DAYS: optNum('DATE_OFFSET_DAYS', 0),
+  LLM_CONCURRENCY: optNum('LLM_CONCURRENCY', 4),
 };
 
 // ACTIVE_LANGS: parse + validate + filtrar contra SUPPORTED_LANGS
-ENV.ACTIVE_LANGS = toLangList(
-  parseCsv('ACTIVE_LANGS', 'es,en,pt'),
-  ['es', 'en', 'pt']
-).filter((l) => ENV.SUPPORTED_LANGS.includes(l));
+ENV.ACTIVE_LANGS = toLangList(parseCsv('ACTIVE_LANGS', 'es,en,pt'), ['es', 'en', 'pt']).filter((l) =>
+  ENV.SUPPORTED_LANGS.includes(l)
+);
+
+// Evita mutaciones accidentales en runtime
+Object.freeze(ENV);
 
 export function assertEnvForLLM() {
-  // Si forzamos mock, no exigimos API key.
   if (ENV.USE_MOCK_LLM) return;
 
-  // Si quieres forzar DeepSeek en producción:
-  // if (process.env.REQUIRE_DEEPSEEK === 'true') req('DEEPSEEK_API_KEY');
-
-  // En dev dejamos que el router elija mock automáticamente si falta key.
+  if (ENV.REQUIRE_DEEPSEEK && !ENV.DEEPSEEK_API_KEY) {
+    throw new Error('Missing env var: DEEPSEEK_API_KEY');
+  }
 }

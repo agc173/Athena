@@ -20,7 +20,10 @@ const ZODIAC_SIGNS: ZodiacSign[] = [
 ];
 
 function dateIsoMadrid(dayOffset: number): string {
-  return DateTime.now().setZone('Europe/Madrid').plus({days: dayOffset}).toISODate()!;
+  return DateTime.now()
+    .setZone('Europe/Madrid')
+    .plus({ days: dayOffset + ENV.DATE_OFFSET_DAYS })
+    .toISODate()!;
 }
 
 async function runWithConcurrency<T>(
@@ -69,12 +72,6 @@ function buildRouter(): LLMRouter {
         ? new DeepSeekProvider()
         : new MockLLMProvider());
 
-  logger.info('LLM configuration', {
-    useMock,
-    deepSeekKeyPresent: Boolean(ENV.DEEPSEEK_API_KEY),
-    geminiImplemented,
-    activeLangs: ENV.ACTIVE_LANGS,
-  });
 
   return geminiImplemented
     ? LLMRouter.withFallback(primaryProvider, gemini)
@@ -89,14 +86,15 @@ export const generateHoroscopesWindow = onSchedule(
     retryCount: 3,
   },
   async () => {
-      console.error('LANGS DEBUG', {
-        ACTIVE_LANGS_raw: process.env.ACTIVE_LANGS,
-        SUPPORTED_LANGS_raw: process.env.SUPPORTED_LANGS,
-        ACTIVE_LANGS_parsed: ENV.ACTIVE_LANGS,
-        SUPPORTED_LANGS_parsed: ENV.SUPPORTED_LANGS,
-        activeLangsLen: ENV.ACTIVE_LANGS.length,
-      });
     const router = buildRouter();
+
+    logger.info('LLM configuration', {
+      useMock: ENV.USE_MOCK_LLM,
+      deepSeekKeyPresent: Boolean(ENV.DEEPSEEK_API_KEY),
+      activeLangs: ENV.ACTIVE_LANGS,
+      router: router.name,
+    });
+
     const generator = new HoroscopeGenerator(router);
 
     let created = 0;
@@ -112,22 +110,13 @@ export const generateHoroscopesWindow = onSchedule(
         for (const lang of ENV.ACTIVE_LANGS) {
           tasks.push(async () => {
             try {
-              const {result, path, provider} = await withRetry(
+              const {result} = await withRetry(
                 () => generator.generateOne(dateIso, sign, lang),
                 ENV.LLM_MAX_RETRIES
               );
 
               if (result === 'created') created++;
               else skipped++;
-
-              logger.info('generateHoroscopesWindow item', {
-                dateIso,
-                sign,
-                lang,
-                path,
-                result,
-                provider,
-              });
             } catch (e) {
               failed++;
               logger.error('generateHoroscopesWindow item failed', {
@@ -143,28 +132,14 @@ export const generateHoroscopesWindow = onSchedule(
     }
 
     // Ejecutamos con concurrencia limitada
-        // Ejecutamos con concurrencia limitada
-        await runWithConcurrency(
-          tasks,
-          Number(process.env.LLM_CONCURRENCY ?? 4)
-        );
+    await runWithConcurrency(tasks, ENV.LLM_CONCURRENCY);
 
-        console.log('DONE snapshot', {
-            created,
-            skipped,
-            failed,
-            activeLangs: ENV.ACTIVE_LANGS,
-            raw: process.env.ACTIVE_LANGS,
-        });
-
-        logger.info('generateHoroscopesWindow done', {
-          provider: router.name,
-          activeLangs: ENV.ACTIVE_LANGS,
-          created,
-          skipped,
-          failed,
-        });
-
-
-      }
-    );
+    logger.info('generateHoroscopesWindow done', {
+      provider: router.name,
+      activeLangs: ENV.ACTIVE_LANGS,
+      created,
+      skipped,
+      failed,
+    });
+  }
+);
