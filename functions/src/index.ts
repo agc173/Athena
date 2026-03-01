@@ -95,6 +95,17 @@ export const generateHoroscopesWindow = onSchedule(
         router: router.name,
       });
 
+      if (!ENV.USE_MOCK_LLM && ENV.REQUIRE_DEEPSEEK && !ENV.DEEPSEEK_API_KEY) {
+        throw new Error('REQUIRE_DEEPSEEK=true but DEEPSEEK_API_KEY is missing');
+      }
+
+      if (ENV.USE_MOCK_LLM) {
+        logger.warn('LLM is running in MOCK mode', {
+          activeLangs: ENV.ACTIVE_LANGS,
+          dateOffsetDays: ENV.DATE_OFFSET_DAYS,
+        });
+      }
+
       const generator = new HoroscopeGenerator(router);
 
       let created = 0;

@@ -43,8 +43,8 @@ export const ENV = {
   GENERATOR_VERSION: optNum('GENERATOR_VERSION', 1),
 
   // LLM tuning (control de coste/calidad)
-  LLM_TEMPERATURE: optNum('LLM_TEMPERATURE', 0.3),
-  LLM_MAX_TOKENS: optNum('LLM_MAX_TOKENS', 500),
+  LLM_TEMPERATURE: optNum('LLM_TEMPERATURE', 0.4),
+  LLM_MAX_TOKENS: optNum('LLM_MAX_TOKENS', 350),
 
   LLM_TIMEOUT_MS: optNum('LLM_TIMEOUT_MS', 25000),
   LLM_MAX_RETRIES: optNum('LLM_MAX_RETRIES', 2),
