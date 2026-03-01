@@ -3,7 +3,7 @@ import type {ZodiacSign} from '../firestore/paths';
 import {createDocIfAbsent} from '../firestore/writeOnce';
 import type {LLMRouter} from '../llm/LLMRouter';
 import {horoscopeSystemPrompt, horoscopeUserPrompt} from '../llm/prompts/horoscopePrompt';
-import {horoscopeSignDocPath} from '../firestore/paths';
+import {horoscopeLangDocPath, horoscopeSignDocPath} from '../firestore/paths';
 
 export type HoroscopeDoc = {
   text: string;
@@ -71,7 +71,9 @@ export class HoroscopeGenerator {
       llmProvider: res.provider,
     };
 
-    const path = horoscopeSignDocPath(dateIso, sign);
+    const path = ENV.HOROSCOPE_USE_LANGS ?
+      horoscopeLangDocPath(dateIso, sign, lang) :
+      horoscopeSignDocPath(dateIso, sign);
     const result = await createDocIfAbsent(path, doc);
     return {result, path, provider: res.provider};
   }

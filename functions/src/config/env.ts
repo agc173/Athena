@@ -35,6 +35,8 @@ export const ENV = {
   // Se mantienen todos para futuro multi-idioma, pero NO lo activamos aÃºn.
   SUPPORTED_LANGS: toLangList(parseCsv('SUPPORTED_LANGS', 'es,en,pt,ru,fr,it,de'), ALL_LANGS),
 
+  HOROSCOPE_USE_LANGS: (process.env.HOROSCOPE_USE_LANGS ?? '').toLowerCase() === 'true',
+
   // ACTIVE_LANGS se rellena abajo para poder filtrar contra SUPPORTED_LANGS
   ACTIVE_LANGS: [] as Lang[],
 
