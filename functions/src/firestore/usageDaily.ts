@@ -1,4 +1,5 @@
 import {FieldValue, getFirestore} from 'firebase-admin/firestore';
+import {estimateDeepSeekCostUsd} from '../utils/cost';
 
 export type LlmScope = 'horoscope' | 'tarot' | 'oracle' | 'unknown' | string;
 
@@ -11,6 +12,7 @@ type UsageDoc = {
   calls?: number;
   inputTokens?: number;
   outputTokens?: number;
+  costUsd?: number;
   updatedAtEpochMillis?: number;
 };
 
@@ -77,14 +79,25 @@ export async function reserveLlmCallOrThrow(scope: LlmScope, caps: DailyCaps): P
   return {dateIso};
 }
 
-export async function addLlmTokens(scope: LlmScope, dateIso: string, inputTokens: number, outputTokens: number) {
+export async function addLlmTokens(
+    scope: LlmScope,
+    dateIso: string,
+    inputTokens: number,
+    outputTokens: number
+) {
   const db = getFirestore();
   const totalRef = usageRef(dateIso, 'TOTAL');
   const scopeRef = usageRef(dateIso, scope);
 
+  const inTok = clampNonNegativeInt(inputTokens);
+  const outTok = clampNonNegativeInt(outputTokens);
+
+  const costUsd = estimateDeepSeekCostUsd(inTok, outTok);
+
   const patch = {
-    inputTokens: FieldValue.increment(clampNonNegativeInt(inputTokens)),
-    outputTokens: FieldValue.increment(clampNonNegativeInt(outputTokens)),
+    inputTokens: FieldValue.increment(inTok),
+    outputTokens: FieldValue.increment(outTok),
+    costUsd: FieldValue.increment(costUsd),
     updatedAtEpochMillis: Date.now(),
   };
 
