@@ -4,6 +4,7 @@ import {createDocIfAbsent} from '../firestore/writeOnce';
 import type {LLMRouter} from '../llm/LLMRouter';
 import {horoscopeSystemPrompt, horoscopeUserPrompt} from '../llm/prompts/horoscopePrompt';
 import {horoscopeLangDocPath, horoscopeSignDocPath} from '../firestore/paths';
+import {getFirestore} from 'firebase-admin/firestore';
 
 export type HoroscopeDoc = {
   text: string;
@@ -25,7 +26,9 @@ function safeParseJson(text: string): unknown {
   return JSON.parse(slice) as unknown;
 }
 
-function normalize(doc: unknown): Omit<HoroscopeDoc, 'createdAtEpochMillis' | 'updatedAtEpochMillis' | 'generatorVersion' | 'llmProvider'> {
+function normalize(
+  doc: unknown,
+): Omit<HoroscopeDoc, 'createdAtEpochMillis' | 'updatedAtEpochMillis' | 'generatorVersion' | 'llmProvider'> {
   const source = (doc ?? {}) as Record<string, unknown>;
   const out = {
     text: String(source.text ?? '').trim(),
@@ -47,9 +50,23 @@ function normalize(doc: unknown): Omit<HoroscopeDoc, 'createdAtEpochMillis' | 'u
 }
 
 export class HoroscopeGenerator {
+  private readonly db = getFirestore();
+
   constructor(private readonly llm: LLMRouter) {}
 
   async generateOne(dateIso: string, sign: ZodiacSign, lang: Lang) {
+    // ✅ 0) Resolve final doc path FIRST (so we can check existence before any LLM call)
+    const path = ENV.HOROSCOPE_USE_LANGS
+      ? horoscopeLangDocPath(dateIso, sign, lang)
+      : horoscopeSignDocPath(dateIso, sign);
+
+    // ✅ 1) COST GUARD: if doc exists -> skip without LLM
+    const snap = await this.db.doc(path).get();
+    if (snap.exists) {
+      return {result: 'skipped', path, provider: 'none'};
+    }
+
+    // ✅ 2) Only now call the LLM
     const now = Date.now();
 
     const res = await this.llm.generate({
@@ -71,10 +88,10 @@ export class HoroscopeGenerator {
       llmProvider: res.provider,
     };
 
-    const path = ENV.HOROSCOPE_USE_LANGS ?
-      horoscopeLangDocPath(dateIso, sign, lang) :
-      horoscopeSignDocPath(dateIso, sign);
+    // ✅ 3) Write-once create (still safe if a race happens)
     const result = await createDocIfAbsent(path, doc);
+
+    // If a race happened, createDocIfAbsent may report skipped; that's fine.
     return {result, path, provider: res.provider};
   }
 }

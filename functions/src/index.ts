@@ -84,6 +84,7 @@ export const generateHoroscopesWindow = onSchedule(
       timeZone: 'Europe/Madrid',
       region: 'europe-west1',
       retryCount: 3,
+      secrets: ['DEEPSEEK_API_KEY'],
     },
     async () => {
       const router = buildRouter();
