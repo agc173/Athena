@@ -27,7 +27,7 @@ function safeParseJson(text: string): unknown {
 }
 
 function normalize(
-  doc: unknown,
+    doc: unknown,
 ): Omit<HoroscopeDoc, 'createdAtEpochMillis' | 'updatedAtEpochMillis' | 'generatorVersion' | 'llmProvider'> {
   const source = (doc ?? {}) as Record<string, unknown>;
   const out = {
@@ -56,13 +56,14 @@ export class HoroscopeGenerator {
 
   async generateOne(dateIso: string, sign: ZodiacSign, lang: Lang) {
     // ✅ 0) Resolve final doc path FIRST (so we can check existence before any LLM call)
-    const path = ENV.HOROSCOPE_USE_LANGS
-      ? horoscopeLangDocPath(dateIso, sign, lang)
-      : horoscopeSignDocPath(dateIso, sign);
+    const path = ENV.HOROSCOPE_USE_LANGS ?
+      horoscopeLangDocPath(dateIso, sign, lang) :
+      horoscopeSignDocPath(dateIso, sign);
 
     // ✅ 1) COST GUARD: if doc exists -> skip without LLM
     const snap = await this.db.doc(path).get();
     if (snap.exists) {
+      console.log('HOROSCOPE_COST_GUARD_SKIP', {path, dateIso, sign, lang});
       return {result: 'skipped', path, provider: 'none'};
     }
 
