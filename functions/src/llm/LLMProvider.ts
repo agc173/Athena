@@ -12,6 +12,10 @@ export type LLMGenerateResult = {
   provider: string;
   text: string;
   raw?: unknown;
+
+  // 🔹 Añadimos métricas opcionales
+  inputTokens?: number;
+  outputTokens?: number;
 };
 
 export interface LLMProvider {

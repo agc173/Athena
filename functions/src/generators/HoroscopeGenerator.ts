@@ -63,7 +63,6 @@ export class HoroscopeGenerator {
     // ✅ 1) COST GUARD: if doc exists -> skip without LLM
     const snap = await this.db.doc(path).get();
     if (snap.exists) {
-      console.log('HOROSCOPE_COST_GUARD_SKIP', {path, dateIso, sign, lang});
       return {result: 'skipped', path, provider: 'none'};
     }
 
@@ -71,6 +70,7 @@ export class HoroscopeGenerator {
     const now = Date.now();
 
     const res = await this.llm.generate({
+      scope: 'horoscope',
       messages: [
         {role: 'system', content: horoscopeSystemPrompt(lang)},
         {role: 'user', content: horoscopeUserPrompt(dateIso, sign, lang)},

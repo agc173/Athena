@@ -113,6 +113,10 @@ export const generateHoroscopesWindow = onSchedule(
       let skipped = 0;
       let failed = 0;
 
+      // ✅ Hard cap stop flag (prevents log spam + pointless retries)
+      let stoppedByCap = false;
+      let capError: string | undefined;
+
       const tasks: Array<() => Promise<void>> = [];
 
       for (let dayOffset = 0; dayOffset <= 7; dayOffset++) {
@@ -121,6 +125,9 @@ export const generateHoroscopesWindow = onSchedule(
         for (const sign of ZODIAC_SIGNS) {
           for (const lang of ENV.ACTIVE_LANGS) {
             tasks.push(async () => {
+            // ✅ If cap already exceeded, skip remaining tasks quietly
+              if (stoppedByCap) return;
+
               try {
                 const {result} = await withRetry(
                     () => generator.generateOne(dateIso, sign, lang),
@@ -130,12 +137,27 @@ export const generateHoroscopesWindow = onSchedule(
                 if (result === 'created') created++;
                 else skipped++;
               } catch (e) {
+                const msg = (e as any)?.message ?? String(e);
+
+                // ✅ If daily cap exceeded, stop scheduling further work
+                if (msg.includes('DAILY_LLM_CAP_EXCEEDED')) {
+                  stoppedByCap = true;
+                  capError = msg;
+                  logger.warn('generateHoroscopesWindow stopped by daily cap', {
+                    dateIso,
+                    sign,
+                    lang,
+                    error: msg,
+                  });
+                  return;
+                }
+
                 failed++;
                 logger.error('generateHoroscopesWindow item failed', {
                   dateIso,
                   sign,
                   lang,
-                  error: String(e),
+                  error: msg,
                 });
               }
             });
@@ -152,6 +174,8 @@ export const generateHoroscopesWindow = onSchedule(
         created,
         skipped,
         failed,
+        stoppedByCap,
+        capError,
       });
     }
 );

@@ -141,6 +141,12 @@ export class DeepSeekProvider implements LLMProvider {
 
     // Ojo: devolvemos el JSON VALIDADO serializado, para que el siguiente paso (guardar en Firestore)
     // sea determinista y no dependa de parseos posteriores.
-    return {provider: this.name, text: JSON.stringify(validated), raw: json};
+    return {
+      provider: this.name,
+      text: JSON.stringify(validated),
+      raw: json,
+      inputTokens,
+      outputTokens,
+    };
   }
 }
