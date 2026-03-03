@@ -26,8 +26,6 @@ export enum RequestStatus {
   DEGRADED = 'DEGRADED',
 }
 
-export interface OracleGetStatusData {}
-
 export interface TarotDrawData {
   requestType: RequestType.TAROT_1 | RequestType.TAROT_3;
   topic?: ReadingTopic;
