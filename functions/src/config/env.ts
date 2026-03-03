@@ -13,6 +13,15 @@ function optNum(name: string, fallback: number): number {
   return Number.isFinite(n) ? n : fallback;
 }
 
+function optBool(name: string, fallback: boolean): boolean {
+  const raw = process.env[name];
+  if (raw == null || raw.trim() === '') return fallback;
+  const normalized = raw.trim().toLowerCase();
+  if (normalized === '1' || normalized === 'true') return true;
+  if (normalized === '0' || normalized === 'false') return false;
+  return fallback;
+}
+
 function parseCsv(name: string, fallback: string): string[] {
   return opt(name, fallback)
       .split(',')
@@ -55,6 +64,7 @@ export const ENV = {
   DAILY_LLM_MAX_CALLS_TAROT: optNum('DAILY_LLM_MAX_CALLS_TAROT', 250),
   DAILY_LLM_MAX_CALLS_ORACLE: optNum('DAILY_LLM_MAX_CALLS_ORACLE', 250),
   DAILY_LLM_MAX_CALLS_UNKNOWN: optNum('DAILY_LLM_MAX_CALLS_UNKNOWN', 500),
+  ALLOW_UNVERIFIED_APPCHECK_IN_DEV: optBool('ALLOW_UNVERIFIED_APPCHECK_IN_DEV', false),
   // Cost metrics (USD per 1M tokens) + FX
   DEEPSEEK_PRICE_INPUT_PER_MILLION_USD: optNum('DEEPSEEK_PRICE_INPUT_PER_MILLION_USD', 0.27),
   DEEPSEEK_PRICE_OUTPUT_PER_MILLION_USD: optNum('DEEPSEEK_PRICE_OUTPUT_PER_MILLION_USD', 1.10),
