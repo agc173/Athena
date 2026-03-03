@@ -284,21 +284,21 @@ export const tarotDraw = onCall(
 
         tx.set(userDailyRef, nextDaily, {merge: true});
         tx.create(
-          requestRef,
-          stripUndefined({
-            uid,
-            requestId,
-            requestType: data.requestType,
-            lang,
-            topic: data.topic,
-            question,
-            dateIso,
-            intent,
-            status: 'PROCESSING',
-            systemMode,
-            createdAt: now,
-            updatedAt: now,
-          } satisfies RequestDoc)
+            requestRef,
+            stripUndefined({
+              uid,
+              requestId,
+              requestType: data.requestType,
+              lang,
+              topic: data.topic,
+              question,
+              dateIso,
+              intent,
+              status: 'PROCESSING',
+              systemMode,
+              createdAt: now,
+              updatedAt: now,
+            } satisfies RequestDoc)
         );
 
         return {
@@ -438,7 +438,11 @@ export const tarotDraw = onCall(
           success: false,
         });
 
-        throw new HttpsError('internal', 'Failed to generate tarot reading');
+        const publicErrorMessage = process.env.FUNCTIONS_EMULATOR === 'true' ?
+          `Failed to generate tarot reading: ${errorMessage}` :
+          'Failed to generate tarot reading';
+
+        throw new HttpsError('internal', publicErrorMessage);
       }
     }
 );
