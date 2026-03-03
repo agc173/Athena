@@ -43,10 +43,11 @@ function assertString(value: unknown, path: string, maxLength: number): string {
   if (typeof value !== 'string') {
     throw new Error(`JSON_INVALID: ${path} must be a string`);
   }
-  if (value.length === 0 || value.length > maxLength) {
+  const trimmed = value.trim();
+  if (trimmed.length === 0 || trimmed.length > maxLength) {
     throw new Error(`JSON_INVALID: ${path} invalid length`);
   }
-  return value;
+  return trimmed;
 }
 
 function assertOrientation(value: unknown, path: string): CardOrientation {
@@ -142,14 +143,27 @@ export function validateTarot3Reading(value: Record<string, unknown>, expectedDr
     throw new Error('JSON_INVALID: cards must have length 3');
   }
 
-  const cards = value.cards.map((card, index) => {
+  const expectedByPosition = new Map<TarotPosition, Tarot3Draw['cards'][number]>(
+      expectedDraw.cards.map((card) => [card.position, card])
+  );
+  const cardsByPosition = new Map<TarotPosition, Tarot3Reading['cards'][number]>();
+
+  value.cards.forEach((card, index) => {
     if (!isObject(card)) {
       throw new Error(`JSON_INVALID: cards[${index}] must be object`);
     }
     assertExactKeys(card, ['position', 'name', 'orientation', 'meaning'], `$.cards[${index}]`);
 
-    const expected = expectedDraw.cards[index];
     const position = assertPosition(card.position, `$.cards[${index}].position`);
+    if (cardsByPosition.has(position)) {
+      throw new Error(`JSON_INVALID: cards[${index}].position duplicated`);
+    }
+
+    const expected = expectedByPosition.get(position);
+    if (!expected) {
+      throw new Error(`JSON_INVALID: cards[${index}].position mismatch`);
+    }
+
     const name = assertString(card.name, `$.cards[${index}].name`, 120);
     const orientation = assertOrientation(card.orientation, `$.cards[${index}].orientation`);
     const meaning = assertString(card.meaning, `$.cards[${index}].meaning`, 350);
@@ -164,12 +178,21 @@ export function validateTarot3Reading(value: Record<string, unknown>, expectedDr
       throw new Error(`JSON_INVALID: cards[${index}].orientation mismatch`);
     }
 
-    return {
+    cardsByPosition.set(position, {
       position,
       name,
       orientation,
       meaning,
-    };
+    });
+  });
+
+  const orderedPositions: TarotPosition[] = ['past', 'present', 'future'];
+  const cards = orderedPositions.map((position) => {
+    const card = cardsByPosition.get(position);
+    if (!card) {
+      throw new Error('JSON_INVALID: cards must contain past, present and future');
+    }
+    return card;
   });
 
   return {
