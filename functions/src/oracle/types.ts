@@ -4,12 +4,18 @@ export enum RequestType {
   ORACLE_1Q = 'ORACLE_1Q',
 }
 
-export enum Intent {
+export enum ReadingTopic {
   GENERAL = 'GENERAL',
   LOVE = 'LOVE',
   WORK = 'WORK',
   HEALTH = 'HEALTH',
   SPIRITUAL = 'SPIRITUAL',
+}
+
+export enum ConsumeIntent {
+  FREE_DAILY = 'FREE_DAILY',
+  AD_UNLOCK = 'AD_UNLOCK',
+  SUBSCRIPTION = 'SUBSCRIPTION',
 }
 
 export enum RequestStatus {
@@ -20,19 +26,26 @@ export enum RequestStatus {
   DEGRADED = 'DEGRADED',
 }
 
-export interface OracleGetStatusData {
-  requestId: string;
-}
+export interface OracleGetStatusData {}
 
 export interface TarotDrawData {
   requestType: RequestType.TAROT_1 | RequestType.TAROT_3;
-  intent?: Intent;
+  topic?: ReadingTopic;
   requestId?: string;
+  lang?: string;
+  question?: string;
+  adUnlock?: {
+    rewardedProof: string;
+  };
 }
 
 export interface OracleAskData {
   requestType: RequestType.ORACLE_1Q;
   question: string;
-  intent?: Intent;
+  topic?: ReadingTopic;
   requestId?: string;
+  lang?: string;
+  adUnlock?: {
+    rewardedProof: string;
+  };
 }
