@@ -1,6 +1,8 @@
 import {FieldValue, Timestamp, getFirestore} from 'firebase-admin/firestore';
 import {HttpsError, onCall} from 'firebase-functions/v2/https';
 import {buildRouter} from '../../llm/buildRouter';
+import {reserveLlmCallOrThrow, addLlmTokens, type DailyCaps} from '../../firestore/usageDaily';
+import {ENV} from '../../config/env';
 import {generateTarotReading} from '../tarot/tarotService';
 import {ConsumeIntent, RequestType, type TarotDrawData} from '../types';
 import {createLlmClientFromRouter} from '../shared/routerLlmClient';
@@ -76,6 +78,61 @@ async function isSubscriber(uid: string): Promise<boolean> {
   const db = getFirestore();
   const entitlementSnap = await db.doc(`userEntitlements/${uid}`).get();
   return entitlementSnap.data()?.isSubscriber === true;
+}
+
+function llmDailyCaps(): DailyCaps {
+  return {
+    totalMaxCalls: ENV.DAILY_LLM_MAX_CALLS_TOTAL,
+    scopeMaxCalls: {
+      tarot: ENV.DAILY_LLM_MAX_CALLS_TAROT,
+      unknown: ENV.DAILY_LLM_MAX_CALLS_TOTAL,
+    },
+  };
+}
+
+async function failRequestAndCompensateQuota(params: {
+  requestRef: FirebaseFirestore.DocumentReference;
+  userDailyRef: FirebaseFirestore.DocumentReference;
+  requestType: RequestType.TAROT_1 | RequestType.TAROT_3;
+  intent: ConsumeIntent;
+  errorMessage: string;
+}) {
+  const db = getFirestore();
+
+  await db.runTransaction(async (tx) => {
+    const requestSnap = await tx.get(params.requestRef);
+    const requestData = requestSnap.data() as RequestDoc | undefined;
+
+    if (requestData?.status !== 'PROCESSING') {
+      return;
+    }
+
+    const compensationPatch: Record<string, FieldValue> = {
+      maxRequestsRemaining: FieldValue.increment(1),
+      updatedAt: FieldValue.serverTimestamp(),
+    };
+
+    if (params.requestType === RequestType.TAROT_3) {
+      compensationPatch.tarot3Remaining = FieldValue.increment(1);
+    }
+
+    if (params.intent === ConsumeIntent.FREE_DAILY) {
+      compensationPatch.freeTarot1Remaining = FieldValue.increment(1);
+    }
+
+    if (params.intent === ConsumeIntent.AD_UNLOCK) {
+      compensationPatch.adUnlockRemaining = FieldValue.increment(1);
+    }
+
+    tx.set(params.userDailyRef, compensationPatch, {merge: true});
+    tx.set(params.requestRef, {
+      status: 'FAILED',
+      error: {
+        message: params.errorMessage,
+      },
+      updatedAt: FieldValue.serverTimestamp(),
+    }, {merge: true});
+  });
 }
 
 async function updateProviderUsage(params: {
@@ -258,7 +315,33 @@ export const tarotDraw = onCall(
       }
 
       const router = buildRouter();
-      const llmClient = createLlmClientFromRouter(router, 'tarot');
+
+      let usageDateIso: string;
+      try {
+        const {dateIso: reservedDateIso} = await reserveLlmCallOrThrow('tarot', llmDailyCaps());
+        usageDateIso = reservedDateIso;
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+
+        if (errorMessage.includes('DAILY_LLM_CAP_EXCEEDED')) {
+          await failRequestAndCompensateQuota({
+            requestRef,
+            userDailyRef,
+            requestType: data.requestType,
+            intent: reservation.intent,
+            errorMessage: 'DAILY_LLM_CAP_EXCEEDED',
+          });
+          throw new HttpsError('resource-exhausted', 'DAILY_LLM_CAP_EXCEEDED');
+        }
+
+        throw error;
+      }
+
+      const llmClient = createLlmClientFromRouter(router, 'tarot', {
+        usageDailyDateIso: usageDateIso,
+        skipUsageReservation: true,
+        skipUsageTokenTracking: true,
+      });
 
       try {
         const generated = await generateTarotReading({
@@ -312,6 +395,13 @@ export const tarotDraw = onCall(
             llmMeta: generated.llmMeta,
           }, {merge: true});
         });
+
+        await addLlmTokens(
+            'tarot',
+            usageDateIso,
+            generated.llmMeta.inputTokens,
+            generated.llmMeta.outputTokens
+        );
 
         await updateProviderUsage({
           dateIso,

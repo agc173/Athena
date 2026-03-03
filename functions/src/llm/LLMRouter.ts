@@ -30,23 +30,40 @@ export class LLMRouter {
     };
   }
 
-  async generate(args: GenerateArgs & {scope?: LlmScope}): Promise<GenerateResult> {
-    const scope = args.scope ?? 'unknown';
+  async generate(args: GenerateArgs & {
+    scope?: LlmScope;
+    usageDailyDateIso?: string;
+    skipUsageReservation?: boolean;
+    skipUsageTokenTracking?: boolean;
+  }): Promise<GenerateResult> {
+    const {
+      scope: requestedScope,
+      usageDailyDateIso,
+      skipUsageReservation,
+      skipUsageTokenTracking,
+      ...providerArgs
+    } = args;
 
-    // Strip scope before passing to provider
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const {scope: _scope, ...providerArgs} = args;
+    const scope = requestedScope ?? 'unknown';
+    const shouldReserve = skipUsageReservation !== true;
+    const shouldTrackTokens = skipUsageTokenTracking !== true;
+    let trackedDateIso = usageDailyDateIso;
 
-    const caps = this.getDailyCaps();
-    const {dateIso} = await reserveLlmCallOrThrow(scope, caps);
+    if (shouldReserve) {
+      const caps = this.getDailyCaps();
+      const {dateIso} = await reserveLlmCallOrThrow(scope, caps);
+      trackedDateIso = dateIso;
+    }
 
     const res = await this.provider.generate(providerArgs as GenerateArgs);
 
     // best-effort: don't fail the whole request if token accounting fails
-    try {
-      await addLlmTokens(scope, dateIso, res.inputTokens ?? 0, res.outputTokens ?? 0);
-    } catch {
-      // no-op (optional: log)
+    if (shouldTrackTokens && trackedDateIso) {
+      try {
+        await addLlmTokens(scope, trackedDateIso, res.inputTokens ?? 0, res.outputTokens ?? 0);
+      } catch {
+        // no-op (optional: log)
+      }
     }
 
     return res;
