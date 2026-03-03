@@ -10,6 +10,7 @@ import {GeminiVertexProvider} from './llm/providers/GeminiVertexProvider';
 import {logger} from './utils/logger';
 import {withRetry} from './utils/retry';
 import {MockLLMProvider} from './llm/providers/MockLLMProvider';
+export {oracleGetStatus, tarotDraw, oracleAsk} from './oracle';
 
 initializeApp();
 assertEnvForLLM();
