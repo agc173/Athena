@@ -68,3 +68,79 @@ Campos:
 ### /rituals/{ritualId}
 ### /readings/{readingId}
 ### /userContent/{userId}/saved/{itemId}
+
+---
+
+## Oracle backend (v1)
+
+### /oracleSystemStatus/current
+Estado operativo global del backend oracle.
+
+Campos:
+- mode: string (`NORMAL` | `DEGRADED` | `EMERGENCY`)
+- updatedAt: timestamp (opcional)
+
+### /userEntitlements/{uid}
+Entitlements económicos del usuario.
+
+Campos:
+- isSubscriber: boolean (default false)
+- updatedAt: timestamp (opcional)
+
+### /oracleUserDaily/{dateIso}/users/{uid}
+Cuotas diarias por usuario y día (timezone Europe/Madrid).
+
+Campos:
+- freeTarot1Remaining: number
+- adUnlockRemaining: number
+- maxRequestsRemaining: number
+- tarot3Remaining: number
+- createdAt: timestamp
+- updatedAt: timestamp
+
+### /oracleRequests/{requestId}
+Control de idempotencia y estado de ejecución por request.
+
+Campos:
+- uid: string
+- requestId: string
+- requestType: string (`TAROT_1` | `TAROT_3`)
+- lang: string
+- topic: string (opcional)
+- question: string (opcional, truncada)
+- dateIso: string (`YYYY-MM-DD`, Europe/Madrid)
+- intent: string (`FREE_DAILY` | `AD_UNLOCK` | `SUBSCRIPTION`)
+- status: string (`PROCESSING` | `COMPLETED_SUCCESS` | `FAILED`)
+- systemMode: string (`NORMAL` | `DEGRADED` | `EMERGENCY`)
+- readingId: string (opcional)
+- responsePayload: map (opcional, para replay idempotente)
+- llmMeta: map (opcional)
+- error: map (opcional)
+- createdAt: timestamp
+- updatedAt: timestamp
+
+### /tarotReadings/{uid}/items/{readingId}
+Histórico de lecturas exitosas por usuario.
+
+Campos:
+- requestId: string
+- requestType: string (`TAROT_1` | `TAROT_3`)
+- lang: string
+- question: string (opcional, truncada)
+- draw: array (id + orientation + position)
+- reading: map (interpretación)
+- createdAt: timestamp
+- llmMeta: map (provider/tokens/cost/duration)
+
+### /llmUsageDaily/{dateIso}/providers/{provider}
+Agregación diaria de uso por proveedor.
+
+Campos:
+- calls: number
+- success: number
+- failed: number
+- inputTokens: number
+- outputTokens: number
+- costUsd: number
+- latencyMsTotal: number
+- updatedAt: timestamp

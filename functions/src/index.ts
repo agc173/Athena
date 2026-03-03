@@ -4,12 +4,9 @@ import {DateTime} from 'luxon';
 import {ENV, assertEnvForLLM} from './config/env';
 import type {ZodiacSign} from './firestore/paths';
 import {HoroscopeGenerator} from './generators/HoroscopeGenerator';
-import {LLMRouter} from './llm/LLMRouter';
-import {DeepSeekProvider} from './llm/providers/DeepSeekProvider';
-import {GeminiVertexProvider} from './llm/providers/GeminiVertexProvider';
 import {logger} from './utils/logger';
+import {buildRouter} from './llm/buildRouter';
 import {withRetry} from './utils/retry';
-import {MockLLMProvider} from './llm/providers/MockLLMProvider';
 export {oracleGetStatus, tarotDraw, oracleAsk} from './oracle';
 
 initializeApp();
@@ -52,32 +49,6 @@ async function runWithConcurrency<T>(
   return results;
 }
 
-/**
- * Build a router that only enables fallback if GeminiVertexProvider is actually implemented.
- * This avoids the current situation where the fallback always throws "not implemented yet"
- * and turns recoverable DeepSeek failures into guaranteed failures.
- */
-function buildRouter(): LLMRouter {
-  const gemini = new GeminiVertexProvider();
-
-  const geminiImplemented =
-    typeof (gemini as any).isImplemented === 'function' ?
-      Boolean((gemini as any).isImplemented()) :
-      false;
-
-  const useMock = ENV.USE_MOCK_LLM;
-
-  const primaryProvider = useMock ?
-    new MockLLMProvider() :
-    (ENV.DEEPSEEK_API_KEY ?
-        new DeepSeekProvider() :
-        new MockLLMProvider());
-
-
-  return geminiImplemented ?
-    LLMRouter.withFallback(primaryProvider, gemini) :
-    new LLMRouter(primaryProvider);
-}
 
 export const generateHoroscopesWindow = onSchedule(
     {
