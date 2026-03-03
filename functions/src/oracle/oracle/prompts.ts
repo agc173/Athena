@@ -20,6 +20,8 @@ export function buildOracleSystemPrompt(lang: string): string {
     normalizedLang + '.',
     'Output schema must be exact (no extra keys):',
     '{"type":"ORACLE_1Q","title":"...","guidance":{"core":"...","do":["..."],"avoid":["..."],"reflection":"..."}}.',
+    'Length constraints: title<=80 chars; guidance.core<=600 chars; guidance.do must have 2..4 items and each item<=120 chars; guidance.avoid must have 1..3 items and each item<=120 chars; guidance.reflection<=200 chars.',
+    'Keep responses concise.',
   ].join(' ');
 }
 

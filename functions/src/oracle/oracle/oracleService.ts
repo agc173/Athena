@@ -1,22 +1,7 @@
 import {type ReadingTopic} from '../types';
+import {type LLMClient} from '../shared/llmClient';
 import {buildOracleSystemPrompt, buildOracleUserPrompt} from './prompts';
 import {parseStrictJsonObject, validateOracleReading, type OracleReading} from './schemas';
-
-export interface LLMClient {
-  generate(params: {
-    systemPrompt: string;
-    userPrompt: string;
-    maxOutputTokens: number;
-    temperature: number;
-  }): Promise<{
-    text: string;
-    provider: string;
-    inputTokens: number;
-    outputTokens: number;
-    costUsd?: number;
-    durationMs?: number;
-  }>;
-}
 
 export async function generateOracleAnswer(params: {
   requestId: string;
