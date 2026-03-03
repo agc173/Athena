@@ -55,20 +55,15 @@ function stripUndefined<T extends Record<string, any>>(obj: T): T {
 }
 
 function stripUndefinedDeep<T>(value: T): T {
-  if (Array.isArray(value)) {
-    return value
-        .filter((item) => item !== undefined)
-        .map((item) => stripUndefinedDeep(item)) as T;
-  }
-
+  if (Array.isArray(value)) return value.map(stripUndefinedDeep) as any;
   if (value && typeof value === 'object') {
-    return Object.fromEntries(
-        Object.entries(value)
-            .filter(([, item]) => item !== undefined)
-            .map(([key, item]) => [key, stripUndefinedDeep(item)])
-    ) as T;
+    const out: any = {};
+    for (const [k, v] of Object.entries(value as any)) {
+      if (v === undefined) continue;
+      out[k] = stripUndefinedDeep(v);
+    }
+    return out;
   }
-
   return value;
 }
 
@@ -377,6 +372,8 @@ export const tarotDraw = onCall(
           llm: llmClient,
         });
 
+        const llmMeta = stripUndefinedDeep(generated.llmMeta);
+
         const readingId = requestId;
         const responsePayload = {
           requestId,
@@ -386,7 +383,6 @@ export const tarotDraw = onCall(
           quotaSnapshot: reservation.quotaSnapshot,
           systemMode,
         };
-        const llmMeta = stripUndefinedDeep(generated.llmMeta);
 
         const drawForHistory = generated.draw.type === RequestType.TAROT_1 ?
           [{
@@ -406,7 +402,7 @@ export const tarotDraw = onCall(
             status: 'COMPLETED_SUCCESS',
             readingId,
             responsePayload,
-            llmMeta,
+            llmMeta: generated.llmMeta,
             updatedAt: FieldValue.serverTimestamp(),
           }, {merge: true});
 
@@ -418,7 +414,7 @@ export const tarotDraw = onCall(
             draw: drawForHistory,
             reading: generated.reading,
             createdAt: FieldValue.serverTimestamp(),
-            llmMeta,
+            llmMeta: generated.llmMeta,
           }, {merge: true});
         });
 

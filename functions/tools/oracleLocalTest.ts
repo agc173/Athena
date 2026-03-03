@@ -70,7 +70,8 @@ async function main() {
   console.log("OK ✅ local test finished");
 }
 
-main().catch((e) => {
+main().catch((e: any) => {
   console.error("Test failed ❌", e);
+  if (e?.details) console.error("Error details:", e.details);
   process.exit(1);
 });

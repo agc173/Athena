@@ -50,19 +50,16 @@ function stripUndefined<T extends Record<string, any>>(obj: T): T {
 
 function stripUndefinedDeep<T>(value: T): T {
   if (Array.isArray(value)) {
-    return value
-        .filter((item) => item !== undefined)
-        .map((item) => stripUndefinedDeep(item)) as T;
+    return value.map(stripUndefinedDeep) as any;
   }
-
   if (value && typeof value === 'object') {
-    return Object.fromEntries(
-        Object.entries(value)
-            .filter(([, item]) => item !== undefined)
-            .map(([key, item]) => [key, stripUndefinedDeep(item)])
-    ) as T;
+    const out: any = {};
+    for (const [k, v] of Object.entries(value as any)) {
+      if (v === undefined) continue;
+      out[k] = stripUndefinedDeep(v);
+    }
+    return out;
   }
-
   return value;
 }
 
@@ -131,9 +128,7 @@ async function failRequestAndCompensateQuota(params: {
     tx.set(params.userDailyRef, compensationPatch, {merge: true});
     tx.set(params.requestRef, {
       status: 'FAILED',
-      error: {
-        message: params.errorMessage,
-      },
+      error: {message: params.errorMessage},
       updatedAt: FieldValue.serverTimestamp(),
     }, {merge: true});
   });
@@ -164,85 +159,79 @@ async function updateProviderUsage(params: {
 }
 
 export const oracleAsk = onCall(
-    {
-      region: 'europe-west1',
-      enforceAppCheck: !ENV.ALLOW_UNVERIFIED_APPCHECK_IN_DEV,
-    },
-    async (request) => {
-      const uid = request.auth?.uid;
-      if (!uid) {
-        throw new HttpsError('unauthenticated', 'Authentication is required');
-      }
+  {
+    region: 'europe-west1',
+    enforceAppCheck: !ENV.ALLOW_UNVERIFIED_APPCHECK_IN_DEV,
+  },
+  async (request) => {
+    const uid = request.auth?.uid;
+    if (!uid) throw new HttpsError('unauthenticated', 'Authentication is required');
 
-      const data = request.data as OracleAskData;
+    const data = request.data as OracleAskData;
 
-      if (data?.requestType !== RequestType.ORACLE_1Q) {
-        throw new HttpsError('invalid-argument', 'requestType must be ORACLE_1Q');
-      }
+    if (data?.requestType !== RequestType.ORACLE_1Q) {
+      throw new HttpsError('invalid-argument', 'requestType must be ORACLE_1Q');
+    }
+    if (!data.question || data.question.trim().length === 0) {
+      throw new HttpsError('invalid-argument', 'question is required');
+    }
+    if (!data.requestId || typeof data.requestId !== 'string' || data.requestId.trim().length === 0) {
+      throw new HttpsError('invalid-argument', 'requestId is required');
+    }
 
-      if (!data.question || data.question.trim().length === 0) {
-        throw new HttpsError('invalid-argument', 'question is required');
-      }
+    const requestId = data.requestId.trim();
+    const lang = normalizeLang(data.lang);
+    const question = normalizeQuestion(data.question);
+    const dateIso = dateIsoMadrid();
 
-      if (!data.requestId || typeof data.requestId !== 'string' || data.requestId.trim().length === 0) {
-        throw new HttpsError('invalid-argument', 'requestId is required');
-      }
+    const [systemMode, subscriber] = await Promise.all([
+      getSystemMode(),
+      isSubscriber(uid),
+    ]);
 
-      const requestId = data.requestId.trim();
-      const lang = normalizeLang(data.lang);
-      const question = normalizeQuestion(data.question);
-      const dateIso = dateIsoMadrid();
+    if (systemMode === 'EMERGENCY' && !subscriber) {
+      throw new HttpsError('resource-exhausted', 'oracleAsk temporarily unavailable');
+    }
 
-      const [systemMode, subscriber] = await Promise.all([
-        getSystemMode(),
-        isSubscriber(uid),
+    const db = getFirestore();
+    const requestRef = oracleRef('oracleRequests', requestId);
+    const userDailyRef = oracleSubRef('oracleUserDaily', dateIso, 'users', uid);
+
+    const reservation = await db.runTransaction(async (tx) => {
+      const [requestSnap, userDailySnap] = await Promise.all([
+        tx.get(requestRef),
+        tx.get(userDailyRef),
       ]);
 
-      if (systemMode === 'EMERGENCY' && !subscriber) {
-        throw new HttpsError('resource-exhausted', 'oracleAsk temporarily unavailable');
+      if (requestSnap.exists) {
+        const existing = requestSnap.data() as RequestDoc;
+
+        if (existing.uid !== uid) {
+          throw new HttpsError('permission-denied', 'requestId already exists for a different user');
+        }
+        if (existing.status === 'COMPLETED_SUCCESS' && existing.responsePayload) {
+          return {type: 'completed' as const, payload: existing.responsePayload};
+        }
+        if (existing.status === 'FAILED') {
+          throw new HttpsError('aborted', 'requestId already failed; retry with new requestId');
+        }
+        return {type: 'in-progress' as const};
       }
 
-      const db = getFirestore();
-      const requestRef = oracleRef('oracleRequests', requestId);
-      const userDailyRef = oracleSubRef('oracleUserDaily', dateIso, 'users', uid);
+      const now = Timestamp.now();
+      const currentDaily = (userDailySnap.data() as UserDailyDoc | undefined) ?? {
+        ...DEFAULT_DAILY_QUOTA,
+        createdAt: now,
+      };
 
-      const reservation = await db.runTransaction(async (tx) => {
-        const [requestSnap, userDailySnap] = await Promise.all([
-          tx.get(requestRef),
-          tx.get(userDailyRef),
-        ]);
-
-        if (requestSnap.exists) {
-          const existing = requestSnap.data() as RequestDoc;
-          if (existing.uid !== uid) {
-            throw new HttpsError('permission-denied', 'requestId already exists for a different user');
-          }
-
-          if (existing.status === 'COMPLETED_SUCCESS' && existing.responsePayload) {
-            return {type: 'completed' as const, payload: existing.responsePayload};
-          }
-
-          if (existing.status === 'FAILED') {
-            throw new HttpsError('aborted', 'requestId already failed; retry with new requestId');
-          }
-
-          return {type: 'in-progress' as const};
-        }
-
-        const now = Timestamp.now();
-        const currentDaily = (userDailySnap.data() as UserDailyDoc | undefined) ?? {
-          ...DEFAULT_DAILY_QUOTA,
-          createdAt: now,
-        };
-
-        const nextDaily: UserDailyDoc = {
-          freeTarot1Remaining: currentDaily.freeTarot1Remaining,
-          adUnlockRemaining: currentDaily.adUnlockRemaining,
-          maxRequestsRemaining: currentDaily.maxRequestsRemaining,
-          tarot3Remaining: currentDaily.tarot3Remaining,
-          createdAt: currentDaily.createdAt ?? now,
-          updatedAt: now,
-        };
+      const nextDaily: UserDailyDoc = {
+        freeTarot1Remaining: currentDaily.freeTarot1Remaining,
+        adUnlockRemaining: currentDaily.adUnlockRemaining,
+        maxRequestsRemaining: currentDaily.maxRequestsRemaining,
+        tarot3Remaining: currentDaily.tarot3Remaining,
+        createdAt: currentDaily.createdAt ?? now,
+        updatedAt: now,
+      };
 
         if (nextDaily.maxRequestsRemaining <= 0) {
           throw new HttpsError('resource-exhausted', 'Daily max requests exhausted');
@@ -270,24 +259,24 @@ export const oracleAsk = onCall(
 
         nextDaily.maxRequestsRemaining -= 1;
 
-        tx.set(userDailyRef, nextDaily, {merge: true});
-        tx.create(
-            requestRef,
-            stripUndefined({
-              uid,
-              requestId,
-              requestType: data.requestType,
-              lang,
-              topic: data.topic,
-              question,
-              dateIso,
-              intent,
-              status: 'PROCESSING',
-              systemMode,
-              createdAt: now,
-              updatedAt: now,
-            } satisfies RequestDoc)
-        );
+      tx.set(userDailyRef, nextDaily, {merge: true});
+
+      const requestDoc: RequestDoc = {
+        uid,
+        requestId,
+        requestType: data.requestType,
+        lang,
+        topic: data.topic,
+        question,
+        dateIso,
+        intent,
+        status: 'PROCESSING',
+        systemMode,
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      tx.create(requestRef, stripUndefined(requestDoc));
 
         return {
           type: 'reserved' as const,
@@ -346,34 +335,38 @@ export const oracleAsk = onCall(
           llm: llmClient,
         });
 
-        const responsePayload = {
-          requestId,
+      const llmMeta = stripUndefinedDeep(generated.llmMeta);
+
+      const responsePayload = {
+        requestId,
+        status: 'COMPLETED_SUCCESS',
+        answer: generated.answer,
+        quotaSnapshot: reservation.quotaSnapshot,
+        systemMode,
+      };
+
+      const answerRef = oracleSubRef('oracleAnswers', uid, 'items', requestId);
+
+      await db.runTransaction(async (tx) => {
+        tx.set(requestRef, {
           status: 'COMPLETED_SUCCESS',
+          responsePayload,
+          llmMeta,
+          updatedAt: FieldValue.serverTimestamp(),
+        }, {merge: true});
+
+        const answerDoc = stripUndefined({
+          requestId,
+          lang,
+          topic: data.topic,
+          question,
           answer: generated.answer,
-          quotaSnapshot: reservation.quotaSnapshot,
-          systemMode,
-        };
-        const llmMeta = stripUndefinedDeep(generated.llmMeta);
-
-        const answerRef = oracleSubRef('oracleAnswers', uid, 'items', requestId);
-        await db.runTransaction(async (tx) => {
-          tx.set(requestRef, {
-            status: 'COMPLETED_SUCCESS',
-            responsePayload,
-            llmMeta,
-            updatedAt: FieldValue.serverTimestamp(),
-          }, {merge: true});
-
-          tx.set(answerRef, {
-            requestId,
-            lang,
-            topic: data.topic,
-            question,
-            answer: generated.answer,
-            createdAt: FieldValue.serverTimestamp(),
-            llmMeta,
-          }, {merge: true});
+          createdAt: FieldValue.serverTimestamp(),
+          llmMeta,
         });
+
+        tx.set(answerRef, answerDoc, {merge: true});
+      });
 
         await addLlmTokens(
             'oracle',
