@@ -1,16 +1,44 @@
-import {onCall} from 'firebase-functions/v2/https';
-import {RequestStatus} from '../types';
+import {Timestamp, getFirestore} from 'firebase-admin/firestore';
+import {HttpsError, onCall} from 'firebase-functions/v2/https';
+
+type SystemMode = 'NORMAL' | 'DEGRADED' | 'EMERGENCY';
+
+type OracleStatusResponse = {
+  mode: SystemMode;
+  message?: string;
+  updatedAt?: Timestamp;
+};
+
+function parseSystemMode(value: unknown): SystemMode {
+  if (value === 'DEGRADED') return 'DEGRADED';
+  if (value === 'EMERGENCY') return 'EMERGENCY';
+  return 'NORMAL';
+}
 
 export const oracleGetStatus = onCall(
     {
       region: 'europe-west1',
       enforceAppCheck: true,
     },
-    async () => {
-      // TODO(oracle-v1): Replace mock response with global Firestore-backed oracle status.
+    async (request): Promise<OracleStatusResponse> => {
+      const uid = request.auth?.uid;
+      if (!uid) {
+        throw new HttpsError('unauthenticated', 'Authentication is required');
+      }
+
+      const db = getFirestore();
+      const statusSnap = await db.doc('oracleSystemStatus/current').get();
+
+      if (!statusSnap.exists) {
+        return {mode: 'NORMAL'};
+      }
+
+      const data = statusSnap.data();
+
       return {
-        status: RequestStatus.QUEUED,
-        message: 'oracleGetStatus scaffold response',
+        mode: parseSystemMode(data?.mode),
+        message: typeof data?.message === 'string' ? data.message : undefined,
+        updatedAt: data?.updatedAt instanceof Timestamp ? data.updatedAt : undefined,
       };
     }
 );
