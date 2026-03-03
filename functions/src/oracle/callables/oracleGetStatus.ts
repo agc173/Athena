@@ -1,5 +1,6 @@
 import {Timestamp, getFirestore} from 'firebase-admin/firestore';
 import {HttpsError, onCall} from 'firebase-functions/v2/https';
+import {ENV} from '../../config/env';
 
 type SystemMode = 'NORMAL' | 'DEGRADED' | 'EMERGENCY';
 
@@ -18,7 +19,7 @@ function parseSystemMode(value: unknown): SystemMode {
 export const oracleGetStatus = onCall(
     {
       region: 'europe-west1',
-      enforceAppCheck: true,
+      enforceAppCheck: !ENV.ALLOW_UNVERIFIED_APPCHECK_IN_DEV,
     },
     async (request): Promise<OracleStatusResponse> => {
       const uid = request.auth?.uid;

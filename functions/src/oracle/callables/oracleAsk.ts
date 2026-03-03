@@ -144,7 +144,7 @@ async function updateProviderUsage(params: {
 export const oracleAsk = onCall(
     {
       region: 'europe-west1',
-      enforceAppCheck: true,
+      enforceAppCheck: !ENV.ALLOW_UNVERIFIED_APPCHECK_IN_DEV,
     },
     async (request) => {
       const uid = request.auth?.uid;
