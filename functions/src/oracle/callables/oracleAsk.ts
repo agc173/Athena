@@ -44,6 +44,10 @@ type UserDailyDoc = {
   updatedAt?: Timestamp;
 };
 
+function stripUndefined<T extends Record<string, any>>(obj: T): T {
+  return Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined)) as T;
+}
+
 function normalizeLang(lang?: string): string {
   if (!lang) return 'es';
   return lang.trim().toLowerCase().startsWith('en') ? 'en' : 'es';
@@ -249,20 +253,23 @@ export const oracleAsk = onCall(
         nextDaily.maxRequestsRemaining -= 1;
 
         tx.set(userDailyRef, nextDaily, {merge: true});
-        tx.create(requestRef, {
-          uid,
-          requestId,
-          requestType: data.requestType,
-          lang,
-          topic: data.topic,
-          question,
-          dateIso,
-          intent,
-          status: 'PROCESSING',
-          systemMode,
-          createdAt: now,
-          updatedAt: now,
-        } satisfies RequestDoc);
+        tx.create(
+          requestRef,
+          stripUndefined({
+            uid,
+            requestId,
+            requestType: data.requestType,
+            lang,
+            topic: data.topic,
+            question,
+            dateIso,
+            intent,
+            status: 'PROCESSING',
+            systemMode,
+            createdAt: now,
+            updatedAt: now,
+          } satisfies RequestDoc)
+        );
 
         return {
           type: 'reserved' as const,
