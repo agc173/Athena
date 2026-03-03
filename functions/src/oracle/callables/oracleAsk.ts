@@ -48,6 +48,24 @@ function stripUndefined<T extends Record<string, any>>(obj: T): T {
   return Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined)) as T;
 }
 
+function stripUndefinedDeep<T>(value: T): T {
+  if (Array.isArray(value)) {
+    return value
+        .filter((item) => item !== undefined)
+        .map((item) => stripUndefinedDeep(item)) as T;
+  }
+
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+        Object.entries(value)
+            .filter(([, item]) => item !== undefined)
+            .map(([key, item]) => [key, stripUndefinedDeep(item)])
+    ) as T;
+  }
+
+  return value;
+}
+
 function normalizeLang(lang?: string): string {
   if (!lang) return 'es';
   return lang.trim().toLowerCase().startsWith('en') ? 'en' : 'es';
@@ -254,21 +272,21 @@ export const oracleAsk = onCall(
 
         tx.set(userDailyRef, nextDaily, {merge: true});
         tx.create(
-          requestRef,
-          stripUndefined({
-            uid,
-            requestId,
-            requestType: data.requestType,
-            lang,
-            topic: data.topic,
-            question,
-            dateIso,
-            intent,
-            status: 'PROCESSING',
-            systemMode,
-            createdAt: now,
-            updatedAt: now,
-          } satisfies RequestDoc)
+            requestRef,
+            stripUndefined({
+              uid,
+              requestId,
+              requestType: data.requestType,
+              lang,
+              topic: data.topic,
+              question,
+              dateIso,
+              intent,
+              status: 'PROCESSING',
+              systemMode,
+              createdAt: now,
+              updatedAt: now,
+            } satisfies RequestDoc)
         );
 
         return {
@@ -335,13 +353,14 @@ export const oracleAsk = onCall(
           quotaSnapshot: reservation.quotaSnapshot,
           systemMode,
         };
+        const llmMeta = stripUndefinedDeep(generated.llmMeta);
 
         const answerRef = oracleSubRef('oracleAnswers', uid, 'items', requestId);
         await db.runTransaction(async (tx) => {
           tx.set(requestRef, {
             status: 'COMPLETED_SUCCESS',
             responsePayload,
-            llmMeta: generated.llmMeta,
+            llmMeta,
             updatedAt: FieldValue.serverTimestamp(),
           }, {merge: true});
 
@@ -352,7 +371,7 @@ export const oracleAsk = onCall(
             question,
             answer: generated.answer,
             createdAt: FieldValue.serverTimestamp(),
-            llmMeta: generated.llmMeta,
+            llmMeta,
           }, {merge: true});
         });
 
