@@ -32,8 +32,6 @@ kotlin {
             implementation(libs.androidx.core.ktx)
             implementation(libs.androidx.activity)
             implementation(libs.androidx.activity.ktx)
-            implementation(libs.androidx.navigationevent.android)
-            implementation(libs.androidx.navigationevent.compose.android)
 
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.androidx.activity.compose)
@@ -119,4 +117,13 @@ android {
 
 dependencies {
     debugImplementation(libs.compose.uiTooling)
+}
+
+configurations.matching {
+    it.name.contains("RuntimeClasspath") || it.name.contains("CompileClasspath")
+}.all {
+    resolutionStrategy.force(
+        "androidx.core:core:1.13.1",
+        "androidx.core:core-ktx:1.13.1"
+    )
 }
