@@ -18,6 +18,7 @@ import com.agc.bwitch.ui.astrology.BirthChartScreen
 import com.agc.bwitch.ui.astrology.HoroscopeScreen
 import com.agc.bwitch.ui.auth.AuthScreen
 import com.agc.bwitch.ui.common.AppScaffold
+import com.agc.bwitch.ui.oracle.OracleDebugScreen
 import com.agc.bwitch.ui.portal.PortalScreen
 import com.agc.bwitch.ui.userprofile.UserProfileScreen
 import org.koin.compose.koinInject
@@ -95,6 +96,8 @@ fun AppRoot() {
                 contentPadding = padding,
                 onBack = { navigator.goBack() }
             )
+
+            Destination.OracleDebug -> OracleDebugScreen(contentPadding = padding)
         }
     }
 }
