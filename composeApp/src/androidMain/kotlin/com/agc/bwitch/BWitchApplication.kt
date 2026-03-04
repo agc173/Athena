@@ -1,6 +1,7 @@
 package com.agc.bwitch
 
 import android.app.Application
+import com.agc.bwitch.BuildConfig
 import com.agc.bwitch.di.init.initKoin
 import com.agc.bwitch.di.platformModule
 import com.google.firebase.FirebaseApp
