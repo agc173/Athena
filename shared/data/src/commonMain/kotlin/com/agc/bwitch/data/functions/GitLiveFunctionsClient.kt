@@ -16,7 +16,7 @@ class GitLiveFunctionsClient(
                 .httpsCallable(name)
                 .invoke(data)
 
-            val payload = result.data
+            val payload = result.data<Map<String, Any?>>()
 
             if (payload is Map<*, *>) {
                 @Suppress("UNCHECKED_CAST")
