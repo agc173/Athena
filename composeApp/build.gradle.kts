@@ -51,7 +51,6 @@ kotlin {
             // GitLive remains the source for Auth/Firestore/Functions integrations.
             implementation("com.google.firebase:firebase-appcheck-debug:18.0.0")
             implementation("com.google.firebase:firebase-firestore:24.10.0")
-            implementation("com.google.firebase:firebase-common:21.0.0")
             // TODO(prod): implementation("com.google.firebase:firebase-appcheck-playintegrity:18.0.0")
 
         }
