@@ -23,6 +23,8 @@ sealed class Destination(val title: String) {
      */
     data object UserProfile : Destination("Perfil")
 
+    data object OracleDebug : Destination("Oracle debug")
+
     /**
      * Feature destinations with params
      */

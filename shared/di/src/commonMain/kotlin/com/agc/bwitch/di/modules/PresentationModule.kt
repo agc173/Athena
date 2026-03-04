@@ -4,6 +4,7 @@ import com.agc.bwitch.presentation.astrology.birthchart.BirthChartViewModel
 import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeViewModel
 import com.agc.bwitch.presentation.auth.SessionViewModel
 import com.agc.bwitch.presentation.navigation.Destination
+import com.agc.bwitch.presentation.oracle.OracleStatusViewModel
 import com.agc.bwitch.presentation.navigation.Navigator
 import org.koin.core.module.Module
 import org.koin.dsl.module
@@ -37,6 +38,8 @@ val presentationModule: Module = module {
 
 
     factory { UserProfileViewModel(get(), get(), get(), get(), get(), get()) }
+
+    factory { OracleStatusViewModel(get()) }
 
 }
 
