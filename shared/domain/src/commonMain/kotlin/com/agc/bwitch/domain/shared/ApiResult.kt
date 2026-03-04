@@ -1,4 +1,4 @@
-package com.agc.bwitch.data.functions
+package com.agc.bwitch.domain.shared
 
 sealed class ApiResult<out T> {
     data class Ok<T>(val value: T) : ApiResult<T>()

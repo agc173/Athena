@@ -1,6 +1,6 @@
 package com.agc.bwitch.presentation.oracle
 
-import com.agc.bwitch.data.functions.ApiResult
+import com.agc.bwitch.domain.shared.ApiResult
 import com.agc.bwitch.domain.oracle.OracleRepository
 import com.agc.bwitch.domain.oracle.SystemMode
 import kotlinx.coroutines.CoroutineScope
