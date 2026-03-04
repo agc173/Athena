@@ -402,7 +402,7 @@ export const tarotDraw = onCall(
             status: 'COMPLETED_SUCCESS',
             readingId,
             responsePayload,
-            llmMeta: generated.llmMeta,
+            llmMeta, // ✅ use sanitized meta
             updatedAt: FieldValue.serverTimestamp(),
           }, {merge: true});
 
@@ -414,7 +414,7 @@ export const tarotDraw = onCall(
             draw: drawForHistory,
             reading: generated.reading,
             createdAt: FieldValue.serverTimestamp(),
-            llmMeta: generated.llmMeta,
+            llmMeta, // ✅ use sanitized meta
           }, {merge: true});
         });
 
