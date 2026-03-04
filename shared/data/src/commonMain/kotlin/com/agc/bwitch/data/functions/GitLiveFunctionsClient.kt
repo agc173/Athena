@@ -14,12 +14,13 @@ class GitLiveFunctionsClient(
         return try {
             val result = functions
                 .httpsCallable(name)
-                .call(data)
-                .data
+                .invoke(data)
 
-            if (result is Map<*, *>) {
+            val payload = result.data
+
+            if (payload is Map<*, *>) {
                 @Suppress("UNCHECKED_CAST")
-                ApiResult.Ok(result as Map<String, Any?>)
+                ApiResult.Ok(payload as Map<String, Any?>)
             } else {
                 ApiResult.Err(ApiError.Internal("Callable '$name' did not return an object payload."))
             }
@@ -31,13 +32,19 @@ class GitLiveFunctionsClient(
     }
 
     private fun FirebaseFunctionsException.toApiError(): ApiError {
-        return when (code) {
-            FirebaseFunctionsException.Code.UNAUTHENTICATED -> ApiError.Unauthenticated(message)
-            FirebaseFunctionsException.Code.PERMISSION_DENIED -> ApiError.PermissionDenied(message)
-            FirebaseFunctionsException.Code.RESOURCE_EXHAUSTED -> ApiError.ResourceExhausted(message)
-            FirebaseFunctionsException.Code.FAILED_PRECONDITION -> ApiError.FailedPrecondition(message)
-            FirebaseFunctionsException.Code.INVALID_ARGUMENT -> ApiError.InvalidArgument(message)
-            FirebaseFunctionsException.Code.INTERNAL -> ApiError.Internal(message)
+        val normalizedCode = code
+            .toString()
+            .lowercase()
+            .substringAfterLast('.')
+            .replace('_', '-')
+
+        return when (normalizedCode) {
+            "unauthenticated" -> ApiError.Unauthenticated(message)
+            "permission-denied" -> ApiError.PermissionDenied(message)
+            "resource-exhausted" -> ApiError.ResourceExhausted(message)
+            "failed-precondition" -> ApiError.FailedPrecondition(message)
+            "invalid-argument" -> ApiError.InvalidArgument(message)
+            "internal" -> ApiError.Internal(message)
             else -> ApiError.Unknown(message)
         }
     }
