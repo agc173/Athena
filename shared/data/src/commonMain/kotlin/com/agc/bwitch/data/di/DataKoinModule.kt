@@ -3,6 +3,8 @@ package com.agc.bwitch.data.di
 import com.agc.bwitch.data.astrology.birthchart.SettingsBirthChartRepository
 import com.agc.bwitch.data.astrology.birthchart.SyncBirthChartRepository
 import com.agc.bwitch.data.auth.FirebaseAuthRepository
+import com.agc.bwitch.data.functions.FunctionsClient
+import com.agc.bwitch.data.functions.GitLiveFunctionsClient
 import com.agc.bwitch.data.session.LocalUserDataRepositoryImpl
 import com.agc.bwitch.data.userprofile.FirebaseAvatarRepository
 import com.agc.bwitch.data.userprofile.SettingsUserProfileRepository
@@ -78,6 +80,11 @@ val dataKoinModule: Module = module {
      */
     single<AvatarRepository> { FirebaseAvatarRepository(get()) }
 
+
+    /**
+     * Cloud Functions
+     */
+    single<FunctionsClient> { GitLiveFunctionsClient() }
     /**
      * Local user data cleanup (logout)
      */
