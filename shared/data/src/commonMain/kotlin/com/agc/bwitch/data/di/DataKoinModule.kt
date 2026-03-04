@@ -7,6 +7,7 @@ import com.agc.bwitch.data.functions.FunctionsClient
 import com.agc.bwitch.data.functions.GitLiveFunctionsClient
 import com.agc.bwitch.data.oracle.OracleRepositoryImpl
 import com.agc.bwitch.data.session.LocalUserDataRepositoryImpl
+import com.agc.bwitch.data.tarot.TarotRepositoryImpl
 import com.agc.bwitch.data.userprofile.FirebaseAvatarRepository
 import com.agc.bwitch.data.userprofile.SettingsUserProfileRepository
 import com.agc.bwitch.data.userprofile.SyncUserProfileRepository
@@ -15,6 +16,7 @@ import com.agc.bwitch.domain.astrology.horoscope.HoroscopeRepository
 import com.agc.bwitch.domain.auth.AuthRepository
 import com.agc.bwitch.domain.oracle.OracleRepository
 import com.agc.bwitch.domain.session.LocalUserDataRepository
+import com.agc.bwitch.domain.tarot.TarotRepository
 import com.agc.bwitch.domain.userprofile.AvatarRepository
 import com.agc.bwitch.domain.userprofile.UserProfileRepository
 import org.koin.core.module.Module
@@ -88,6 +90,7 @@ val dataKoinModule: Module = module {
      */
     single<FunctionsClient> { GitLiveFunctionsClient() }
     single<OracleRepository> { OracleRepositoryImpl(get()) }
+    single<TarotRepository> { TarotRepositoryImpl(get()) }
     /**
      * Local user data cleanup (logout)
      */
