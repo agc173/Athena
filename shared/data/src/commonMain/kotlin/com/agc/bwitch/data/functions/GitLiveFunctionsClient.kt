@@ -1,5 +1,8 @@
 package com.agc.bwitch.data.functions
 
+import com.agc.bwitch.domain.shared.ApiError
+import com.agc.bwitch.domain.shared.ApiResult
+
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.functions.FirebaseFunctionsException
 import dev.gitlive.firebase.functions.functions

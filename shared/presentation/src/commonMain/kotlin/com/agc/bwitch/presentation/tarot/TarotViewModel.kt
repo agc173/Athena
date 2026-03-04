@@ -1,6 +1,6 @@
 package com.agc.bwitch.presentation.tarot
 
-import com.agc.bwitch.data.functions.ApiResult
+import com.agc.bwitch.domain.shared.ApiResult
 import com.agc.bwitch.domain.tarot.TarotDrawResponse
 import com.agc.bwitch.domain.tarot.TarotRepository
 import com.agc.bwitch.domain.tarot.TarotRequestType

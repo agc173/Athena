@@ -1,6 +1,6 @@
 package com.agc.bwitch.domain.tarot
 
-import com.agc.bwitch.data.functions.ApiResult
+import com.agc.bwitch.domain.shared.ApiResult
 
 interface TarotRepository {
     suspend fun tarotDraw(
