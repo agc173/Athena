@@ -50,6 +50,8 @@ kotlin {
             // Firebase App Check (native Android SDK only) to fetch App Check tokens.
             // GitLive remains the source for Auth/Firestore/Functions integrations.
             implementation("com.google.firebase:firebase-appcheck-debug:18.0.0")
+            implementation("com.google.firebase:firebase-firestore:24.10.0")
+            implementation("com.google.firebase:firebase-common:21.0.0")
             // TODO(prod): implementation("com.google.firebase:firebase-appcheck-playintegrity:18.0.0")
 
         }
@@ -129,8 +131,4 @@ configurations.matching {
         "androidx.core:core:1.13.1",
         "androidx.core:core-ktx:1.13.1"
     )
-}
-
-configurations.all {
-    exclude(group = "com.google.firebase", module = "firebase-firestore")
 }
