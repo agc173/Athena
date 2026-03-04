@@ -28,6 +28,16 @@ kotlin {
     
     sourceSets {
         androidMain.dependencies {
+            constraints {
+                implementation(libs.androidx.core)
+                implementation(libs.androidx.core.ktx)
+                implementation(libs.androidx.activity)
+                implementation(libs.androidx.activity.ktx)
+                implementation(libs.androidx.activity.compose)
+                implementation(libs.androidx.navigationevent.android)
+                implementation(libs.androidx.navigationevent.compose.android)
+            }
+
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.androidx.activity.compose)
             implementation(libs.ktor.client.okhttp)
