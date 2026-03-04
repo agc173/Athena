@@ -127,3 +127,7 @@ configurations.matching {
         "androidx.core:core-ktx:1.13.1"
     )
 }
+
+configurations.all {
+    exclude(group = "com.google.firebase", module = "firebase-firestore")
+}
