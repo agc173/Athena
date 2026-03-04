@@ -28,7 +28,6 @@ kotlin {
     
     sourceSets {
         androidMain.dependencies {
-            implementation(enforcedPlatform("com.google.firebase:firebase-bom:33.13.0"))
             implementation(libs.androidx.core)
             implementation(libs.androidx.core.ktx)
             implementation(libs.androidx.activity)
