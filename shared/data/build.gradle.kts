@@ -63,6 +63,10 @@ android {
         minSdk = libs.versions.android.minSdk.get().toInt()
     }
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     lint {
         abortOnError = false
         checkReleaseBuilds = true
