@@ -16,12 +16,13 @@ class GitLiveFunctionsClient(
     override suspend fun <Req : Any, Res : Any> call(
         name: String,
         data: Req?,
+        requestSerializer: KSerializer<Req>,
         responseSerializer: KSerializer<Res>,
     ): ApiResult<Res> {
         return try {
             val result = functions
                 .httpsCallable(name)
-                .invoke(data)
+                .invoke(data, requestSerializer)
 
             val payload = result.data(responseSerializer)
 

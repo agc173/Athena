@@ -6,6 +6,7 @@ import com.agc.bwitch.data.functions.FunctionsClient
 import com.agc.bwitch.domain.oracle.OracleRepository
 import com.agc.bwitch.domain.oracle.SystemMode
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.serializer
 
 class OracleRepositoryImpl(
     private val functionsClient: FunctionsClient,
@@ -15,7 +16,8 @@ class OracleRepositoryImpl(
         return when (
             val result = functionsClient.call<Unit, OracleStatusResponse>(
                 name = "oracleGetStatus",
-                data = null,
+                data = Unit,
+                requestSerializer = Unit.serializer(),
                 responseSerializer = OracleStatusResponse.serializer(),
             )
         ) {
