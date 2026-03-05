@@ -408,7 +408,7 @@ export const tarotDraw = onCall(
             updatedAt: FieldValue.serverTimestamp(),
           }, {merge: true});
 
-          tx.set(readingRef, {
+          tx.set(readingRef, stripUndefinedDeep({
             requestId,
             requestType: data.requestType,
             lang,
@@ -417,7 +417,7 @@ export const tarotDraw = onCall(
             reading: generated.reading,
             createdAt: FieldValue.serverTimestamp(),
             llmMeta, // ✅ use sanitized meta
-          }, {merge: true});
+          }), {merge: true});
         });
 
         await addLlmTokens(
