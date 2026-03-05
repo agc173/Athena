@@ -28,6 +28,8 @@ kotlin {
     
     sourceSets {
         androidMain.dependencies {
+            implementation(platform("com.google.firebase:firebase-bom:33.13.0"))
+
             implementation(libs.androidx.core)
             implementation(libs.androidx.core.ktx)
             implementation(libs.androidx.activity)
@@ -49,7 +51,7 @@ kotlin {
 
             // Firebase App Check (native Android SDK only) to fetch App Check tokens.
             // GitLive remains the source for Auth/Firestore/Functions integrations.
-            implementation("com.google.firebase:firebase-appcheck-debug:18.0.0")
+            implementation("com.google.firebase:firebase-appcheck-debug")
             // TODO(prod): implementation("com.google.firebase:firebase-appcheck-playintegrity:18.0.0")
 
         }
