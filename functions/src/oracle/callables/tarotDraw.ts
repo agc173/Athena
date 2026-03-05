@@ -180,6 +180,7 @@ export const tarotDraw = onCall(
     {
       region: 'europe-west1',
       enforceAppCheck: !ENV.ALLOW_UNVERIFIED_APPCHECK_IN_DEV,
+      secrets: ['DEEPSEEK_API_KEY'],
     },
     async (request) => {
       const uid = request.auth?.uid;
@@ -341,6 +342,7 @@ export const tarotDraw = onCall(
         const {dateIso: reservedDateIso} = await reserveLlmCallOrThrow('tarot', llmDailyCaps());
         usageDateIso = reservedDateIso;
       } catch (error) {
+        console.error('tarotDraw error:', error);
         const errorMessage = error instanceof Error ? error.message : String(error);
 
         if (errorMessage.includes('DAILY_LLM_CAP_EXCEEDED')) {
@@ -437,6 +439,7 @@ export const tarotDraw = onCall(
 
         return responsePayload;
       } catch (error) {
+        console.error('tarotDraw error:', error);
         const errorMessage = error instanceof Error ? error.message : String(error);
 
         await requestRef.set({
