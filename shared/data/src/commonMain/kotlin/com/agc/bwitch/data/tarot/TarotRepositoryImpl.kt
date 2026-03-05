@@ -3,6 +3,7 @@ package com.agc.bwitch.data.tarot
 import com.agc.bwitch.domain.shared.ApiError
 import com.agc.bwitch.domain.shared.ApiResult
 import com.agc.bwitch.data.functions.FunctionsClient
+import com.agc.bwitch.data.platform.BuildInfo
 import com.agc.bwitch.domain.tarot.TarotCard
 import com.agc.bwitch.domain.tarot.TarotDrawResponse
 import com.agc.bwitch.domain.tarot.TarotReading
@@ -24,6 +25,10 @@ class TarotRepositoryImpl(
             put("requestId", requestId)
             lang?.let { put("lang", it) }
             question?.let { put("question", it) }
+            // Temporary dev-only hack until real rewarded ad proof / SSV validation is implemented.
+            if (BuildInfo.isDebug) {
+                put("adUnlock", mapOf("rewardedProof" to "dev-test-proof"))
+            }
         }
 
         return when (val result = functionsClient.call("tarotDraw", payload)) {
