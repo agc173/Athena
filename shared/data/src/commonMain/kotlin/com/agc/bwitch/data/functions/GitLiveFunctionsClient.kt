@@ -35,8 +35,8 @@ class GitLiveFunctionsClient(
     }
 
     private fun FirebaseFunctionsException.toApiError(): ApiError {
-        val normalizedCode = code
-            .toString()
+        val normalizedCode = runCatching { code.toString() }
+            .getOrDefault("")
             .lowercase()
             .substringAfterLast('.')
             .replace('_', '-')
