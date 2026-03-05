@@ -37,6 +37,7 @@ class TarotRepositoryImpl(
             val result = functionsClient.call(
                 name = "tarotDraw",
                 data = payload,
+                requestSerializer = TarotDrawRequestDto.serializer(),
                 responseSerializer = TarotDrawResponseDto.serializer(),
             )
         ) {

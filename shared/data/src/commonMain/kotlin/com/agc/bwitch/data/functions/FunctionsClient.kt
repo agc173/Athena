@@ -7,6 +7,7 @@ interface FunctionsClient {
     suspend fun <Req : Any, Res : Any> call(
         name: String,
         data: Req? = null,
+        requestSerializer: KSerializer<Req>,
         responseSerializer: KSerializer<Res>,
     ): ApiResult<Res>
 }
