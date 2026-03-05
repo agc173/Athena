@@ -28,7 +28,7 @@ kotlin {
     
     sourceSets {
         androidMain.dependencies {
-            implementation(platform("com.google.firebase:firebase-bom:33.13.0"))
+            // (sin BoM)
 
             implementation(libs.androidx.core)
             implementation(libs.androidx.core.ktx)
@@ -42,7 +42,6 @@ kotlin {
             implementation(libs.ktor.client.okhttp)
             implementation(libs.multiplatform.settings)
 
-
             // Google Sign-In (Credential Manager)
             implementation("androidx.credentials:credentials:1.5.0")
             implementation("androidx.credentials:credentials-play-services-auth:1.5.0")
@@ -51,9 +50,8 @@ kotlin {
 
             // Firebase App Check (native Android SDK only) to fetch App Check tokens.
             // GitLive remains the source for Auth/Firestore/Functions integrations.
-            implementation("com.google.firebase:firebase-appcheck-debug")
+            implementation("com.google.firebase:firebase-appcheck-debug:18.0.0")
             // TODO(prod): implementation("com.google.firebase:firebase-appcheck-playintegrity:18.0.0")
-
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
@@ -129,6 +127,8 @@ configurations.matching {
 }.all {
     resolutionStrategy.force(
         "androidx.core:core:1.13.1",
-        "androidx.core:core-ktx:1.13.1"
+        "androidx.core:core-ktx:1.13.1",
+        "com.google.firebase:firebase-common:20.4.2",
+        "com.google.firebase:firebase-common-ktx:20.4.2"
     )
 }
