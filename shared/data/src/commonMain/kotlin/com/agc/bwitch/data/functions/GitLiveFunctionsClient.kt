@@ -35,19 +35,19 @@ class GitLiveFunctionsClient(
     }
 
     private fun FirebaseFunctionsException.toApiError(): ApiError {
-        val normalizedCode = runCatching { code.toString() }
-            .getOrDefault("")
-            .lowercase()
-            .substringAfterLast('.')
-            .replace('_', '-')
+        val haystack = buildString {
+            append(message ?: "")
+            append(' ')
+            append(this@toApiError.toString())
+        }.lowercase()
 
-        return when (normalizedCode) {
-            "unauthenticated" -> ApiError.Unauthenticated(message)
-            "permission-denied" -> ApiError.PermissionDenied(message)
-            "resource-exhausted" -> ApiError.ResourceExhausted(message)
-            "failed-precondition" -> ApiError.FailedPrecondition(message)
-            "invalid-argument" -> ApiError.InvalidArgument(message)
-            "internal" -> ApiError.Internal(message)
+        return when {
+            "unauthenticated" in haystack -> ApiError.Unauthenticated(message)
+            "permission-denied" in haystack || "permission denied" in haystack -> ApiError.PermissionDenied(message)
+            "resource-exhausted" in haystack || "resource exhausted" in haystack -> ApiError.ResourceExhausted(message)
+            "failed-precondition" in haystack || "failed precondition" in haystack -> ApiError.FailedPrecondition(message)
+            "invalid-argument" in haystack || "invalid argument" in haystack -> ApiError.InvalidArgument(message)
+            "internal" in haystack -> ApiError.Internal(message)
             else -> ApiError.Unknown(message)
         }
     }
