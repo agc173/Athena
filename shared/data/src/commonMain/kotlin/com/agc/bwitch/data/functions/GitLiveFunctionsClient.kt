@@ -6,6 +6,7 @@ import com.agc.bwitch.domain.shared.ApiResult
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.functions.FirebaseFunctionsException
 import dev.gitlive.firebase.functions.functions
+import kotlinx.serialization.json.JsonObject
 
 class GitLiveFunctionsClient(
     region: String = DEFAULT_REGION
@@ -13,20 +14,15 @@ class GitLiveFunctionsClient(
 
     private val functions = Firebase.functions(region)
 
-    override suspend fun call(name: String, data: Map<String, Any?>?): ApiResult<Map<String, Any?>> {
+    override suspend fun call(name: String, data: JsonObject?): ApiResult<JsonObject> {
         return try {
             val result = functions
                 .httpsCallable(name)
                 .invoke(data)
 
-            val payload = result.data<Map<String, Any?>>()
+            val payload = result.data<JsonObject>()
 
-            if (payload is Map<*, *>) {
-                @Suppress("UNCHECKED_CAST")
-                ApiResult.Ok(payload as Map<String, Any?>)
-            } else {
-                ApiResult.Err(ApiError.Internal("Callable '$name' did not return an object payload."))
-            }
+            ApiResult.Ok(payload)
         } catch (e: FirebaseFunctionsException) {
             ApiResult.Err(e.toApiError())
         } catch (e: Throwable) {
