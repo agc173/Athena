@@ -2,11 +2,10 @@ package com.agc.bwitch.data.functions
 
 import com.agc.bwitch.domain.shared.ApiError
 import com.agc.bwitch.domain.shared.ApiResult
-
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.functions.FirebaseFunctionsException
 import dev.gitlive.firebase.functions.functions
-import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.KSerializer
 
 class GitLiveFunctionsClient(
     region: String = DEFAULT_REGION
@@ -14,13 +13,17 @@ class GitLiveFunctionsClient(
 
     private val functions = Firebase.functions(region)
 
-    override suspend fun call(name: String, data: JsonObject?): ApiResult<JsonObject> {
+    override suspend fun <Req : Any, Res : Any> call(
+        name: String,
+        data: Req?,
+        responseSerializer: KSerializer<Res>,
+    ): ApiResult<Res> {
         return try {
             val result = functions
                 .httpsCallable(name)
                 .invoke(data)
 
-            val payload = result.data<JsonObject>()
+            val payload = result.data(responseSerializer)
 
             ApiResult.Ok(payload)
         } catch (e: FirebaseFunctionsException) {

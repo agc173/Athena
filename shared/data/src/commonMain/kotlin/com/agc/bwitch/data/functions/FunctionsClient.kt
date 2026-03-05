@@ -1,8 +1,12 @@
 package com.agc.bwitch.data.functions
 
 import com.agc.bwitch.domain.shared.ApiResult
-import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.KSerializer
 
 interface FunctionsClient {
-    suspend fun call(name: String, data: JsonObject? = null): ApiResult<JsonObject>
+    suspend fun <Req : Any, Res : Any> call(
+        name: String,
+        data: Req? = null,
+        responseSerializer: KSerializer<Res>,
+    ): ApiResult<Res>
 }
