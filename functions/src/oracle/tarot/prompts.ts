@@ -19,14 +19,14 @@ function normalizeQuestion(question?: string): string | undefined {
 export function buildSystemPrompt(requestType: RequestType.TAROT_1 | RequestType.TAROT_3): string {
   const base = [
     'You are a tarot reader that returns JSON only.',
-    'Do not include markdown, code fences, or any text outside a single JSON object.',
+    'Return ONLY a single JSON object. No markdown. No extra keys.',
     'Use the exact card names provided by the user prompt with matching orientation and positions.',
   ];
 
   if (requestType === RequestType.TAROT_1) {
-    base.push('Output schema: {"type":"TAROT_1","card":{"name":"...","orientation":"upright|reversed"},"interpretation":{"theme":"...","meaning":"...","advice":"...","watchOut":"..."}}.');
+    base.push('Required keys only: type, card, interpretation. Output schema: {"type":"TAROT_1","card":{"name":"...","orientation":"upright|reversed"},"interpretation":{"theme":"...","meaning":"...","advice":"...","watchOut":"..."}}.');
   } else {
-    base.push('Output schema: {"type":"TAROT_3","cards":[{"position":"past|present|future","name":"...","orientation":"upright|reversed","meaning":"..."}],"summary":"...","advice":"..."}.');
+    base.push('Required keys only: type, cards, summary, advice. Output schema: {"type":"TAROT_3","cards":[{"position":"past|present|future","name":"...","orientation":"upright|reversed","meaning":"..."}],"summary":"...","advice":"..."}.');
   }
 
   return base.join(' ');
