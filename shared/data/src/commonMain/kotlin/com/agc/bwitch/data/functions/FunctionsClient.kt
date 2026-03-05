@@ -6,7 +6,7 @@ import kotlinx.serialization.KSerializer
 interface FunctionsClient {
     suspend fun <Req : Any, Res : Any> call(
         name: String,
-        data: Req? = null,
+        data: Req,
         requestSerializer: KSerializer<Req>,
         responseSerializer: KSerializer<Res>,
     ): ApiResult<Res>
