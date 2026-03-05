@@ -19,12 +19,15 @@ export function buildRouter(): LLMRouter {
 
   const useMock = ENV.USE_MOCK_LLM;
 
+  if (!useMock && !ENV.DEEPSEEK_API_KEY) {
+    throw new Error('DEEPSEEK_API_KEY is missing but USE_MOCK_LLM=false');
+  }
+
   const primaryProvider = useMock ?
     new MockLLMProvider() :
-    (ENV.DEEPSEEK_API_KEY ?
-      new DeepSeekProvider() :
-      new MockLLMProvider());
+    new DeepSeekProvider();
 
+  console.info('LLM Router primary provider:', primaryProvider.constructor.name);
 
   return geminiImplemented ?
     LLMRouter.withFallback(primaryProvider, gemini) :
