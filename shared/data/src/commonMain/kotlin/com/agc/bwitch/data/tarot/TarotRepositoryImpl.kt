@@ -9,6 +9,11 @@ import com.agc.bwitch.domain.tarot.TarotDrawResponse
 import com.agc.bwitch.domain.tarot.TarotReading
 import com.agc.bwitch.domain.tarot.TarotRepository
 import com.agc.bwitch.domain.tarot.TarotRequestType
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.contentOrNull
 
 class TarotRepositoryImpl(
     private val functionsClient: FunctionsClient,
@@ -20,14 +25,14 @@ class TarotRepositoryImpl(
         lang: String?,
         question: String?,
     ): ApiResult<TarotDrawResponse> {
-        val payload = buildMap<String, Any> {
-            put("requestType", type.name)
-            put("requestId", requestId)
-            lang?.let { put("lang", it) }
-            question?.let { put("question", it) }
+        val payload = buildJsonObject {
+            put("requestType", JsonPrimitive(type.name))
+            put("requestId", JsonPrimitive(requestId))
+            lang?.let { put("lang", JsonPrimitive(it)) }
+            question?.let { put("question", JsonPrimitive(it)) }
             // Temporary dev-only hack until real rewarded ad proof / SSV validation is implemented.
             if (BuildInfo.isDebug) {
-                put("adUnlock", mapOf("rewardedProof" to "dev-test-proof"))
+                put("adUnlock", buildJsonObject { put("rewardedProof", JsonPrimitive("dev-test-proof")) })
             }
         }
 
@@ -37,10 +42,10 @@ class TarotRepositoryImpl(
         }
     }
 
-    private fun parseResponse(response: Map<String, Any?>): ApiResult<TarotDrawResponse> {
-        val requestId = response["requestId"] as? String
+    private fun parseResponse(response: JsonObject): ApiResult<TarotDrawResponse> {
+        val requestId = response.string("requestId")
             ?: return ApiResult.Err(ApiError.Internal("Invalid response: missing requestId"))
-        val status = response["status"] as? String
+        val status = response.string("status")
             ?: return ApiResult.Err(ApiError.Internal("Invalid response: missing status"))
 
         if (status == "IN_PROGRESS" || status == "PROCESSING") {
@@ -55,19 +60,19 @@ class TarotRepositoryImpl(
         }
 
         if (status == "FAILED") {
-            val errorMessage = (response["error"] as? Map<*, *>)?.get("message") as? String
+            val errorMessage = response.obj("error")?.string("message")
             return ApiResult.Err(ApiError.Internal(errorMessage ?: "Request failed"))
         }
 
-        val draw = response["draw"] as? Map<*, *>
+        val draw = response.obj("draw")
             ?: return ApiResult.Err(ApiError.Internal("Invalid response: missing draw"))
-        val reading = response["reading"] as? Map<*, *>
+        val reading = response.obj("reading")
             ?: return ApiResult.Err(ApiError.Internal("Invalid response: missing reading"))
 
         val cards = parseCards(
             draw = draw,
-            requestTypeHint = response["requestType"] as? String,
-            readingTypeHint = reading["type"] as? String,
+            requestTypeHint = response.string("requestType"),
+            readingTypeHint = reading.string("type"),
         ) ?: return ApiResult.Err(ApiError.Internal("Invalid response: invalid draw"))
 
         val parsedReading = parseReading(reading)
@@ -84,25 +89,25 @@ class TarotRepositoryImpl(
     }
 
     private fun parseCards(
-        draw: Map<*, *>,
+        draw: JsonObject,
         requestTypeHint: String? = null,
         readingTypeHint: String? = null,
     ): List<TarotCard>? {
-        val inferredType = (draw["type"] as? String)
+        val inferredType = draw.string("type")
             ?: requestTypeHint
             ?: readingTypeHint
             ?: when {
-                draw["card"] is Map<*, *> -> TarotRequestType.TAROT_1.name
-                draw["cards"] is List<*> -> TarotRequestType.TAROT_3.name
+                draw.obj("card") != null -> TarotRequestType.TAROT_1.name
+                draw.arr("cards") != null -> TarotRequestType.TAROT_3.name
                 else -> null
             }
 
         return when (inferredType) {
             TarotRequestType.TAROT_1.name -> {
-                val card = draw["card"] as? Map<*, *> ?: return null
-                val id = card["id"] as? String ?: return null
-                val name = card["name"] as? String ?: return null
-                val upright = when (card["orientation"] as? String) {
+                val card = draw.obj("card") ?: return null
+                val id = card.string("id") ?: return null
+                val name = card.string("name") ?: return null
+                val upright = when (card.string("orientation")) {
                     "upright" -> true
                     "reversed" -> false
                     else -> null
@@ -111,12 +116,12 @@ class TarotRepositoryImpl(
             }
 
             TarotRequestType.TAROT_3.name -> {
-                val cards = draw["cards"] as? List<*> ?: return null
+                val cards = draw.arr("cards") ?: return null
                 cards.map { cardRaw ->
-                    val card = cardRaw as? Map<*, *> ?: return null
-                    val id = card["id"] as? String ?: return null
-                    val name = card["name"] as? String ?: return null
-                    val upright = when (card["orientation"] as? String) {
+                    val card = cardRaw as? JsonObject ?: return null
+                    val id = card.string("id") ?: return null
+                    val name = card.string("name") ?: return null
+                    val upright = when (card.string("orientation")) {
                         "upright" -> true
                         "reversed" -> false
                         else -> null
@@ -129,26 +134,26 @@ class TarotRepositoryImpl(
         }
     }
 
-    private fun parseReading(reading: Map<*, *>): TarotReading? {
-        val type = reading["type"] as? String ?: return null
+    private fun parseReading(reading: JsonObject): TarotReading? {
+        val type = reading.string("type") ?: return null
         return when (type) {
             TarotRequestType.TAROT_1.name -> {
-                val interpretation = reading["interpretation"] as? Map<*, *> ?: return null
+                val interpretation = reading.obj("interpretation") ?: return null
                 val parts = listOf("theme", "meaning", "advice", "watchOut")
-                    .mapNotNull { key -> interpretation[key] as? String }
+                    .mapNotNull { key -> interpretation.string(key) }
                 if (parts.isEmpty()) return null
                 TarotReading(parts.joinToString(separator = "\n\n"))
             }
 
             TarotRequestType.TAROT_3.name -> {
-                val summary = reading["summary"] as? String
-                val advice = reading["advice"] as? String
-                val cards = reading["cards"] as? List<*>
+                val summary = reading.string("summary")
+                val advice = reading.string("advice")
+                val cards = reading.arr("cards")
                 val cardMeanings = cards
-                    ?.mapNotNull { it as? Map<*, *> }
+                    ?.mapNotNull { it as? JsonObject }
                     ?.mapNotNull { card ->
-                        val position = card["position"] as? String
-                        val meaning = card["meaning"] as? String
+                        val position = card.string("position")
+                        val meaning = card.string("meaning")
                         if (position != null && meaning != null) "$position: $meaning" else null
                     }
                     .orEmpty()
@@ -166,4 +171,13 @@ class TarotRepositoryImpl(
             else -> null
         }
     }
+
+    private fun JsonObject.string(key: String): String? =
+        (this[key] as? JsonPrimitive)?.contentOrNull
+
+    private fun JsonObject.obj(key: String): JsonObject? =
+        this[key] as? JsonObject
+
+    private fun JsonObject.arr(key: String): JsonArray? =
+        this[key] as? JsonArray
 }
