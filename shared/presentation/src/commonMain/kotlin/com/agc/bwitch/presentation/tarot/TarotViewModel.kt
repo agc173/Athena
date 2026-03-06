@@ -15,12 +15,21 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+enum class TarotRevealPhase {
+    IDLE,
+    SHUFFLING,
+    CARDS_READY,
+    READING_VISIBLE,
+}
+
 data class TarotUiState(
     val requestId: String? = null,
     val selectedType: TarotRequestType = TarotRequestType.TAROT_1,
     val isLoading: Boolean = false,
     val response: TarotDrawResponse? = null,
     val error: String? = null,
+    val revealPhase: TarotRevealPhase = TarotRevealPhase.IDLE,
+    val revealedCardCount: Int = 0,
 )
 
 class TarotViewModel(
@@ -39,6 +48,8 @@ class TarotViewModel(
                 selectedType = type,
                 response = null,
                 error = null,
+                revealPhase = TarotRevealPhase.SHUFFLING,
+                revealedCardCount = 0,
             )
         }
         draw(requestId, type)
@@ -47,7 +58,34 @@ class TarotViewModel(
     fun retry() {
         val currentState = _uiState.value
         val requestId = currentState.requestId ?: return
+        _uiState.update {
+            it.copy(
+                revealPhase = TarotRevealPhase.SHUFFLING,
+                revealedCardCount = 0,
+            )
+        }
         draw(requestId, currentState.selectedType)
+    }
+
+    fun revealNextCard() {
+        _uiState.update { currentState ->
+            val response = currentState.response ?: return@update currentState
+            if (currentState.revealPhase != TarotRevealPhase.CARDS_READY) return@update currentState
+
+            currentState.copy(
+                revealedCardCount = (currentState.revealedCardCount + 1).coerceAtMost(response.cards.size),
+            )
+        }
+    }
+
+    fun showReading() {
+        _uiState.update { currentState ->
+            val response = currentState.response ?: return@update currentState
+            val allCardsRevealed = currentState.revealedCardCount >= response.cards.size
+            if (!allCardsRevealed) return@update currentState
+
+            currentState.copy(revealPhase = TarotRevealPhase.READING_VISIBLE)
+        }
     }
 
     private fun draw(requestId: String, type: TarotRequestType) {
@@ -66,6 +104,8 @@ class TarotViewModel(
                             isLoading = false,
                             response = result.value,
                             error = null,
+                            revealPhase = TarotRevealPhase.CARDS_READY,
+                            revealedCardCount = 0,
                         )
                     }
                 }
@@ -75,6 +115,8 @@ class TarotViewModel(
                         it.copy(
                             isLoading = false,
                             response = null,
+                            revealPhase = TarotRevealPhase.IDLE,
+                            revealedCardCount = 0,
                             error = result.error.message ?: "Unknown error",
                         )
                     }
