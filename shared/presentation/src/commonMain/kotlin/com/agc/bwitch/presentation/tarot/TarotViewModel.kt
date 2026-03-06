@@ -57,11 +57,14 @@ class TarotViewModel(
 
     fun retry() {
         val currentState = _uiState.value
-        val requestId = currentState.requestId ?: return
+        val requestId = generateRequestId()
         _uiState.update {
             it.copy(
+                requestId = requestId,
                 revealPhase = TarotRevealPhase.SHUFFLING,
                 revealedCardCount = 0,
+                response = null,
+                error = null,
             )
         }
         draw(requestId, currentState.selectedType)
