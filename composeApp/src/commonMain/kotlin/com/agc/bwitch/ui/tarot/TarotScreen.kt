@@ -34,36 +34,29 @@ fun TarotCardView(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(140.dp),
+            .height(180.dp),
     ) {
         if (!revealed) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(140.dp),
+                    .height(180.dp),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Text("BWitch Tarot", style = MaterialTheme.typography.titleMedium)
+                Text("BWitch", style = MaterialTheme.typography.titleMedium)
+                Text("Tarot", style = MaterialTheme.typography.bodyMedium)
             }
         } else {
-            val orientation = when (card?.upright) {
-                true -> "upright"
-                false -> "reversed"
-                null -> "unknown"
-            }
-
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(card?.name.orEmpty(), style = MaterialTheme.typography.titleMedium)
-                Text("Orientación: $orientation", style = MaterialTheme.typography.bodyMedium)
-                card?.position?.let {
-                    Text("Posición: ${it.name.lowercase()}", style = MaterialTheme.typography.bodySmall)
-                }
+                Text("Ilustración próximamente", style = MaterialTheme.typography.bodyMedium)
             }
         }
     }
@@ -123,10 +116,31 @@ fun TarotScreen(
                     Text("Tus cartas", style = MaterialTheme.typography.titleMedium)
                     response.cards.forEachIndexed { index, card ->
                         val revealed = index < state.revealedCardCount
-                        TarotCardView(
-                            card = if (revealed) card else null,
-                            revealed = revealed,
-                        )
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            TarotCardView(
+                                card = if (revealed) card else null,
+                                revealed = revealed,
+                            )
+
+                            if (revealed) {
+                                val orientation = when (card.upright) {
+                                    true -> "Al derecho"
+                                    false -> "Invertida"
+                                    null -> "Desconocida"
+                                }
+                                Text("Orientación: $orientation", style = MaterialTheme.typography.bodyMedium)
+
+                                val position = when (card.position) {
+                                    TarotCardPosition.PAST -> "Pasado"
+                                    TarotCardPosition.PRESENT -> "Presente"
+                                    TarotCardPosition.FUTURE -> "Futuro"
+                                    null -> null
+                                }
+                                if (position != null) {
+                                    Text("Posición: $position", style = MaterialTheme.typography.bodySmall)
+                                }
+                            }
+                        }
                     }
                 }
             }
