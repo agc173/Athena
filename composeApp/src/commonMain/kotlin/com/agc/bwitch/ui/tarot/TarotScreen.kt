@@ -14,6 +14,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.agc.bwitch.domain.tarot.TarotRequestType
+import com.agc.bwitch.presentation.tarot.TarotRevealPhase
 import com.agc.bwitch.presentation.tarot.TarotViewModel
 import org.koin.compose.koinInject
 
@@ -51,22 +52,61 @@ fun TarotScreen(
             Text("Request ID: $it", style = MaterialTheme.typography.bodySmall)
         }
 
+        if (state.revealPhase == TarotRevealPhase.SHUFFLING) {
+            Text("Shuffling...")
+        }
+
         state.response?.let { response ->
             Text("Status: ${response.status}")
 
-            if (response.cards.isNotEmpty()) {
+            if (
+                response.cards.isNotEmpty() &&
+                (state.revealPhase == TarotRevealPhase.CARDS_READY || state.revealPhase == TarotRevealPhase.READING_VISIBLE)
+            ) {
                 Text("Cards:", style = MaterialTheme.typography.titleMedium)
-                response.cards.forEach { card ->
-                    val orientation = when (card.upright) {
-                        true -> "upright"
-                        false -> "reversed"
-                        null -> "unknown"
+                response.cards.forEachIndexed { index, card ->
+                    if (index < state.revealedCardCount) {
+                        val orientation = when (card.upright) {
+                            true -> "upright"
+                            false -> "reversed"
+                            null -> "unknown"
+                        }
+                        val positionText = card.position?.let { " • ${it.name.lowercase()}" }.orEmpty()
+                        Text("- ${card.name} (${card.id}) • $orientation$positionText")
+                    } else {
+                        Text("- Card face down")
                     }
-                    Text("- ${card.name} (${card.id}) • $orientation")
                 }
             }
 
-            if (response.interpretation.isNotBlank()) {
+            if (state.revealPhase == TarotRevealPhase.CARDS_READY) {
+                if (state.revealedCardCount < response.cards.size) {
+                    Button(
+                        onClick = viewModel::revealNextCard,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(
+                            if (state.selectedType == TarotRequestType.TAROT_1) {
+                                "Reveal card"
+                            } else {
+                                "Reveal next card"
+                            },
+                        )
+                    }
+                } else {
+                    Button(
+                        onClick = viewModel::showReading,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text("View reading")
+                    }
+                }
+            }
+
+            if (
+                state.revealPhase == TarotRevealPhase.READING_VISIBLE &&
+                response.interpretation.isNotBlank()
+            ) {
                 Text("Interpretation", style = MaterialTheme.typography.titleMedium)
                 Text(
                     text = response.interpretation,
