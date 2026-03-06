@@ -17,6 +17,7 @@ import kotlinx.coroutines.launch
 
 data class TarotUiState(
     val requestId: String? = null,
+    val selectedType: TarotRequestType = TarotRequestType.TAROT_1,
     val isLoading: Boolean = false,
     val response: TarotDrawResponse? = null,
     val error: String? = null,
@@ -30,31 +31,33 @@ class TarotViewModel(
     private val _uiState = MutableStateFlow(TarotUiState())
     val uiState: StateFlow<TarotUiState> = _uiState.asStateFlow()
 
-    fun newRequest() {
+    fun newRequest(type: TarotRequestType) {
         val requestId = generateRequestId()
         _uiState.update {
             it.copy(
                 requestId = requestId,
+                selectedType = type,
                 response = null,
                 error = null,
             )
         }
-        draw(requestId)
+        draw(requestId, type)
     }
 
     fun retry() {
-        val requestId = _uiState.value.requestId ?: return
-        draw(requestId)
+        val currentState = _uiState.value
+        val requestId = currentState.requestId ?: return
+        draw(requestId, currentState.selectedType)
     }
 
-    private fun draw(requestId: String) {
+    private fun draw(requestId: String, type: TarotRequestType) {
         scope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
 
             when (
                 val result = tarotRepository.tarotDraw(
                     requestId = requestId,
-                    type = TarotRequestType.TAROT_1,
+                    type = type,
                 )
             ) {
                 is ApiResult.Ok -> {
