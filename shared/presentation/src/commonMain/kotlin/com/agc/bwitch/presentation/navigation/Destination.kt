@@ -25,7 +25,7 @@ sealed class Destination(val title: String) {
 
     data object OracleDebug : Destination("Oracle debug")
 
-    data object TarotDebug : Destination("Tarot debug")
+    data object Tarot : Destination("Tarot")
 
     /**
      * Feature destinations with params

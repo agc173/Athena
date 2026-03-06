@@ -20,7 +20,7 @@ import com.agc.bwitch.ui.auth.AuthScreen
 import com.agc.bwitch.ui.common.AppScaffold
 import com.agc.bwitch.ui.oracle.OracleDebugScreen
 import com.agc.bwitch.ui.portal.PortalScreen
-import com.agc.bwitch.ui.tarot.TarotDebugScreen
+import com.agc.bwitch.ui.tarot.TarotScreen
 import com.agc.bwitch.ui.userprofile.UserProfileScreen
 import org.koin.compose.koinInject
 import com.agc.bwitch.domain.userprofile.GetUserProfileUseCase
@@ -100,7 +100,7 @@ fun AppRoot() {
 
             Destination.OracleDebug -> OracleDebugScreen(contentPadding = padding)
 
-            Destination.TarotDebug -> TarotDebugScreen(contentPadding = padding)
+            Destination.Tarot -> TarotScreen(contentPadding = padding)
         }
     }
 }
