@@ -4,19 +4,66 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.agc.bwitch.domain.tarot.TarotCard
 import com.agc.bwitch.domain.tarot.TarotRequestType
 import com.agc.bwitch.presentation.tarot.TarotRevealPhase
 import com.agc.bwitch.presentation.tarot.TarotViewModel
 import org.koin.compose.koinInject
+
+@Composable
+fun TarotCardView(
+    card: TarotCard?,
+    revealed: Boolean,
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(140.dp),
+    ) {
+        if (!revealed) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(140.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text("BWitch Tarot", style = MaterialTheme.typography.titleMedium)
+            }
+        } else {
+            val orientation = when (card?.upright) {
+                true -> "upright"
+                false -> "reversed"
+                null -> "unknown"
+            }
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Text(card?.name.orEmpty(), style = MaterialTheme.typography.titleMedium)
+                Text("Orientation: $orientation", style = MaterialTheme.typography.bodyMedium)
+                card?.position?.let {
+                    Text("Position: ${it.name.lowercase()}", style = MaterialTheme.typography.bodySmall)
+                }
+            }
+        }
+    }
+}
 
 @Composable
 fun TarotScreen(
@@ -65,17 +112,11 @@ fun TarotScreen(
             ) {
                 Text("Cards:", style = MaterialTheme.typography.titleMedium)
                 response.cards.forEachIndexed { index, card ->
-                    if (index < state.revealedCardCount) {
-                        val orientation = when (card.upright) {
-                            true -> "upright"
-                            false -> "reversed"
-                            null -> "unknown"
-                        }
-                        val positionText = card.position?.let { " • ${it.name.lowercase()}" }.orEmpty()
-                        Text("- ${card.name} (${card.id}) • $orientation$positionText")
-                    } else {
-                        Text("- Card face down")
-                    }
+                    val revealed = index < state.revealedCardCount
+                    TarotCardView(
+                        card = if (revealed) card else null,
+                        revealed = revealed,
+                    )
                 }
             }
 
