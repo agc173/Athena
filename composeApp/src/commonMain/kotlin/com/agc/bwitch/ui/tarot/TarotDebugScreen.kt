@@ -13,6 +13,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.agc.bwitch.domain.tarot.TarotRequestType
 import com.agc.bwitch.presentation.tarot.TarotViewModel
 import org.koin.compose.koinInject
 
@@ -31,11 +32,19 @@ fun TarotDebugScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Button(
-            onClick = viewModel::newRequest,
+            onClick = { viewModel.newRequest(TarotRequestType.TAROT_1) },
             modifier = Modifier.fillMaxWidth(),
             enabled = !state.isLoading,
         ) {
             Text(if (state.isLoading) "Drawing..." else "Draw 1 card")
+        }
+
+        Button(
+            onClick = { viewModel.newRequest(TarotRequestType.TAROT_3) },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !state.isLoading,
+        ) {
+            Text("Draw 3 cards")
         }
 
         state.requestId?.let {
