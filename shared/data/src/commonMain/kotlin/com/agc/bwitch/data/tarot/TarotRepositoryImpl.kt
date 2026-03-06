@@ -9,9 +9,11 @@ import com.agc.bwitch.data.tarot.dto.TarotDrawRequestDto
 import com.agc.bwitch.data.tarot.dto.TarotDrawResponseDto
 import com.agc.bwitch.domain.shared.ApiError
 import com.agc.bwitch.domain.shared.ApiResult
+import com.agc.bwitch.domain.tarot.Tarot3CardMeaning
 import com.agc.bwitch.domain.tarot.TarotCard
+import com.agc.bwitch.domain.tarot.TarotCardPosition
 import com.agc.bwitch.domain.tarot.TarotDrawResponse
-import com.agc.bwitch.domain.tarot.TarotReading
+import com.agc.bwitch.domain.tarot.TarotReadingDetails
 import com.agc.bwitch.domain.tarot.TarotRepository
 import com.agc.bwitch.domain.tarot.TarotRequestType
 
@@ -53,6 +55,7 @@ class TarotRepositoryImpl(
                     requestId = response.requestId,
                     status = response.status,
                     cards = emptyList(),
+                    details = null,
                     interpretation = "",
                 )
             )
@@ -73,7 +76,7 @@ class TarotRepositoryImpl(
             readingTypeHint = reading.type,
         ) ?: return ApiResult.Err(ApiError.Internal("Invalid response: invalid draw"))
 
-        val parsedReading = parseReading(reading)
+        val details = parseReadingDetails(reading)
             ?: return ApiResult.Err(ApiError.Internal("Invalid response: invalid reading"))
 
         return ApiResult.Ok(
@@ -81,7 +84,8 @@ class TarotRepositoryImpl(
                 requestId = response.requestId,
                 status = response.status,
                 cards = cards,
-                interpretation = parsedReading.text,
+                details = details,
+                interpretation = details.toInterpretationText(),
             )
         )
     }
@@ -114,6 +118,7 @@ class TarotRepositoryImpl(
                         id = card.id,
                         name = card.name,
                         upright = card.orientation.toUpright(),
+                        position = card.position.toCardPosition(),
                     )
                 }
             }
@@ -122,42 +127,59 @@ class TarotRepositoryImpl(
         }
     }
 
-    private fun parseReading(reading: ReadingDto): TarotReading? {
+    private fun parseReadingDetails(reading: ReadingDto): TarotReadingDetails? {
         return when (reading.type) {
             TarotRequestType.TAROT_1.name -> {
                 val interpretation = reading.interpretation ?: return null
-                val parts = listOfNotNull(
-                    interpretation.theme,
-                    interpretation.meaning,
-                    interpretation.advice,
-                    interpretation.watchOut,
+                val theme = interpretation.theme ?: return null
+                val meaning = interpretation.meaning ?: return null
+                val advice = interpretation.advice ?: return null
+                val watchOut = interpretation.watchOut ?: return null
+
+                TarotReadingDetails.Tarot1ReadingDetails(
+                    theme = theme,
+                    meaning = meaning,
+                    advice = advice,
+                    watchOut = watchOut,
                 )
-                if (parts.isEmpty()) return null
-                TarotReading(parts.joinToString(separator = "\n\n"))
             }
 
             TarotRequestType.TAROT_3.name -> {
-                val summary = reading.summary
-                val advice = reading.advice
-                val cardMeanings = reading.cards
-                    .orEmpty()
-                    .mapNotNull { card ->
-                        val position = card.position
-                        val meaning = card.meaning
-                        if (position != null && meaning != null) "$position: $meaning" else null
-                    }
+                val summary = reading.summary ?: return null
+                val advice = reading.advice ?: return null
+                val cards = reading.cards.orEmpty().mapNotNull { card ->
+                    val position = card.position.toCardPosition() ?: return@mapNotNull null
+                    val meaning = card.meaning ?: return@mapNotNull null
+                    Tarot3CardMeaning(position = position, meaning = meaning)
+                }
 
-                val text = buildList {
-                    summary?.let(::add)
-                    if (cardMeanings.isNotEmpty()) add(cardMeanings.joinToString("\n"))
-                    advice?.let(::add)
-                }.joinToString(separator = "\n\n")
-
-                if (text.isBlank()) return null
-                TarotReading(text)
+                TarotReadingDetails.Tarot3ReadingDetails(
+                    cards = cards,
+                    summary = summary,
+                    advice = advice,
+                )
             }
 
             else -> null
+        }
+    }
+
+    private fun TarotReadingDetails.toInterpretationText(): String {
+        return when (this) {
+            is TarotReadingDetails.Tarot1ReadingDetails -> listOf(
+                theme,
+                meaning,
+                advice,
+                watchOut,
+            ).joinToString(separator = "\n\n")
+
+            is TarotReadingDetails.Tarot3ReadingDetails -> {
+                val cardMeanings = cards
+                    .joinToString(separator = "\n") { "${it.position.toLabel()}: ${it.meaning}" }
+                listOf(summary, cardMeanings, advice)
+                    .filter { it.isNotBlank() }
+                    .joinToString(separator = "\n\n")
+            }
         }
     }
 
@@ -165,5 +187,18 @@ class TarotRepositoryImpl(
         "upright" -> true
         "reversed" -> false
         else -> null
+    }
+
+    private fun String?.toCardPosition(): TarotCardPosition? = when (this) {
+        "past" -> TarotCardPosition.PAST
+        "present" -> TarotCardPosition.PRESENT
+        "future" -> TarotCardPosition.FUTURE
+        else -> null
+    }
+
+    private fun TarotCardPosition.toLabel(): String = when (this) {
+        TarotCardPosition.PAST -> "past"
+        TarotCardPosition.PRESENT -> "present"
+        TarotCardPosition.FUTURE -> "future"
     }
 }
