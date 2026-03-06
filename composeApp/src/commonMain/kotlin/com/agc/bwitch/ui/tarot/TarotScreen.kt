@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
@@ -56,9 +58,9 @@ fun TarotCardView(
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 Text(card?.name.orEmpty(), style = MaterialTheme.typography.titleMedium)
-                Text("Orientation: $orientation", style = MaterialTheme.typography.bodyMedium)
+                Text("Orientación: $orientation", style = MaterialTheme.typography.bodyMedium)
                 card?.position?.let {
-                    Text("Position: ${it.name.lowercase()}", style = MaterialTheme.typography.bodySmall)
+                    Text("Posición: ${it.name.lowercase()}", style = MaterialTheme.typography.bodySmall)
                 }
             }
         }
@@ -76,15 +78,25 @@ fun TarotScreen(
     Column(
         modifier = modifier
             .padding(contentPadding)
+            .verticalScroll(rememberScrollState())
             .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text("Tarot", style = MaterialTheme.typography.headlineMedium)
+            Text(
+                "Elige una tirada y revela tus cartas",
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        }
+
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Button(
             onClick = { viewModel.newRequest(TarotRequestType.TAROT_1) },
             modifier = Modifier.fillMaxWidth(),
             enabled = !state.isLoading,
         ) {
-            Text(if (state.isLoading) "Drawing..." else "Draw 1 card")
+            Text(if (state.isLoading) "Sacando carta..." else "Sacar 1 carta")
         }
 
         Button(
@@ -92,31 +104,28 @@ fun TarotScreen(
             modifier = Modifier.fillMaxWidth(),
             enabled = !state.isLoading,
         ) {
-            Text("Draw 3 cards")
+            Text("Tirada de 3 cartas")
         }
-
-        state.requestId?.let {
-            Text("Request ID: $it", style = MaterialTheme.typography.bodySmall)
         }
 
         if (state.revealPhase == TarotRevealPhase.SHUFFLING) {
-            Text("Shuffling...")
+            Text("Barajando...")
         }
 
         state.response?.let { response ->
-            Text("Status: ${response.status}")
-
             if (
                 response.cards.isNotEmpty() &&
                 (state.revealPhase == TarotRevealPhase.CARDS_READY || state.revealPhase == TarotRevealPhase.READING_VISIBLE)
             ) {
-                Text("Cards:", style = MaterialTheme.typography.titleMedium)
-                response.cards.forEachIndexed { index, card ->
-                    val revealed = index < state.revealedCardCount
-                    TarotCardView(
-                        card = if (revealed) card else null,
-                        revealed = revealed,
-                    )
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text("Tus cartas", style = MaterialTheme.typography.titleMedium)
+                    response.cards.forEachIndexed { index, card ->
+                        val revealed = index < state.revealedCardCount
+                        TarotCardView(
+                            card = if (revealed) card else null,
+                            revealed = revealed,
+                        )
+                    }
                 }
             }
 
@@ -128,9 +137,9 @@ fun TarotScreen(
                     ) {
                         Text(
                             if (state.selectedType == TarotRequestType.TAROT_1) {
-                                "Reveal card"
+                                "Revelar carta"
                             } else {
-                                "Reveal next card"
+                                "Revelar siguiente carta"
                             },
                         )
                     }
@@ -139,7 +148,7 @@ fun TarotScreen(
                         onClick = viewModel::showReading,
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Text("View reading")
+                        Text("Ver lectura")
                     }
                 }
             }
@@ -148,22 +157,26 @@ fun TarotScreen(
                 state.revealPhase == TarotRevealPhase.READING_VISIBLE &&
                 response.interpretation.isNotBlank()
             ) {
-                Text("Interpretation", style = MaterialTheme.typography.titleMedium)
-                Text(
-                    text = response.interpretation,
-                    style = MaterialTheme.typography.bodyLarge,
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Lectura", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        text = response.interpretation,
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                }
             }
         }
 
         state.error?.let { error ->
-            Text("Error: $error", color = MaterialTheme.colorScheme.error)
-            Button(
-                onClick = viewModel::retry,
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !state.isLoading && state.requestId != null,
-            ) {
-                Text("Retry")
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Error: $error", color = MaterialTheme.colorScheme.error)
+                Button(
+                    onClick = viewModel::retry,
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !state.isLoading && state.requestId != null,
+                ) {
+                    Text("Reintentar")
+                }
             }
         }
     }
