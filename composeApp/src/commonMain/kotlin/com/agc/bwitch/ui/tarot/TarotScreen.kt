@@ -63,6 +63,43 @@ fun TarotCardView(
 }
 
 @Composable
+private fun TarotLoadingDeck(
+    title: String,
+    subtitle: String,
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(220.dp),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(220.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text("BWitch", style = MaterialTheme.typography.headlineSmall)
+                Text("Tarot", style = MaterialTheme.typography.titleMedium)
+            }
+        }
+
+        Column(
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(title, style = MaterialTheme.typography.titleMedium)
+            Text(subtitle, style = MaterialTheme.typography.bodyMedium)
+        }
+    }
+}
+
+@Composable
 fun TarotScreen(
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
@@ -86,25 +123,41 @@ fun TarotScreen(
         }
 
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Button(
-            onClick = { viewModel.newRequest(TarotRequestType.TAROT_1) },
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !state.isLoading,
-        ) {
-            Text(if (state.isLoading) "Sacando carta..." else "Sacar 1 carta")
-        }
+            Button(
+                onClick = { viewModel.newRequest(TarotRequestType.TAROT_1) },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !state.isLoading,
+            ) {
+                Text(if (state.isLoading) "Sacando carta..." else "Sacar 1 carta")
+            }
 
-        Button(
-            onClick = { viewModel.newRequest(TarotRequestType.TAROT_3) },
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !state.isLoading,
-        ) {
-            Text("Tirada de 3 cartas")
-        }
+            Button(
+                onClick = { viewModel.newRequest(TarotRequestType.TAROT_3) },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !state.isLoading,
+            ) {
+                Text("Tirada de 3 cartas")
+            }
         }
 
         if (state.revealPhase == TarotRevealPhase.SHUFFLING) {
-            Text("Barajando...")
+            val loadingTitle: String
+            val loadingSubtitle: String
+            when (state.selectedType) {
+                TarotRequestType.TAROT_1 -> {
+                    loadingTitle = "Barajando las cartas..."
+                    loadingSubtitle = "Tu lectura se está preparando"
+                }
+
+                TarotRequestType.TAROT_3 -> {
+                    loadingTitle = "Preparando tu tirada..."
+                    loadingSubtitle = "Las cartas están revelando su mensaje"
+                }
+            }
+            TarotLoadingDeck(
+                title = loadingTitle,
+                subtitle = loadingSubtitle,
+            )
         }
 
         state.response?.let { response ->
