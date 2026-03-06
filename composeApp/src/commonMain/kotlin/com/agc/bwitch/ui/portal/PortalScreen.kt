@@ -53,7 +53,7 @@ fun PortalScreen(
         PortalItemConfig(
             title = "Tarot",
             subtitle = "Tiradas y lecturas",
-            destination = Destination.TarotDebug,
+            destination = Destination.Tarot,
             enabled = true
         ),
         PortalItemConfig(

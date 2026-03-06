@@ -18,7 +18,7 @@ import com.agc.bwitch.presentation.tarot.TarotViewModel
 import org.koin.compose.koinInject
 
 @Composable
-fun TarotDebugScreen(
+fun TarotScreen(
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
     viewModel: TarotViewModel = koinInject(),
@@ -48,14 +48,14 @@ fun TarotDebugScreen(
         }
 
         state.requestId?.let {
-            Text("requestId: $it", style = MaterialTheme.typography.bodySmall)
+            Text("Request ID: $it", style = MaterialTheme.typography.bodySmall)
         }
 
         state.response?.let { response ->
-            Text("status: ${response.status}")
+            Text("Status: ${response.status}")
 
             if (response.cards.isNotEmpty()) {
-                Text("cards:", style = MaterialTheme.typography.titleMedium)
+                Text("Cards:", style = MaterialTheme.typography.titleMedium)
                 response.cards.forEach { card ->
                     val orientation = when (card.upright) {
                         true -> "upright"
@@ -67,7 +67,7 @@ fun TarotDebugScreen(
             }
 
             if (response.interpretation.isNotBlank()) {
-                Text("interpretation", style = MaterialTheme.typography.titleMedium)
+                Text("Interpretation", style = MaterialTheme.typography.titleMedium)
                 Text(
                     text = response.interpretation,
                     style = MaterialTheme.typography.bodyLarge,
@@ -76,7 +76,7 @@ fun TarotDebugScreen(
         }
 
         state.error?.let { error ->
-            Text("error: $error", color = MaterialTheme.colorScheme.error)
+            Text("Error: $error", color = MaterialTheme.colorScheme.error)
             Button(
                 onClick = viewModel::retry,
                 modifier = Modifier.fillMaxWidth(),
