@@ -18,6 +18,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.agc.bwitch.domain.tarot.TarotCardPosition
+import com.agc.bwitch.domain.tarot.TarotReadingDetails
 import com.agc.bwitch.domain.tarot.TarotCard
 import com.agc.bwitch.domain.tarot.TarotRequestType
 import com.agc.bwitch.presentation.tarot.TarotRevealPhase
@@ -153,16 +155,50 @@ fun TarotScreen(
                 }
             }
 
-            if (
-                state.revealPhase == TarotRevealPhase.READING_VISIBLE &&
-                response.interpretation.isNotBlank()
-            ) {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Lectura", style = MaterialTheme.typography.titleMedium)
-                    Text(
-                        text = response.interpretation,
-                        style = MaterialTheme.typography.bodyLarge,
-                    )
+            if (state.revealPhase == TarotRevealPhase.READING_VISIBLE) {
+                when (val details = response.details) {
+                    is TarotReadingDetails.Tarot1ReadingDetails -> {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("Lectura", style = MaterialTheme.typography.titleMedium)
+                            TarotReadingSection(title = "Tema", body = details.theme)
+                            TarotReadingSection(title = "Significado", body = details.meaning)
+                            TarotReadingSection(title = "Consejo", body = details.advice)
+                            TarotReadingSection(title = "Atención", body = details.watchOut)
+                        }
+                    }
+
+                    is TarotReadingDetails.Tarot3ReadingDetails -> {
+                        val cardsByPosition = details.cards.associateBy { it.position }
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("Lectura", style = MaterialTheme.typography.titleMedium)
+                            TarotReadingSection(
+                                title = "Pasado",
+                                body = cardsByPosition[TarotCardPosition.PAST]?.meaning.orEmpty(),
+                            )
+                            TarotReadingSection(
+                                title = "Presente",
+                                body = cardsByPosition[TarotCardPosition.PRESENT]?.meaning.orEmpty(),
+                            )
+                            TarotReadingSection(
+                                title = "Futuro",
+                                body = cardsByPosition[TarotCardPosition.FUTURE]?.meaning.orEmpty(),
+                            )
+                            TarotReadingSection(title = "Resumen", body = details.summary)
+                            TarotReadingSection(title = "Consejo", body = details.advice)
+                        }
+                    }
+
+                    null -> {
+                        if (response.interpretation.isNotBlank()) {
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text("Lectura", style = MaterialTheme.typography.titleMedium)
+                                Text(
+                                    text = response.interpretation,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -178,6 +214,24 @@ fun TarotScreen(
                     Text("Reintentar")
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun TarotReadingSection(
+    title: String,
+    body: String,
+) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(title, style = MaterialTheme.typography.titleSmall)
+            Text(body, style = MaterialTheme.typography.bodyMedium)
         }
     }
 }
