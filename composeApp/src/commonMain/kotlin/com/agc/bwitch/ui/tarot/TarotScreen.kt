@@ -33,6 +33,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.agc.bwitch.domain.tarot.TarotCardPosition
 import com.agc.bwitch.domain.tarot.TarotReadingDetails
 import com.agc.bwitch.domain.tarot.TarotCard
@@ -443,7 +444,10 @@ fun TarotScreen(
                 val isMiniOverlay = !state.overlayVisible
                 val isRevealed = if (state.overlayVisible) state.overlayCardRevealed else true
 
-                Dialog(onDismissRequest = {}) {
+                Dialog(
+                    onDismissRequest = {},
+                    properties = DialogProperties(usePlatformDefaultWidth = false),
+                ) {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
