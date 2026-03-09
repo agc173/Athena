@@ -10,7 +10,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.matchParentSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -39,6 +38,7 @@ import com.agc.bwitch.domain.tarot.TarotRequestType
 import com.agc.bwitch.presentation.tarot.TarotRevealPhase
 import com.agc.bwitch.presentation.tarot.TarotViewModel
 import org.koin.compose.koinInject
+
 
 @Composable
 fun TarotCardView(
@@ -443,7 +443,7 @@ fun TarotScreen(
 
                 Box(
                     modifier = Modifier
-                        .matchParentSize()
+                        .fillMaxSize()
                         .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.6f)),
                     contentAlignment = Alignment.Center,
                 ) {
