@@ -88,9 +88,18 @@ fun TarotCardView(
             AnimatedContent(
                 targetState = revealed,
                 transitionSpec = {
-                    (fadeIn(animationSpec = tween(280)) + scaleIn(initialScale = 0.98f, animationSpec = tween(280))) togetherWith
-                        (fadeOut(animationSpec = tween(180)) + scaleOut(targetScale = 1.01f, animationSpec = tween(180)))
-                            .using(SizeTransform(clip = false))
+                    (
+                            (fadeIn(animationSpec = tween(280)) + scaleIn(
+                                initialScale = 0.98f,
+                                animationSpec = tween(280),
+                            )) togetherWith
+                                    (fadeOut(animationSpec = tween(180)) + scaleOut(
+                                        targetScale = 1.01f,
+                                        animationSpec = tween(180),
+                                    ))
+                            ).using(
+                            SizeTransform(clip = false),
+                        )
                 },
                 label = "tarot-card-reveal-content",
             ) { isRevealed ->
