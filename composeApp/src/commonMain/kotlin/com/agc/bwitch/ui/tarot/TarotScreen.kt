@@ -3,6 +3,7 @@ package com.agc.bwitch.ui.tarot
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -30,11 +31,21 @@ import org.koin.compose.koinInject
 fun TarotCardView(
     card: TarotCard?,
     revealed: Boolean,
+    onClick: (() -> Unit)? = null,
 ) {
+    val cardModifier = Modifier
+        .fillMaxWidth()
+        .height(180.dp)
+        .let { modifier ->
+            if (onClick != null) {
+                modifier.clickable(onClick = onClick)
+            } else {
+                modifier
+            }
+        }
+
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(180.dp),
+        modifier = cardModifier,
     ) {
         if (!revealed) {
             Column(
@@ -173,6 +184,11 @@ fun TarotScreen(
                             TarotCardView(
                                 card = if (revealed) card else null,
                                 revealed = revealed,
+                                onClick = if (!revealed && state.revealPhase == TarotRevealPhase.CARDS_READY) {
+                                    viewModel::revealNextCard
+                                } else {
+                                    null
+                                },
                             )
 
                             if (revealed) {
@@ -199,20 +215,7 @@ fun TarotScreen(
             }
 
             if (state.revealPhase == TarotRevealPhase.CARDS_READY) {
-                if (state.revealedCardCount < response.cards.size) {
-                    Button(
-                        onClick = viewModel::revealNextCard,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Text(
-                            if (state.selectedType == TarotRequestType.TAROT_1) {
-                                "Revelar carta"
-                            } else {
-                                "Revelar siguiente carta"
-                            },
-                        )
-                    }
-                } else {
+                if (state.revealedCardCount >= response.cards.size) {
                     Button(
                         onClick = viewModel::showReading,
                         modifier = Modifier.fillMaxWidth(),
