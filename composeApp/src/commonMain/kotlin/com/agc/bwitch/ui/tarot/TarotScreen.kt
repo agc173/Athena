@@ -94,6 +94,7 @@ fun TarotCardView(
 private fun TarotMiniCard(
     card: TarotCard,
     label: String,
+    onClick: (() -> Unit)? = null,
 ) {
     val cardWidth = 92.dp
     val cardHeight = 136.dp
@@ -106,7 +107,14 @@ private fun TarotMiniCard(
         Card(
             modifier = Modifier
                 .width(cardWidth)
-                .height(cardHeight),
+                .height(cardHeight)
+                .let { modifier ->
+                    if (onClick != null) {
+                        modifier.clickable(onClick = onClick)
+                    } else {
+                        modifier
+                    }
+                },
         ) {
             Column(
                 modifier = Modifier
@@ -294,42 +302,79 @@ fun TarotScreen(
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text("Tus cartas", style = MaterialTheme.typography.titleMedium)
                     if (state.selectedType == TarotRequestType.TAROT_3 && (state.revealPhase == TarotRevealPhase.CARDS_READY || state.revealPhase == TarotRevealPhase.READING_VISIBLE)) {
-                        val activeIndex = state.activeCardIndex.coerceIn(0, response.cards.lastIndex)
-                        val activeCard = response.cards[activeIndex]
+                        val allCardsRevealed = state.revealedCardCount >= response.cards.size
+                        if (!allCardsRevealed) {
+                            val activeIndex = state.activeCardIndex.coerceIn(0, response.cards.lastIndex)
+                            val activeCard = response.cards[activeIndex]
 
-                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            TarotCardView(
-                                card = if (state.activeCardRevealed) activeCard else null,
-                                revealed = state.activeCardRevealed,
-                                onClick = if (state.revealPhase == TarotRevealPhase.CARDS_READY) viewModel::revealNextCard else null,
-                            )
+                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                TarotCardView(
+                                    card = if (state.activeCardRevealed) activeCard else null,
+                                    revealed = state.activeCardRevealed,
+                                    onClick = if (state.revealPhase == TarotRevealPhase.CARDS_READY) viewModel::revealNextCard else null,
+                                )
 
-                            if (state.activeCardRevealed) {
-                                val orientation = when (activeCard.upright) {
-                                    true -> "Al derecho"
-                                    false -> "Invertida"
-                                    null -> "Desconocida"
-                                }
-                                Text("Posición: ${
-                                    when (activeCard.position) {
-                                        TarotCardPosition.PAST -> "Pasado"
-                                        TarotCardPosition.PRESENT -> "Presente"
-                                        TarotCardPosition.FUTURE -> "Futuro"
+                                if (state.activeCardRevealed) {
+                                    val orientation = when (activeCard.upright) {
+                                        true -> "Al derecho"
+                                        false -> "Invertida"
                                         null -> "Desconocida"
                                     }
-                                }", style = MaterialTheme.typography.bodySmall)
-                                Text("Orientación: $orientation", style = MaterialTheme.typography.bodyMedium)
+                                    Text("Posición: ${
+                                        when (activeCard.position) {
+                                            TarotCardPosition.PAST -> "Pasado"
+                                            TarotCardPosition.PRESENT -> "Presente"
+                                            TarotCardPosition.FUTURE -> "Futuro"
+                                            null -> "Desconocida"
+                                        }
+                                    }", style = MaterialTheme.typography.bodySmall)
+                                    Text("Orientación: $orientation", style = MaterialTheme.typography.bodyMedium)
+                                }
+                            }
+                        } else {
+                            val openedIndex = state.openedMiniCardIndex?.coerceIn(0, response.cards.lastIndex)
+                            val openedCard = openedIndex?.let { response.cards[it] }
+
+                            if (openedCard != null && openedIndex != null) {
+                                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    TarotCardView(
+                                        card = openedCard,
+                                        revealed = true,
+                                        onClick = { viewModel.toggleMiniCard(openedIndex) },
+                                    )
+
+                                    val orientation = when (openedCard.upright) {
+                                        true -> "Al derecho"
+                                        false -> "Invertida"
+                                        null -> "Desconocida"
+                                    }
+                                    Text("Posición: ${
+                                        when (openedCard.position) {
+                                            TarotCardPosition.PAST -> "Pasado"
+                                            TarotCardPosition.PRESENT -> "Presente"
+                                            TarotCardPosition.FUTURE -> "Futuro"
+                                            null -> "Desconocida"
+                                        }
+                                    }", style = MaterialTheme.typography.bodySmall)
+                                    Text("Orientación: $orientation", style = MaterialTheme.typography.bodyMedium)
+                                }
                             }
                         }
 
                         if (state.revealedCardCount > 0) {
+                            val miniCards = if (allCardsRevealed) {
+                                response.cards
+                            } else {
+                                response.cards.take(state.revealedCardCount)
+                            }
+
                             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                 Text("Cartas reveladas", style = MaterialTheme.typography.titleSmall)
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
                                 ) {
-                                    response.cards.take(state.revealedCardCount).forEachIndexed { index, card ->
+                                    miniCards.forEachIndexed { index, card ->
                                         val label = when (index) {
                                             0 -> "Pasado"
                                             1 -> "Presente"
@@ -338,6 +383,11 @@ fun TarotScreen(
                                         TarotMiniCard(
                                             card = card,
                                             label = label,
+                                            onClick = if (allCardsRevealed) {
+                                                { viewModel.toggleMiniCard(index) }
+                                            } else {
+                                                null
+                                            },
                                         )
                                     }
                                 }

@@ -32,6 +32,7 @@ data class TarotUiState(
     val revealedCardCount: Int = 0,
     val activeCardIndex: Int = 0,
     val activeCardRevealed: Boolean = false,
+    val openedMiniCardIndex: Int? = null,
 )
 
 class TarotViewModel(
@@ -54,6 +55,7 @@ class TarotViewModel(
                 revealedCardCount = 0,
                 activeCardIndex = 0,
                 activeCardRevealed = false,
+                openedMiniCardIndex = null,
             )
         }
         draw(requestId, type)
@@ -71,9 +73,22 @@ class TarotViewModel(
                 activeCardRevealed = false,
                 response = null,
                 error = null,
+                openedMiniCardIndex = null,
             )
         }
         draw(requestId, currentState.selectedType)
+    }
+
+    fun toggleMiniCard(index: Int) {
+        _uiState.update {
+            it.copy(
+                openedMiniCardIndex = if (it.openedMiniCardIndex == index) {
+                    null
+                } else {
+                    index
+                },
+            )
+        }
     }
 
     fun revealNextCard() {
@@ -127,6 +142,7 @@ class TarotViewModel(
                             revealedCardCount = 0,
                             activeCardIndex = 0,
                             activeCardRevealed = false,
+                            openedMiniCardIndex = null,
                         )
                     }
                 }
@@ -140,6 +156,7 @@ class TarotViewModel(
                             revealedCardCount = 0,
                             activeCardIndex = 0,
                             activeCardRevealed = false,
+                            openedMiniCardIndex = null,
                             error = result.error.message ?: "Unknown error",
                         )
                     }
