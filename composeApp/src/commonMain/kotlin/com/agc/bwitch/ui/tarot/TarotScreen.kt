@@ -34,8 +34,13 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.scaleIn
+import androidx.compose.animation.togetherWith
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
@@ -80,27 +85,37 @@ fun TarotCardView(
         Card(
             modifier = cardModifier,
         ) {
-            if (!revealed) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(cardHeight),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Text("BWitch", style = MaterialTheme.typography.titleMedium)
-                    Text("Tarot", style = MaterialTheme.typography.bodyMedium)
-                }
-            } else {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Text(card?.name.orEmpty(), style = MaterialTheme.typography.titleMedium)
-                    Text("Ilustración próximamente", style = MaterialTheme.typography.bodyMedium)
+            AnimatedContent(
+                targetState = revealed,
+                transitionSpec = {
+                    (fadeIn(animationSpec = tween(280)) + scaleIn(initialScale = 0.98f, animationSpec = tween(280))) togetherWith
+                        (fadeOut(animationSpec = tween(180)) + scaleOut(targetScale = 1.01f, animationSpec = tween(180)))
+                            .using(SizeTransform(clip = false))
+                },
+                label = "tarot-card-reveal-content",
+            ) { isRevealed ->
+                if (!isRevealed) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(cardHeight),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Text("BWitch", style = MaterialTheme.typography.titleMedium)
+                        Text("Tarot", style = MaterialTheme.typography.bodyMedium)
+                    }
+                } else {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Text(card?.name.orEmpty(), style = MaterialTheme.typography.titleMedium)
+                        Text("Ilustración próximamente", style = MaterialTheme.typography.bodyMedium)
+                    }
                 }
             }
         }
