@@ -31,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import com.agc.bwitch.domain.tarot.TarotCardPosition
 import com.agc.bwitch.domain.tarot.TarotReadingDetails
 import com.agc.bwitch.domain.tarot.TarotCard
@@ -441,45 +442,47 @@ fun TarotScreen(
                 val isMiniOverlay = !state.overlayVisible
                 val isRevealed = if (state.overlayVisible) state.overlayCardRevealed else true
 
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.6f)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Column(
+                Dialog(onDismissRequest = {}) {
+                    Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(24.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
+                            .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.6f)),
+                        contentAlignment = Alignment.Center,
                     ) {
-                        TarotCardView(
-                            card = if (isRevealed) overlayCard else null,
-                            revealed = isRevealed,
-                            onClick = if (isMiniOverlay) {
-                                { viewModel.toggleMiniCard(overlayIndex) }
-                            } else {
-                                viewModel::revealNextCard
-                            },
-                        )
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(24.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+                            TarotCardView(
+                                card = if (isRevealed) overlayCard else null,
+                                revealed = isRevealed,
+                                onClick = if (isMiniOverlay) {
+                                    { viewModel.toggleMiniCard(overlayIndex) }
+                                } else {
+                                    viewModel::revealNextCard
+                                },
+                            )
 
-                        if (isRevealed) {
-                            val orientation = when (overlayCard.upright) {
-                                true -> "Al derecho"
-                                false -> "Invertida"
-                                null -> "Desconocida"
-                            }
-                            Text("Orientación: $orientation", style = MaterialTheme.typography.bodyMedium)
+                            if (isRevealed) {
+                                val orientation = when (overlayCard.upright) {
+                                    true -> "Al derecho"
+                                    false -> "Invertida"
+                                    null -> "Desconocida"
+                                }
+                                Text("Orientación: $orientation", style = MaterialTheme.typography.bodyMedium)
 
-                            val position = when (overlayCard.position) {
-                                TarotCardPosition.PAST -> "Pasado"
-                                TarotCardPosition.PRESENT -> "Presente"
-                                TarotCardPosition.FUTURE -> "Futuro"
-                                null -> null
-                            }
-                            if (position != null) {
-                                Text("Posición: $position", style = MaterialTheme.typography.bodySmall)
+                                val position = when (overlayCard.position) {
+                                    TarotCardPosition.PAST -> "Pasado"
+                                    TarotCardPosition.PRESENT -> "Presente"
+                                    TarotCardPosition.FUTURE -> "Futuro"
+                                    null -> null
+                                }
+                                if (position != null) {
+                                    Text("Posición: $position", style = MaterialTheme.typography.bodySmall)
+                                }
                             }
                         }
                     }
