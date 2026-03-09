@@ -1,23 +1,24 @@
 package com.agc.bwitch.ui.tarot
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.border
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,267 +28,20 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.StartOffset
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.SizeTransform
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleOut
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.togetherWith
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.draw.clip
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.agc.bwitch.domain.tarot.TarotCardPosition
 import com.agc.bwitch.domain.tarot.TarotReadingDetails
-import com.agc.bwitch.domain.tarot.TarotCard
 import com.agc.bwitch.domain.tarot.TarotRequestType
 import com.agc.bwitch.presentation.tarot.TarotRevealPhase
 import com.agc.bwitch.presentation.tarot.TarotViewModel
+import com.agc.bwitch.ui.tarot.components.TarotCardView
+import com.agc.bwitch.ui.tarot.components.TarotLoadingDeck
+import com.agc.bwitch.ui.tarot.components.TarotMiniCard
 import org.koin.compose.koinInject
-
-
-@Composable
-fun TarotCardView(
-    card: TarotCard?,
-    revealed: Boolean,
-    cardWidth: Dp = 160.dp,
-    cardHeight: Dp = 240.dp,
-    onClick: (() -> Unit)? = null,
-) {
-    val cardModifier = Modifier
-        .width(cardWidth)
-        .height(cardHeight)
-        .let { modifier ->
-            if (onClick != null) {
-                modifier.clickable(onClick = onClick)
-            } else {
-                modifier
-            }
-        }
-
-    Box(
-        modifier = Modifier.fillMaxWidth(),
-        contentAlignment = Alignment.Center,
-    ) {
-        Card(
-            modifier = cardModifier,
-        ) {
-            AnimatedContent(
-                targetState = revealed,
-                transitionSpec = {
-                    (
-                            (fadeIn(animationSpec = tween(280)) + scaleIn(
-                                initialScale = 0.98f,
-                                animationSpec = tween(280),
-                            )) togetherWith
-                                    (fadeOut(animationSpec = tween(180)) + scaleOut(
-                                        targetScale = 1.01f,
-                                        animationSpec = tween(180),
-                                    ))
-                            ).using(
-                            SizeTransform(clip = false),
-                        )
-                },
-                label = "tarot-card-reveal-content",
-            ) { isRevealed ->
-                if (!isRevealed) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(cardHeight),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        Text("BWitch", style = MaterialTheme.typography.titleMedium)
-                        Text("Tarot", style = MaterialTheme.typography.bodyMedium)
-                    }
-                } else {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        Text(card?.name.orEmpty(), style = MaterialTheme.typography.titleMedium)
-                        Text("Ilustración próximamente", style = MaterialTheme.typography.bodyMedium)
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun TarotMiniCard(
-    card: TarotCard,
-    label: String,
-    selected: Boolean = false,
-    onClick: (() -> Unit)? = null,
-) {
-    val cardWidth = 92.dp
-    val cardHeight = 136.dp
-
-    Column(
-        verticalArrangement = Arrangement.spacedBy(6.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text(label, style = MaterialTheme.typography.bodySmall)
-        Card(
-            modifier = Modifier
-                .width(cardWidth)
-                .height(cardHeight)
-                .graphicsLayer {
-                    scaleX = if (selected) 1.03f else 1f
-                    scaleY = if (selected) 1.03f else 1f
-                    alpha = if (selected) 1f else 0.96f
-                }
-                .clip(MaterialTheme.shapes.medium)
-                .border(
-                    width = if (selected) 1.5.dp else 0.dp,
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f),
-                    shape = MaterialTheme.shapes.medium,
-                )
-                .let { modifier ->
-                    if (onClick != null) {
-                        modifier.clickable(onClick = onClick)
-                    } else {
-                        modifier
-                    }
-                },
-            elevation = CardDefaults.cardElevation(
-                defaultElevation = if (selected) 6.dp else 2.dp,
-            ),
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(cardHeight)
-                    .padding(8.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text(card.name, style = MaterialTheme.typography.bodyMedium)
-                Text("Tarot", style = MaterialTheme.typography.bodySmall)
-            }
-        }
-    }
-}
-
-@Composable
-private fun TarotLoadingDeck(
-    title: String,
-    subtitle: String,
-) {
-    val cardWidth = 150.dp
-    val cardHeight = 230.dp
-    val transition = rememberInfiniteTransition(label = "tarot-loading-transition")
-    val backCardMovement by transition.animateFloat(
-        initialValue = -6f,
-        targetValue = 6f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 1400),
-            repeatMode = RepeatMode.Reverse,
-            initialStartOffset = StartOffset(offsetMillis = 120),
-        ),
-        label = "back-card-movement",
-    )
-    val middleCardMovement by transition.animateFloat(
-        initialValue = 6f,
-        targetValue = -6f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 1300),
-            repeatMode = RepeatMode.Reverse,
-            initialStartOffset = StartOffset(offsetMillis = 240),
-        ),
-        label = "middle-card-movement",
-    )
-    val topCardMovement by transition.animateFloat(
-        initialValue = -2f,
-        targetValue = 2f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 1000),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "top-card-movement",
-    )
-
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(cardHeight + 32.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            Card(
-                modifier = Modifier
-                    .width(cardWidth)
-                    .height(cardHeight)
-                    .graphicsLayer {
-                        rotationZ = -8f + backCardMovement
-                        translationX = -16f
-                        translationY = 10f
-                    },
-            ) {}
-
-            Card(
-                modifier = Modifier
-                    .width(cardWidth)
-                    .height(cardHeight)
-                    .graphicsLayer {
-                        rotationZ = 8f + middleCardMovement
-                        translationX = 16f
-                        translationY = 2f
-                    },
-            ) {}
-
-            Card(
-                modifier = Modifier
-                    .width(cardWidth)
-                    .height(cardHeight)
-                    .graphicsLayer {
-                        rotationZ = topCardMovement
-                    },
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(cardHeight),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Text("BWitch", style = MaterialTheme.typography.headlineSmall)
-                    Text("Tarot", style = MaterialTheme.typography.titleMedium)
-                }
-            }
-        }
-
-        Column(
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text(title, style = MaterialTheme.typography.titleMedium)
-            Text(subtitle, style = MaterialTheme.typography.bodyMedium)
-        }
-    }
-}
 
 @Composable
 fun TarotScreen(
