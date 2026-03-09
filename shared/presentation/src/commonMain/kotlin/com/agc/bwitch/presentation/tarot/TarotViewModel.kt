@@ -17,7 +17,9 @@ import kotlinx.coroutines.launch
 
 enum class TarotRevealPhase {
     IDLE,
+    WAITING_TO_SHUFFLE,
     SHUFFLING,
+    WAITING_TO_REVEAL,
     CARDS_READY,
     READING_VISIBLE,
 }
@@ -32,6 +34,9 @@ data class TarotUiState(
     val revealedCardCount: Int = 0,
     val activeCardIndex: Int = 0,
     val activeCardRevealed: Boolean = false,
+    val overlayVisible: Boolean = false,
+    val overlayCardIndex: Int? = null,
+    val overlayCardRevealed: Boolean = false,
     val openedMiniCardIndex: Int? = null,
 )
 
@@ -51,14 +56,55 @@ class TarotViewModel(
                 selectedType = type,
                 response = null,
                 error = null,
-                revealPhase = TarotRevealPhase.SHUFFLING,
+                revealPhase = TarotRevealPhase.WAITING_TO_SHUFFLE,
                 revealedCardCount = 0,
                 activeCardIndex = 0,
                 activeCardRevealed = false,
+                overlayVisible = false,
+                overlayCardIndex = null,
+                overlayCardRevealed = false,
                 openedMiniCardIndex = null,
             )
         }
         draw(requestId, type)
+    }
+
+    fun startShuffle() {
+        _uiState.update { currentState ->
+            if (currentState.revealPhase != TarotRevealPhase.WAITING_TO_SHUFFLE) return@update currentState
+
+            currentState.copy(
+                revealPhase = if (currentState.response != null) {
+                    TarotRevealPhase.WAITING_TO_REVEAL
+                } else {
+                    TarotRevealPhase.SHUFFLING
+                },
+            )
+        }
+    }
+
+    fun startReveal() {
+        _uiState.update { currentState ->
+            val response = currentState.response ?: return@update currentState
+            val canStartReveal = currentState.revealPhase == TarotRevealPhase.WAITING_TO_REVEAL ||
+                currentState.revealPhase == TarotRevealPhase.CARDS_READY
+            if (!canStartReveal || response.cards.isEmpty()) return@update currentState
+
+            currentState.copy(
+                revealPhase = TarotRevealPhase.CARDS_READY,
+                activeCardIndex = 0,
+                activeCardRevealed = false,
+                overlayVisible = true,
+                overlayCardIndex = 0,
+                overlayCardRevealed = false,
+            )
+        }
+    }
+
+    fun closeOverlay() {
+        _uiState.update {
+            it.copy(overlayVisible = false)
+        }
     }
 
     fun retry() {
@@ -67,10 +113,13 @@ class TarotViewModel(
         _uiState.update {
             it.copy(
                 requestId = requestId,
-                revealPhase = TarotRevealPhase.SHUFFLING,
+                revealPhase = TarotRevealPhase.WAITING_TO_SHUFFLE,
                 revealedCardCount = 0,
                 activeCardIndex = 0,
                 activeCardRevealed = false,
+                overlayVisible = false,
+                overlayCardIndex = null,
+                overlayCardRevealed = false,
                 response = null,
                 error = null,
                 openedMiniCardIndex = null,
@@ -95,19 +144,29 @@ class TarotViewModel(
         _uiState.update { currentState ->
             val response = currentState.response ?: return@update currentState
             if (currentState.revealPhase != TarotRevealPhase.CARDS_READY) return@update currentState
+            val overlayCardIndex = currentState.overlayCardIndex ?: return@update currentState
+            if (!currentState.overlayVisible) return@update currentState
 
-            if (!currentState.activeCardRevealed) {
+            if (!currentState.overlayCardRevealed) {
                 currentState.copy(
+                    activeCardIndex = overlayCardIndex,
                     activeCardRevealed = true,
+                    overlayCardRevealed = true,
                     revealedCardCount = (currentState.revealedCardCount + 1).coerceAtMost(response.cards.size),
                 )
-            } else if (currentState.activeCardIndex < response.cards.lastIndex) {
+            } else if (overlayCardIndex < response.cards.lastIndex) {
                 currentState.copy(
-                    activeCardIndex = currentState.activeCardIndex + 1,
+                    activeCardIndex = overlayCardIndex + 1,
                     activeCardRevealed = false,
+                    overlayCardIndex = overlayCardIndex + 1,
+                    overlayCardRevealed = false,
                 )
             } else {
-                currentState
+                currentState.copy(
+                    overlayVisible = false,
+                    overlayCardIndex = null,
+                    overlayCardRevealed = false,
+                )
             }
         }
     }
@@ -138,10 +197,17 @@ class TarotViewModel(
                             isLoading = false,
                             response = result.value,
                             error = null,
-                            revealPhase = TarotRevealPhase.CARDS_READY,
+                            revealPhase = if (it.revealPhase == TarotRevealPhase.SHUFFLING) {
+                                TarotRevealPhase.WAITING_TO_REVEAL
+                            } else {
+                                it.revealPhase
+                            },
                             revealedCardCount = 0,
                             activeCardIndex = 0,
                             activeCardRevealed = false,
+                            overlayVisible = false,
+                            overlayCardIndex = null,
+                            overlayCardRevealed = false,
                             openedMiniCardIndex = null,
                         )
                     }
@@ -156,6 +222,9 @@ class TarotViewModel(
                             revealedCardCount = 0,
                             activeCardIndex = 0,
                             activeCardRevealed = false,
+                            overlayVisible = false,
+                            overlayCardIndex = null,
+                            overlayCardRevealed = false,
                             openedMiniCardIndex = null,
                             error = result.error.message ?: "Unknown error",
                         )
