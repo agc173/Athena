@@ -21,15 +21,21 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.StartOffset
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.scaleIn
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
@@ -488,40 +494,56 @@ fun TarotScreen(
                             },
                         contentAlignment = Alignment.Center,
                     ) {
-                        Column(
-                            modifier = Modifier
-                                .padding(24.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
+                        var overlayContentVisible by remember(overlayIndex, isMiniOverlay) {
+                            mutableStateOf(false)
+                        }
+                        LaunchedEffect(overlayIndex, isMiniOverlay) {
+                            overlayContentVisible = true
+                        }
+
+                        AnimatedVisibility(
+                            visible = overlayContentVisible,
+                            enter = fadeIn(animationSpec = tween(durationMillis = 220)) +
+                                scaleIn(
+                                    initialScale = 0.96f,
+                                    animationSpec = tween(durationMillis = 220),
+                                ),
                         ) {
-                            TarotCardView(
-                                card = if (isRevealed) overlayCard else null,
-                                revealed = isRevealed,
-                                cardWidth = 220.dp,
-                                cardHeight = 330.dp,
-                                onClick = if (isMiniOverlay) {
-                                    { viewModel.toggleMiniCard(overlayIndex) }
-                                } else {
-                                    viewModel::revealNextCard
-                                },
-                            )
+                            Column(
+                                modifier = Modifier
+                                    .padding(24.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                            ) {
+                                TarotCardView(
+                                    card = if (isRevealed) overlayCard else null,
+                                    revealed = isRevealed,
+                                    cardWidth = 220.dp,
+                                    cardHeight = 330.dp,
+                                    onClick = if (isMiniOverlay) {
+                                        { viewModel.toggleMiniCard(overlayIndex) }
+                                    } else {
+                                        viewModel::revealNextCard
+                                    },
+                                )
 
-                            if (isRevealed) {
-                                val orientation = when (overlayCard.upright) {
-                                    true -> "Al derecho"
-                                    false -> "Invertida"
-                                    null -> "Desconocida"
-                                }
-                                Text("Orientación: $orientation", style = MaterialTheme.typography.bodyMedium)
+                                if (isRevealed) {
+                                    val orientation = when (overlayCard.upright) {
+                                        true -> "Al derecho"
+                                        false -> "Invertida"
+                                        null -> "Desconocida"
+                                    }
+                                    Text("Orientación: $orientation", style = MaterialTheme.typography.bodyMedium)
 
-                                val position = when (overlayCard.position) {
-                                    TarotCardPosition.PAST -> "Pasado"
-                                    TarotCardPosition.PRESENT -> "Presente"
-                                    TarotCardPosition.FUTURE -> "Futuro"
-                                    null -> null
-                                }
-                                if (position != null) {
-                                    Text("Posición: $position", style = MaterialTheme.typography.bodySmall)
+                                    val position = when (overlayCard.position) {
+                                        TarotCardPosition.PAST -> "Pasado"
+                                        TarotCardPosition.PRESENT -> "Presente"
+                                        TarotCardPosition.FUTURE -> "Futuro"
+                                        null -> null
+                                    }
+                                    if (position != null) {
+                                        Text("Posición: $position", style = MaterialTheme.typography.bodySmall)
+                                    }
                                 }
                             }
                         }
