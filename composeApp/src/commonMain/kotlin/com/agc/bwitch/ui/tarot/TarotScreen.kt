@@ -30,6 +30,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.agc.bwitch.domain.tarot.TarotCardPosition
@@ -45,10 +46,10 @@ import org.koin.compose.koinInject
 fun TarotCardView(
     card: TarotCard?,
     revealed: Boolean,
+    cardWidth: Dp = 160.dp,
+    cardHeight: Dp = 240.dp,
     onClick: (() -> Unit)? = null,
 ) {
-    val cardWidth = 160.dp
-    val cardHeight = 240.dp
     val cardModifier = Modifier
         .width(cardWidth)
         .height(cardHeight)
@@ -451,7 +452,6 @@ fun TarotScreen(
                     ) {
                         Column(
                             modifier = Modifier
-                                .fillMaxSize()
                                 .padding(24.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
@@ -459,6 +459,8 @@ fun TarotScreen(
                             TarotCardView(
                                 card = if (isRevealed) overlayCard else null,
                                 revealed = isRevealed,
+                                cardWidth = 220.dp,
+                                cardHeight = 330.dp,
                                 onClick = if (isMiniOverlay) {
                                     { viewModel.toggleMiniCard(overlayIndex) }
                                 } else {
