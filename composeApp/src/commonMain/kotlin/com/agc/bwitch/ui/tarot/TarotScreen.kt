@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -84,6 +85,39 @@ fun TarotCardView(
                     Text(card?.name.orEmpty(), style = MaterialTheme.typography.titleMedium)
                     Text("Ilustración próximamente", style = MaterialTheme.typography.bodyMedium)
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TarotMiniCard(
+    card: TarotCard,
+    label: String,
+) {
+    val cardWidth = 92.dp
+    val cardHeight = 136.dp
+
+    Column(
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(label, style = MaterialTheme.typography.bodySmall)
+        Card(
+            modifier = Modifier
+                .width(cardWidth)
+                .height(cardHeight),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(cardHeight)
+                    .padding(8.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(card.name, style = MaterialTheme.typography.bodyMedium)
+                Text("Tarot", style = MaterialTheme.typography.bodySmall)
             }
         }
     }
@@ -291,13 +325,21 @@ fun TarotScreen(
                         if (state.revealedCardCount > 0) {
                             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                 Text("Cartas reveladas", style = MaterialTheme.typography.titleSmall)
-                                response.cards.take(state.revealedCardCount).forEachIndexed { index, card ->
-                                    val label = when (index) {
-                                        0 -> "Pasado"
-                                        1 -> "Presente"
-                                        else -> "Futuro"
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
+                                ) {
+                                    response.cards.take(state.revealedCardCount).forEachIndexed { index, card ->
+                                        val label = when (index) {
+                                            0 -> "Pasado"
+                                            1 -> "Presente"
+                                            else -> "Futuro"
+                                        }
+                                        TarotMiniCard(
+                                            card = card,
+                                            label = label,
+                                        )
                                     }
-                                    Text("$label — ${card.name}", style = MaterialTheme.typography.bodyMedium)
                                 }
                             }
                         }
