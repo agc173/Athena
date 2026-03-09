@@ -8,7 +8,9 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -44,11 +46,18 @@ class TarotViewModel(
     private val tarotRepository: TarotRepository,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    private var shuffleDelayJob: Job? = null
+    private var shuffleMinDurationElapsed = false
+    private var shuffleRequestId: String? = null
 
     private val _uiState = MutableStateFlow(TarotUiState())
     val uiState: StateFlow<TarotUiState> = _uiState.asStateFlow()
 
     fun newRequest(type: TarotRequestType) {
+        shuffleDelayJob?.cancel()
+        shuffleMinDurationElapsed = false
+        shuffleRequestId = null
+
         val requestId = generateRequestId()
         _uiState.update {
             it.copy(
@@ -70,16 +79,34 @@ class TarotViewModel(
     }
 
     fun startShuffle() {
+        var startedShuffle = false
+        val requestId = _uiState.value.requestId
         _uiState.update { currentState ->
             if (currentState.revealPhase != TarotRevealPhase.WAITING_TO_SHUFFLE) return@update currentState
 
-            currentState.copy(
-                revealPhase = if (currentState.response != null) {
-                    TarotRevealPhase.WAITING_TO_REVEAL
+            startedShuffle = true
+            currentState.copy(revealPhase = TarotRevealPhase.SHUFFLING)
+        }
+        if (!startedShuffle) return
+
+        shuffleDelayJob?.cancel()
+        shuffleMinDurationElapsed = false
+        shuffleRequestId = requestId
+        shuffleDelayJob = scope.launch {
+            delay(MIN_SHUFFLE_DURATION_MS)
+            shuffleMinDurationElapsed = true
+
+            _uiState.update { currentState ->
+                if (
+                    currentState.revealPhase == TarotRevealPhase.SHUFFLING &&
+                    currentState.requestId == shuffleRequestId &&
+                    currentState.response != null
+                ) {
+                    currentState.copy(revealPhase = TarotRevealPhase.WAITING_TO_REVEAL)
                 } else {
-                    TarotRevealPhase.SHUFFLING
-                },
-            )
+                    currentState
+                }
+            }
         }
     }
 
@@ -108,6 +135,10 @@ class TarotViewModel(
     }
 
     fun retry() {
+        shuffleDelayJob?.cancel()
+        shuffleMinDurationElapsed = false
+        shuffleRequestId = null
+
         val currentState = _uiState.value
         val requestId = generateRequestId()
         _uiState.update {
@@ -197,7 +228,11 @@ class TarotViewModel(
                             isLoading = false,
                             response = result.value,
                             error = null,
-                            revealPhase = if (it.revealPhase == TarotRevealPhase.SHUFFLING) {
+                            revealPhase = if (
+                                it.revealPhase == TarotRevealPhase.SHUFFLING &&
+                                shuffleMinDurationElapsed &&
+                                it.requestId == shuffleRequestId
+                            ) {
                                 TarotRevealPhase.WAITING_TO_REVEAL
                             } else {
                                 it.revealPhase
@@ -236,4 +271,8 @@ class TarotViewModel(
 
     @OptIn(ExperimentalUuidApi::class)
     private fun generateRequestId(): String = Uuid.random().toString()
+
+    private companion object {
+        const val MIN_SHUFFLE_DURATION_MS = 1200L
+    }
 }
