@@ -30,6 +30,8 @@ data class TarotUiState(
     val error: String? = null,
     val revealPhase: TarotRevealPhase = TarotRevealPhase.IDLE,
     val revealedCardCount: Int = 0,
+    val activeCardIndex: Int = 0,
+    val activeCardRevealed: Boolean = false,
 )
 
 class TarotViewModel(
@@ -50,6 +52,8 @@ class TarotViewModel(
                 error = null,
                 revealPhase = TarotRevealPhase.SHUFFLING,
                 revealedCardCount = 0,
+                activeCardIndex = 0,
+                activeCardRevealed = false,
             )
         }
         draw(requestId, type)
@@ -63,6 +67,8 @@ class TarotViewModel(
                 requestId = requestId,
                 revealPhase = TarotRevealPhase.SHUFFLING,
                 revealedCardCount = 0,
+                activeCardIndex = 0,
+                activeCardRevealed = false,
                 response = null,
                 error = null,
             )
@@ -75,9 +81,19 @@ class TarotViewModel(
             val response = currentState.response ?: return@update currentState
             if (currentState.revealPhase != TarotRevealPhase.CARDS_READY) return@update currentState
 
-            currentState.copy(
-                revealedCardCount = (currentState.revealedCardCount + 1).coerceAtMost(response.cards.size),
-            )
+            if (!currentState.activeCardRevealed) {
+                currentState.copy(
+                    activeCardRevealed = true,
+                    revealedCardCount = (currentState.revealedCardCount + 1).coerceAtMost(response.cards.size),
+                )
+            } else if (currentState.activeCardIndex < response.cards.lastIndex) {
+                currentState.copy(
+                    activeCardIndex = currentState.activeCardIndex + 1,
+                    activeCardRevealed = false,
+                )
+            } else {
+                currentState
+            }
         }
     }
 
@@ -109,6 +125,8 @@ class TarotViewModel(
                             error = null,
                             revealPhase = TarotRevealPhase.CARDS_READY,
                             revealedCardCount = 0,
+                            activeCardIndex = 0,
+                            activeCardRevealed = false,
                         )
                     }
                 }
@@ -120,6 +138,8 @@ class TarotViewModel(
                             response = null,
                             revealPhase = TarotRevealPhase.IDLE,
                             revealedCardCount = 0,
+                            activeCardIndex = 0,
+                            activeCardRevealed = false,
                             error = result.error.message ?: "Unknown error",
                         )
                     }
