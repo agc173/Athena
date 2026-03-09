@@ -23,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.StartOffset
 import androidx.compose.animation.core.animateFloat
@@ -35,6 +36,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.agc.bwitch.domain.tarot.TarotCardPosition
@@ -471,10 +473,19 @@ fun TarotScreen(
                     },
                     properties = DialogProperties(usePlatformDefaultWidth = false),
                 ) {
+                    val scrimInteractionSource = remember { MutableInteractionSource() }
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.6f)),
+                            .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.6f))
+                            .clickable(
+                                interactionSource = scrimInteractionSource,
+                                indication = null,
+                            ) {
+                                if (isMiniOverlay) {
+                                    viewModel.toggleMiniCard(overlayIndex)
+                                }
+                            },
                         contentAlignment = Alignment.Center,
                     ) {
                         Column(
