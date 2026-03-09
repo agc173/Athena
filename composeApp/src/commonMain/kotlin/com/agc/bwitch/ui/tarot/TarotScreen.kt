@@ -8,6 +8,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -41,9 +42,11 @@ fun TarotCardView(
     revealed: Boolean,
     onClick: (() -> Unit)? = null,
 ) {
+    val cardWidth = 160.dp
+    val cardHeight = 240.dp
     val cardModifier = Modifier
-        .fillMaxWidth()
-        .height(180.dp)
+        .width(cardWidth)
+        .height(cardHeight)
         .let { modifier ->
             if (onClick != null) {
                 modifier.clickable(onClick = onClick)
@@ -52,30 +55,35 @@ fun TarotCardView(
             }
         }
 
-    Card(
-        modifier = cardModifier,
+    Box(
+        modifier = Modifier.fillMaxWidth(),
+        contentAlignment = Alignment.Center,
     ) {
-        if (!revealed) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(180.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text("BWitch", style = MaterialTheme.typography.titleMedium)
-                Text("Tarot", style = MaterialTheme.typography.bodyMedium)
-            }
-        } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text(card?.name.orEmpty(), style = MaterialTheme.typography.titleMedium)
-                Text("Ilustración próximamente", style = MaterialTheme.typography.bodyMedium)
+        Card(
+            modifier = cardModifier,
+        ) {
+            if (!revealed) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(cardHeight),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text("BWitch", style = MaterialTheme.typography.titleMedium)
+                    Text("Tarot", style = MaterialTheme.typography.bodyMedium)
+                }
+            } else {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text(card?.name.orEmpty(), style = MaterialTheme.typography.titleMedium)
+                    Text("Ilustración próximamente", style = MaterialTheme.typography.bodyMedium)
+                }
             }
         }
     }
@@ -86,6 +94,8 @@ private fun TarotLoadingDeck(
     title: String,
     subtitle: String,
 ) {
+    val cardWidth = 150.dp
+    val cardHeight = 230.dp
     val transition = rememberInfiniteTransition(label = "tarot-loading-transition")
     val backCardMovement by transition.animateFloat(
         initialValue = -6f,
@@ -125,13 +135,13 @@ private fun TarotLoadingDeck(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(180.dp),
+                .height(cardHeight + 32.dp),
             contentAlignment = Alignment.Center,
         ) {
             Card(
                 modifier = Modifier
-                    .fillMaxWidth(0.78f)
-                    .height(150.dp)
+                    .width(cardWidth)
+                    .height(cardHeight)
                     .graphicsLayer {
                         rotationZ = -8f + backCardMovement
                         translationX = -16f
@@ -141,8 +151,8 @@ private fun TarotLoadingDeck(
 
             Card(
                 modifier = Modifier
-                    .fillMaxWidth(0.78f)
-                    .height(150.dp)
+                    .width(cardWidth)
+                    .height(cardHeight)
                     .graphicsLayer {
                         rotationZ = 8f + middleCardMovement
                         translationX = 16f
@@ -152,8 +162,8 @@ private fun TarotLoadingDeck(
 
             Card(
                 modifier = Modifier
-                    .fillMaxWidth(0.78f)
-                    .height(150.dp)
+                    .width(cardWidth)
+                    .height(cardHeight)
                     .graphicsLayer {
                         rotationZ = topCardMovement
                     },
@@ -161,7 +171,7 @@ private fun TarotLoadingDeck(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(150.dp),
+                        .height(cardHeight),
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
