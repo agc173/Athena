@@ -1,6 +1,7 @@
 package com.agc.bwitch.ui.tarot
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.clickable
@@ -16,8 +17,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.StartOffset
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import com.agc.bwitch.domain.tarot.TarotCardPosition
 import com.agc.bwitch.domain.tarot.TarotReadingDetails
@@ -78,25 +86,88 @@ private fun TarotLoadingDeck(
     title: String,
     subtitle: String,
 ) {
+    val transition = rememberInfiniteTransition(label = "tarot-loading-transition")
+    val backCardMovement by transition.animateFloat(
+        initialValue = -6f,
+        targetValue = 6f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1400),
+            repeatMode = RepeatMode.Reverse,
+            initialStartOffset = StartOffset(offsetMillis = 120),
+        ),
+        label = "back-card-movement",
+    )
+    val middleCardMovement by transition.animateFloat(
+        initialValue = 6f,
+        targetValue = -6f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1300),
+            repeatMode = RepeatMode.Reverse,
+            initialStartOffset = StartOffset(offsetMillis = 240),
+        ),
+        label = "middle-card-movement",
+    )
+    val topCardMovement by transition.animateFloat(
+        initialValue = -2f,
+        targetValue = 2f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1000),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "top-card-movement",
+    )
+
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Card(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(220.dp),
+                .height(180.dp),
+            contentAlignment = Alignment.Center,
         ) {
-            Column(
+            Card(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(220.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally,
+                    .fillMaxWidth(0.78f)
+                    .height(150.dp)
+                    .graphicsLayer {
+                        rotationZ = -8f + backCardMovement
+                        translationX = -16f
+                        translationY = 10f
+                    },
+            ) {}
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth(0.78f)
+                    .height(150.dp)
+                    .graphicsLayer {
+                        rotationZ = 8f + middleCardMovement
+                        translationX = 16f
+                        translationY = 2f
+                    },
+            ) {}
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth(0.78f)
+                    .height(150.dp)
+                    .graphicsLayer {
+                        rotationZ = topCardMovement
+                    },
             ) {
-                Text("BWitch", style = MaterialTheme.typography.headlineSmall)
-                Text("Tarot", style = MaterialTheme.typography.titleMedium)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(150.dp),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text("BWitch", style = MaterialTheme.typography.headlineSmall)
+                    Text("Tarot", style = MaterialTheme.typography.titleMedium)
+                }
             }
         }
 
