@@ -14,8 +14,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.border
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -32,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.agc.bwitch.domain.tarot.TarotCardPosition
@@ -100,6 +103,7 @@ fun TarotCardView(
 private fun TarotMiniCard(
     card: TarotCard,
     label: String,
+    selected: Boolean = false,
     onClick: (() -> Unit)? = null,
 ) {
     val cardWidth = 92.dp
@@ -114,6 +118,17 @@ private fun TarotMiniCard(
             modifier = Modifier
                 .width(cardWidth)
                 .height(cardHeight)
+                .graphicsLayer {
+                    scaleX = if (selected) 1.03f else 1f
+                    scaleY = if (selected) 1.03f else 1f
+                    alpha = if (selected) 1f else 0.96f
+                }
+                .clip(MaterialTheme.shapes.medium)
+                .border(
+                    width = if (selected) 1.5.dp else 0.dp,
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f),
+                    shape = MaterialTheme.shapes.medium,
+                )
                 .let { modifier ->
                     if (onClick != null) {
                         modifier.clickable(onClick = onClick)
@@ -121,6 +136,9 @@ private fun TarotMiniCard(
                         modifier
                     }
                 },
+            elevation = CardDefaults.cardElevation(
+                defaultElevation = if (selected) 6.dp else 2.dp,
+            ),
         ) {
             Column(
                 modifier = Modifier
@@ -349,6 +367,7 @@ fun TarotScreen(
                                 TarotMiniCard(
                                     card = card,
                                     label = label,
+                                    selected = state.openedMiniCardIndex == index,
                                     onClick = if (allCardsRevealed) {
                                         { viewModel.toggleMiniCard(index) }
                                     } else {
@@ -445,7 +464,11 @@ fun TarotScreen(
                 val isRevealed = if (state.overlayVisible) state.overlayCardRevealed else true
 
                 Dialog(
-                    onDismissRequest = {},
+                    onDismissRequest = {
+                        if (isMiniOverlay) {
+                            viewModel.toggleMiniCard(overlayIndex)
+                        }
+                    },
                     properties = DialogProperties(usePlatformDefaultWidth = false),
                 ) {
                     Box(
