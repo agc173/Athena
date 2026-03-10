@@ -10,6 +10,7 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,12 +28,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.agc.bwitch.domain.tarot.TarotCard
 import com.agc.bwitch.ui.tarot.TarotCardArt
+import bwich.composeapp.generated.resources.Res
+import bwich.composeapp.generated.resources.tarot_back_bw
+import org.jetbrains.compose.resources.painterResource
 
 @Composable
 fun TarotCardView(
@@ -81,30 +85,12 @@ internal fun TarotCardFaceContent(card: TarotCard?, revealed: Boolean) {
 
 @Composable
 private fun TarotBackFace() {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                brush = Brush.linearGradient(
-                    listOf(
-                        MaterialTheme.colorScheme.primaryContainer,
-                        MaterialTheme.colorScheme.secondaryContainer,
-                    ),
-                ),
-            )
-            .padding(14.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .clip(RoundedCornerShape(14.dp))
-                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.35f)),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text("BWitch\nTarot", style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center)
-        }
-    }
+    Image(
+        painter = painterResource(Res.drawable.tarot_back_bw),
+        contentDescription = "Tarot card back",
+        modifier = Modifier.fillMaxSize(),
+        contentScale = ContentScale.Crop,
+    )
 }
 
 @Composable
