@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -304,22 +305,32 @@ fun TarotScreen(
                                     },
                                 )
 
-                                if (isRevealed) {
-                                    val orientation = when (overlayCard.upright) {
-                                        true -> "Al derecho"
-                                        false -> "Invertida"
-                                        null -> "Desconocida"
-                                    }
-                                    Text("Orientación: $orientation", style = MaterialTheme.typography.bodyMedium)
+                                Box(
+                                    modifier = Modifier.height(52.dp),
+                                    contentAlignment = Alignment.TopCenter,
+                                ) {
+                                    if (isRevealed) {
+                                        Column(
+                                            verticalArrangement = Arrangement.spacedBy(2.dp),
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                        ) {
+                                            val orientation = when (overlayCard.upright) {
+                                                true -> "Al derecho"
+                                                false -> "Invertida"
+                                                null -> "Desconocida"
+                                            }
+                                            Text("Orientación: $orientation", style = MaterialTheme.typography.bodyMedium)
 
-                                    val position = when (overlayCard.position) {
-                                        TarotCardPosition.PAST -> "Pasado"
-                                        TarotCardPosition.PRESENT -> "Presente"
-                                        TarotCardPosition.FUTURE -> "Futuro"
-                                        null -> null
-                                    }
-                                    if (position != null) {
-                                        Text("Posición: $position", style = MaterialTheme.typography.bodySmall)
+                                            val position = when (overlayCard.position) {
+                                                TarotCardPosition.PAST -> "Pasado"
+                                                TarotCardPosition.PRESENT -> "Presente"
+                                                TarotCardPosition.FUTURE -> "Futuro"
+                                                null -> null
+                                            }
+                                            if (position != null) {
+                                                Text("Posición: $position", style = MaterialTheme.typography.bodySmall)
+                                            }
+                                        }
                                     }
                                 }
                             }

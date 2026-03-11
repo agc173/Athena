@@ -19,6 +19,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,6 +33,7 @@ import com.agc.bwitch.domain.tarot.TarotCard
 import com.agc.bwitch.ui.tarot.TarotCardArt
 import bwitch.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
+import kotlin.math.abs
 
 
 @Composable
@@ -48,10 +50,17 @@ fun TarotCardView(
     )
 
     val isFrontVisible = fliprotation.value >= 90f
+    val revealPeak = (1f - (abs(fliprotation.value - 90f) / 90f)).coerceIn(0f, 1f)
+    val revealScale = 1f + (0.035f * revealPeak)
+    val revealGlowAlpha = (0.22f * revealPeak) + if (revealed) 0.04f else 0f
 
     val cardModifier = Modifier
         .width(cardWidth)
         .aspectRatio(TAROT_CARD_ASPECT_RATIO)
+        .graphicsLayer {
+            scaleX = revealScale
+            scaleY = revealScale
+        }
         .let { modifier -> if (onClick != null) modifier.clickable(onClick = onClick) else modifier }
 
     Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
@@ -84,6 +93,20 @@ fun TarotCardView(
                 ) {
                     TarotCardFaceContent(card = card, revealed = true)
                 }
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            brush = Brush.radialGradient(
+                                colors = listOf(
+                                    MaterialTheme.colorScheme.primary.copy(alpha = revealGlowAlpha),
+                                    MaterialTheme.colorScheme.tertiary.copy(alpha = revealGlowAlpha * 0.45f),
+                                    Color.Transparent,
+                                ),
+                            ),
+                        ),
+                )
             }
         }
     }
