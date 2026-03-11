@@ -1,13 +1,7 @@
 package com.agc.bwitch.ui.tarot.components
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.Image
@@ -29,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -46,6 +41,14 @@ fun TarotCardView(
     cardWidth: Dp = 160.dp,
     onClick: (() -> Unit)? = null,
 ) {
+    val rotationY = animateFloatAsState(
+        targetValue = if (revealed) 180f else 0f,
+        animationSpec = tween(durationMillis = REVEAL_FLIP_DURATION_MS),
+        label = "tarot-card-reveal-rotation",
+    )
+
+    val isFrontVisible = rotationY.value >= 90f
+
     val cardModifier = Modifier
         .width(cardWidth)
         .aspectRatio(TAROT_CARD_ASPECT_RATIO)
@@ -57,23 +60,37 @@ fun TarotCardView(
             shape = RoundedCornerShape(0.dp),
             elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         ) {
-            AnimatedContent(
-                targetState = revealed,
-                transitionSpec = {
-                    (
-                        (fadeIn(animationSpec = tween(280)) + scaleIn(initialScale = 0.98f, animationSpec = tween(280))) togetherWith
-                            (fadeOut(animationSpec = tween(180)) + scaleOut(targetScale = 1.01f, animationSpec = tween(180)))
-                        ).using(SizeTransform(clip = false))
-                },
-                label = "tarot-card-reveal-content",
-            ) { isRevealed ->
-                TarotCardFaceContent(card = card, revealed = isRevealed)
+            Box(modifier = Modifier.fillMaxSize()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer {
+                            rotationY = rotationY.value
+                            alpha = if (isFrontVisible) 0f else 1f
+                            cameraDistance = 12f * density
+                        },
+                ) {
+                    TarotCardFaceContent(card = card, revealed = false)
+                }
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer {
+                            rotationY = rotationY.value + 180f
+                            alpha = if (isFrontVisible) 1f else 0f
+                            cameraDistance = 12f * density
+                        },
+                ) {
+                    TarotCardFaceContent(card = card, revealed = true)
+                }
             }
         }
     }
 }
 
 private const val TAROT_CARD_ASPECT_RATIO = 0.6f
+private const val REVEAL_FLIP_DURATION_MS = 520
 
 @Composable
 internal fun TarotCardFaceContent(card: TarotCard?, revealed: Boolean) {
