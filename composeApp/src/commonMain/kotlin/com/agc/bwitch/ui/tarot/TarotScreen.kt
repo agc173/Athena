@@ -2,7 +2,9 @@ package com.agc.bwitch.ui.tarot
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -42,6 +44,7 @@ import com.agc.bwitch.presentation.tarot.TarotViewModel
 import com.agc.bwitch.ui.tarot.components.TarotCardView
 import com.agc.bwitch.ui.tarot.components.TarotLoadingDeck
 import com.agc.bwitch.ui.tarot.components.TarotMiniCard
+import kotlinx.coroutines.delay
 import org.koin.compose.koinInject
 
 @Composable
@@ -276,8 +279,18 @@ fun TarotScreen(
                         var overlayContentVisible by remember(overlayIndex, isMiniOverlay) {
                             mutableStateOf(false)
                         }
+                        var advancingFromRevealedCard by remember(overlayIndex, isMiniOverlay) {
+                            mutableStateOf(false)
+                        }
                         LaunchedEffect(overlayIndex, isMiniOverlay) {
                             overlayContentVisible = true
+                            advancingFromRevealedCard = false
+                        }
+                        LaunchedEffect(advancingFromRevealedCard) {
+                            if (advancingFromRevealedCard) {
+                                delay(OVERLAY_CARD_EXIT_DURATION_MS.toLong())
+                                viewModel.revealNextCard()
+                            }
                         }
 
                         AnimatedVisibility(
@@ -286,6 +299,11 @@ fun TarotScreen(
                                 scaleIn(
                                     initialScale = 0.96f,
                                     animationSpec = tween(durationMillis = 220),
+                                ),
+                            exit = fadeOut(animationSpec = tween(durationMillis = OVERLAY_CARD_EXIT_DURATION_MS)) +
+                                scaleOut(
+                                    targetScale = 0.96f,
+                                    animationSpec = tween(durationMillis = OVERLAY_CARD_EXIT_DURATION_MS),
                                 ),
                         ) {
                             Column(
@@ -301,7 +319,16 @@ fun TarotScreen(
                                     onClick = if (isMiniOverlay) {
                                         { viewModel.toggleMiniCard(overlayIndex) }
                                     } else {
-                                        viewModel::revealNextCard
+                                        {
+                                            if (isRevealed) {
+                                                if (!advancingFromRevealedCard) {
+                                                    advancingFromRevealedCard = true
+                                                    overlayContentVisible = false
+                                                }
+                                            } else {
+                                                viewModel.revealNextCard()
+                                            }
+                                        }
                                     },
                                 )
 
@@ -341,6 +368,8 @@ fun TarotScreen(
         }
     }
 }
+
+private const val OVERLAY_CARD_EXIT_DURATION_MS = 180
 
 @Composable
 private fun TarotReadingSection(
