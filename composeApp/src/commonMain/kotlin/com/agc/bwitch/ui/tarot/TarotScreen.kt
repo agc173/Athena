@@ -33,6 +33,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -54,6 +56,7 @@ fun TarotScreen(
     viewModel: TarotViewModel = koinInject(),
 ) {
     val state by viewModel.uiState.collectAsState()
+    val language = currentTarotUiLanguage()
 
     Box {
         Column(
@@ -332,32 +335,39 @@ fun TarotScreen(
                                     },
                                 )
 
+                                if (isRevealed) {
+                                    val labels = tarotOverlayLabels(overlayCard, language)
+                                    Column(
+                                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                    ) {
+                                        labels.position?.let {
+                                            Text(
+                                                text = it,
+                                                style = MaterialTheme.typography.labelSmall,
+                                            )
+                                        }
+
+                                        Text(
+                                            text = labels.cardName,
+                                            style = MaterialTheme.typography.titleMedium.copy(
+                                                fontFamily = FontFamily.Serif,
+                                                fontWeight = FontWeight.SemiBold,
+                                            ),
+                                        )
+                                    }
+                                }
+
                                 Box(
                                     modifier = Modifier.height(52.dp),
                                     contentAlignment = Alignment.TopCenter,
                                 ) {
                                     if (isRevealed) {
-                                        Column(
-                                            verticalArrangement = Arrangement.spacedBy(2.dp),
-                                            horizontalAlignment = Alignment.CenterHorizontally,
-                                        ) {
-                                            val orientation = when (overlayCard.upright) {
-                                                true -> "Al derecho"
-                                                false -> "Invertida"
-                                                null -> "Desconocida"
-                                            }
-                                            Text("Orientación: $orientation", style = MaterialTheme.typography.bodyMedium)
-
-                                            val position = when (overlayCard.position) {
-                                                TarotCardPosition.PAST -> "Pasado"
-                                                TarotCardPosition.PRESENT -> "Presente"
-                                                TarotCardPosition.FUTURE -> "Futuro"
-                                                null -> null
-                                            }
-                                            if (position != null) {
-                                                Text("Posición: $position", style = MaterialTheme.typography.bodySmall)
-                                            }
-                                        }
+                                        val labels = tarotOverlayLabels(overlayCard, language)
+                                        Text(
+                                            text = labels.orientation,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                        )
                                     }
                                 }
                             }
