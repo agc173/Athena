@@ -12,15 +12,16 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -43,18 +44,18 @@ fun TarotCardView(
     card: TarotCard?,
     revealed: Boolean,
     cardWidth: Dp = 160.dp,
-    cardHeight: Dp = 240.dp,
     onClick: (() -> Unit)? = null,
 ) {
     val cardModifier = Modifier
         .width(cardWidth)
-        .height(cardHeight)
+        .aspectRatio(TAROT_CARD_ASPECT_RATIO)
         .let { modifier -> if (onClick != null) modifier.clickable(onClick = onClick) else modifier }
 
     Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
         Card(
             modifier = cardModifier,
             shape = RoundedCornerShape(0.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         ) {
             AnimatedContent(
                 targetState = revealed,
@@ -71,6 +72,8 @@ fun TarotCardView(
         }
     }
 }
+
+private const val TAROT_CARD_ASPECT_RATIO = 0.6f
 
 @Composable
 internal fun TarotCardFaceContent(card: TarotCard?, revealed: Boolean) {
