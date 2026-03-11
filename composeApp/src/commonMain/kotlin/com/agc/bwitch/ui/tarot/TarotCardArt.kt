@@ -1,6 +1,6 @@
 package com.agc.bwitch.ui.tarot
 
-import bwitch.composeapp.generated.resources.Res
+import bwitch.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.DrawableResource
 
 object TarotCardArt {
@@ -11,8 +11,8 @@ object TarotCardArt {
     private val faceDrawableByCardId: Map<String, DrawableResource> = mapOf(
         "major-00-fool" to Res.drawable.major_00_fool,
         "major-01-magician" to Res.drawable.major_01_magician,
-        "major-02-hight-priestess" to Res.drawable.major_02_hight_priestess,
-        "major-02-high-priestess" to Res.drawable.major_02_hight_priestess,
+        "major-02-high-priestess" to Res.drawable.major_02_high_priestess,
+        "major-02-high-priestess" to Res.drawable.major_02_high_priestess,
         "major-03-empress" to Res.drawable.major_03_empress,
         "major-04-emperor" to Res.drawable.major_04_emperor,
         "major-05-hierophant" to Res.drawable.major_05_hierophant,

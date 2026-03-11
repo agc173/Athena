@@ -34,7 +34,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.agc.bwitch.domain.tarot.TarotCard
 import com.agc.bwitch.ui.tarot.TarotCardArt
-import bwitch.composeapp.generated.resources.Res
+import bwitch.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
 
 
