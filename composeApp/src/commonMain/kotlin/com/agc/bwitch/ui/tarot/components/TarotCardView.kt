@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
@@ -52,11 +53,18 @@ fun TarotCardView(
     val isFrontVisible = fliprotation.value >= 90f
     val revealPeak = (1f - (abs(fliprotation.value - 90f) / 90f)).coerceIn(0f, 1f)
     val revealScale = 1f + (0.035f * revealPeak)
-    val revealGlowAlpha = (0.22f * revealPeak) + if (revealed) 0.04f else 0f
+    val revealGlowAlpha = (0.42f * revealPeak) + if (revealed) 0.08f else 0f
+    val revealGlowElevation = 14.dp * revealPeak
 
     val cardModifier = Modifier
         .width(cardWidth)
         .aspectRatio(TAROT_CARD_ASPECT_RATIO)
+        .shadow(
+            elevation = revealGlowElevation,
+            ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = revealGlowAlpha * 0.65f),
+            spotColor = MaterialTheme.colorScheme.tertiary.copy(alpha = revealGlowAlpha * 0.55f),
+            shape = RoundedCornerShape(0.dp),
+        )
         .graphicsLayer {
             scaleX = revealScale
             scaleY = revealScale
@@ -100,8 +108,10 @@ fun TarotCardView(
                         .background(
                             brush = Brush.radialGradient(
                                 colors = listOf(
+                                    Color.Transparent,
+                                    MaterialTheme.colorScheme.primary.copy(alpha = revealGlowAlpha * 0.28f),
                                     MaterialTheme.colorScheme.primary.copy(alpha = revealGlowAlpha),
-                                    MaterialTheme.colorScheme.tertiary.copy(alpha = revealGlowAlpha * 0.45f),
+                                    MaterialTheme.colorScheme.tertiary.copy(alpha = revealGlowAlpha * 0.58f),
                                     Color.Transparent,
                                 ),
                             ),
