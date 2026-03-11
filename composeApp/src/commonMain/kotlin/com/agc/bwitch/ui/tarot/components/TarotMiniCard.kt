@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RectangleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -31,6 +31,7 @@ fun TarotMiniCard(
     onClick: (() -> Unit)? = null,
 ) {
     val cardWidth = 92.dp
+    val cardShape = RoundedCornerShape(0.dp)
 
     Column(
         verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -45,23 +46,23 @@ fun TarotMiniCard(
                     elevation = if (selected) 6.dp else 3.dp,
                     ambientColor = Color.Black.copy(alpha = 0.06f),
                     spotColor = Color.Black.copy(alpha = 0.12f),
-                    shape = RectangleShape,
+                    shape = cardShape,
                 )
                 .graphicsLayer {
                     scaleX = if (selected) 1.03f else 1f
                     scaleY = if (selected) 1.03f else 1f
                     alpha = if (selected) 1f else 0.96f
                 }
-                .clip(RectangleShape)
+                .clip(cardShape)
                 .border(
                     width = if (selected) 1.5.dp else 0.dp,
                     color = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f),
-                    shape = RectangleShape,
+                    shape = cardShape,
                 )
                 .let { modifier ->
                     if (onClick != null) modifier.clickable(onClick = onClick) else modifier
                 },
-            shape = RectangleShape,
+            shape = cardShape,
             elevation = CardDefaults.cardElevation(defaultElevation = if (selected) 2.dp else 0.dp),
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
