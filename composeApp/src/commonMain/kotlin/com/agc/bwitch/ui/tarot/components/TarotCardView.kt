@@ -52,7 +52,10 @@ fun TarotCardView(
         .let { modifier -> if (onClick != null) modifier.clickable(onClick = onClick) else modifier }
 
     Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-        Card(modifier = cardModifier) {
+        Card(
+            modifier = cardModifier,
+            shape = RoundedCornerShape(0.dp),
+        ) {
             AnimatedContent(
                 targetState = revealed,
                 transitionSpec = {
@@ -90,7 +93,7 @@ private fun TarotBackFace() {
         painter = painterResource(Res.drawable.tarot_back_bw),
         contentDescription = "Tarot card back",
         modifier = Modifier.fillMaxSize(),
-        contentScale = ContentScale.Crop,
+        contentScale = ContentScale.Fit,
     )
 }
 
@@ -100,7 +103,7 @@ private fun TarotKnownFace(card: TarotCard?, drawable: org.jetbrains.compose.res
         painter = painterResource(drawable),
         contentDescription = card?.name ?: "Tarot card face",
         modifier = Modifier.fillMaxSize(),
-        contentScale = ContentScale.Crop,
+        contentScale = ContentScale.Fit,
     )
 }
 

@@ -296,8 +296,8 @@ fun TarotScreen(
                                 TarotCardView(
                                     card = if (isRevealed) overlayCard else null,
                                     revealed = isRevealed,
-                                    cardWidth = 220.dp,
-                                    cardHeight = 330.dp,
+                                    cardWidth = 260.dp,
+                                    cardHeight = 390.dp,
                                     onClick = if (isMiniOverlay) {
                                         { viewModel.toggleMiniCard(overlayIndex) }
                                     } else {
