@@ -1,5 +1,8 @@
 package com.agc.bwitch.ui.tarot
 
+import bwich.composeapp.generated.resources.Res
+import org.jetbrains.compose.resources.DrawableResource
+
 /**
  * Tarot art resolver.
  *
@@ -24,38 +27,19 @@ object TarotCardArt {
      */
     const val placeholderFaceAssetKey: String = "tarot_placeholder_face"
 
-    /**
-     * Maps normalized backend tarot ids to expected drawable keys.
-     *
-     * NOTE: backend ids may vary (e.g. "the_moon", "moon", "XVIII").
-     */
-    private val knownFaceAssetKeys: Map<String, String> = mapOf(
-        "moon" to "tarot_moon",
-        "the_moon" to "tarot_moon",
-        "major_18_the_moon" to "tarot_moon",
-        "xviii" to "tarot_moon",
-        "18" to "tarot_moon",
-    )
-
-    fun faceAssetKeyForCardId(cardId: String?): String? {
+    fun faceDrawableForCardId(cardId: String?): DrawableResource? {
         val normalized = normalizeCardId(cardId)
-        return knownFaceAssetKeys[normalized]
+        if (normalized.isBlank()) return null
+        return Res.allDrawableResources[normalized]
     }
 
-    fun hasSpecificFace(cardId: String?): Boolean = faceAssetKeyForCardId(cardId) != null
+    fun hasSpecificFace(cardId: String?): Boolean = faceDrawableForCardId(cardId) != null
 
     private fun normalizeCardId(cardId: String?): String {
         return cardId
             .orEmpty()
             .trim()
             .lowercase()
-            .replace("á", "a")
-            .replace("é", "e")
-            .replace("í", "i")
-            .replace("ó", "o")
-            .replace("ú", "u")
-            .replace("ñ", "n")
-            .replace(Regex("[^a-z0-9]+"), "_")
-            .trim('_')
+            .replace('-', '_')
     }
 }

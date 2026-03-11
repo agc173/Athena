@@ -35,7 +35,6 @@ import androidx.compose.ui.unit.dp
 import com.agc.bwitch.domain.tarot.TarotCard
 import com.agc.bwitch.ui.tarot.TarotCardArt
 import bwich.composeapp.generated.resources.Res
-import bwich.composeapp.generated.resources.tarot_back_bw
 import org.jetbrains.compose.resources.painterResource
 
 @Composable
@@ -76,8 +75,9 @@ internal fun TarotCardFaceContent(card: TarotCard?, revealed: Boolean) {
         return
     }
 
-    if (TarotCardArt.hasSpecificFace(card?.id)) {
-        TarotKnownFacePlaceholder(card)
+    val faceDrawable = TarotCardArt.faceDrawableForCardId(card?.id)
+    if (faceDrawable != null) {
+        TarotKnownFace(card = card, drawable = faceDrawable)
     } else {
         TarotPremiumFallbackFace(card)
     }
@@ -94,10 +94,12 @@ private fun TarotBackFace() {
 }
 
 @Composable
-private fun TarotKnownFacePlaceholder(card: TarotCard?) {
-    TarotPremiumFallbackFace(
-        card = card,
-        status = "Arte listo para integrar",
+private fun TarotKnownFace(card: TarotCard?, drawable: org.jetbrains.compose.resources.DrawableResource) {
+    Image(
+        painter = painterResource(drawable),
+        contentDescription = card?.name ?: "Tarot card face",
+        modifier = Modifier.fillMaxSize(),
+        contentScale = ContentScale.Crop,
     )
 }
 
