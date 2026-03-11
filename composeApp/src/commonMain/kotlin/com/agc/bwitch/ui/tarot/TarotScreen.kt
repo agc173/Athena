@@ -33,11 +33,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import bwitch.composeapp.generated.resources.*
 import com.agc.bwitch.domain.tarot.TarotCardPosition
 import com.agc.bwitch.domain.tarot.TarotReadingDetails
 import com.agc.bwitch.domain.tarot.TarotRequestType
@@ -47,6 +53,7 @@ import com.agc.bwitch.ui.tarot.components.TarotCardView
 import com.agc.bwitch.ui.tarot.components.TarotLoadingDeck
 import com.agc.bwitch.ui.tarot.components.TarotMiniCard
 import kotlinx.coroutines.delay
+import org.jetbrains.compose.resources.Font
 import org.koin.compose.koinInject
 
 @Composable
@@ -268,7 +275,7 @@ fun TarotScreen(
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.6f))
+                            .background(tarotOverlayAtmosphereBrush())
                             .clickable(
                                 interactionSource = scrimInteractionSource,
                                 indication = null,
@@ -299,15 +306,15 @@ fun TarotScreen(
                         AnimatedVisibility(
                             visible = overlayContentVisible,
                             enter = fadeIn(animationSpec = tween(durationMillis = 220)) +
-                                scaleIn(
-                                    initialScale = 0.96f,
-                                    animationSpec = tween(durationMillis = 220),
-                                ),
+                                    scaleIn(
+                                        initialScale = 0.96f,
+                                        animationSpec = tween(durationMillis = 220),
+                                    ),
                             exit = fadeOut(animationSpec = tween(durationMillis = OVERLAY_CARD_EXIT_DURATION_MS)) +
-                                scaleOut(
-                                    targetScale = 0.96f,
-                                    animationSpec = tween(durationMillis = OVERLAY_CARD_EXIT_DURATION_MS),
-                                ),
+                                    scaleOut(
+                                        targetScale = 0.96f,
+                                        animationSpec = tween(durationMillis = OVERLAY_CARD_EXIT_DURATION_MS),
+                                    ),
                         ) {
                             Column(
                                 modifier = Modifier
@@ -350,8 +357,8 @@ fun TarotScreen(
 
                                         Text(
                                             text = labels.cardName,
-                                            style = MaterialTheme.typography.titleMedium.copy(
-                                                fontFamily = FontFamily.Serif,
+                                            style = tarotOverlayTitleTextStyle(
+                                                baseStyle = MaterialTheme.typography.titleLarge,
                                                 fontWeight = FontWeight.SemiBold,
                                             ),
                                         )
@@ -366,7 +373,8 @@ fun TarotScreen(
                                         val labels = tarotOverlayLabels(overlayCard, language)
                                         Text(
                                             text = labels.orientation,
-                                            style = MaterialTheme.typography.bodyMedium,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            textAlign = TextAlign.Center,
                                         )
                                     }
                                 }
@@ -380,6 +388,36 @@ fun TarotScreen(
 }
 
 private const val OVERLAY_CARD_EXIT_DURATION_MS = 180
+
+@Composable
+private fun tarotOverlayAtmosphereBrush(): Brush {
+    val scrim = MaterialTheme.colorScheme.scrim
+    val deepBase = lerp(scrim, Color(0xFF080711), 0.68f)
+    return Brush.radialGradient(
+        colors = listOf(
+            Color(0xFF312752).copy(alpha = 0.58f),
+            Color(0xFF17142B).copy(alpha = 0.85f),
+            deepBase.copy(alpha = 0.96f),
+        ),
+        radius = 1200f,
+    )
+}
+
+@Composable
+private fun tarotOverlayTitleTextStyle(
+    baseStyle: TextStyle,
+    fontWeight: FontWeight,
+): TextStyle = baseStyle.copy(
+    fontFamily = tarotTitleFontFamily(),
+    fontWeight = fontWeight,
+    textAlign = TextAlign.Center,
+)
+
+@Composable
+private fun tarotTitleFontFamily(): FontFamily = FontFamily(
+    Font(Res.allFontResources.getValue("cinzel_regular")),
+    Font(Res.allFontResources.getValue("cinzel_semibold"), weight = FontWeight.SemiBold),
+)
 
 @Composable
 private fun TarotReadingSection(
