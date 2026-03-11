@@ -22,7 +22,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -318,12 +317,48 @@ fun TarotScreen(
                                         animationSpec = tween(durationMillis = OVERLAY_CARD_EXIT_DURATION_MS),
                                     ),
                         ) {
+                            val labels = remember(overlayCard.id, language) {
+                                tarotOverlayLabels(overlayCard, language)
+                            }
+                            val metadataPrimaryColor = Color(0xFFF8EEFF)
+                            val metadataSecondaryColor = Color(0xFFD5C4E9)
+
                             Column(
                                 modifier = Modifier
                                     .padding(24.dp),
                                 verticalArrangement = Arrangement.spacedBy(8.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally,
                             ) {
+                                Box(
+                                    modifier = Modifier.height(OVERLAY_TOP_METADATA_HEIGHT),
+                                    contentAlignment = Alignment.BottomCenter,
+                                ) {
+                                    if (isRevealed) {
+                                        Column(
+                                            verticalArrangement = Arrangement.spacedBy(2.dp),
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                        ) {
+                                            labels.position?.let {
+                                                Text(
+                                                    text = it,
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = metadataSecondaryColor,
+                                                    textAlign = TextAlign.Center,
+                                                )
+                                            }
+
+                                            Text(
+                                                text = labels.cardName,
+                                                style = tarotOverlayTitleTextStyle(
+                                                    baseStyle = MaterialTheme.typography.titleLarge,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                ),
+                                                color = metadataPrimaryColor,
+                                            )
+                                        }
+                                    }
+                                }
+
                                 TarotCardView(
                                     card = if (isRevealed) overlayCard else null,
                                     revealed = isRevealed,
@@ -344,40 +379,16 @@ fun TarotScreen(
                                     },
                                 )
 
-                                if (isRevealed) {
-                                    val labels = tarotOverlayLabels(overlayCard, language)
-                                    Column(
-                                        verticalArrangement = Arrangement.spacedBy(2.dp),
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                    ) {
-                                        labels.position?.let {
-                                            Text(
-                                                text = it,
-                                                style = MaterialTheme.typography.labelSmall,
-                                                color = LocalContentColor.current.copy(alpha = 0.75f),
-                                            )
-                                        }
-
-                                        Text(
-                                            text = labels.cardName,
-                                            style = tarotOverlayTitleTextStyle(
-                                                baseStyle = MaterialTheme.typography.titleLarge,
-                                                fontWeight = FontWeight.SemiBold,
-                                            ),
-                                        )
-                                    }
-                                }
-
                                 Box(
-                                    modifier = Modifier.height(52.dp),
+                                    modifier = Modifier.height(OVERLAY_BOTTOM_METADATA_HEIGHT),
                                     contentAlignment = Alignment.TopCenter,
                                 ) {
                                     if (isRevealed) {
-                                        val labels = tarotOverlayLabels(overlayCard, language)
                                         Text(
                                             text = labels.orientation,
                                             style = MaterialTheme.typography.bodySmall,
                                             textAlign = TextAlign.Center,
+                                            color = metadataSecondaryColor,
                                         )
                                     }
                                 }
@@ -391,6 +402,8 @@ fun TarotScreen(
 }
 
 private const val OVERLAY_CARD_EXIT_DURATION_MS = 180
+private val OVERLAY_TOP_METADATA_HEIGHT = 72.dp
+private val OVERLAY_BOTTOM_METADATA_HEIGHT = 52.dp
 
 @Composable
 private fun tarotOverlayAtmosphereBrush(): Brush {
