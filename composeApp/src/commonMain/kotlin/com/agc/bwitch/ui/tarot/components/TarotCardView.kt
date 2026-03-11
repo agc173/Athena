@@ -41,13 +41,13 @@ fun TarotCardView(
     cardWidth: Dp = 160.dp,
     onClick: (() -> Unit)? = null,
 ) {
-    val rotationY = animateFloatAsState(
+    val fliprotation = animateFloatAsState(
         targetValue = if (revealed) 180f else 0f,
         animationSpec = tween(durationMillis = REVEAL_FLIP_DURATION_MS),
         label = "tarot-card-reveal-rotation",
     )
 
-    val isFrontVisible = rotationY.value >= 90f
+    val isFrontVisible = fliprotation.value >= 90f
 
     val cardModifier = Modifier
         .width(cardWidth)
@@ -65,7 +65,7 @@ fun TarotCardView(
                     modifier = Modifier
                         .fillMaxSize()
                         .graphicsLayer {
-                            rotationY = rotationY.value
+                            rotationY = fliprotation.value
                             alpha = if (isFrontVisible) 0f else 1f
                             cameraDistance = 12f * density
                         },
@@ -77,7 +77,7 @@ fun TarotCardView(
                     modifier = Modifier
                         .fillMaxSize()
                         .graphicsLayer {
-                            rotationY = rotationY.value + 180f
+                            rotationY = fliprotation.value + 180f
                             alpha = if (isFrontVisible) 1f else 0f
                             cameraDistance = 12f * density
                         },
