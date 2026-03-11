@@ -1,6 +1,6 @@
 package com.agc.bwitch.ui.tarot.components
 
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -19,6 +19,8 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -42,18 +44,22 @@ fun TarotCardView(
     cardWidth: Dp = 160.dp,
     onClick: (() -> Unit)? = null,
 ) {
-    val flipRotation = if (revealed) {
-        animateFloatAsState(
-            targetValue = 180f,
-            animationSpec = tween(durationMillis = REVEAL_FLIP_DURATION_MS),
-            label = "tarot-card-reveal-rotation",
-        ).value
-    } else {
-        0f
+    val flipRotation = remember { Animatable(0f) }
+
+    LaunchedEffect(revealed) {
+        if (revealed) {
+            flipRotation.animateTo(
+                targetValue = 180f,
+                animationSpec = tween(durationMillis = REVEAL_FLIP_DURATION_MS),
+            )
+        } else {
+            flipRotation.snapTo(0f)
+        }
     }
 
-    val isFrontVisible = flipRotation >= 90f
-    val revealPeak = (1f - (abs(flipRotation - 90f) / 90f)).coerceIn(0f, 1f)
+    val visualRotation = if (revealed) flipRotation.value else 0f
+    val isFrontVisible = revealed && visualRotation >= 90f
+    val revealPeak = (1f - (abs(visualRotation - 90f) / 90f)).coerceIn(0f, 1f)
     val revealScale = 1f + (0.035f * revealPeak)
 
     val cardModifier = Modifier
@@ -76,7 +82,7 @@ fun TarotCardView(
                     modifier = Modifier
                         .fillMaxSize()
                         .graphicsLayer {
-                            rotationY = flipRotation
+                            rotationY = visualRotation
                             alpha = if (isFrontVisible) 0f else 1f
                             cameraDistance = 12f * density
                         },
@@ -88,7 +94,7 @@ fun TarotCardView(
                     modifier = Modifier
                         .fillMaxSize()
                         .graphicsLayer {
-                            rotationY = flipRotation + 180f
+                            rotationY = visualRotation + 180f
                             alpha = if (isFrontVisible) 1f else 0f
                             cameraDistance = 12f * density
                         },
