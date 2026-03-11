@@ -22,6 +22,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -41,6 +42,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import bwitch.composeapp.generated.resources.*
@@ -352,6 +354,7 @@ fun TarotScreen(
                                             Text(
                                                 text = it,
                                                 style = MaterialTheme.typography.labelSmall,
+                                                color = LocalContentColor.current.copy(alpha = 0.75f),
                                             )
                                         }
 
@@ -410,6 +413,7 @@ private fun tarotOverlayTitleTextStyle(
 ): TextStyle = baseStyle.copy(
     fontFamily = tarotTitleFontFamily(),
     fontWeight = fontWeight,
+    letterSpacing = 0.08.em,
     textAlign = TextAlign.Center,
 )
 
