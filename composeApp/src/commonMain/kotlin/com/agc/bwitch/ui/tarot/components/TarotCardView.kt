@@ -19,11 +19,9 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
@@ -44,27 +42,23 @@ fun TarotCardView(
     cardWidth: Dp = 160.dp,
     onClick: (() -> Unit)? = null,
 ) {
-    val fliprotation = animateFloatAsState(
-        targetValue = if (revealed) 180f else 0f,
-        animationSpec = tween(durationMillis = REVEAL_FLIP_DURATION_MS),
-        label = "tarot-card-reveal-rotation",
-    )
+    val flipRotation = if (revealed) {
+        animateFloatAsState(
+            targetValue = 180f,
+            animationSpec = tween(durationMillis = REVEAL_FLIP_DURATION_MS),
+            label = "tarot-card-reveal-rotation",
+        ).value
+    } else {
+        0f
+    }
 
-    val isFrontVisible = fliprotation.value >= 90f
-    val revealPeak = (1f - (abs(fliprotation.value - 90f) / 90f)).coerceIn(0f, 1f)
+    val isFrontVisible = flipRotation >= 90f
+    val revealPeak = (1f - (abs(flipRotation - 90f) / 90f)).coerceIn(0f, 1f)
     val revealScale = 1f + (0.035f * revealPeak)
-    val revealGlowAlpha = (0.42f * revealPeak) + if (revealed) 0.08f else 0f
-    val revealGlowElevation = 14.dp * revealPeak
 
     val cardModifier = Modifier
         .width(cardWidth)
         .aspectRatio(TAROT_CARD_ASPECT_RATIO)
-        .shadow(
-            elevation = revealGlowElevation,
-            ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = revealGlowAlpha * 0.65f),
-            spotColor = MaterialTheme.colorScheme.tertiary.copy(alpha = revealGlowAlpha * 0.55f),
-            shape = RoundedCornerShape(0.dp),
-        )
         .graphicsLayer {
             scaleX = revealScale
             scaleY = revealScale
@@ -82,7 +76,7 @@ fun TarotCardView(
                     modifier = Modifier
                         .fillMaxSize()
                         .graphicsLayer {
-                            rotationY = fliprotation.value
+                            rotationY = flipRotation
                             alpha = if (isFrontVisible) 0f else 1f
                             cameraDistance = 12f * density
                         },
@@ -94,29 +88,13 @@ fun TarotCardView(
                     modifier = Modifier
                         .fillMaxSize()
                         .graphicsLayer {
-                            rotationY = fliprotation.value + 180f
+                            rotationY = flipRotation + 180f
                             alpha = if (isFrontVisible) 1f else 0f
                             cameraDistance = 12f * density
                         },
                 ) {
                     TarotCardFaceContent(card = card, revealed = true)
                 }
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            brush = Brush.radialGradient(
-                                colors = listOf(
-                                    Color.Transparent,
-                                    MaterialTheme.colorScheme.primary.copy(alpha = revealGlowAlpha * 0.28f),
-                                    MaterialTheme.colorScheme.primary.copy(alpha = revealGlowAlpha),
-                                    MaterialTheme.colorScheme.tertiary.copy(alpha = revealGlowAlpha * 0.58f),
-                                    Color.Transparent,
-                                ),
-                            ),
-                        ),
-                )
             }
         }
     }
