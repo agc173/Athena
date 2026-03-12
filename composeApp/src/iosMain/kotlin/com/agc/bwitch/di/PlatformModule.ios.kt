@@ -1,5 +1,7 @@
 package com.agc.bwitch.di
 
+import com.agc.bwitch.audio.IosTarotSoundPlayer
+import com.agc.bwitch.audio.TarotSoundPlayer
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.darwin.Darwin
 import kotlinx.coroutines.CoroutineDispatcher
@@ -13,4 +15,6 @@ val platformModule: Module = module {
 
     // Engine Ktor iOS
     single<HttpClientEngine> { Darwin.create() }
+
+    single<TarotSoundPlayer> { IosTarotSoundPlayer() }
 }

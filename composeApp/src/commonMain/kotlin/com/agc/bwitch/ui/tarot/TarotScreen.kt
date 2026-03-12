@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.em
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import bwitch.composeapp.generated.resources.*
+import com.agc.bwitch.audio.TarotSoundPlayer
 import com.agc.bwitch.domain.tarot.TarotCardPosition
 import com.agc.bwitch.domain.tarot.TarotReadingDetails
 import com.agc.bwitch.domain.tarot.TarotRequestType
@@ -63,6 +64,7 @@ fun TarotScreen(
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
     viewModel: TarotViewModel = koinInject(),
+    tarotSoundPlayer: TarotSoundPlayer = koinInject(),
 ) {
     val state by viewModel.uiState.collectAsState()
     val language = currentTarotUiLanguage()
@@ -373,6 +375,11 @@ fun TarotScreen(
                                         card = if (isRevealed) overlayCard else null,
                                         revealed = isRevealed,
                                         cardWidth = 260.dp,
+                                        onRevealStart = {
+                                            if (!isMiniOverlay) {
+                                                tarotSoundPlayer.playCardFlip()
+                                            }
+                                        },
                                         onClick = if (isMiniOverlay) {
                                             { viewModel.toggleMiniCard(overlayIndex) }
                                         } else {
