@@ -22,17 +22,19 @@ class AndroidTarotHaptics(
         val currentVibrator = vibrator ?: return
         if (!currentVibrator.hasVibrator()) return
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            currentVibrator.vibrate(
-                VibrationEffect.createPredefined(VibrationEffect.EFFECT_TICK),
-            )
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            currentVibrator.vibrate(
-                VibrationEffect.createOneShot(16L, VibrationEffect.DEFAULT_AMPLITUDE),
-            )
-        } else {
-            @Suppress("DEPRECATION")
-            currentVibrator.vibrate(16L)
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val effect = VibrationEffect.createOneShot(
+                    16L,
+                    VibrationEffect.DEFAULT_AMPLITUDE
+                )
+                currentVibrator.vibrate(effect)
+            } else {
+                @Suppress("DEPRECATION")
+                currentVibrator.vibrate(16L)
+            }
+        } catch (_: Throwable) {
+            // Algunos dispositivos/emuladores no soportan vibración
         }
     }
 }
