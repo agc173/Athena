@@ -13,9 +13,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RectangleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
@@ -65,6 +65,11 @@ fun TarotCardView(
     val cardModifier = Modifier
         .width(cardWidth)
         .aspectRatio(TAROT_CARD_ASPECT_RATIO)
+        .shadow(
+            elevation = 4.dp,
+            shape = RectangleShape,
+            clip = false,
+        )
         .graphicsLayer {
             scaleX = revealScale
             scaleY = revealScale
@@ -72,11 +77,7 @@ fun TarotCardView(
         .let { modifier -> if (onClick != null) modifier.clickable(onClick = onClick) else modifier }
 
     Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-        Card(
-            modifier = cardModifier,
-            shape = RoundedCornerShape(0.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        ) {
+        Box(modifier = cardModifier) {
             Box(modifier = Modifier.fillMaxSize()) {
                 Box(
                     modifier = Modifier
