@@ -375,11 +375,6 @@ fun TarotScreen(
                                         card = if (isRevealed) overlayCard else null,
                                         revealed = isRevealed,
                                         cardWidth = 260.dp,
-                                        onRevealStart = {
-                                            if (!isMiniOverlay) {
-                                                tarotSoundPlayer.playCardFlip()
-                                            }
-                                        },
                                         onClick = if (isMiniOverlay) {
                                             { viewModel.toggleMiniCard(overlayIndex) }
                                         } else {
@@ -390,6 +385,7 @@ fun TarotScreen(
                                                         overlayContentVisible = false
                                                     }
                                                 } else {
+                                                    tarotSoundPlayer.playCardFlip()
                                                     viewModel.revealNextCard()
                                                 }
                                             }
