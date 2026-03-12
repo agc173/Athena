@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -359,25 +360,35 @@ fun TarotScreen(
                                     }
                                 }
 
-                                TarotCardView(
-                                    card = if (isRevealed) overlayCard else null,
-                                    revealed = isRevealed,
-                                    cardWidth = 260.dp,
-                                    onClick = if (isMiniOverlay) {
-                                        { viewModel.toggleMiniCard(overlayIndex) }
-                                    } else {
-                                        {
-                                            if (isRevealed) {
-                                                if (!advancingFromRevealedCard) {
-                                                    advancingFromRevealedCard = true
-                                                    overlayContentVisible = false
+                                Box(contentAlignment = Alignment.Center) {
+                                    if (!isMiniOverlay) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(width = 336.dp, height = 504.dp)
+                                                .background(brush = tarotOverlayCardHaloBrush()),
+                                        )
+                                    }
+
+                                    TarotCardView(
+                                        card = if (isRevealed) overlayCard else null,
+                                        revealed = isRevealed,
+                                        cardWidth = 260.dp,
+                                        onClick = if (isMiniOverlay) {
+                                            { viewModel.toggleMiniCard(overlayIndex) }
+                                        } else {
+                                            {
+                                                if (isRevealed) {
+                                                    if (!advancingFromRevealedCard) {
+                                                        advancingFromRevealedCard = true
+                                                        overlayContentVisible = false
+                                                    }
+                                                } else {
+                                                    viewModel.revealNextCard()
                                                 }
-                                            } else {
-                                                viewModel.revealNextCard()
                                             }
-                                        }
-                                    },
-                                )
+                                        },
+                                    )
+                                }
 
                                 Box(
                                     modifier = Modifier.height(OVERLAY_BOTTOM_METADATA_HEIGHT),
@@ -418,6 +429,16 @@ private fun tarotOverlayAtmosphereBrush(): Brush {
         radius = 1200f,
     )
 }
+
+@Composable
+private fun tarotOverlayCardHaloBrush(): Brush = Brush.radialGradient(
+    colors = listOf(
+        Color(0xFFE8DCFF).copy(alpha = 0.14f),
+        Color(0xFF8D79C8).copy(alpha = 0.10f),
+        Color(0xFF241A3F).copy(alpha = 0.00f),
+    ),
+    radius = 520f,
+)
 
 @Composable
 private fun tarotOverlayTitleTextStyle(
