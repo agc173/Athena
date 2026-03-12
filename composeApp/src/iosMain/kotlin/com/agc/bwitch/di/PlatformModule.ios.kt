@@ -1,6 +1,8 @@
 package com.agc.bwitch.di
 
+import com.agc.bwitch.audio.IosTarotHaptics
 import com.agc.bwitch.audio.IosTarotSoundPlayer
+import com.agc.bwitch.audio.TarotHaptics
 import com.agc.bwitch.audio.TarotSoundPlayer
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.darwin.Darwin
@@ -17,4 +19,5 @@ val platformModule: Module = module {
     single<HttpClientEngine> { Darwin.create() }
 
     single<TarotSoundPlayer> { IosTarotSoundPlayer() }
+    single<TarotHaptics> { IosTarotHaptics() }
 }

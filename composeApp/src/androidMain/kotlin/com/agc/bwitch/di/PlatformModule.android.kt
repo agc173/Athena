@@ -2,7 +2,9 @@ package com.agc.bwitch.di
 
 import android.app.Application
 import android.content.Context
+import com.agc.bwitch.audio.AndroidTarotHaptics
 import com.agc.bwitch.audio.AndroidTarotSoundPlayer
+import com.agc.bwitch.audio.TarotHaptics
 import com.agc.bwitch.audio.TarotSoundPlayer
 import com.agc.bwitch.data.storage.SettingsFactory
 import com.agc.bwitch.presentation.auth.GoogleIdTokenProvider
@@ -20,6 +22,7 @@ fun platformModule(app: Application): Module = module {
     single { SettingsFactory(app) }
     single<Settings> { get<SettingsFactory>().create("bwitch") }
     single<TarotSoundPlayer> { AndroidTarotSoundPlayer(app) }
+    single<TarotHaptics> { AndroidTarotHaptics(app) }
 
     // Needs Activity context (passed from Compose via parametersOf(context))
     factory<GoogleIdTokenProvider> { (ctx: Context) ->
