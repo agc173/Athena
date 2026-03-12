@@ -18,7 +18,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -42,10 +45,17 @@ fun TarotCardView(
     revealed: Boolean,
     cardWidth: Dp = 160.dp,
     onClick: (() -> Unit)? = null,
+    onRevealStart: (() -> Unit)? = null,
 ) {
     val flipRotation = remember { Animatable(0f) }
 
+    var wasRevealed by remember { mutableStateOf(revealed) }
+
     LaunchedEffect(revealed) {
+        if (revealed && !wasRevealed) {
+            onRevealStart?.invoke()
+        }
+
         if (revealed) {
             flipRotation.animateTo(
                 targetValue = 180f,
@@ -54,6 +64,8 @@ fun TarotCardView(
         } else {
             flipRotation.snapTo(0f)
         }
+
+        wasRevealed = revealed
     }
 
     val visualRotation = if (revealed) flipRotation.value else 0f
