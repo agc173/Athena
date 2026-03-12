@@ -45,6 +45,12 @@ fun PortalScreen(
             enabled = true
         ),
         PortalItemConfig(
+            title = "Oráculo",
+            subtitle = "Haz una pregunta y recibe guía",
+            destination = Destination.Oracle,
+            enabled = true
+        ),
+        PortalItemConfig(
             title = "Oracle Debug",
             subtitle = "Estado de oracleGetStatus",
             destination = Destination.OracleDebug,

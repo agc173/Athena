@@ -19,6 +19,7 @@ import com.agc.bwitch.ui.astrology.HoroscopeScreen
 import com.agc.bwitch.ui.auth.AuthScreen
 import com.agc.bwitch.ui.common.AppScaffold
 import com.agc.bwitch.ui.oracle.OracleDebugScreen
+import com.agc.bwitch.ui.oracle.OracleScreen
 import com.agc.bwitch.ui.portal.PortalScreen
 import com.agc.bwitch.ui.tarot.TarotScreen
 import com.agc.bwitch.ui.userprofile.UserProfileScreen
@@ -97,6 +98,8 @@ fun AppRoot() {
                 contentPadding = padding,
                 onBack = { navigator.goBack() }
             )
+
+            Destination.Oracle -> OracleScreen(contentPadding = padding)
 
             Destination.OracleDebug -> OracleDebugScreen(contentPadding = padding)
 
