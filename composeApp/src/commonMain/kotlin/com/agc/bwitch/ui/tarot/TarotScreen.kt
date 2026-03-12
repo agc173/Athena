@@ -33,6 +33,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -204,33 +205,98 @@ fun TarotScreen(
                 if (state.revealPhase == TarotRevealPhase.READING_VISIBLE) {
                     when (val details = response.details) {
                         is TarotReadingDetails.Tarot1ReadingDetails -> {
+                            val sectionVisibility = remember(details) {
+                                mutableStateListOf(false, false, false, false)
+                            }
+                            LaunchedEffect(details) {
+                                sectionVisibility.indices.forEach { sectionVisibility[it] = false }
+                                sectionVisibility.indices.forEach { index ->
+                                    if (index > 0) delay(250)
+                                    sectionVisibility[index] = true
+                                }
+                            }
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Text("Lectura", style = MaterialTheme.typography.titleMedium)
-                                TarotReadingSection(title = "Tema", body = details.theme)
-                                TarotReadingSection(title = "Significado", body = details.meaning)
-                                TarotReadingSection(title = "Consejo", body = details.advice)
-                                TarotReadingSection(title = "Atención", body = details.watchOut)
+                                AnimatedVisibility(
+                                    visible = sectionVisibility[0],
+                                    enter = fadeIn(animationSpec = tween(400)),
+                                ) {
+                                    TarotReadingSection(title = "Tema", body = details.theme)
+                                }
+                                AnimatedVisibility(
+                                    visible = sectionVisibility[1],
+                                    enter = fadeIn(animationSpec = tween(400)),
+                                ) {
+                                    TarotReadingSection(title = "Significado", body = details.meaning)
+                                }
+                                AnimatedVisibility(
+                                    visible = sectionVisibility[2],
+                                    enter = fadeIn(animationSpec = tween(400)),
+                                ) {
+                                    TarotReadingSection(title = "Consejo", body = details.advice)
+                                }
+                                AnimatedVisibility(
+                                    visible = sectionVisibility[3],
+                                    enter = fadeIn(animationSpec = tween(400)),
+                                ) {
+                                    TarotReadingSection(title = "Atención", body = details.watchOut)
+                                }
                             }
                         }
 
                         is TarotReadingDetails.Tarot3ReadingDetails -> {
+                            val sectionVisibility = remember(details) {
+                                mutableStateListOf(false, false, false, false, false)
+                            }
+                            LaunchedEffect(details) {
+                                sectionVisibility.indices.forEach { sectionVisibility[it] = false }
+                                sectionVisibility.indices.forEach { index ->
+                                    if (index > 0) delay(250)
+                                    sectionVisibility[index] = true
+                                }
+                            }
                             val cardsByPosition = details.cards.associateBy { it.position }
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Text("Lectura", style = MaterialTheme.typography.titleMedium)
-                                TarotReadingSection(
-                                    title = "Pasado",
-                                    body = cardsByPosition[TarotCardPosition.PAST]?.meaning.orEmpty(),
-                                )
-                                TarotReadingSection(
-                                    title = "Presente",
-                                    body = cardsByPosition[TarotCardPosition.PRESENT]?.meaning.orEmpty(),
-                                )
-                                TarotReadingSection(
-                                    title = "Futuro",
-                                    body = cardsByPosition[TarotCardPosition.FUTURE]?.meaning.orEmpty(),
-                                )
-                                TarotReadingSection(title = "Resumen", body = details.summary)
-                                TarotReadingSection(title = "Consejo", body = details.advice)
+                                AnimatedVisibility(
+                                    visible = sectionVisibility[0],
+                                    enter = fadeIn(animationSpec = tween(400)),
+                                ) {
+                                    TarotReadingSection(
+                                        title = "Pasado",
+                                        body = cardsByPosition[TarotCardPosition.PAST]?.meaning.orEmpty(),
+                                    )
+                                }
+                                AnimatedVisibility(
+                                    visible = sectionVisibility[1],
+                                    enter = fadeIn(animationSpec = tween(400)),
+                                ) {
+                                    TarotReadingSection(
+                                        title = "Presente",
+                                        body = cardsByPosition[TarotCardPosition.PRESENT]?.meaning.orEmpty(),
+                                    )
+                                }
+                                AnimatedVisibility(
+                                    visible = sectionVisibility[2],
+                                    enter = fadeIn(animationSpec = tween(400)),
+                                ) {
+                                    TarotReadingSection(
+                                        title = "Futuro",
+                                        body = cardsByPosition[TarotCardPosition.FUTURE]?.meaning.orEmpty(),
+                                    )
+                                }
+                                AnimatedVisibility(
+                                    visible = sectionVisibility[3],
+                                    enter = fadeIn(animationSpec = tween(400)),
+                                ) {
+                                    TarotReadingSection(title = "Resumen", body = details.summary)
+                                }
+                                AnimatedVisibility(
+                                    visible = sectionVisibility[4],
+                                    enter = fadeIn(animationSpec = tween(400)),
+                                ) {
+                                    TarotReadingSection(title = "Consejo", body = details.advice)
+                                }
                             }
                         }
 
