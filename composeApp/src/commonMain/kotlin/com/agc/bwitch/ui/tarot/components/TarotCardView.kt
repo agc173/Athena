@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RectangleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -67,7 +66,7 @@ fun TarotCardView(
         .aspectRatio(TAROT_CARD_ASPECT_RATIO)
         .shadow(
             elevation = 4.dp,
-            shape = RectangleShape,
+            shape = RoundedCornerShape(0.dp),
             clip = false,
         )
         .graphicsLayer {
