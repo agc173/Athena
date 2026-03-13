@@ -18,6 +18,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+private const val MAX_QUESTION_LENGTH = 400
+
 data class OracleAskUiState(
     val question: String = "",
     val isLoading: Boolean = false,
@@ -37,11 +39,19 @@ class OracleAskViewModel(
     val uiState: StateFlow<OracleAskUiState> = _uiState.asStateFlow()
 
     fun onQuestionChange(value: String) {
-        _uiState.update { it.copy(question = value, error = null) }
+        _uiState.update {
+            it.copy(
+                question = value,
+                error = null,
+                answer = null,
+                result = null,
+                inProgress = false,
+            )
+        }
     }
 
     fun ask(topic: OracleTopic? = null, lang: String? = null) {
-        val trimmedQuestion = _uiState.value.question.trim()
+        val trimmedQuestion = _uiState.value.question.trim().take(MAX_QUESTION_LENGTH)
         if (trimmedQuestion.isBlank()) {
             _uiState.update { it.copy(error = "Escribe una pregunta para consultar al Oráculo") }
             return
@@ -101,6 +111,10 @@ class OracleAskViewModel(
 
     fun retry(topic: OracleTopic? = null, lang: String? = null) {
         ask(topic = topic, lang = lang)
+    }
+
+    fun startNewConsultation() {
+        _uiState.value = OracleAskUiState()
     }
 
     @OptIn(ExperimentalUuidApi::class)
