@@ -35,7 +35,9 @@ class PendulumViewModel {
     }
 
     fun reset() {
-        _uiState.value = PendulumUiState()
+        _uiState.update { current ->
+            PendulumUiState(resetCounter = current.resetCounter + 1)
+        }
     }
 
     private fun randomAnswer(): PendulumAnswer {
