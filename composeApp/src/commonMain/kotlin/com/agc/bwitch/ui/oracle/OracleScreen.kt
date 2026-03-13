@@ -14,6 +14,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -129,6 +130,32 @@ fun OracleScreen(
                     answer.reflection?.let {
                         Text("Reflexión", style = MaterialTheme.typography.titleSmall)
                         Text(it, style = MaterialTheme.typography.bodyMedium)
+                    }
+
+                    state.quotaSnapshot?.let { quota ->
+                        val quotaLines = buildList {
+                            quota.maxRequestsRemaining?.let { add("Consultas restantes hoy: $it") }
+                            quota.adUnlockRemaining?.let { add("Desbloqueos por anuncio restantes: $it") }
+                        }
+                        if (quotaLines.isNotEmpty()) {
+                            Surface(
+                                color = MaterialTheme.colorScheme.surface,
+                                shape = MaterialTheme.shapes.small,
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(10.dp),
+                                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                                ) {
+                                    quotaLines.forEach { line ->
+                                        Text(
+                                            text = line,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }

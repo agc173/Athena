@@ -3,6 +3,7 @@ package com.agc.bwitch.presentation.oracle
 import com.agc.bwitch.domain.oracle.OracleAnswer
 import com.agc.bwitch.domain.oracle.OracleAskRequest
 import com.agc.bwitch.domain.oracle.OracleAskResult
+import com.agc.bwitch.domain.oracle.OracleQuotaSnapshot
 import com.agc.bwitch.domain.oracle.OracleRepository
 import com.agc.bwitch.domain.oracle.OracleTopic
 import com.agc.bwitch.domain.shared.ApiError
@@ -26,6 +27,7 @@ data class OracleAskUiState(
     val requestId: String? = null,
     val result: OracleAskResult? = null,
     val answer: OracleAnswer? = null,
+    val quotaSnapshot: OracleQuotaSnapshot? = null,
     val inProgress: Boolean = false,
     val error: String? = null,
 )
@@ -44,6 +46,7 @@ class OracleAskViewModel(
                 question = value,
                 error = null,
                 answer = null,
+                quotaSnapshot = null,
                 result = null,
                 inProgress = false,
             )
@@ -67,6 +70,7 @@ class OracleAskViewModel(
                 inProgress = false,
                 result = null,
                 answer = null,
+                quotaSnapshot = null,
             )
         }
 
@@ -88,6 +92,7 @@ class OracleAskViewModel(
                             isLoading = false,
                             result = oracleResult,
                             answer = (oracleResult as? OracleAskResult.CompletedSuccess)?.answer,
+                            quotaSnapshot = (oracleResult as? OracleAskResult.CompletedSuccess)?.quotaSnapshot,
                             inProgress = oracleResult is OracleAskResult.InProgress,
                             error = null,
                         )
@@ -100,6 +105,7 @@ class OracleAskViewModel(
                             isLoading = false,
                             result = null,
                             answer = null,
+                            quotaSnapshot = null,
                             inProgress = false,
                             error = result.error.toUserMessage(),
                         )
@@ -121,14 +127,42 @@ class OracleAskViewModel(
     private fun generateRequestId(): String = Uuid.random().toString()
 
     private fun ApiError.toUserMessage(): String {
+        val backendMessage = message.orEmpty()
         return when (this) {
             is ApiError.Unauthenticated -> "Necesitas iniciar sesión para usar el Oráculo"
-            is ApiError.PermissionDenied -> "No tienes permisos para completar esta consulta"
-            is ApiError.ResourceExhausted -> message ?: "Has alcanzado el límite diario del Oráculo"
-            is ApiError.FailedPrecondition -> message ?: "No se pudo completar la consulta en este momento"
+            is ApiError.PermissionDenied -> "No podemos completar esta consulta con tu cuenta actual."
+            is ApiError.ResourceExhausted -> when {
+                backendMessage.hasAdUnlockHint() -> "Alcanzaste el límite de hoy. Mira un anuncio para desbloquear otra consulta."
+                else -> "Ya usaste tus consultas de hoy. Vuelve mañana para seguir consultando."
+            }
+            is ApiError.FailedPrecondition -> when {
+                backendMessage.hasAdUnlockHint() -> "Necesitas desbloquear la siguiente consulta viendo un anuncio."
+                backendMessage.isTemporaryUnavailabilityHint() -> "El Oráculo está momentáneamente no disponible. Inténtalo en unos minutos."
+                else -> "No pudimos completar tu consulta en este momento."
+            }
             is ApiError.InvalidArgument -> message ?: "La pregunta no es válida"
-            is ApiError.Internal -> message ?: "Error interno del Oráculo"
+            is ApiError.Internal -> when {
+                backendMessage.isTemporaryUnavailabilityHint() -> "El Oráculo está temporalmente ocupado. Inténtalo nuevamente en breve."
+                else -> "Tuvimos un problema al procesar tu consulta. Inténtalo nuevamente."
+            }
             is ApiError.Unknown -> message ?: "No se pudo conectar con el Oráculo"
         }
+    }
+
+    private fun String.hasAdUnlockHint(): Boolean {
+        val normalized = lowercase()
+        return normalized.contains("rewardedproof") ||
+            normalized.contains("ad unlock") ||
+            normalized.contains("unlock by ad") ||
+            normalized.contains("rewarded")
+    }
+
+    private fun String.isTemporaryUnavailabilityHint(): Boolean {
+        val normalized = lowercase()
+        return normalized.contains("temporar") ||
+            normalized.contains("unavailable") ||
+            normalized.contains("not available") ||
+            normalized.contains("maintenance") ||
+            normalized.contains("try again later")
     }
 }
