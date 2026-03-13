@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
@@ -58,6 +59,11 @@ fun PendulumScreen(
                 animationSpec = tween(durationMillis = 580),
             )
             viewModel.onSwingFinished()
+        } else if (state.phase == PendulumPhase.IDLE) {
+            angle.animateTo(
+                targetValue = 0f,
+                animationSpec = tween(durationMillis = 260),
+            )
         }
     }
 
@@ -118,8 +124,13 @@ fun PendulumScreen(
         if (state.phase == PendulumPhase.RESULT) {
             state.selectedAnswer?.let { answer ->
                 Text(
-                    text = "El péndulo dice: ${answer.label()}",
+                    text = answer.mysticalMessage(),
                     style = MaterialTheme.typography.titleMedium,
+                )
+                Text(
+                    text = "El péndulo ha marcado: ${answer.label()}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
@@ -143,24 +154,32 @@ private fun PendulumAnswerBoard(selectedAnswer: PendulumAnswer?) {
             .padding(horizontal = 16.dp),
     ) {
         AnswerNode(
-            text = "Sí",
-            isSelected = selectedAnswer == PendulumAnswer.YES,
-            modifier = Modifier.align(Alignment.TopCenter),
-        )
-        AnswerNode(
             text = "No",
             isSelected = selectedAnswer == PendulumAnswer.NO,
-            modifier = Modifier.align(Alignment.CenterStart),
-        )
-        AnswerNode(
-            text = "Tal vez",
-            isSelected = selectedAnswer == PendulumAnswer.MAYBE,
-            modifier = Modifier.align(Alignment.CenterEnd),
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .offset(x = 12.dp, y = (-84).dp),
         )
         AnswerNode(
             text = "Aún no",
             isSelected = selectedAnswer == PendulumAnswer.NOT_NOW,
-            modifier = Modifier.align(Alignment.BottomCenter),
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .offset(x = (-72).dp, y = (-22).dp),
+        )
+        AnswerNode(
+            text = "Tal vez",
+            isSelected = selectedAnswer == PendulumAnswer.MAYBE,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .offset(x = 72.dp, y = (-22).dp),
+        )
+        AnswerNode(
+            text = "Sí",
+            isSelected = selectedAnswer == PendulumAnswer.YES,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .offset(x = (-12).dp, y = (-84).dp),
         )
     }
 }
@@ -191,10 +210,10 @@ private fun AnswerNode(
 }
 
 private fun PendulumAnswer?.toTargetAngle(): Float = when (this) {
-    PendulumAnswer.YES -> 0f
-    PendulumAnswer.NO -> -24f
-    PendulumAnswer.MAYBE -> 24f
-    PendulumAnswer.NOT_NOW -> 10f
+    PendulumAnswer.NO -> -28f
+    PendulumAnswer.NOT_NOW -> -10f
+    PendulumAnswer.MAYBE -> 10f
+    PendulumAnswer.YES -> 28f
     null -> 0f
 }
 
@@ -203,4 +222,11 @@ private fun PendulumAnswer.label(): String = when (this) {
     PendulumAnswer.NO -> "NO"
     PendulumAnswer.MAYBE -> "TAL VEZ"
     PendulumAnswer.NOT_NOW -> "AÚN NO"
+}
+
+private fun PendulumAnswer.mysticalMessage(): String = when (this) {
+    PendulumAnswer.YES -> "El destino parece favorable"
+    PendulumAnswer.NO -> "El destino parece desfavorable"
+    PendulumAnswer.MAYBE -> "Las señales aún son inciertas"
+    PendulumAnswer.NOT_NOW -> "Todavía no es el momento"
 }
