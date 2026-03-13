@@ -69,6 +69,7 @@ import org.koin.compose.koinInject
 @Composable
 fun TarotScreen(
     contentPadding: PaddingValues,
+    initialRequestType: TarotRequestType? = null,
     modifier: Modifier = Modifier,
     viewModel: TarotViewModel = koinInject(),
     tarotSoundPlayer: TarotSoundPlayer = koinInject(),
@@ -76,6 +77,10 @@ fun TarotScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
     val language = currentTarotUiLanguage()
+
+    LaunchedEffect(initialRequestType) {
+        initialRequestType?.let { viewModel.newRequest(it) }
+    }
 
     Box {
         Column(
@@ -88,27 +93,9 @@ fun TarotScreen(
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text("Tarot", style = MaterialTheme.typography.headlineMedium)
                 Text(
-                    "Elige una tirada y revela tus cartas",
+                    "Revela tus cartas y explora su lectura",
                     style = MaterialTheme.typography.bodyMedium,
                 )
-            }
-
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Button(
-                    onClick = { viewModel.newRequest(TarotRequestType.TAROT_1) },
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = !state.isLoading,
-                ) {
-                    Text(if (state.isLoading) "Sacando carta..." else "Sacar 1 carta")
-                }
-
-                Button(
-                    onClick = { viewModel.newRequest(TarotRequestType.TAROT_3) },
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = !state.isLoading,
-                ) {
-                    Text("Tirada de 3 cartas")
-                }
             }
 
             when (state.revealPhase) {

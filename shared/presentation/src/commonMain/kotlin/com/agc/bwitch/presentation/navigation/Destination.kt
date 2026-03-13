@@ -1,6 +1,7 @@
 package com.agc.bwitch.presentation.navigation
 
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
+import com.agc.bwitch.domain.tarot.TarotRequestType
 
 sealed class Destination(val title: String) {
 
@@ -27,7 +28,15 @@ sealed class Destination(val title: String) {
 
     data object OracleDebug : Destination("Oracle debug")
 
-    data object Tarot : Destination("Tarot")
+    data object Guide : Destination("Guía")
+
+    data object TarotHome : Destination("Tarot")
+
+    data class Tarot(
+        val requestType: TarotRequestType? = null,
+    ) : Destination("Tarot")
+
+    data object Pendulum : Destination("El Péndulo")
 
     /**
      * Feature destinations with params
@@ -36,5 +45,4 @@ sealed class Destination(val title: String) {
         val preselectedSign: ZodiacSign? = null
     ) : Destination("Horóscopo diario")
 }
-
 

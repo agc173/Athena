@@ -18,9 +18,12 @@ import com.agc.bwitch.ui.astrology.BirthChartScreen
 import com.agc.bwitch.ui.astrology.HoroscopeScreen
 import com.agc.bwitch.ui.auth.AuthScreen
 import com.agc.bwitch.ui.common.AppScaffold
+import com.agc.bwitch.ui.guide.GuideHomeScreen
+import com.agc.bwitch.ui.guide.PendulumPlaceholderScreen
 import com.agc.bwitch.ui.oracle.OracleDebugScreen
 import com.agc.bwitch.ui.oracle.OracleScreen
 import com.agc.bwitch.ui.portal.PortalScreen
+import com.agc.bwitch.ui.tarot.TarotHomeScreen
 import com.agc.bwitch.ui.tarot.TarotScreen
 import com.agc.bwitch.ui.userprofile.UserProfileScreen
 import org.koin.compose.koinInject
@@ -99,11 +102,28 @@ fun AppRoot() {
                 onBack = { navigator.goBack() }
             )
 
+            Destination.Guide -> GuideHomeScreen(
+                contentPadding = padding,
+                onNavigate = { navigator.navigate(it) }
+            )
+
+            Destination.TarotHome -> TarotHomeScreen(
+                contentPadding = padding,
+                onSelectRequestType = { requestType ->
+                    navigator.navigate(Destination.Tarot(requestType = requestType))
+                }
+            )
+
             Destination.Oracle -> OracleScreen(contentPadding = padding)
 
             Destination.OracleDebug -> OracleDebugScreen(contentPadding = padding)
 
-            Destination.Tarot -> TarotScreen(contentPadding = padding)
+            is Destination.Tarot -> TarotScreen(
+                contentPadding = padding,
+                initialRequestType = (dest as Destination.Tarot).requestType,
+            )
+
+            Destination.Pendulum -> PendulumPlaceholderScreen(contentPadding = padding)
         }
     }
 }

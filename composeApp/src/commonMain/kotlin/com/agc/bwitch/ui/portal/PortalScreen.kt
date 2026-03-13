@@ -45,21 +45,15 @@ fun PortalScreen(
             enabled = true
         ),
         PortalItemConfig(
-            title = "Oráculo",
-            subtitle = "Haz una pregunta y recibe guía",
-            destination = Destination.Oracle,
+            title = "Guía",
+            subtitle = "Tarot, Oráculo y El Péndulo",
+            destination = Destination.Guide,
             enabled = true
         ),
         PortalItemConfig(
             title = "Oracle Debug",
             subtitle = "Estado de oracleGetStatus",
             destination = Destination.OracleDebug,
-            enabled = true
-        ),
-        PortalItemConfig(
-            title = "Tarot",
-            subtitle = "Tiradas y lecturas",
-            destination = Destination.Tarot,
             enabled = true
         ),
         PortalItemConfig(
