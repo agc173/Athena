@@ -210,10 +210,10 @@ private fun AnswerNode(
 }
 
 private fun PendulumAnswer?.toTargetAngle(): Float = when (this) {
-    PendulumAnswer.NO -> -28f
-    PendulumAnswer.NOT_NOW -> -10f
-    PendulumAnswer.MAYBE -> 10f
-    PendulumAnswer.YES -> 28f
+    PendulumAnswer.NO -> 28f
+    PendulumAnswer.NOT_NOW -> 10f
+    PendulumAnswer.MAYBE -> -10f
+    PendulumAnswer.YES -> -28f
     null -> 0f
 }
 
