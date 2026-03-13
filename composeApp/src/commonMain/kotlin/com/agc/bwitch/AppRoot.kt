@@ -19,7 +19,7 @@ import com.agc.bwitch.ui.astrology.HoroscopeScreen
 import com.agc.bwitch.ui.auth.AuthScreen
 import com.agc.bwitch.ui.common.AppScaffold
 import com.agc.bwitch.ui.guide.GuideHomeScreen
-import com.agc.bwitch.ui.guide.PendulumPlaceholderScreen
+import com.agc.bwitch.ui.guide.PendulumScreen
 import com.agc.bwitch.ui.oracle.OracleDebugScreen
 import com.agc.bwitch.ui.oracle.OracleScreen
 import com.agc.bwitch.ui.portal.PortalScreen
@@ -123,7 +123,7 @@ fun AppRoot() {
                 initialRequestType = (dest as Destination.Tarot).requestType,
             )
 
-            Destination.Pendulum -> PendulumPlaceholderScreen(contentPadding = padding)
+            Destination.Pendulum -> PendulumScreen(contentPadding = padding)
         }
     }
 }

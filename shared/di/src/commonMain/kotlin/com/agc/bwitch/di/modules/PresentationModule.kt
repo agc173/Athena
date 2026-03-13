@@ -6,6 +6,7 @@ import com.agc.bwitch.presentation.auth.SessionViewModel
 import com.agc.bwitch.presentation.navigation.Destination
 import com.agc.bwitch.presentation.oracle.OracleAskViewModel
 import com.agc.bwitch.presentation.oracle.OracleStatusViewModel
+import com.agc.bwitch.presentation.pendulum.PendulumViewModel
 import com.agc.bwitch.presentation.navigation.Navigator
 import com.agc.bwitch.presentation.tarot.TarotViewModel
 import org.koin.core.module.Module
@@ -44,6 +45,7 @@ val presentationModule: Module = module {
     factory { OracleStatusViewModel(get()) }
     factory { OracleAskViewModel(get()) }
     factory { TarotViewModel(get()) }
+    factory { PendulumViewModel() }
 
 }
 
