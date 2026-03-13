@@ -12,4 +12,5 @@ data class PendulumUiState(
     val question: String = "",
     val phase: PendulumPhase = PendulumPhase.IDLE,
     val selectedAnswer: PendulumAnswer? = null,
+    val resetCounter: Int = 0,
 )

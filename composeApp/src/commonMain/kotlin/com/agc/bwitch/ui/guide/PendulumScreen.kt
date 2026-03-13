@@ -22,7 +22,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -42,6 +45,7 @@ fun PendulumScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
     val angle = remember { Animatable(0f) }
+    var questionText by rememberSaveable { mutableStateOf("") }
     val onSurface = MaterialTheme.colorScheme.onSurface
     val pendulumWeightColor = MaterialTheme.colorScheme.primary
 
@@ -67,6 +71,10 @@ fun PendulumScreen(
         }
     }
 
+    LaunchedEffect(state.resetCounter) {
+        questionText = state.question
+    }
+
     val isAnimating = state.phase == PendulumPhase.ANIMATING
 
     Column(
@@ -82,8 +90,11 @@ fun PendulumScreen(
         )
 
         OutlinedTextField(
-            value = state.question,
-            onValueChange = viewModel::onQuestionChange,
+            value = questionText,
+            onValueChange = { value ->
+                questionText = value
+                viewModel.onQuestionChange(value)
+            },
             modifier = Modifier.fillMaxWidth(),
             label = { Text("Tu pregunta (opcional)") },
             enabled = !isAnimating,
