@@ -19,8 +19,10 @@ class PendulumViewModel {
         if (_uiState.value.phase == PendulumPhase.ANIMATING) return
 
         val selectedAnswer = randomAnswer()
-        _uiState.update {
-            it.copy(
+        _uiState.update { current ->
+            val resetQuestion = if (current.phase == PendulumPhase.RESULT) "" else current.question
+            current.copy(
+                question = resetQuestion,
                 phase = PendulumPhase.ANIMATING,
                 selectedAnswer = selectedAnswer,
             )
