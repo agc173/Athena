@@ -35,8 +35,12 @@ class PendulumViewModel {
     }
 
     fun reset() {
-        _uiState.update { current ->
-            PendulumUiState(resetCounter = current.resetCounter + 1)
+        _uiState.update {
+            PendulumUiState(
+                question = "",
+                phase = PendulumPhase.IDLE,
+                selectedAnswer = null,
+            )
         }
     }
 
