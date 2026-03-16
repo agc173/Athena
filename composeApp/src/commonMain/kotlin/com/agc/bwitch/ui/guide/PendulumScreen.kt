@@ -46,8 +46,6 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.LocalDensity
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.agc.bwitch.domain.pendulum.PendulumAnswer
 import com.agc.bwitch.presentation.pendulum.PendulumPhase
@@ -175,12 +173,9 @@ private fun PendulumBoard(
     animationProgress: Float,
 ) {
     val colorScheme = MaterialTheme.colorScheme
-    val density = LocalDensity.current
     var boardSize by remember { mutableStateOf(IntSize.Zero) }
-    val markerWidth: Dp = 92.dp
-    val markerHeight: Dp = 38.dp
-    val markerWidthPx = with(density) { markerWidth.toPx() }
-    val markerHeightPx = with(density) { markerHeight.toPx() }
+    val markerHorizontalHalfFactor = 0.14f
+    val markerVerticalHalfFactor = 0.06f
     val boardRadiusPx = min(boardSize.width.toFloat(), boardSize.height.toFloat()) * 0.40f
     val crystalOffsetPx = crystalOffsetFor(
         phase = phase,
@@ -240,44 +235,36 @@ private fun PendulumBoard(
         AnswerMarker(
             text = "NO",
             isSelected = phase == PendulumPhase.RESULT && selectedAnswer == PendulumAnswer.NO,
-            markerWidth = markerWidth,
-            markerHeight = markerHeight,
-            markerWidthPx = markerWidthPx,
-            markerHeightPx = markerHeightPx,
             boardSize = boardSize,
+            horizontalHalfFactor = markerHorizontalHalfFactor,
+            verticalHalfFactor = markerVerticalHalfFactor,
             x = 0.23f,
             y = 0.22f,
         )
         AnswerMarker(
             text = "SÍ",
             isSelected = phase == PendulumPhase.RESULT && selectedAnswer == PendulumAnswer.YES,
-            markerWidth = markerWidth,
-            markerHeight = markerHeight,
-            markerWidthPx = markerWidthPx,
-            markerHeightPx = markerHeightPx,
             boardSize = boardSize,
+            horizontalHalfFactor = markerHorizontalHalfFactor,
+            verticalHalfFactor = markerVerticalHalfFactor,
             x = 0.77f,
             y = 0.22f,
         )
         AnswerMarker(
             text = "AÚN NO",
             isSelected = phase == PendulumPhase.RESULT && selectedAnswer == PendulumAnswer.NOT_NOW,
-            markerWidth = markerWidth,
-            markerHeight = markerHeight,
-            markerWidthPx = markerWidthPx,
-            markerHeightPx = markerHeightPx,
             boardSize = boardSize,
+            horizontalHalfFactor = markerHorizontalHalfFactor,
+            verticalHalfFactor = markerVerticalHalfFactor,
             x = 0.23f,
             y = 0.78f,
         )
         AnswerMarker(
             text = "TAL VEZ",
             isSelected = phase == PendulumPhase.RESULT && selectedAnswer == PendulumAnswer.MAYBE,
-            markerWidth = markerWidth,
-            markerHeight = markerHeight,
-            markerWidthPx = markerWidthPx,
-            markerHeightPx = markerHeightPx,
             boardSize = boardSize,
+            horizontalHalfFactor = markerHorizontalHalfFactor,
+            verticalHalfFactor = markerVerticalHalfFactor,
             x = 0.77f,
             y = 0.78f,
         )
@@ -307,11 +294,9 @@ private fun PendulumBoard(
 private fun AnswerMarker(
     text: String,
     isSelected: Boolean,
-    markerWidth: Dp,
-    markerHeight: Dp,
-    markerWidthPx: Float,
-    markerHeightPx: Float,
     boardSize: IntSize,
+    horizontalHalfFactor: Float,
+    verticalHalfFactor: Float,
     x: Float,
     y: Float,
 ) {
@@ -321,11 +306,11 @@ private fun AnswerMarker(
         modifier = Modifier
             .offset {
                 IntOffset(
-                    x = (boardSize.width * x - markerWidthPx / 2f).roundToInt(),
-                    y = (boardSize.height * y - markerHeightPx / 2f).roundToInt(),
+                    x = (boardSize.width * (x - horizontalHalfFactor)).roundToInt(),
+                    y = (boardSize.height * (y - verticalHalfFactor)).roundToInt(),
                 )
             }
-            .size(width = markerWidth, height = markerHeight),
+            .size(width = 92.dp, height = 38.dp),
         shape = MaterialTheme.shapes.small,
         color = if (isSelected) colorScheme.primary.copy(alpha = 0.20f) else colorScheme.surface.copy(alpha = 0.30f),
         border = BorderStroke(
