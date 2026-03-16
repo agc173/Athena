@@ -1,6 +1,8 @@
 package com.agc.bwitch.ui.guide
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
@@ -9,6 +11,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -28,21 +32,25 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.agc.bwitch.domain.pendulum.PendulumAnswer
 import com.agc.bwitch.presentation.pendulum.PendulumPhase
 import com.agc.bwitch.presentation.pendulum.PendulumViewModel
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.min
+import kotlin.math.pow
+import kotlin.math.sin
 import org.koin.compose.koinInject
 
 @Composable
@@ -51,28 +59,26 @@ fun PendulumScreen(
     viewModel: PendulumViewModel = koinInject(),
 ) {
     val state by viewModel.uiState.collectAsState()
-    val angle = remember { Animatable(0f) }
+    val orbitProgress = remember { Animatable(0f) }
     val colorScheme = MaterialTheme.colorScheme
 
     LaunchedEffect(state.phase, state.selectedAnswer) {
-        if (state.phase == PendulumPhase.ANIMATING) {
-            angle.snapTo(0f)
-            angle.animateTo(35f, animationSpec = tween(durationMillis = 260))
-            angle.animateTo(-35f, animationSpec = tween(durationMillis = 260))
-            angle.animateTo(28f, animationSpec = tween(durationMillis = 220))
-            angle.animateTo(-24f, animationSpec = tween(durationMillis = 220))
-            angle.animateTo(18f, animationSpec = tween(durationMillis = 180))
-            angle.animateTo(-14f, animationSpec = tween(durationMillis = 180))
-            angle.animateTo(
-                targetValue = state.selectedAnswer.toTargetAngle(),
-                animationSpec = tween(durationMillis = 580),
-            )
-            viewModel.onSwingFinished()
-        } else if (state.phase == PendulumPhase.IDLE) {
-            angle.animateTo(
+        when (state.phase) {
+            PendulumPhase.ANIMATING -> {
+                orbitProgress.snapTo(0f)
+                orbitProgress.animateTo(
+                    targetValue = 1f,
+                    animationSpec = tween(durationMillis = 3000, easing = LinearOutSlowInEasing),
+                )
+                viewModel.onSwingFinished()
+            }
+
+            PendulumPhase.IDLE -> orbitProgress.animateTo(
                 targetValue = 0f,
-                animationSpec = tween(durationMillis = 260),
+                animationSpec = tween(durationMillis = 320, easing = FastOutSlowInEasing),
             )
+
+            PendulumPhase.RESULT -> Unit
         }
     }
 
@@ -90,7 +96,7 @@ fun PendulumScreen(
             fontWeight = FontWeight.SemiBold,
         )
         Text(
-            "Haz una pregunta o piénsala en silencio. Toca el péndulo para consultar.",
+            "Haz una pregunta o piénsala en silencio. Toca el tablero para consultar.",
             style = MaterialTheme.typography.bodyMedium,
             color = colorScheme.onSurfaceVariant,
         )
@@ -111,58 +117,20 @@ fun PendulumScreen(
             border = BorderStroke(1.dp, colorScheme.outlineVariant.copy(alpha = 0.45f)),
             color = colorScheme.surfaceVariant.copy(alpha = 0.28f),
         ) {
-            Box(
+            PendulumBoard(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(300.dp)
-                    .padding(horizontal = 14.dp, vertical = 10.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                PendulumAnswerBoard(selectedAnswer = if (state.phase == PendulumPhase.RESULT) state.selectedAnswer else null)
-                Canvas(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clickable(
-                            enabled = !isAnimating,
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                        ) { viewModel.startSwing() },
-                ) {
-                    val centerX = size.width / 2
-                    val topY = size.height * 0.10f
-                    val length = size.height * 0.50f
-
-                    drawCircle(
-                        color = colorScheme.primary.copy(alpha = 0.08f),
-                        radius = 18f,
-                        center = Offset(centerX, topY),
-                    )
-
-                    rotate(degrees = angle.value, pivot = Offset(centerX, topY)) {
-                        drawLine(
-                            color = colorScheme.onSurface.copy(alpha = 0.86f),
-                            start = Offset(centerX, topY + 8f),
-                            end = Offset(centerX, topY + length),
-                            strokeWidth = 3.2f,
-                            cap = StrokeCap.Round,
-                        )
-
-                        drawCircle(
-                            color = colorScheme.onSurfaceVariant,
-                            radius = 7f,
-                            center = Offset(centerX, topY),
-                        )
-
-                        val crystalCenter = Offset(centerX, topY + length + 24f)
-                        drawMysticCrystal(
-                            center = crystalCenter,
-                            size = 52f,
-                            primaryColor = colorScheme.primary,
-                            glowColor = colorScheme.primary.copy(alpha = 0.20f),
-                        )
-                    }
-                }
-            }
+                    .height(380.dp)
+                    .padding(horizontal = 14.dp, vertical = 12.dp)
+                    .clickable(
+                        enabled = !isAnimating,
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                    ) { viewModel.startSwing() },
+                phase = state.phase,
+                selectedAnswer = state.selectedAnswer,
+                animationProgress = orbitProgress.value,
+            )
         }
 
         if (state.phase == PendulumPhase.RESULT) {
@@ -193,111 +161,222 @@ fun PendulumScreen(
 }
 
 @Composable
-private fun PendulumAnswerBoard(selectedAnswer: PendulumAnswer?) {
-    val colorScheme = MaterialTheme.colorScheme
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(280.dp)
-            .padding(horizontal = 14.dp)
-            .drawBehind {
-                val arcTop = size.height * 0.48f
-                drawArc(
-                    brush = Brush.radialGradient(
-                        colors = listOf(
-                            colorScheme.primary.copy(alpha = 0.06f),
-                            Color.Transparent,
-                        ),
-                        center = Offset(size.width / 2f, arcTop + 30f),
-                        radius = size.width * 0.48f,
-                    ),
-                    startAngle = 200f,
-                    sweepAngle = 140f,
-                    useCenter = false,
-                    topLeft = Offset(size.width * 0.17f, arcTop),
-                    size = Size(size.width * 0.66f, size.height * 0.50f),
-                )
-            },
-    ) {
-        AnswerNode(
-            text = "No",
-            isSelected = selectedAnswer == PendulumAnswer.NO,
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .offset(x = 10.dp, y = (-92).dp),
-        )
-        AnswerNode(
-            text = "Aún no",
-            isSelected = selectedAnswer == PendulumAnswer.NOT_NOW,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .offset(x = (-74).dp, y = (-28).dp),
-        )
-        AnswerNode(
-            text = "Tal vez",
-            isSelected = selectedAnswer == PendulumAnswer.MAYBE,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .offset(x = 74.dp, y = (-28).dp),
-        )
-        AnswerNode(
-            text = "Sí",
-            isSelected = selectedAnswer == PendulumAnswer.YES,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .offset(x = (-10).dp, y = (-92).dp),
-        )
-    }
-}
-
-@Composable
-private fun AnswerNode(
-    text: String,
-    isSelected: Boolean,
-    modifier: Modifier = Modifier,
+private fun PendulumBoard(
+    modifier: Modifier,
+    phase: PendulumPhase,
+    selectedAnswer: PendulumAnswer?,
+    animationProgress: Float,
 ) {
     val colorScheme = MaterialTheme.colorScheme
-    val borderColor = if (isSelected) colorScheme.primary.copy(alpha = 0.70f) else colorScheme.outlineVariant.copy(alpha = 0.55f)
-    val background = if (isSelected) {
-        Brush.verticalGradient(
-            colors = listOf(
-                colorScheme.primary.copy(alpha = 0.22f),
-                colorScheme.primary.copy(alpha = 0.10f),
-            ),
-        )
-    } else {
-        Brush.verticalGradient(
-            colors = listOf(
-                colorScheme.surface.copy(alpha = 0.58f),
-                colorScheme.surfaceVariant.copy(alpha = 0.45f),
-            ),
-        )
-    }
 
-    Surface(
-        modifier = modifier,
-        shape = MaterialTheme.shapes.medium,
-        color = Color.Transparent,
-        border = BorderStroke(1.dp, borderColor),
-        tonalElevation = if (isSelected) 2.dp else 0.dp,
-        shadowElevation = if (isSelected) 2.dp else 0.dp,
-    ) {
-        Box(
+    BoxWithConstraints(modifier = modifier) {
+        val boardDiameter = min(maxWidth, maxHeight) * 0.80f
+        val boardRadiusPx = with(this) { boardDiameter.toPx() / 2f }
+        val crystalOffsetPx = crystalOffsetFor(
+            phase = phase,
+            selectedAnswer = selectedAnswer,
+            animationProgress = animationProgress,
+            boardRadius = boardRadiusPx,
+        )
+        val crystalOffsetX = with(this) { crystalOffsetPx.x.toDp() }
+        val crystalOffsetY = with(this) { crystalOffsetPx.y.toDp() }
+
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val center = Offset(size.width / 2f, size.height / 2f)
+            val boardRadius = min(size.width, size.height) * 0.40f
+
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(
+                        colorScheme.primary.copy(alpha = 0.18f),
+                        colorScheme.surface.copy(alpha = 0.08f),
+                        Color.Transparent,
+                    ),
+                    center = center,
+                    radius = boardRadius * 1.25f,
+                ),
+                radius = boardRadius * 1.25f,
+                center = center,
+            )
+
+            drawCircle(
+                color = colorScheme.surface.copy(alpha = 0.44f),
+                radius = boardRadius,
+                center = center,
+            )
+            drawCircle(
+                color = colorScheme.outlineVariant.copy(alpha = 0.65f),
+                radius = boardRadius,
+                center = center,
+                style = Stroke(width = 2.8f),
+            )
+            drawCircle(
+                color = colorScheme.primary.copy(alpha = 0.18f),
+                radius = boardRadius * 0.72f,
+                center = center,
+                style = Stroke(width = 1.6f),
+            )
+            drawCircle(
+                color = colorScheme.primary.copy(alpha = 0.10f),
+                radius = boardRadius * 0.36f,
+                center = center,
+                style = Stroke(width = 1.2f),
+            )
+        }
+
+        AnswerMarker(
+            text = "NO",
+            isSelected = phase == PendulumPhase.RESULT && selectedAnswer == PendulumAnswer.NO,
+            x = 0.23f,
+            y = 0.22f,
+        )
+        AnswerMarker(
+            text = "SÍ",
+            isSelected = phase == PendulumPhase.RESULT && selectedAnswer == PendulumAnswer.YES,
+            x = 0.77f,
+            y = 0.22f,
+        )
+        AnswerMarker(
+            text = "AÚN NO",
+            isSelected = phase == PendulumPhase.RESULT && selectedAnswer == PendulumAnswer.NOT_NOW,
+            x = 0.23f,
+            y = 0.78f,
+        )
+        AnswerMarker(
+            text = "TAL VEZ",
+            isSelected = phase == PendulumPhase.RESULT && selectedAnswer == PendulumAnswer.MAYBE,
+            x = 0.77f,
+            y = 0.78f,
+        )
+
+        Canvas(
             modifier = Modifier
-                .background(background)
-                .padding(horizontal = 12.dp, vertical = 8.dp),
+                .align(Alignment.Center)
+                .offset(x = crystalOffsetX, y = crystalOffsetY)
+                .size(56.dp),
         ) {
-            Text(
-                text = text.uppercase(),
-                style = MaterialTheme.typography.labelLarge,
-                color = if (isSelected) colorScheme.onPrimaryContainer else colorScheme.onSurfaceVariant,
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+            drawMysticCrystal(
+                center = Offset(size.width / 2f, size.height / 2f),
+                size = size.minDimension * 0.72f,
+                primaryColor = colorScheme.primary,
+                glowColor = colorScheme.primary.copy(alpha = 0.26f),
             )
         }
     }
 }
 
+@Composable
+private fun BoxWithConstraintsScope.AnswerMarker(
+    text: String,
+    isSelected: Boolean,
+    x: Float,
+    y: Float,
+) {
+    val colorScheme = MaterialTheme.colorScheme
+    val markerWidth: Dp = 92.dp
+    val markerHeight: Dp = 38.dp
+
+    Surface(
+        modifier = Modifier
+            .offset(
+                x = maxWidth * x - markerWidth / 2,
+                y = maxHeight * y - markerHeight / 2,
+            )
+            .size(width = markerWidth, height = markerHeight),
+        shape = MaterialTheme.shapes.small,
+        color = if (isSelected) colorScheme.primary.copy(alpha = 0.20f) else colorScheme.surface.copy(alpha = 0.30f),
+        border = BorderStroke(
+            width = 1.dp,
+            color = if (isSelected) colorScheme.primary.copy(alpha = 0.92f) else colorScheme.outlineVariant.copy(alpha = 0.58f),
+        ),
+        tonalElevation = if (isSelected) 1.dp else 0.dp,
+        shadowElevation = if (isSelected) 3.dp else 0.dp,
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    if (isSelected) {
+                        Brush.verticalGradient(
+                            listOf(
+                                colorScheme.primary.copy(alpha = 0.30f),
+                                colorScheme.primary.copy(alpha = 0.12f),
+                            ),
+                        )
+                    } else {
+                        Brush.verticalGradient(
+                            listOf(
+                                Color.Transparent,
+                                colorScheme.surfaceVariant.copy(alpha = 0.12f),
+                            ),
+                        )
+                    },
+                ),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = text,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                color = if (isSelected) colorScheme.onPrimaryContainer else colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+private fun crystalOffsetFor(
+    phase: PendulumPhase,
+    selectedAnswer: PendulumAnswer?,
+    animationProgress: Float,
+    boardRadius: Float,
+): Offset {
+    val target = answerTarget(selectedAnswer, boardRadius)
+
+    if (phase == PendulumPhase.IDLE || selectedAnswer == null) return Offset.Zero
+    if (phase == PendulumPhase.RESULT) return target
+
+    val orbitCutoff = 0.78f
+    val t = animationProgress.coerceIn(0f, 1f)
+    return if (t <= orbitCutoff) {
+        orbitPosition(t = t / orbitCutoff, boardRadius = boardRadius)
+    } else {
+        val local = ((t - orbitCutoff) / (1f - orbitCutoff)).coerceIn(0f, 1f)
+        val eased = 1f - (1f - local).pow(3)
+        lerpOffset(
+            start = orbitPosition(1f, boardRadius),
+            end = target,
+            t = eased,
+        )
+    }
+}
+
+private fun orbitPosition(t: Float, boardRadius: Float): Offset {
+    val loops = 2.35f
+    val angle = (t * loops * 2f * PI).toFloat()
+    val startRadius = boardRadius * 0.46f
+    val endRadius = boardRadius * 0.22f
+    val radius = startRadius - (startRadius - endRadius) * t
+    return Offset(
+        x = cos(angle) * radius,
+        y = sin(angle) * radius,
+    )
+}
+
+private fun answerTarget(answer: PendulumAnswer?, boardRadius: Float): Offset {
+    val diagonal = boardRadius * 0.62f
+    return when (answer) {
+        PendulumAnswer.NO -> Offset(-diagonal, -diagonal)
+        PendulumAnswer.YES -> Offset(diagonal, -diagonal)
+        PendulumAnswer.NOT_NOW -> Offset(-diagonal, diagonal)
+        PendulumAnswer.MAYBE -> Offset(diagonal, diagonal)
+        null -> Offset.Zero
+    }
+}
+
+private fun lerpOffset(start: Offset, end: Offset, t: Float): Offset = Offset(
+    x = start.x + (end.x - start.x) * t,
+    y = start.y + (end.y - start.y) * t,
+)
 
 private fun DrawScope.drawMysticCrystal(
     center: Offset,
@@ -307,16 +386,16 @@ private fun DrawScope.drawMysticCrystal(
 ) {
     drawCircle(
         color = glowColor,
-        radius = size * 0.78f,
+        radius = size * 0.88f,
         center = center,
     )
 
     val half = size / 2f
     val diamond = Path().apply {
         moveTo(center.x, center.y - half)
-        lineTo(center.x + half * 0.62f, center.y)
+        lineTo(center.x + half * 0.65f, center.y)
         lineTo(center.x, center.y + half)
-        lineTo(center.x - half * 0.62f, center.y)
+        lineTo(center.x - half * 0.65f, center.y)
         close()
     }
 
@@ -325,7 +404,7 @@ private fun DrawScope.drawMysticCrystal(
         brush = Brush.verticalGradient(
             colors = listOf(
                 primaryColor.copy(alpha = 0.96f),
-                primaryColor.copy(alpha = 0.74f),
+                primaryColor.copy(alpha = 0.72f),
             ),
             startY = center.y - half,
             endY = center.y + half,
@@ -334,19 +413,11 @@ private fun DrawScope.drawMysticCrystal(
 
     drawLine(
         color = Color.White.copy(alpha = 0.45f),
-        start = Offset(center.x, center.y - half * 0.66f),
-        end = Offset(center.x, center.y + half * 0.62f),
+        start = Offset(center.x, center.y - half * 0.62f),
+        end = Offset(center.x, center.y + half * 0.58f),
         strokeWidth = 2f,
         cap = StrokeCap.Round,
     )
-}
-
-private fun PendulumAnswer?.toTargetAngle(): Float = when (this) {
-    PendulumAnswer.NO -> 28f
-    PendulumAnswer.NOT_NOW -> 10f
-    PendulumAnswer.MAYBE -> -10f
-    PendulumAnswer.YES -> -28f
-    null -> 0f
 }
 
 private fun PendulumAnswer.label(): String = when (this) {
