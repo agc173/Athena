@@ -192,6 +192,11 @@ private fun PendulumBoard(
         right = ((boardSize.width + visibleBoardWidth) / 2f).roundToInt(),
         bottom = ((boardSize.height + visibleBoardHeight) / 2f).roundToInt(),
     )
+    val boardContentRect = visibleBoardRect.insetByFactors(
+        horizontal = 0.14f,
+        top = 0.16f,
+        bottom = 0.20f,
+    )
     val markerHorizontalHalfFactor = 0.13f
     val markerVerticalHalfFactor = 0.055f
     val boardMinDimension = min(boardSize.width.toFloat(), boardSize.height.toFloat()).coerceAtLeast(1f)
@@ -234,7 +239,7 @@ private fun PendulumBoard(
         AnswerMarker(
             text = "NO",
             isSelected = phase == PendulumPhase.RESULT && selectedAnswer == PendulumAnswer.NO,
-            boardRect = visibleBoardRect,
+            boardRect = boardContentRect,
             horizontalHalfFactor = markerHorizontalHalfFactor,
             verticalHalfFactor = markerVerticalHalfFactor,
             x = 0.29f,
@@ -243,7 +248,7 @@ private fun PendulumBoard(
         AnswerMarker(
             text = "SÍ",
             isSelected = phase == PendulumPhase.RESULT && selectedAnswer == PendulumAnswer.YES,
-            boardRect = visibleBoardRect,
+            boardRect = boardContentRect,
             horizontalHalfFactor = markerHorizontalHalfFactor,
             verticalHalfFactor = markerVerticalHalfFactor,
             x = 0.71f,
@@ -252,7 +257,7 @@ private fun PendulumBoard(
         AnswerMarker(
             text = "AÚN NO",
             isSelected = phase == PendulumPhase.RESULT && selectedAnswer == PendulumAnswer.NOT_NOW,
-            boardRect = visibleBoardRect,
+            boardRect = boardContentRect,
             horizontalHalfFactor = markerHorizontalHalfFactor,
             verticalHalfFactor = markerVerticalHalfFactor,
             x = 0.30f,
@@ -261,7 +266,7 @@ private fun PendulumBoard(
         AnswerMarker(
             text = "TAL VEZ",
             isSelected = phase == PendulumPhase.RESULT && selectedAnswer == PendulumAnswer.MAYBE,
-            boardRect = visibleBoardRect,
+            boardRect = boardContentRect,
             horizontalHalfFactor = markerHorizontalHalfFactor,
             verticalHalfFactor = markerVerticalHalfFactor,
             x = 0.70f,
@@ -324,6 +329,25 @@ private fun AnswerMarker(
             color = if (isSelected) selectedMysticTextColor else mysticTextColor,
         )
     }
+}
+
+
+private fun IntRect.insetByFactors(
+    horizontal: Float,
+    top: Float,
+    bottom: Float,
+): IntRect {
+    val insetLeft = (width * horizontal).roundToInt()
+    val insetRight = (width * horizontal).roundToInt()
+    val insetTop = (height * top).roundToInt()
+    val insetBottom = (height * bottom).roundToInt()
+
+    return IntRect(
+        left = left + insetLeft,
+        top = top + insetTop,
+        right = right - insetRight,
+        bottom = bottom - insetBottom,
+    )
 }
 
 private fun crystalOffsetFor(
