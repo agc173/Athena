@@ -41,6 +41,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -51,6 +52,7 @@ import com.agc.bwitch.domain.pendulum.PendulumAnswer
 import com.agc.bwitch.presentation.pendulum.PendulumPhase
 import com.agc.bwitch.presentation.pendulum.PendulumViewModel
 import kotlin.math.PI
+import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.min
 import kotlin.math.pow
@@ -73,7 +75,7 @@ fun PendulumScreen(
                 orbitProgress.snapTo(0f)
                 orbitProgress.animateTo(
                     targetValue = 1f,
-                    animationSpec = tween(durationMillis = 3000, easing = LinearOutSlowInEasing),
+                    animationSpec = tween(durationMillis = 4100, easing = LinearOutSlowInEasing),
                 )
                 viewModel.onSwingFinished()
             }
@@ -213,23 +215,37 @@ private fun PendulumBoard(
                 center = center,
             )
             drawCircle(
-                color = colorScheme.outlineVariant.copy(alpha = 0.65f),
+                color = colorScheme.outlineVariant.copy(alpha = 0.52f),
                 radius = boardRadius,
                 center = center,
-                style = Stroke(width = 2.8f),
+                style = Stroke(width = 2.4f),
             )
             drawCircle(
-                color = colorScheme.primary.copy(alpha = 0.18f),
-                radius = boardRadius * 0.72f,
+                color = colorScheme.primary.copy(alpha = 0.14f),
+                radius = boardRadius * 0.70f,
                 center = center,
-                style = Stroke(width = 1.6f),
+                style = Stroke(width = 1.25f),
             )
-            drawCircle(
-                color = colorScheme.primary.copy(alpha = 0.10f),
-                radius = boardRadius * 0.36f,
-                center = center,
-                style = Stroke(width = 1.2f),
-            )
+            rotate(degrees = -14f, pivot = center) {
+                drawArc(
+                    color = colorScheme.primary.copy(alpha = 0.14f),
+                    startAngle = 22f,
+                    sweepAngle = 128f,
+                    useCenter = false,
+                    topLeft = Offset(center.x - boardRadius * 0.76f, center.y - boardRadius * 0.76f),
+                    size = androidx.compose.ui.geometry.Size(boardRadius * 1.52f, boardRadius * 1.52f),
+                    style = Stroke(width = 1.15f),
+                )
+                drawArc(
+                    color = colorScheme.outlineVariant.copy(alpha = 0.16f),
+                    startAngle = 210f,
+                    sweepAngle = 108f,
+                    useCenter = false,
+                    topLeft = Offset(center.x - boardRadius * 0.52f, center.y - boardRadius * 0.52f),
+                    size = androidx.compose.ui.geometry.Size(boardRadius * 1.04f, boardRadius * 1.04f),
+                    style = Stroke(width = 1.05f),
+                )
+            }
         }
 
         AnswerMarker(
@@ -238,8 +254,8 @@ private fun PendulumBoard(
             boardSize = boardSize,
             horizontalHalfFactor = markerHorizontalHalfFactor,
             verticalHalfFactor = markerVerticalHalfFactor,
-            x = 0.23f,
-            y = 0.22f,
+            x = 0.27f,
+            y = 0.26f,
         )
         AnswerMarker(
             text = "SÍ",
@@ -247,8 +263,8 @@ private fun PendulumBoard(
             boardSize = boardSize,
             horizontalHalfFactor = markerHorizontalHalfFactor,
             verticalHalfFactor = markerVerticalHalfFactor,
-            x = 0.77f,
-            y = 0.22f,
+            x = 0.73f,
+            y = 0.26f,
         )
         AnswerMarker(
             text = "AÚN NO",
@@ -256,8 +272,8 @@ private fun PendulumBoard(
             boardSize = boardSize,
             horizontalHalfFactor = markerHorizontalHalfFactor,
             verticalHalfFactor = markerVerticalHalfFactor,
-            x = 0.23f,
-            y = 0.78f,
+            x = 0.27f,
+            y = 0.74f,
         )
         AnswerMarker(
             text = "TAL VEZ",
@@ -265,8 +281,8 @@ private fun PendulumBoard(
             boardSize = boardSize,
             horizontalHalfFactor = markerHorizontalHalfFactor,
             verticalHalfFactor = markerVerticalHalfFactor,
-            x = 0.77f,
-            y = 0.78f,
+            x = 0.73f,
+            y = 0.74f,
         )
 
         Canvas(
@@ -363,35 +379,66 @@ private fun crystalOffsetFor(
     if (phase == PendulumPhase.IDLE || selectedAnswer == null) return Offset.Zero
     if (phase == PendulumPhase.RESULT) return target
 
-    val orbitCutoff = 0.78f
     val t = animationProgress.coerceIn(0f, 1f)
+    val orbitCutoff = 0.70f
+    val settleCutoff = 0.88f
+    val preferredTarget = target * 0.82f
+
     return if (t <= orbitCutoff) {
         orbitPosition(t = t / orbitCutoff, boardRadius = boardRadius)
-    } else {
-        val local = ((t - orbitCutoff) / (1f - orbitCutoff)).coerceIn(0f, 1f)
-        val eased = 1f - (1f - local).pow(3)
-        lerpOffset(
+    } else if (t <= settleCutoff) {
+        val local = ((t - orbitCutoff) / (settleCutoff - orbitCutoff)).coerceIn(0f, 1f)
+        val eased = 1f - (1f - local).pow(2.5f)
+        val approach = lerpOffset(
             start = orbitPosition(1f, boardRadius),
+            end = preferredTarget,
+            t = eased,
+        )
+        val targetAngle = atan2(target.y, target.x)
+        val swirlRadius = boardRadius * 0.095f * (1f - local).pow(1.35f)
+        approach + Offset(
+            x = cos((local * 2.2f * 2f * PI).toFloat() + targetAngle) * swirlRadius,
+            y = sin((local * 2.2f * 2f * PI).toFloat() + targetAngle) * swirlRadius,
+        )
+    } else {
+        val local = ((t - settleCutoff) / (1f - settleCutoff)).coerceIn(0f, 1f)
+        val eased = 1f - (1f - local).pow(3.6f)
+        val settle = lerpOffset(
+            start = preferredTarget,
             end = target,
             t = eased,
+        )
+        val targetAngle = atan2(target.y, target.x)
+        val driftRadius = boardRadius * 0.028f * (1f - eased).pow(1.6f)
+        settle + Offset(
+            x = cos((local * 1.25f * 2f * PI).toFloat() + targetAngle + 0.45f) * driftRadius,
+            y = sin((local * 1.25f * 2f * PI).toFloat() + targetAngle + 0.45f) * driftRadius,
         )
     }
 }
 
 private fun orbitPosition(t: Float, boardRadius: Float): Offset {
-    val loops = 2.35f
-    val angle = (t * loops * 2f * PI).toFloat()
-    val startRadius = boardRadius * 0.46f
-    val endRadius = boardRadius * 0.22f
-    val radius = startRadius - (startRadius - endRadius) * t
+    val easedT = t.coerceIn(0f, 1f)
+    val loops = 2.85f
+    val angleBase = easedT * loops * 2f * PI
+    val angleWobble = sin(easedT * 2.4f * PI) * 0.34f
+    val angle = (angleBase + angleWobble).toFloat()
+
+    val contraction = easedT.pow(1.28f)
+    val startRadius = boardRadius * 0.44f
+    val endRadius = boardRadius * 0.16f
+    val radius = startRadius - (startRadius - endRadius) * contraction
+    val noiseX = cos((easedT * 6.3f * PI).toFloat() + 0.8f) * boardRadius * 0.028f * (1f - easedT)
+    val noiseY = sin((easedT * 5.1f * PI).toFloat() - 0.45f) * boardRadius * 0.024f * (1f - easedT)
+
     return Offset(
-        x = cos(angle) * radius,
-        y = sin(angle) * radius,
+        x = cos(angle) * radius + noiseX,
+        y = sin(angle) * radius + noiseY,
     )
 }
 
 private fun answerTarget(answer: PendulumAnswer?, boardRadius: Float): Offset {
-    val diagonal = boardRadius * 0.62f
+    val diagonal = boardRadius * 0.56f
     return when (answer) {
         PendulumAnswer.NO -> Offset(-diagonal, -diagonal)
         PendulumAnswer.YES -> Offset(diagonal, -diagonal)
