@@ -54,7 +54,6 @@ import com.agc.bwitch.presentation.pendulum.PendulumViewModel
 import kotlin.math.PI
 import kotlin.math.atan2
 import kotlin.math.cos
-import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.roundToInt
@@ -179,8 +178,7 @@ private fun PendulumBoard(
     var boardSize by remember { mutableStateOf(IntSize.Zero) }
     val markerHorizontalHalfFactor = 0.13f
     val markerVerticalHalfFactor = 0.055f
-    val boardMinDimension = min(boardSize.width.toFloat(), boardSize.height.toFloat())
-    val safeGradientRadius = max(1f, boardMinDimension * 0.62f)
+    val boardMinDimension = min(boardSize.width.toFloat(), boardSize.height.toFloat()).coerceAtLeast(1f)
     val boardRadiusPx = min(boardSize.width.toFloat(), boardSize.height.toFloat()) * 0.40f
     val crystalOffsetPx = crystalOffsetFor(
         phase = phase,
@@ -206,11 +204,11 @@ private fun PendulumBoard(
                     .background(
                         brush = Brush.radialGradient(
                             colors = listOf(
-                                MaterialTheme.colorScheme.primary.copy(alpha = 0.18f),
-                                MaterialTheme.colorScheme.surface.copy(alpha = 0.08f),
-                                Color.Transparent,
+                                MaterialTheme.colorScheme.surface.copy(alpha = 0.72f),
+                                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.52f),
+                                color = MaterialTheme.colorScheme.scrim.copy(alpha = 0.35f),
                             ),
-                            radius = safeGradientRadius,
+                            radius = boardMinDimension * 0.6f,
                         ),
                     ),
             )
@@ -297,15 +295,15 @@ private fun AnswerMarker(
                     y = (boardSize.height * (y - verticalHalfFactor)).roundToInt(),
                 )
             }
-            .size(width = 92.dp, height = 38.dp),
-        shape = RoundedCornerShape(8.dp),
-        color = if (isSelected) colorScheme.primary.copy(alpha = 0.18f) else colorScheme.surface.copy(alpha = 0.18f),
+            .size(width = 100.dp, height = 42.dp),
+        shape = RoundedCornerShape(11.dp),
+        color = if (isSelected) colorScheme.primaryContainer.copy(alpha = 0.55f) else colorScheme.scrim.copy(alpha = 0.62f),
         border = BorderStroke(
             width = 1.dp,
-            color = if (isSelected) colorScheme.primary.copy(alpha = 0.78f) else colorScheme.outlineVariant.copy(alpha = 0.35f),
+            color = if (isSelected) colorScheme.primary.copy(alpha = 0.88f) else colorScheme.onSurface.copy(alpha = 0.34f),
         ),
-        tonalElevation = if (isSelected) 1.dp else 0.dp,
-        shadowElevation = if (isSelected) 1.dp else 0.dp,
+        tonalElevation = if (isSelected) 2.dp else 1.dp,
+        shadowElevation = if (isSelected) 4.dp else 2.dp,
     ) {
         Box(
             modifier = Modifier
@@ -314,15 +312,15 @@ private fun AnswerMarker(
                     if (isSelected) {
                         Brush.verticalGradient(
                             listOf(
-                                colorScheme.primary.copy(alpha = 0.24f),
-                                colorScheme.primary.copy(alpha = 0.10f),
+                                colorScheme.primary.copy(alpha = 0.34f),
+                                colorScheme.primaryContainer.copy(alpha = 0.18f),
                             ),
                         )
                     } else {
                         Brush.verticalGradient(
                             listOf(
-                                Color.Transparent,
-                                colorScheme.surfaceVariant.copy(alpha = 0.08f),
+                                colorScheme.scrim.copy(alpha = 0.12f),
+                                colorScheme.surfaceVariant.copy(alpha = 0.26f),
                             ),
                         )
                     },
@@ -332,8 +330,8 @@ private fun AnswerMarker(
             Text(
                 text = text,
                 style = MaterialTheme.typography.labelLarge,
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                color = if (isSelected) colorScheme.onPrimaryContainer else colorScheme.onSurfaceVariant,
+                fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.SemiBold,
+                color = if (isSelected) colorScheme.onPrimaryContainer else colorScheme.onSurface,
             )
         }
     }
