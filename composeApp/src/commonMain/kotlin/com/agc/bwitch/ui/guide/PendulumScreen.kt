@@ -42,9 +42,9 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import bwitch.composeapp.generated.resources.Res
 import bwitch.composeapp.generated.resources.pendulum_board
@@ -184,21 +184,6 @@ private fun PendulumBoard(
 ) {
     var boardSize by remember { mutableStateOf(IntSize.Zero) }
     val boardImageScale = 0.98f
-    val visibleBoardWidth = (boardSize.width * boardImageScale).roundToInt()
-    val visibleBoardHeight = (boardSize.height * boardImageScale).roundToInt()
-    val visibleBoardRect = IntRect(
-        left = ((boardSize.width - visibleBoardWidth) / 2f).roundToInt(),
-        top = ((boardSize.height - visibleBoardHeight) / 2f).roundToInt(),
-        right = ((boardSize.width + visibleBoardWidth) / 2f).roundToInt(),
-        bottom = ((boardSize.height + visibleBoardHeight) / 2f).roundToInt(),
-    )
-    val boardContentRect = visibleBoardRect.insetByFactors(
-        horizontal = 0.14f,
-        topFactor = 0.16f,
-        bottomFactor = 0.20f,
-    )
-    val markerHorizontalHalfFactor = 0.13f
-    val markerVerticalHalfFactor = 0.055f
     val boardMinDimension = min(boardSize.width.toFloat(), boardSize.height.toFloat()).coerceAtLeast(1f)
     val boardRadiusPx = min(boardSize.width.toFloat(), boardSize.height.toFloat()) * 0.40f
     val crystalOffsetPx = crystalOffsetFor(
@@ -239,38 +224,26 @@ private fun PendulumBoard(
         AnswerMarker(
             text = "NO",
             isSelected = phase == PendulumPhase.RESULT && selectedAnswer == PendulumAnswer.NO,
-            boardRect = boardContentRect,
-            horizontalHalfFactor = markerHorizontalHalfFactor,
-            verticalHalfFactor = markerVerticalHalfFactor,
-            x = 0.29f,
-            y = 0.25f,
+            offsetX = (-90).dp,
+            offsetY = (-80).dp,
         )
         AnswerMarker(
             text = "SÍ",
             isSelected = phase == PendulumPhase.RESULT && selectedAnswer == PendulumAnswer.YES,
-            boardRect = boardContentRect,
-            horizontalHalfFactor = markerHorizontalHalfFactor,
-            verticalHalfFactor = markerVerticalHalfFactor,
-            x = 0.71f,
-            y = 0.25f,
+            offsetX = 90.dp,
+            offsetY = (-80).dp,
         )
         AnswerMarker(
             text = "AÚN NO",
             isSelected = phase == PendulumPhase.RESULT && selectedAnswer == PendulumAnswer.NOT_NOW,
-            boardRect = boardContentRect,
-            horizontalHalfFactor = markerHorizontalHalfFactor,
-            verticalHalfFactor = markerVerticalHalfFactor,
-            x = 0.30f,
-            y = 0.75f,
+            offsetX = (-90).dp,
+            offsetY = 80.dp,
         )
         AnswerMarker(
             text = "TAL VEZ",
             isSelected = phase == PendulumPhase.RESULT && selectedAnswer == PendulumAnswer.MAYBE,
-            boardRect = boardContentRect,
-            horizontalHalfFactor = markerHorizontalHalfFactor,
-            verticalHalfFactor = markerVerticalHalfFactor,
-            x = 0.70f,
-            y = 0.75f,
+            offsetX = 90.dp,
+            offsetY = 80.dp,
         )
 
         Image(
@@ -294,23 +267,15 @@ private fun PendulumBoard(
 private fun AnswerMarker(
     text: String,
     isSelected: Boolean,
-    boardRect: IntRect,
-    horizontalHalfFactor: Float,
-    verticalHalfFactor: Float,
-    x: Float,
-    y: Float,
+    offsetX: Dp,
+    offsetY: Dp,
 ) {
     val mysticTextColor = Color(0xFFF4E5BC)
     val selectedMysticTextColor = Color(0xFFFFF4D8)
 
     Box(
         modifier = Modifier
-            .offset {
-                IntOffset(
-                    x = (boardRect.left + boardRect.width * (x - horizontalHalfFactor)).roundToInt(),
-                    y = (boardRect.top + boardRect.height * (y - verticalHalfFactor)).roundToInt(),
-                )
-            }
+            .offset(x = offsetX, y = offsetY)
             .size(width = 100.dp, height = 42.dp),
         contentAlignment = Alignment.Center,
     ) {
@@ -329,25 +294,6 @@ private fun AnswerMarker(
             color = if (isSelected) selectedMysticTextColor else mysticTextColor,
         )
     }
-}
-
-
-private fun IntRect.insetByFactors(
-    horizontal: Float,
-    topFactor: Float,
-    bottomFactor: Float,
-): IntRect {
-    val insetLeft = (width * horizontal).roundToInt()
-    val insetRight = (width * horizontal).roundToInt()
-    val insetTop = (height * topFactor).roundToInt()
-    val insetBottom = (height * bottomFactor).roundToInt()
-
-    return IntRect(
-        left = this.left + insetLeft,
-        top = this.top + insetTop,
-        right = this.right - insetRight,
-        bottom = this.bottom - insetBottom,
-    )
 }
 
 private fun crystalOffsetFor(
