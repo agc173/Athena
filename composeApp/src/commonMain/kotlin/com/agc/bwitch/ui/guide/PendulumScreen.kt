@@ -206,7 +206,7 @@ private fun PendulumBoard(
                             colors = listOf(
                                 MaterialTheme.colorScheme.surface.copy(alpha = 0.72f),
                                 MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.52f),
-                                color = MaterialTheme.colorScheme.scrim.copy(alpha = 0.35f),
+                                MaterialTheme.colorScheme.scrim.copy(alpha = 0.35f),
                             ),
                             radius = boardMinDimension * 0.6f,
                         ),
