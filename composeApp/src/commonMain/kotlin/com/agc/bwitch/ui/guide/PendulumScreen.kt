@@ -5,7 +5,7 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -37,17 +38,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import bwitch.composeapp.generated.resources.Res
 import com.agc.bwitch.domain.pendulum.PendulumAnswer
 import com.agc.bwitch.presentation.pendulum.PendulumPhase
 import com.agc.bwitch.presentation.pendulum.PendulumViewModel
@@ -58,6 +56,7 @@ import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.roundToInt
 import kotlin.math.sin
+import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 
 @Composable
@@ -174,10 +173,9 @@ private fun PendulumBoard(
     selectedAnswer: PendulumAnswer?,
     animationProgress: Float,
 ) {
-    val colorScheme = MaterialTheme.colorScheme
     var boardSize by remember { mutableStateOf(IntSize.Zero) }
-    val markerHorizontalHalfFactor = 0.14f
-    val markerVerticalHalfFactor = 0.06f
+    val markerHorizontalHalfFactor = 0.13f
+    val markerVerticalHalfFactor = 0.055f
     val boardRadiusPx = min(boardSize.width.toFloat(), boardSize.height.toFloat()) * 0.40f
     val crystalOffsetPx = crystalOffsetFor(
         phase = phase,
@@ -191,61 +189,33 @@ private fun PendulumBoard(
             .aspectRatio(1f)
             .onSizeChanged { boardSize = it },
     ) {
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            val center = Offset(size.width / 2f, size.height / 2f)
-            val boardRadius = min(size.width, size.height) * 0.40f
-
-            drawCircle(
-                brush = Brush.radialGradient(
-                    colors = listOf(
-                        colorScheme.primary.copy(alpha = 0.18f),
-                        colorScheme.surface.copy(alpha = 0.08f),
-                        Color.Transparent,
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(4.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        brush = Brush.radialGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.18f),
+                                MaterialTheme.colorScheme.surface.copy(alpha = 0.08f),
+                                Color.Transparent,
+                            ),
+                            radius = boardSize.minDimension * 0.62f,
+                        ),
                     ),
-                    center = center,
-                    radius = boardRadius * 1.25f,
-                ),
-                radius = boardRadius * 1.25f,
-                center = center,
             )
 
-            drawCircle(
-                color = colorScheme.surface.copy(alpha = 0.44f),
-                radius = boardRadius,
-                center = center,
+            Image(
+                painter = painterResource(Res.drawable.pendulum_board),
+                contentDescription = null,
+                contentScale = ContentScale.Fit,
+                modifier = Modifier.fillMaxSize(0.94f),
             )
-            drawCircle(
-                color = colorScheme.outlineVariant.copy(alpha = 0.52f),
-                radius = boardRadius,
-                center = center,
-                style = Stroke(width = 2.4f),
-            )
-            drawCircle(
-                color = colorScheme.primary.copy(alpha = 0.14f),
-                radius = boardRadius * 0.70f,
-                center = center,
-                style = Stroke(width = 1.25f),
-            )
-            rotate(degrees = -14f, pivot = center) {
-                drawArc(
-                    color = colorScheme.primary.copy(alpha = 0.14f),
-                    startAngle = 22f,
-                    sweepAngle = 128f,
-                    useCenter = false,
-                    topLeft = Offset(center.x - boardRadius * 0.76f, center.y - boardRadius * 0.76f),
-                    size = androidx.compose.ui.geometry.Size(boardRadius * 1.52f, boardRadius * 1.52f),
-                    style = Stroke(width = 1.15f),
-                )
-                drawArc(
-                    color = colorScheme.outlineVariant.copy(alpha = 0.16f),
-                    startAngle = 210f,
-                    sweepAngle = 108f,
-                    useCenter = false,
-                    topLeft = Offset(center.x - boardRadius * 0.52f, center.y - boardRadius * 0.52f),
-                    size = androidx.compose.ui.geometry.Size(boardRadius * 1.04f, boardRadius * 1.04f),
-                    style = Stroke(width = 1.05f),
-                )
-            }
         }
 
         AnswerMarker(
@@ -254,8 +224,8 @@ private fun PendulumBoard(
             boardSize = boardSize,
             horizontalHalfFactor = markerHorizontalHalfFactor,
             verticalHalfFactor = markerVerticalHalfFactor,
-            x = 0.27f,
-            y = 0.26f,
+            x = 0.29f,
+            y = 0.25f,
         )
         AnswerMarker(
             text = "SÍ",
@@ -263,8 +233,8 @@ private fun PendulumBoard(
             boardSize = boardSize,
             horizontalHalfFactor = markerHorizontalHalfFactor,
             verticalHalfFactor = markerVerticalHalfFactor,
-            x = 0.73f,
-            y = 0.26f,
+            x = 0.71f,
+            y = 0.25f,
         )
         AnswerMarker(
             text = "AÚN NO",
@@ -272,8 +242,8 @@ private fun PendulumBoard(
             boardSize = boardSize,
             horizontalHalfFactor = markerHorizontalHalfFactor,
             verticalHalfFactor = markerVerticalHalfFactor,
-            x = 0.27f,
-            y = 0.74f,
+            x = 0.30f,
+            y = 0.75f,
         )
         AnswerMarker(
             text = "TAL VEZ",
@@ -281,11 +251,14 @@ private fun PendulumBoard(
             boardSize = boardSize,
             horizontalHalfFactor = markerHorizontalHalfFactor,
             verticalHalfFactor = markerVerticalHalfFactor,
-            x = 0.73f,
-            y = 0.74f,
+            x = 0.70f,
+            y = 0.75f,
         )
 
-        Canvas(
+        Image(
+            painter = painterResource(Res.drawable.pendulum_crystal),
+            contentDescription = null,
+            contentScale = ContentScale.Fit,
             modifier = Modifier
                 .align(Alignment.Center)
                 .offset {
@@ -294,15 +267,8 @@ private fun PendulumBoard(
                         y = crystalOffsetPx.y.roundToInt(),
                     )
                 }
-                .size(56.dp),
-        ) {
-            drawMysticCrystal(
-                center = Offset(size.width / 2f, size.height / 2f),
-                size = size.minDimension * 0.72f,
-                primaryColor = colorScheme.primary,
-                glowColor = colorScheme.primary.copy(alpha = 0.26f),
-            )
-        }
+                .size(62.dp),
+        )
     }
 }
 
@@ -327,14 +293,14 @@ private fun AnswerMarker(
                 )
             }
             .size(width = 92.dp, height = 38.dp),
-        shape = MaterialTheme.shapes.small,
-        color = if (isSelected) colorScheme.primary.copy(alpha = 0.20f) else colorScheme.surface.copy(alpha = 0.30f),
+        shape = RoundedCornerShape(8.dp),
+        color = if (isSelected) colorScheme.primary.copy(alpha = 0.18f) else colorScheme.surface.copy(alpha = 0.18f),
         border = BorderStroke(
             width = 1.dp,
-            color = if (isSelected) colorScheme.primary.copy(alpha = 0.92f) else colorScheme.outlineVariant.copy(alpha = 0.58f),
+            color = if (isSelected) colorScheme.primary.copy(alpha = 0.78f) else colorScheme.outlineVariant.copy(alpha = 0.35f),
         ),
         tonalElevation = if (isSelected) 1.dp else 0.dp,
-        shadowElevation = if (isSelected) 3.dp else 0.dp,
+        shadowElevation = if (isSelected) 1.dp else 0.dp,
     ) {
         Box(
             modifier = Modifier
@@ -343,15 +309,15 @@ private fun AnswerMarker(
                     if (isSelected) {
                         Brush.verticalGradient(
                             listOf(
-                                colorScheme.primary.copy(alpha = 0.30f),
-                                colorScheme.primary.copy(alpha = 0.12f),
+                                colorScheme.primary.copy(alpha = 0.24f),
+                                colorScheme.primary.copy(alpha = 0.10f),
                             ),
                         )
                     } else {
                         Brush.verticalGradient(
                             listOf(
                                 Color.Transparent,
-                                colorScheme.surfaceVariant.copy(alpha = 0.12f),
+                                colorScheme.surfaceVariant.copy(alpha = 0.08f),
                             ),
                         )
                     },
@@ -452,48 +418,6 @@ private fun lerpOffset(start: Offset, end: Offset, t: Float): Offset = Offset(
     x = start.x + (end.x - start.x) * t,
     y = start.y + (end.y - start.y) * t,
 )
-
-private fun DrawScope.drawMysticCrystal(
-    center: Offset,
-    size: Float,
-    primaryColor: Color,
-    glowColor: Color,
-) {
-    drawCircle(
-        color = glowColor,
-        radius = size * 0.88f,
-        center = center,
-    )
-
-    val half = size / 2f
-    val diamond = Path().apply {
-        moveTo(center.x, center.y - half)
-        lineTo(center.x + half * 0.65f, center.y)
-        lineTo(center.x, center.y + half)
-        lineTo(center.x - half * 0.65f, center.y)
-        close()
-    }
-
-    drawPath(
-        path = diamond,
-        brush = Brush.verticalGradient(
-            colors = listOf(
-                primaryColor.copy(alpha = 0.96f),
-                primaryColor.copy(alpha = 0.72f),
-            ),
-            startY = center.y - half,
-            endY = center.y + half,
-        ),
-    )
-
-    drawLine(
-        color = Color.White.copy(alpha = 0.45f),
-        start = Offset(center.x, center.y - half * 0.62f),
-        end = Offset(center.x, center.y + half * 0.58f),
-        strokeWidth = 2f,
-        cap = StrokeCap.Round,
-    )
-}
 
 private fun PendulumAnswer.label(): String = when (this) {
     PendulumAnswer.YES -> "SÍ"
