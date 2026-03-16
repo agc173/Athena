@@ -4,7 +4,6 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -20,11 +19,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -41,6 +38,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.unit.IntOffset
@@ -70,8 +68,6 @@ fun PendulumScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
     val orbitProgress = remember { Animatable(0f) }
-    val colorScheme = MaterialTheme.colorScheme
-
     LaunchedEffect(state.phase, state.selectedAnswer) {
         when (state.phase) {
             PendulumPhase.ANIMATING -> {
@@ -100,25 +96,31 @@ fun PendulumScreen(
             .background(
                 Brush.verticalGradient(
                     colors = listOf(
-                        colorScheme.surface.copy(alpha = 0.98f),
-                        colorScheme.surfaceVariant.copy(alpha = 0.46f),
-                        colorScheme.scrim.copy(alpha = 0.30f),
+                        Color(0xFF0E0B18),
+                        Color(0xFF171127),
+                        Color(0xFF08060F),
                     ),
                 ),
             )
             .padding(contentPadding)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+            .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         Text(
             "El Péndulo",
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.SemiBold,
+            color = Color(0xFFF8ECD0),
+            shadow = Shadow(
+                color = Color.Black.copy(alpha = 0.5f),
+                offset = Offset(0f, 1.5f),
+                blurRadius = 5f,
+            ),
         )
         Text(
             "Haz una pregunta o piénsala en silencio. Toca el tablero para consultar.",
             style = MaterialTheme.typography.bodyMedium,
-            color = colorScheme.onSurfaceVariant,
+            color = Color(0xFFE2D9C3),
         )
 
         OutlinedTextField(
@@ -133,7 +135,7 @@ fun PendulumScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(380.dp)
-                .padding(horizontal = 8.dp, vertical = 4.dp)
+                .padding(horizontal = 2.dp)
                 .clickable(
                     enabled = !isAnimating,
                     interactionSource = remember { MutableInteractionSource() },
@@ -194,35 +196,29 @@ private fun PendulumBoard(
         modifier = modifier
             .aspectRatio(1f)
             .onSizeChanged { boardSize = it },
+        contentAlignment = Alignment.Center,
     ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(2.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        brush = Brush.radialGradient(
-                            colors = listOf(
-                                MaterialTheme.colorScheme.surface.copy(alpha = 0.72f),
-                                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.52f),
-                                color = MaterialTheme.colorScheme.scrim.copy(alpha = 0.35f),
-                            ),
-                            radius = boardMinDimension * 0.66f,
+                .background(
+                    brush = Brush.radialGradient(
+                        colors = listOf(
+                            Color(0xFF3B2A5A).copy(alpha = 0.40f),
+                            Color(0xFF120D1F).copy(alpha = 0.04f),
+                            Color.Transparent,
                         ),
+                        radius = boardMinDimension * 0.6f,
                     ),
-            )
+                ),
+        )
 
-            Image(
-                painter = painterResource(Res.drawable.pendulum_board),
-                contentDescription = null,
-                contentScale = ContentScale.Fit,
-                modifier = Modifier.fillMaxSize(0.94f),
-            )
-        }
+        Image(
+            painter = painterResource(Res.drawable.pendulum_board),
+            contentDescription = null,
+            contentScale = ContentScale.Fit,
+            modifier = Modifier.fillMaxSize(0.98f),
+        )
 
         AnswerMarker(
             text = "NO",
@@ -288,11 +284,10 @@ private fun AnswerMarker(
     x: Float,
     y: Float,
 ) {
-    val colorScheme = MaterialTheme.colorScheme
-    val mysticTextColor = Color(0xFFF2D8A2)
-    val selectedMysticTextColor = Color(0xFFFFF1CF)
+    val mysticTextColor = Color(0xFFF4E5BC)
+    val selectedMysticTextColor = Color(0xFFFFF4D8)
 
-    Surface(
+    Box(
         modifier = Modifier
             .offset {
                 IntOffset(
@@ -301,50 +296,21 @@ private fun AnswerMarker(
                 )
             }
             .size(width = 100.dp, height = 42.dp),
-        shape = RoundedCornerShape(11.dp),
-        color = if (isSelected) colorScheme.primaryContainer.copy(alpha = 0.52f) else colorScheme.scrim.copy(alpha = 0.58f),
-        border = BorderStroke(
-            width = 1.dp,
-            color = if (isSelected) Color(0xFFEFC97A).copy(alpha = 0.90f) else Color(0xFFB28A4A).copy(alpha = 0.65f),
-        ),
-        tonalElevation = if (isSelected) 2.dp else 0.dp,
-        shadowElevation = if (isSelected) 4.dp else 1.dp,
+        contentAlignment = Alignment.Center,
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    if (isSelected) {
-                        Brush.verticalGradient(
-                            listOf(
-                                Color(0xFF7B5A21).copy(alpha = 0.55f),
-                                colorScheme.primaryContainer.copy(alpha = 0.22f),
-                            ),
-                        )
-                    } else {
-                        Brush.verticalGradient(
-                            listOf(
-                                colorScheme.scrim.copy(alpha = 0.18f),
-                                Color(0xFF3E3122).copy(alpha = 0.22f),
-                            ),
-                        )
-                    },
-                ),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = text,
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
-                letterSpacing = if (isSelected) 1.2.sp else 0.8.sp,
-                color = if (isSelected) selectedMysticTextColor else mysticTextColor,
-                shadow = Shadow(
-                    color = Color.Black.copy(alpha = if (isSelected) 0.75f else 0.6f),
-                    offset = Offset(0f, 1.2f),
-                    blurRadius = if (isSelected) 4f else 2.8f,
-                ),
-            )
-        }
+        Text(
+            text = text,
+            style = MaterialTheme.typography.titleSmall,
+            fontFamily = FontFamily.Serif,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
+            letterSpacing = if (isSelected) 1.6.sp else 1.1.sp,
+            color = if (isSelected) selectedMysticTextColor else mysticTextColor,
+            shadow = Shadow(
+                color = Color.Black.copy(alpha = if (isSelected) 0.85f else 0.72f),
+                offset = Offset(0f, 1.8f),
+                blurRadius = if (isSelected) 8f else 5.5f,
+            ),
+        )
     }
 }
 
