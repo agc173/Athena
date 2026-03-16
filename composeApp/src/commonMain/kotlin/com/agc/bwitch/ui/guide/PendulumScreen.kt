@@ -54,6 +54,7 @@ import com.agc.bwitch.presentation.pendulum.PendulumViewModel
 import kotlin.math.PI
 import kotlin.math.atan2
 import kotlin.math.cos
+import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.roundToInt
@@ -178,6 +179,8 @@ private fun PendulumBoard(
     var boardSize by remember { mutableStateOf(IntSize.Zero) }
     val markerHorizontalHalfFactor = 0.13f
     val markerVerticalHalfFactor = 0.055f
+    val boardMinDimension = min(boardSize.width.toFloat(), boardSize.height.toFloat())
+    val safeGradientRadius = max(1f, boardMinDimension * 0.62f)
     val boardRadiusPx = min(boardSize.width.toFloat(), boardSize.height.toFloat()) * 0.40f
     val crystalOffsetPx = crystalOffsetFor(
         phase = phase,
@@ -207,7 +210,7 @@ private fun PendulumBoard(
                                 MaterialTheme.colorScheme.surface.copy(alpha = 0.08f),
                                 Color.Transparent,
                             ),
-                            radius = min(boardSize.width.toFloat(), boardSize.height.toFloat()) * 0.62f,
+                            radius = safeGradientRadius,
                         ),
                     ),
             )
