@@ -42,6 +42,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.dp
@@ -182,6 +183,15 @@ private fun PendulumBoard(
     animationProgress: Float,
 ) {
     var boardSize by remember { mutableStateOf(IntSize.Zero) }
+    val boardImageScale = 0.98f
+    val visibleBoardWidth = (boardSize.width * boardImageScale).roundToInt()
+    val visibleBoardHeight = (boardSize.height * boardImageScale).roundToInt()
+    val visibleBoardRect = IntRect(
+        left = ((boardSize.width - visibleBoardWidth) / 2f).roundToInt(),
+        top = ((boardSize.height - visibleBoardHeight) / 2f).roundToInt(),
+        right = ((boardSize.width + visibleBoardWidth) / 2f).roundToInt(),
+        bottom = ((boardSize.height + visibleBoardHeight) / 2f).roundToInt(),
+    )
     val markerHorizontalHalfFactor = 0.13f
     val markerVerticalHalfFactor = 0.055f
     val boardMinDimension = min(boardSize.width.toFloat(), boardSize.height.toFloat()).coerceAtLeast(1f)
@@ -218,13 +228,13 @@ private fun PendulumBoard(
             painter = painterResource(Res.drawable.pendulum_board),
             contentDescription = null,
             contentScale = ContentScale.Fit,
-            modifier = Modifier.fillMaxSize(0.98f),
+            modifier = Modifier.fillMaxSize(boardImageScale),
         )
 
         AnswerMarker(
             text = "NO",
             isSelected = phase == PendulumPhase.RESULT && selectedAnswer == PendulumAnswer.NO,
-            boardSize = boardSize,
+            boardRect = visibleBoardRect,
             horizontalHalfFactor = markerHorizontalHalfFactor,
             verticalHalfFactor = markerVerticalHalfFactor,
             x = 0.29f,
@@ -233,7 +243,7 @@ private fun PendulumBoard(
         AnswerMarker(
             text = "SÍ",
             isSelected = phase == PendulumPhase.RESULT && selectedAnswer == PendulumAnswer.YES,
-            boardSize = boardSize,
+            boardRect = visibleBoardRect,
             horizontalHalfFactor = markerHorizontalHalfFactor,
             verticalHalfFactor = markerVerticalHalfFactor,
             x = 0.71f,
@@ -242,7 +252,7 @@ private fun PendulumBoard(
         AnswerMarker(
             text = "AÚN NO",
             isSelected = phase == PendulumPhase.RESULT && selectedAnswer == PendulumAnswer.NOT_NOW,
-            boardSize = boardSize,
+            boardRect = visibleBoardRect,
             horizontalHalfFactor = markerHorizontalHalfFactor,
             verticalHalfFactor = markerVerticalHalfFactor,
             x = 0.30f,
@@ -251,7 +261,7 @@ private fun PendulumBoard(
         AnswerMarker(
             text = "TAL VEZ",
             isSelected = phase == PendulumPhase.RESULT && selectedAnswer == PendulumAnswer.MAYBE,
-            boardSize = boardSize,
+            boardRect = visibleBoardRect,
             horizontalHalfFactor = markerHorizontalHalfFactor,
             verticalHalfFactor = markerVerticalHalfFactor,
             x = 0.70f,
@@ -279,7 +289,7 @@ private fun PendulumBoard(
 private fun AnswerMarker(
     text: String,
     isSelected: Boolean,
-    boardSize: IntSize,
+    boardRect: IntRect,
     horizontalHalfFactor: Float,
     verticalHalfFactor: Float,
     x: Float,
@@ -292,8 +302,8 @@ private fun AnswerMarker(
         modifier = Modifier
             .offset {
                 IntOffset(
-                    x = (boardSize.width * (x - horizontalHalfFactor)).roundToInt(),
-                    y = (boardSize.height * (y - verticalHalfFactor)).roundToInt(),
+                    x = (boardRect.left + boardRect.width * (x - horizontalHalfFactor)).roundToInt(),
+                    y = (boardRect.top + boardRect.height * (y - verticalHalfFactor)).roundToInt(),
                 )
             }
             .size(width = 100.dp, height = 42.dp),
