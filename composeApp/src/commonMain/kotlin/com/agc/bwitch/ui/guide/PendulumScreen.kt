@@ -42,8 +42,10 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.dp
 import bwitch.composeapp.generated.resources.Res
 import bwitch.composeapp.generated.resources.pendulum_board
@@ -94,6 +96,16 @@ fun PendulumScreen(
 
     Column(
         modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        colorScheme.surface.copy(alpha = 0.98f),
+                        colorScheme.surfaceVariant.copy(alpha = 0.46f),
+                        colorScheme.scrim.copy(alpha = 0.30f),
+                    ),
+                ),
+            )
             .padding(contentPadding)
             .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
@@ -117,29 +129,20 @@ fun PendulumScreen(
             enabled = !isAnimating,
         )
 
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.large,
-            tonalElevation = 3.dp,
-            shadowElevation = 1.dp,
-            border = BorderStroke(1.dp, colorScheme.outlineVariant.copy(alpha = 0.45f)),
-            color = colorScheme.surfaceVariant.copy(alpha = 0.28f),
-        ) {
-            PendulumBoard(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(380.dp)
-                    .padding(horizontal = 14.dp, vertical = 12.dp)
-                    .clickable(
-                        enabled = !isAnimating,
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                    ) { viewModel.startSwing() },
-                phase = state.phase,
-                selectedAnswer = state.selectedAnswer,
-                animationProgress = orbitProgress.value,
-            )
-        }
+        PendulumBoard(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(380.dp)
+                .padding(horizontal = 8.dp, vertical = 4.dp)
+                .clickable(
+                    enabled = !isAnimating,
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                ) { viewModel.startSwing() },
+            phase = state.phase,
+            selectedAnswer = state.selectedAnswer,
+            animationProgress = orbitProgress.value,
+        )
 
         if (state.phase == PendulumPhase.RESULT) {
             state.selectedAnswer?.let { answer ->
@@ -195,7 +198,7 @@ private fun PendulumBoard(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(4.dp),
+                .padding(2.dp),
             contentAlignment = Alignment.Center,
         ) {
             Box(
@@ -208,7 +211,7 @@ private fun PendulumBoard(
                                 MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.52f),
                                 color = MaterialTheme.colorScheme.scrim.copy(alpha = 0.35f),
                             ),
-                            radius = boardMinDimension * 0.6f,
+                            radius = boardMinDimension * 0.66f,
                         ),
                     ),
             )
@@ -286,6 +289,8 @@ private fun AnswerMarker(
     y: Float,
 ) {
     val colorScheme = MaterialTheme.colorScheme
+    val mysticTextColor = Color(0xFFF2D8A2)
+    val selectedMysticTextColor = Color(0xFFFFF1CF)
 
     Surface(
         modifier = Modifier
@@ -297,13 +302,13 @@ private fun AnswerMarker(
             }
             .size(width = 100.dp, height = 42.dp),
         shape = RoundedCornerShape(11.dp),
-        color = if (isSelected) colorScheme.primaryContainer.copy(alpha = 0.55f) else colorScheme.scrim.copy(alpha = 0.62f),
+        color = if (isSelected) colorScheme.primaryContainer.copy(alpha = 0.52f) else colorScheme.scrim.copy(alpha = 0.58f),
         border = BorderStroke(
             width = 1.dp,
-            color = if (isSelected) colorScheme.primary.copy(alpha = 0.88f) else colorScheme.onSurface.copy(alpha = 0.34f),
+            color = if (isSelected) Color(0xFFEFC97A).copy(alpha = 0.90f) else Color(0xFFB28A4A).copy(alpha = 0.65f),
         ),
-        tonalElevation = if (isSelected) 2.dp else 1.dp,
-        shadowElevation = if (isSelected) 4.dp else 2.dp,
+        tonalElevation = if (isSelected) 2.dp else 0.dp,
+        shadowElevation = if (isSelected) 4.dp else 1.dp,
     ) {
         Box(
             modifier = Modifier
@@ -312,15 +317,15 @@ private fun AnswerMarker(
                     if (isSelected) {
                         Brush.verticalGradient(
                             listOf(
-                                colorScheme.primary.copy(alpha = 0.34f),
-                                colorScheme.primaryContainer.copy(alpha = 0.18f),
+                                Color(0xFF7B5A21).copy(alpha = 0.55f),
+                                colorScheme.primaryContainer.copy(alpha = 0.22f),
                             ),
                         )
                     } else {
                         Brush.verticalGradient(
                             listOf(
-                                colorScheme.scrim.copy(alpha = 0.12f),
-                                colorScheme.surfaceVariant.copy(alpha = 0.26f),
+                                colorScheme.scrim.copy(alpha = 0.18f),
+                                Color(0xFF3E3122).copy(alpha = 0.22f),
                             ),
                         )
                     },
@@ -330,8 +335,14 @@ private fun AnswerMarker(
             Text(
                 text = text,
                 style = MaterialTheme.typography.labelLarge,
-                fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.SemiBold,
-                color = if (isSelected) colorScheme.onPrimaryContainer else colorScheme.onSurface,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
+                letterSpacing = if (isSelected) 1.2.sp else 0.8.sp,
+                color = if (isSelected) selectedMysticTextColor else mysticTextColor,
+                shadow = Shadow(
+                    color = Color.Black.copy(alpha = if (isSelected) 0.75f else 0.6f),
+                    offset = Offset(0f, 1.2f),
+                    blurRadius = if (isSelected) 4f else 2.8f,
+                ),
             )
         }
     }
