@@ -194,8 +194,8 @@ private fun PendulumBoard(
     )
     val boardContentRect = visibleBoardRect.insetByFactors(
         horizontal = 0.14f,
-        top = 0.16f,
-        bottom = 0.20f,
+        topFactor = 0.16f,
+        bottomFactor = 0.20f,
     )
     val markerHorizontalHalfFactor = 0.13f
     val markerVerticalHalfFactor = 0.055f
@@ -334,19 +334,19 @@ private fun AnswerMarker(
 
 private fun IntRect.insetByFactors(
     horizontal: Float,
-    top: Float,
-    bottom: Float,
+    topFactor: Float,
+    bottomFactor: Float,
 ): IntRect {
     val insetLeft = (width * horizontal).roundToInt()
     val insetRight = (width * horizontal).roundToInt()
-    val insetTop = (height * top).roundToInt()
-    val insetBottom = (height * bottom).roundToInt()
+    val insetTop = (height * topFactor).roundToInt()
+    val insetBottom = (height * bottomFactor).roundToInt()
 
     return IntRect(
-        left = left + insetLeft,
-        top = top + insetTop,
-        right = right - insetRight,
-        bottom = bottom - insetBottom,
+        left = this.left + insetLeft,
+        top = this.top + insetTop,
+        right = this.right - insetRight,
+        bottom = this.bottom - insetBottom,
     )
 }
 
