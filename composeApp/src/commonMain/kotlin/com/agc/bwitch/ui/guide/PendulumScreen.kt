@@ -46,6 +46,8 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import bwitch.composeapp.generated.resources.Res
+import bwitch.composeapp.generated.resources.pendulum_board
+import bwitch.composeapp.generated.resources.pendulum_crystal
 import com.agc.bwitch.domain.pendulum.PendulumAnswer
 import com.agc.bwitch.presentation.pendulum.PendulumPhase
 import com.agc.bwitch.presentation.pendulum.PendulumViewModel
@@ -205,7 +207,7 @@ private fun PendulumBoard(
                                 MaterialTheme.colorScheme.surface.copy(alpha = 0.08f),
                                 Color.Transparent,
                             ),
-                            radius = boardSize.minDimension * 0.62f,
+                            radius = min(boardSize.width.toFloat(), boardSize.height.toFloat()) * 0.62f,
                         ),
                     ),
             )
