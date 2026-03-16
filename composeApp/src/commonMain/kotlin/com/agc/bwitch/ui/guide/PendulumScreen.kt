@@ -11,9 +11,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -29,7 +29,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -39,8 +41,12 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.agc.bwitch.domain.pendulum.PendulumAnswer
@@ -50,6 +56,7 @@ import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.min
 import kotlin.math.pow
+import kotlin.math.roundToInt
 import kotlin.math.sin
 import org.koin.compose.koinInject
 
@@ -168,19 +175,25 @@ private fun PendulumBoard(
     animationProgress: Float,
 ) {
     val colorScheme = MaterialTheme.colorScheme
+    val density = LocalDensity.current
+    var boardSize by remember { mutableStateOf(IntSize.Zero) }
+    val markerWidth: Dp = 92.dp
+    val markerHeight: Dp = 38.dp
+    val markerWidthPx = with(density) { markerWidth.toPx() }
+    val markerHeightPx = with(density) { markerHeight.toPx() }
+    val boardRadiusPx = min(boardSize.width.toFloat(), boardSize.height.toFloat()) * 0.40f
+    val crystalOffsetPx = crystalOffsetFor(
+        phase = phase,
+        selectedAnswer = selectedAnswer,
+        animationProgress = animationProgress,
+        boardRadius = boardRadiusPx,
+    )
 
-    BoxWithConstraints(modifier = modifier) {
-        val boardDiameter = min(maxWidth, maxHeight) * 0.80f
-        val boardRadiusPx = with(this) { boardDiameter.toPx() / 2f }
-        val crystalOffsetPx = crystalOffsetFor(
-            phase = phase,
-            selectedAnswer = selectedAnswer,
-            animationProgress = animationProgress,
-            boardRadius = boardRadiusPx,
-        )
-        val crystalOffsetX = with(this) { crystalOffsetPx.x.toDp() }
-        val crystalOffsetY = with(this) { crystalOffsetPx.y.toDp() }
-
+    Box(
+        modifier = modifier
+            .aspectRatio(1f)
+            .onSizeChanged { boardSize = it },
+    ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
             val center = Offset(size.width / 2f, size.height / 2f)
             val boardRadius = min(size.width, size.height) * 0.40f
@@ -227,24 +240,44 @@ private fun PendulumBoard(
         AnswerMarker(
             text = "NO",
             isSelected = phase == PendulumPhase.RESULT && selectedAnswer == PendulumAnswer.NO,
+            markerWidth = markerWidth,
+            markerHeight = markerHeight,
+            markerWidthPx = markerWidthPx,
+            markerHeightPx = markerHeightPx,
+            boardSize = boardSize,
             x = 0.23f,
             y = 0.22f,
         )
         AnswerMarker(
             text = "SÍ",
             isSelected = phase == PendulumPhase.RESULT && selectedAnswer == PendulumAnswer.YES,
+            markerWidth = markerWidth,
+            markerHeight = markerHeight,
+            markerWidthPx = markerWidthPx,
+            markerHeightPx = markerHeightPx,
+            boardSize = boardSize,
             x = 0.77f,
             y = 0.22f,
         )
         AnswerMarker(
             text = "AÚN NO",
             isSelected = phase == PendulumPhase.RESULT && selectedAnswer == PendulumAnswer.NOT_NOW,
+            markerWidth = markerWidth,
+            markerHeight = markerHeight,
+            markerWidthPx = markerWidthPx,
+            markerHeightPx = markerHeightPx,
+            boardSize = boardSize,
             x = 0.23f,
             y = 0.78f,
         )
         AnswerMarker(
             text = "TAL VEZ",
             isSelected = phase == PendulumPhase.RESULT && selectedAnswer == PendulumAnswer.MAYBE,
+            markerWidth = markerWidth,
+            markerHeight = markerHeight,
+            markerWidthPx = markerWidthPx,
+            markerHeightPx = markerHeightPx,
+            boardSize = boardSize,
             x = 0.77f,
             y = 0.78f,
         )
@@ -252,7 +285,12 @@ private fun PendulumBoard(
         Canvas(
             modifier = Modifier
                 .align(Alignment.Center)
-                .offset(x = crystalOffsetX, y = crystalOffsetY)
+                .offset {
+                    IntOffset(
+                        x = crystalOffsetPx.x.roundToInt(),
+                        y = crystalOffsetPx.y.roundToInt(),
+                    )
+                }
                 .size(56.dp),
         ) {
             drawMysticCrystal(
@@ -266,22 +304,27 @@ private fun PendulumBoard(
 }
 
 @Composable
-private fun BoxWithConstraintsScope.AnswerMarker(
+private fun AnswerMarker(
     text: String,
     isSelected: Boolean,
+    markerWidth: Dp,
+    markerHeight: Dp,
+    markerWidthPx: Float,
+    markerHeightPx: Float,
+    boardSize: IntSize,
     x: Float,
     y: Float,
 ) {
     val colorScheme = MaterialTheme.colorScheme
-    val markerWidth: Dp = 92.dp
-    val markerHeight: Dp = 38.dp
 
     Surface(
         modifier = Modifier
-            .offset(
-                x = maxWidth * x - markerWidth / 2,
-                y = maxHeight * y - markerHeight / 2,
-            )
+            .offset {
+                IntOffset(
+                    x = (boardSize.width * x - markerWidthPx / 2f).roundToInt(),
+                    y = (boardSize.height * y - markerHeightPx / 2f).roundToInt(),
+                )
+            }
             .size(width = markerWidth, height = markerHeight),
         shape = MaterialTheme.shapes.small,
         color = if (isSelected) colorScheme.primary.copy(alpha = 0.20f) else colorScheme.surface.copy(alpha = 0.30f),
