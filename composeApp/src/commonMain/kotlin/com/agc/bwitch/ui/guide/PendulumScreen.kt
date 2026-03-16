@@ -108,14 +108,15 @@ fun PendulumScreen(
     ) {
         Text(
             "El Péndulo",
-            style = MaterialTheme.typography.headlineMedium,
+            style = MaterialTheme.typography.headlineMedium.copy(
+                shadow = Shadow(
+                    color = Color.Black.copy(alpha = 0.5f),
+                    offset = Offset(0f, 1.5f),
+                    blurRadius = 5f,
+                ),
+            ),
             fontWeight = FontWeight.SemiBold,
             color = Color(0xFFF8ECD0),
-            shadow = Shadow(
-                color = Color.Black.copy(alpha = 0.5f),
-                offset = Offset(0f, 1.5f),
-                blurRadius = 5f,
-            ),
         )
         Text(
             "Haz una pregunta o piénsala en silencio. Toca el tablero para consultar.",
@@ -300,16 +301,17 @@ private fun AnswerMarker(
     ) {
         Text(
             text = text,
-            style = MaterialTheme.typography.titleSmall,
+            style = MaterialTheme.typography.titleSmall.copy(
+                shadow = Shadow(
+                    color = Color.Black.copy(alpha = if (isSelected) 0.85f else 0.72f),
+                    offset = Offset(0f, 1.8f),
+                    blurRadius = if (isSelected) 8f else 5.5f,
+                ),
+            ),
             fontFamily = FontFamily.Serif,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
             letterSpacing = if (isSelected) 1.6.sp else 1.1.sp,
             color = if (isSelected) selectedMysticTextColor else mysticTextColor,
-            shadow = Shadow(
-                color = Color.Black.copy(alpha = if (isSelected) 0.85f else 0.72f),
-                offset = Offset(0f, 1.8f),
-                blurRadius = if (isSelected) 8f else 5.5f,
-            ),
         )
     }
 }
