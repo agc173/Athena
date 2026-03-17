@@ -4,11 +4,17 @@ import com.agc.bwitch.data.sync.LocalStore
 import com.agc.bwitch.data.sync.RemoteStore
 import com.agc.bwitch.data.sync.SyncEngine
 import com.agc.bwitch.data.sync.Timestamped
+import com.agc.bwitch.data.userprofile.dto.SaveUserProfileRequestDto
+import com.agc.bwitch.data.userprofile.dto.SaveUserProfileResponseDto
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
 import com.agc.bwitch.domain.auth.AuthRepository
+import com.agc.bwitch.domain.shared.ApiError
+import com.agc.bwitch.domain.shared.ApiResult
+import com.agc.bwitch.domain.userprofile.UsernameRules
 import com.agc.bwitch.domain.userprofile.UserProfile
 import com.agc.bwitch.domain.userprofile.UserProfileRepository
 import com.agc.bwitch.domain.userprofile.UserProfileSyncController
+import com.agc.bwitch.data.functions.FunctionsClient
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.firestore.firestore
 import kotlinx.coroutines.CoroutineScope
@@ -23,7 +29,8 @@ import kotlinx.serialization.Serializable
 
 class SyncUserProfileRepository(
     private val localRepo: SettingsUserProfileRepository,
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val functionsClient: FunctionsClient,
 ) : UserProfileRepository, UserProfileSyncController {
 
     private val firestore = Firebase.firestore
@@ -46,9 +53,7 @@ class SyncUserProfileRepository(
         }
 
         override suspend fun push(value: UserProfile, updatedAtEpochMillis: Long) {
-            val uid = currentUidOrNull() ?: return
-            val dto = UserProfileRemoteDto.fromUserProfile(value, updatedAtEpochMillis)
-            runCatching { setRemote(uid, dto) }
+            pushThroughCallable(value, updatedAtEpochMillis)
         }
     }
 
@@ -64,14 +69,9 @@ class SyncUserProfileRepository(
 
     override suspend fun saveUserProfile(profile: UserProfile) {
         val now = Clock.System.now().toEpochMilliseconds()
-        engine.save(profile, now)
-
-        val localUpdated = localRepo.getLocalUpdatedAtEpochMillisOrNull()
-        if (localUpdated == null) {
-            val normalizedNow = Clock.System.now().toEpochMilliseconds()
-            localRepo.saveUserProfileWithUpdatedAt(profile, normalizedNow)
-            runCatching { remoteStore.push(profile, normalizedNow) }
-        }
+        val normalizedProfile = profile.copy(username = UsernameRules.normalize(profile.username))
+        pushThroughCallable(normalizedProfile, now)
+        localRepo.saveUserProfileWithUpdatedAt(normalizedProfile, now)
     }
 
     override suspend fun pull() {
@@ -98,8 +98,57 @@ class SyncUserProfileRepository(
         return snap.data(UserProfileRemoteDto.serializer())
     }
 
-    private suspend fun setRemote(uid: String, dto: UserProfileRemoteDto) {
-        doc(uid).set(dto)
+
+    private suspend fun pushThroughCallable(value: UserProfile, updatedAtEpochMillis: Long) {
+        val normalizedUsername = UsernameRules.normalize(value.username)
+        if (normalizedUsername != null && !UsernameRules.isValid(normalizedUsername)) {
+            throw IllegalArgumentException("Username inválido. Usa 3-30 caracteres: letras, números, punto o guion bajo")
+        }
+
+        val request = SaveUserProfileRequestDto(
+            displayName = value.displayName,
+            photoUrl = value.photoUrl,
+            email = value.email,
+            username = normalizedUsername,
+            birthDate = value.birthDate,
+            zodiacSign = value.zodiacSign,
+            updatedAtEpochMillis = updatedAtEpochMillis,
+        )
+
+        when (
+            val result = functionsClient.call(
+                name = SAVE_USER_PROFILE_CALLABLE,
+                data = request,
+                requestSerializer = SaveUserProfileRequestDto.serializer(),
+                responseSerializer = SaveUserProfileResponseDto.serializer(),
+            )
+        ) {
+            is ApiResult.Ok -> {
+                // El callable persiste perfil + índice de username.
+                return
+            }
+
+            is ApiResult.Err -> throw result.error.toUserMessageException()
+        }
+    }
+
+    private fun ApiError.toUserMessageException(): IllegalStateException {
+        val backendMessage = message.orEmpty().lowercase()
+        return when {
+            this is ApiError.FailedPrecondition && "username_taken" in backendMessage -> {
+                IllegalStateException("Ese username ya está en uso")
+            }
+
+            this is ApiError.InvalidArgument -> {
+                IllegalStateException(message ?: "Username inválido")
+            }
+
+            else -> IllegalStateException(message ?: "No se pudo guardar el perfil")
+        }
+    }
+
+    private companion object {
+        const val SAVE_USER_PROFILE_CALLABLE = "saveUserProfile"
     }
 }
 

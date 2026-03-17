@@ -75,7 +75,7 @@ val dataKoinModule: Module = module {
     /**
      * UserProfile - SYNC (source of truth del dominio)
      */
-    single { SyncUserProfileRepository(get(), get()) }
+    single { SyncUserProfileRepository(get(), get(), get()) }
     single<UserProfileRepository> { get<SyncUserProfileRepository>() }
     single<UserProfileSyncController> { get<SyncUserProfileRepository>() }
 

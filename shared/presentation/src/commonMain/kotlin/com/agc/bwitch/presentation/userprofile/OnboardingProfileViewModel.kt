@@ -6,6 +6,7 @@ import com.agc.bwitch.domain.userprofile.ObserveUserProfileUseCase
 import com.agc.bwitch.domain.userprofile.SaveUserProfileUseCase
 import com.agc.bwitch.domain.userprofile.UploadAvatarUseCase
 import com.agc.bwitch.domain.userprofile.UserProfile
+import com.agc.bwitch.domain.userprofile.UsernameRules
 import com.agc.bwitch.presentation.auth.SessionViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -91,9 +92,13 @@ class OnboardingProfileViewModel(
     fun completeOnboarding(usernameText: String, birthDateText: String) = scope.launch {
         if (uiState.value.isBusy) return@launch
 
-        val username = usernameText.trim().removePrefix("@").takeUnless { it.isBlank() }
+        val username = UsernameRules.normalize(usernameText)
         if (username == null) {
             _uiState.update { it.copy(error = "El username es obligatorio") }
+            return@launch
+        }
+        if (!UsernameRules.isValid(username)) {
+            _uiState.update { it.copy(error = "Username inválido. Usa 3-30 caracteres: letras, números, punto o guion bajo") }
             return@launch
         }
 
