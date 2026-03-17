@@ -7,6 +7,7 @@ import com.agc.bwitch.domain.userprofile.PullUserProfileUseCase
 import com.agc.bwitch.domain.userprofile.SaveUserProfileUseCase
 import com.agc.bwitch.domain.userprofile.UploadAvatarUseCase
 import com.agc.bwitch.domain.userprofile.UserProfile
+import com.agc.bwitch.domain.userprofile.UsernameRules
 import com.agc.bwitch.presentation.auth.SessionViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -148,11 +149,23 @@ class UserProfileViewModel(
 
         val zodiacSign = parsedBirthDate?.let(deriveZodiacSign::invoke)
 
+        val normalizedUsername = UsernameRules.normalize(username)
+        if (normalizedUsername != null && !UsernameRules.isValid(normalizedUsername)) {
+            _uiState.update {
+                it.copy(
+                    isSaving = false,
+                    error = "Username inválido. Usa 3-30 caracteres: letras, números, punto o guion bajo"
+                )
+            }
+            _snackbarEvents.tryEmit("Username inválido")
+            return@launch
+        }
+
         val profile = UserProfile(
             displayName = displayName?.trim().takeUnless { it.isNullOrBlank() },
             photoUrl = photoUrl?.trim().takeUnless { it.isNullOrBlank() },
             email = email?.trim().takeUnless { it.isNullOrBlank() },
-            username = username?.trim()?.removePrefix("@").takeUnless { it.isNullOrBlank() },
+            username = normalizedUsername,
             birthDate = parsedBirthDate,
             zodiacSign = zodiacSign
         )
