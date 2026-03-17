@@ -3,12 +3,23 @@ package com.agc.bwitch.ui.astrology
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
 import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeUiState
 import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeViewModel
+import com.agc.bwitch.ui.common.designsystem.BWitchPrimaryButton
+import com.agc.bwitch.ui.common.designsystem.BWitchSecondaryButton
 import com.agc.bwitch.ui.theme.BWitchThemeTokens
 import org.koin.compose.koinInject
 
@@ -91,13 +102,9 @@ private fun HoroscopeScreenContent(
             onSelected = onSelectSign
         )
 
-        Button(
+        BWitchPrimaryButton(
             onClick = onRefresh,
             enabled = !state.isRefreshing,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = colors.primary,
-                contentColor = colors.onPrimary
-            )
         ) {
             Text(
                 when {
@@ -140,7 +147,7 @@ private fun SignSelector(
     val options = remember { ZodiacSign.values().toList() }
 
     Box {
-        OutlinedButton(onClick = { expanded = true }) {
+        BWitchSecondaryButton(onClick = { expanded = true }) {
             Text(selected.name.lowercase().replaceFirstChar { it.uppercase() })
         }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {

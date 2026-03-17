@@ -1,7 +1,9 @@
 package com.agc.bwitch.ui.auth
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -9,6 +11,9 @@ import androidx.compose.ui.unit.dp
 import com.agc.bwitch.platform.rememberPlatformContext
 import com.agc.bwitch.presentation.auth.GoogleIdTokenProvider
 import com.agc.bwitch.presentation.auth.SessionViewModel
+import com.agc.bwitch.ui.common.designsystem.BWitchPrimaryButton
+import com.agc.bwitch.ui.common.designsystem.BWitchSecondaryButton
+import com.agc.bwitch.ui.common.designsystem.BWitchTextField
 import com.agc.bwitch.ui.theme.BWitchThemeTokens
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
@@ -49,7 +54,7 @@ fun AuthScreen(
             style = MaterialTheme.typography.bodyMedium
         )
 
-        OutlinedButton(
+        BWitchSecondaryButton(
             onClick = {
                 isSubmitting = true
                 localError = null
@@ -70,7 +75,7 @@ fun AuthScreen(
 
         localError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
 
-        OutlinedTextField(
+        BWitchTextField(
             value = email,
             onValueChange = {
                 email = it
@@ -82,7 +87,7 @@ fun AuthScreen(
             modifier = Modifier.fillMaxWidth()
         )
 
-        OutlinedTextField(
+        BWitchTextField(
             value = password,
             onValueChange = {
                 password = it
@@ -99,7 +104,7 @@ fun AuthScreen(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(dimens.spacingSm + dimens.spacingXs)
         ) {
-            Button(
+            BWitchPrimaryButton(
                 onClick = {
                     isSubmitting = true
                     localError = null
@@ -111,7 +116,7 @@ fun AuthScreen(
                 Text("Entrar")
             }
 
-            OutlinedButton(
+            BWitchSecondaryButton(
                 onClick = {
                     isSubmitting = true
                     localError = null

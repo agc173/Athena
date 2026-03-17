@@ -5,15 +5,15 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import com.agc.bwitch.presentation.astrology.birthchart.BirthChartViewModel
+import com.agc.bwitch.ui.common.designsystem.BWitchPrimaryButton
+import com.agc.bwitch.ui.common.designsystem.BWitchTextField
 import com.agc.bwitch.ui.theme.BWitchThemeTokens
 import org.koin.compose.koinInject
 
@@ -41,7 +41,7 @@ fun BirthChartScreen(
             color = extras.textSecondary
         )
 
-        OutlinedTextField(
+        BWitchTextField(
             value = state.dateText,
             onValueChange = viewModel::onDateChange,
             label = { Text("Fecha (YYYY-MM-DD)") },
@@ -50,7 +50,7 @@ fun BirthChartScreen(
             modifier = Modifier.fillMaxWidth()
         )
 
-        OutlinedTextField(
+        BWitchTextField(
             value = state.timeText,
             onValueChange = viewModel::onTimeChange,
             label = { Text("Hora (HH:MM)") },
@@ -59,7 +59,7 @@ fun BirthChartScreen(
             modifier = Modifier.fillMaxWidth()
         )
 
-        OutlinedTextField(
+        BWitchTextField(
             value = state.placeText,
             onValueChange = viewModel::onPlaceChange,
             label = { Text("Lugar (ciudad/país)") },
@@ -68,7 +68,7 @@ fun BirthChartScreen(
             modifier = Modifier.fillMaxWidth()
         )
 
-        Button(
+        BWitchPrimaryButton(
             onClick = viewModel::refresh,
             enabled = !state.isLoading && !state.isBusy,
             modifier = Modifier.fillMaxWidth()
@@ -76,7 +76,7 @@ fun BirthChartScreen(
             Text(if (state.isRefreshing) "Refrescando..." else "Refrescar")
         }
 
-        Button(
+        BWitchPrimaryButton(
             onClick = viewModel::onSave,
             enabled = !state.isLoading && !state.isBusy,
             modifier = Modifier.fillMaxWidth()

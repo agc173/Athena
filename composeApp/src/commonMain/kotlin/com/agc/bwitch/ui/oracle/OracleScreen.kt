@@ -8,11 +8,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -23,6 +21,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import com.agc.bwitch.presentation.oracle.OracleAskViewModel
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
+import com.agc.bwitch.ui.common.designsystem.BWitchPrimaryButton
+import com.agc.bwitch.ui.common.designsystem.BWitchSecondaryButton
+import com.agc.bwitch.ui.common.designsystem.BWitchTextField
 import com.agc.bwitch.ui.common.designsystem.BWitchScreen
 import com.agc.bwitch.ui.common.designsystem.BWitchSectionHeader
 import com.agc.bwitch.ui.theme.BWitchThemeTokens
@@ -55,7 +56,7 @@ fun OracleScreen(
             )
         }
 
-        OutlinedTextField(
+        BWitchTextField(
             value = state.question,
             onValueChange = viewModel::onQuestionChange,
             modifier = Modifier.fillMaxWidth(),
@@ -64,7 +65,7 @@ fun OracleScreen(
             minLines = 3,
         )
 
-        Button(
+        BWitchPrimaryButton(
             onClick = { viewModel.ask() },
             modifier = Modifier.fillMaxWidth(),
             enabled = !state.isLoading && !state.inProgress,
@@ -157,7 +158,7 @@ fun OracleScreen(
                 }
             }
 
-            Button(
+            BWitchSecondaryButton(
                 onClick = viewModel::startNewConsultation,
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !state.isLoading,
@@ -176,7 +177,7 @@ fun OracleScreen(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onErrorContainer,
                 )
-                Button(
+                BWitchPrimaryButton(
                     onClick = { viewModel.retry() },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = !state.isLoading && !state.inProgress,
