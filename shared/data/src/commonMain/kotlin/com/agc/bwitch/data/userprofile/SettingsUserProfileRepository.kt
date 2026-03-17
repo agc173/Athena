@@ -1,11 +1,13 @@
 package com.agc.bwitch.data.userprofile
 
-import com.agc.bwitch.data.storage.SettingsFactory
+import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
 import com.agc.bwitch.domain.userprofile.UserProfile
+import com.agc.bwitch.data.storage.SettingsFactory
 import com.russhwolf.settings.Settings
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
@@ -49,6 +51,9 @@ class SettingsUserProfileRepository(
             displayName = profile.displayName,
             photoUrl = profile.photoUrl,
             email = profile.email,
+            username = profile.username,
+            birthDate = profile.birthDate,
+            zodiacSign = profile.zodiacSign,
             updatedAtEpochMillis = updatedAtEpochMillis
         )
 
@@ -85,16 +90,22 @@ class SettingsUserProfileRepository(
             UserProfile(
                 displayName = dto.displayName,
                 photoUrl = dto.photoUrl,
-                email = dto.email
+                email = dto.email,
+                username = dto.username,
+                birthDate = dto.birthDate,
+                zodiacSign = dto.zodiacSign
             )
         }.getOrNull()
     }
 
     @Serializable
     private data class UserProfileDto(
-        val displayName: String?,
-        val photoUrl: String?,
-        val email: String?,
+        val displayName: String? = null,
+        val photoUrl: String? = null,
+        val email: String? = null,
+        val username: String? = null,
+        val birthDate: LocalDate? = null,
+        val zodiacSign: ZodiacSign? = null,
         val updatedAtEpochMillis: Long
     )
 }

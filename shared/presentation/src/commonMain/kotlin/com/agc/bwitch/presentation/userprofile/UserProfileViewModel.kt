@@ -1,7 +1,9 @@
 package com.agc.bwitch.presentation.userprofile
 
+import com.agc.bwitch.domain.astrology.horoscope.DeriveZodiacSignUseCase
 import com.agc.bwitch.domain.userprofile.GetUserProfileUseCase
 import com.agc.bwitch.domain.userprofile.ObserveUserProfileUseCase
+import com.agc.bwitch.domain.userprofile.PullUserProfileUseCase
 import com.agc.bwitch.domain.userprofile.SaveUserProfileUseCase
 import com.agc.bwitch.domain.userprofile.UploadAvatarUseCase
 import com.agc.bwitch.domain.userprofile.UserProfile
@@ -21,17 +23,13 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import com.agc.bwitch.domain.userprofile.PullUserProfileUseCase
+import kotlinx.datetime.LocalDate
 
 data class UserProfileUiState(
-    // Carga inicial (observer + warm-up)
     val isInitialLoading: Boolean = true,
-
-    // Operaciones de usuario
     val isSaving: Boolean = false,
     val isUploadingAvatar: Boolean = false,
     val isRefreshing: Boolean = false,
-
     val profile: UserProfile? = null,
     val error: String? = null
 ) {
@@ -44,7 +42,8 @@ class UserProfileViewModel(
     private val save: SaveUserProfileUseCase,
     private val sessionVm: SessionViewModel,
     private val uploadAvatar: UploadAvatarUseCase,
-    private val pull: PullUserProfileUseCase
+    private val pull: PullUserProfileUseCase,
+    private val deriveZodiacSign: DeriveZodiacSignUseCase
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
@@ -58,12 +57,10 @@ class UserProfileViewModel(
     )
     val snackbarEvents: SharedFlow<String> = _snackbarEvents.asSharedFlow()
 
-    // Evita “seed” repetidos (por ejemplo si se recrea la pantalla)
     private var seededForUid: String? = null
     private var isSeeding: Boolean = false
 
     init {
-        // 1) observar cambios (source of truth)
         scope.launch {
             observe()
                 .catch { e ->
@@ -81,7 +78,6 @@ class UserProfileViewModel(
                 }
         }
 
-        // 2) warm up (provoca pull en sync repo)
         scope.launch {
             runCatching { get() }
                 .onFailure { e ->
@@ -90,7 +86,6 @@ class UserProfileViewModel(
                 }
         }
 
-        // 3) seed inicial desde sesión si aún no existe perfil
         scope.launch {
             sessionVm.uiState
                 .map { it.uid }
@@ -98,15 +93,11 @@ class UserProfileViewModel(
                 .collectLatest { uid ->
                     if (uid.isNullOrBlank()) return@collectLatest
                     if (seededForUid == uid) return@collectLatest
-
-                    // evita carreras si hay varios collectors / recomposiciones
                     if (isSeeding) return@collectLatest
                     isSeeding = true
 
                     try {
                         seededForUid = uid
-
-                        // Si ya hay perfil (local/remote), no hacemos nada
                         val existing = runCatching { get() }.getOrNull()
                         if (!existing.isNullOrBlankProfile()) return@collectLatest
 
@@ -114,14 +105,16 @@ class UserProfileViewModel(
                         val seeded = UserProfile(
                             displayName = session.displayName?.trim().takeUnless { it.isNullOrBlank() },
                             photoUrl = session.photoUrl?.trim().takeUnless { it.isNullOrBlank() },
-                            email = session.email?.trim().takeUnless { it.isNullOrBlank() }
+                            email = session.email?.trim().takeUnless { it.isNullOrBlank() },
+                            username = null,
+                            birthDate = null,
+                            zodiacSign = null
                         )
 
                         if (seeded.isNullOrBlankProfile()) return@collectLatest
 
                         runCatching { save(seeded) }
                             .onFailure { e ->
-                                // Seed no es crítico: avisamos por snackbar pero no rompemos UI
                                 _snackbarEvents.tryEmit(e.message ?: "No se pudo inicializar el perfil")
                             }
                     } finally {
@@ -131,15 +124,37 @@ class UserProfileViewModel(
         }
     }
 
-    fun updateAndSave(displayName: String?, photoUrl: String?, email: String?) = scope.launch {
+    fun updateAndSave(
+        displayName: String?,
+        photoUrl: String?,
+        email: String?,
+        username: String?,
+        birthDateText: String?
+    ) = scope.launch {
         if (uiState.value.isBusy) return@launch
 
         _uiState.update { it.copy(isSaving = true, error = null) }
 
+        val parsedBirthDate = birthDateText
+            ?.trim()
+            ?.takeUnless { it.isBlank() }
+            ?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+
+        if (!birthDateText.isNullOrBlank() && parsedBirthDate == null) {
+            _uiState.update { it.copy(isSaving = false, error = "Fecha inválida. Usa YYYY-MM-DD") }
+            _snackbarEvents.tryEmit("Fecha inválida. Usa YYYY-MM-DD")
+            return@launch
+        }
+
+        val zodiacSign = parsedBirthDate?.let(deriveZodiacSign::invoke)
+
         val profile = UserProfile(
             displayName = displayName?.trim().takeUnless { it.isNullOrBlank() },
             photoUrl = photoUrl?.trim().takeUnless { it.isNullOrBlank() },
-            email = email?.trim().takeUnless { it.isNullOrBlank() }
+            email = email?.trim().takeUnless { it.isNullOrBlank() },
+            username = username?.trim()?.removePrefix("@").takeUnless { it.isNullOrBlank() },
+            birthDate = parsedBirthDate,
+            zodiacSign = zodiacSign
         )
 
         runCatching { save(profile) }
@@ -160,14 +175,16 @@ class UserProfileViewModel(
         runCatching {
             val current = uiState.value.profile
             val previousUrl = current?.photoUrl
-
             val url = uploadAvatar(fileUri, mimeType, previousUrl)
 
             val updated = UserProfile(
                 displayName = current?.displayName,
                 photoUrl = url,
                 email = current?.email
-                    ?: sessionVm.uiState.value.email?.trim().takeUnless { it.isNullOrBlank() }
+                    ?: sessionVm.uiState.value.email?.trim().takeUnless { it.isNullOrBlank() },
+                username = current?.username,
+                birthDate = current?.birthDate,
+                zodiacSign = current?.zodiacSign ?: current?.birthDate?.let(deriveZodiacSign::invoke)
             )
 
             save(updated)
@@ -200,6 +217,9 @@ class UserProfileViewModel(
         val emptyName = displayName.isNullOrBlank()
         val emptyPhoto = photoUrl.isNullOrBlank()
         val emptyEmail = email.isNullOrBlank()
-        return emptyName && emptyPhoto && emptyEmail
+        val emptyUsername = username.isNullOrBlank()
+        val emptyBirthDate = birthDate == null
+        val emptySign = zodiacSign == null
+        return emptyName && emptyPhoto && emptyEmail && emptyUsername && emptyBirthDate && emptySign
     }
 }

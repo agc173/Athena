@@ -4,6 +4,7 @@ import com.agc.bwitch.data.sync.LocalStore
 import com.agc.bwitch.data.sync.RemoteStore
 import com.agc.bwitch.data.sync.SyncEngine
 import com.agc.bwitch.data.sync.Timestamped
+import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
 import com.agc.bwitch.domain.auth.AuthRepository
 import com.agc.bwitch.domain.userprofile.UserProfile
 import com.agc.bwitch.domain.userprofile.UserProfileRepository
@@ -17,6 +18,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
 
 class SyncUserProfileRepository(
@@ -61,11 +63,9 @@ class SyncUserProfileRepository(
     override suspend fun getUserProfile(): UserProfile? = engine.get()
 
     override suspend fun saveUserProfile(profile: UserProfile) {
-        // Guardas local con ts “now” (igual que antes, solo que ahora lo hacemos explícito)
         val now = Clock.System.now().toEpochMilliseconds()
         engine.save(profile, now)
 
-        // Si por cualquier motivo local no tuviera ts (estado raro), lo normalizamos como hacías:
         val localUpdated = localRepo.getLocalUpdatedAtEpochMillisOrNull()
         if (localUpdated == null) {
             val normalizedNow = Clock.System.now().toEpochMilliseconds()
@@ -105,16 +105,22 @@ class SyncUserProfileRepository(
 
 @Serializable
 data class UserProfileRemoteDto(
-    val displayName: String?,
-    val photoUrl: String?,
-    val email: String?,
+    val displayName: String? = null,
+    val photoUrl: String? = null,
+    val email: String? = null,
+    val username: String? = null,
+    val birthDate: LocalDate? = null,
+    val zodiacSign: ZodiacSign? = null,
     val updatedAtEpochMillis: Long
 ) {
     fun toUserProfile(): UserProfile =
         UserProfile(
             displayName = displayName,
             photoUrl = photoUrl,
-            email = email
+            email = email,
+            username = username,
+            birthDate = birthDate,
+            zodiacSign = zodiacSign
         )
 
     companion object {
@@ -123,6 +129,9 @@ data class UserProfileRemoteDto(
                 displayName = profile.displayName,
                 photoUrl = profile.photoUrl,
                 email = profile.email,
+                username = profile.username,
+                birthDate = profile.birthDate,
+                zodiacSign = profile.zodiacSign,
                 updatedAtEpochMillis = updatedAtEpochMillis
             )
     }

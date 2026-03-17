@@ -29,6 +29,25 @@ Notas:
 
 ---
 
+
+### /users/{userId}/profile/current
+Perfil consumido por la app cliente actual.
+
+Campos:
+- displayName: string (opcional)
+- photoUrl: string (opcional)
+- email: string (opcional)
+- username: string (opcional)
+- birthDate: string ISO `YYYY-MM-DD` (opcional)
+- zodiacSign: string (enum en domain, opcional)
+- updatedAtEpochMillis: number
+
+Notas:
+- Campos opcionales para mantener compatibilidad con perfiles antiguos.
+- Si `zodiacSign` no existe, puede derivarse desde `birthDate` en capa domain/presentation.
+
+---
+
 ### /posts/{postId}
 Post del feed de comunidad.
 
