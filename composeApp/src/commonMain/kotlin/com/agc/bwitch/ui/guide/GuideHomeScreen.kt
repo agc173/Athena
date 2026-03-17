@@ -16,8 +16,8 @@ fun GuideHomeScreen(
 ) {
     BWitchScreen(contentPadding = contentPadding) {
         BWitchSectionHeader(
-            title = "Guía",
-            subtitle = "Busca orientación para lo que necesitas saber hoy",
+            title = "Explora tu intuición",
+            subtitle = "Elige una práctica para lo que necesitas comprender hoy",
         )
 
         GuideOptionCard(

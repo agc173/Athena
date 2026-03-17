@@ -32,15 +32,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.sp
@@ -69,6 +66,7 @@ fun PendulumScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
     val orbitProgress = remember { Animatable(0f) }
+    val colors = MaterialTheme.colorScheme
     LaunchedEffect(state.phase, state.selectedAnswer) {
         when (state.phase) {
             PendulumPhase.ANIMATING -> {
@@ -97,9 +95,9 @@ fun PendulumScreen(
             .background(
                 Brush.verticalGradient(
                     colors = listOf(
-                        Color(0xFF0E0B18),
-                        Color(0xFF171127),
-                        Color(0xFF08060F),
+                        colors.background,
+                        colors.surface,
+                        colors.background.copy(alpha = 0.94f),
                     ),
                 ),
             )
@@ -107,22 +105,11 @@ fun PendulumScreen(
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        Text(
-            "El Péndulo",
-            style = MaterialTheme.typography.headlineMedium.copy(
-                shadow = Shadow(
-                    color = Color.Black.copy(alpha = 0.5f),
-                    offset = Offset(0f, 1.5f),
-                    blurRadius = 5f,
-                ),
-            ),
-            fontWeight = FontWeight.SemiBold,
-            color = Color(0xFFF8ECD0),
-        )
+
         Text(
             "Haz una pregunta o piénsala en silencio. Toca el tablero para consultar.",
             style = MaterialTheme.typography.bodyMedium,
-            color = Color(0xFFE2D9C3),
+            color = colors.onSurfaceVariant,
         )
 
         OutlinedTextField(

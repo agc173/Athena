@@ -44,8 +44,8 @@ fun OracleScreen(
         modifier = modifier.verticalScroll(rememberScrollState()),
     ) {
         BWitchSectionHeader(
-            title = "Oráculo",
-            subtitle = "Haz una pregunta clara para recibir guía",
+            title = "Consulta intuitiva",
+            subtitle = "Haz una pregunta clara para recibir una guía enfocada",
         )
 
         if (state.answer == null && state.error == null && !state.inProgress && !state.isLoading) {
