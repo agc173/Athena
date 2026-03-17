@@ -29,9 +29,7 @@ fun PortalScreen(
     onNavigate: (Destination) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val extras = BWitchThemeTokens.extras
     val sessionVm: SessionViewModel = koinInject()
-
     val clearLocalUserData: ClearLocalUserDataUseCase = koinInject()
     val scope = rememberCoroutineScope()
 
@@ -92,7 +90,6 @@ fun PortalScreen(
                 Button(
                     onClick = {
                         scope.launch {
-                            // Orden recomendado: signOut primero y limpiamos local sí o sí
                             runCatching { sessionVm.signOut() }
                             runCatching { clearLocalUserData() }
                         }
@@ -103,7 +100,6 @@ fun PortalScreen(
             }
 
             Column(verticalArrangement = Arrangement.spacedBy(BWitchThemeTokens.dimens.spacingSm)) {
-                Text("Módulos", style = MaterialTheme.typography.titleMedium, color = extras.textSecondary)
                 items.forEach { item ->
                     PortalItem(
                         title = item.title,
