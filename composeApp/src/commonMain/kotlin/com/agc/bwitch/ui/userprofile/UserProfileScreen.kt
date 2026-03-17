@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import com.agc.bwitch.presentation.userprofile.UserProfileViewModel
 import io.kamel.image.KamelImage
 import io.kamel.image.asyncPainterResource
+import kotlinx.datetime.LocalDate
 import org.koin.compose.koinInject
 
 private const val MAX_NAME_LEN = 40
@@ -74,7 +75,7 @@ fun UserProfileScreen(
     val nameTooLong = trimmedName.length > MAX_NAME_LEN
     val usernameTooLong = trimmedUsername.length > MAX_USERNAME_LEN
     val birthDateLooksValid = trimmedBirthDate.isBlank() || runCatching {
-        kotlinx.datetime.LocalDate.parse(trimmedBirthDate)
+        LocalDate.parse(trimmedBirthDate)
     }.isSuccess
 
     val normalizedName = if (nameTooLong) trimmedName.take(MAX_NAME_LEN) else trimmedName
