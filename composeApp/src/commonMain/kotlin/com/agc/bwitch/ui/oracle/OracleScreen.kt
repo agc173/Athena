@@ -22,8 +22,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import com.agc.bwitch.presentation.oracle.OracleAskViewModel
+import com.agc.bwitch.ui.theme.BWitchThemeTokens
 import org.koin.compose.koinInject
 
 @Composable
@@ -32,23 +32,30 @@ fun OracleScreen(
     modifier: Modifier = Modifier,
     viewModel: OracleAskViewModel = koinInject(),
 ) {
+    val dimens = BWitchThemeTokens.dimens
+    val extras = BWitchThemeTokens.extras
+    val colors = MaterialTheme.colorScheme
     val state by viewModel.uiState.collectAsState()
 
     Column(
         modifier = modifier
             .padding(contentPadding)
             .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+            .padding(dimens.spacingMd),
+        verticalArrangement = Arrangement.spacedBy(dimens.spacingSm + dimens.spacingXs),
     ) {
         Text("Oráculo", style = MaterialTheme.typography.headlineMedium)
-        Text("Haz una pregunta clara para recibir guía", style = MaterialTheme.typography.bodyMedium)
+        Text(
+            "Haz una pregunta clara para recibir guía",
+            style = MaterialTheme.typography.bodyMedium,
+            color = extras.textSecondary
+        )
 
         if (state.answer == null && state.error == null && !state.inProgress && !state.isLoading) {
             Text(
                 text = "Escribe una pregunta específica y el Oráculo te ofrecerá guía práctica para tu situación.",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = colors.onSurfaceVariant,
             )
         }
 
@@ -73,12 +80,12 @@ fun OracleScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 20.dp),
+                    .padding(vertical = dimens.spacingLg - dimens.spacingXs),
                 contentAlignment = Alignment.Center,
             ) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(dimens.spacingSm + dimens.spacingXs),
                 ) {
                     CircularProgressIndicator()
                     Text(
@@ -103,8 +110,8 @@ fun OracleScreen(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
             ) {
                 Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.padding(dimens.spacingMd),
+                    verticalArrangement = Arrangement.spacedBy(dimens.spacingSm),
                 ) {
                     answer.title?.let {
                         Text(it, style = MaterialTheme.typography.titleLarge)
@@ -143,8 +150,8 @@ fun OracleScreen(
                                 shape = MaterialTheme.shapes.small,
                             ) {
                                 Column(
-                                    modifier = Modifier.padding(10.dp),
-                                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                                    modifier = Modifier.padding(dimens.spacingSm + dimens.spacingXs / 2),
+                                    verticalArrangement = Arrangement.spacedBy(dimens.spacingXs / 2),
                                 ) {
                                     quotaLines.forEach { line ->
                                         Text(
@@ -175,8 +182,8 @@ fun OracleScreen(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
             ) {
                 Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.padding(dimens.spacingMd),
+                    verticalArrangement = Arrangement.spacedBy(dimens.spacingSm + dimens.spacingXs),
                 ) {
                     Text(
                         text = error,
