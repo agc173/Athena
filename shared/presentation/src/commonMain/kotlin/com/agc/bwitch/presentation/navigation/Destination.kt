@@ -10,6 +10,8 @@ sealed class Destination(val title: String) {
      */
     data object AuthGate : Destination("")
 
+    data object OnboardingProfile : Destination("Completa tu perfil")
+
     /**
      * Main app destinations
      */
