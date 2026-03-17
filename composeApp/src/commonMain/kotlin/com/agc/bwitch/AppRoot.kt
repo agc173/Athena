@@ -33,7 +33,8 @@ import com.agc.bwitch.ui.oracle.OracleScreen
 import com.agc.bwitch.ui.portal.PortalScreen
 import com.agc.bwitch.ui.tarot.TarotHomeScreen
 import com.agc.bwitch.ui.tarot.TarotScreen
-import com.agc.bwitch.ui.userprofile.UserProfileScreen
+import com.agc.bwitch.ui.userprofile.ProfileScreen
+import com.agc.bwitch.ui.userprofile.SettingsScreen
 import org.koin.compose.koinInject
 
 @Composable
@@ -136,10 +137,12 @@ fun AppRoot() {
                 preselectedSign = (dest as Destination.HoroscopeDaily).preselectedSign
             )
 
-            Destination.UserProfile -> UserProfileScreen(
+            Destination.UserProfile -> ProfileScreen(
                 contentPadding = padding,
-                onBack = { navigator.goBack() }
+                onOpenSettings = { navigator.navigate(Destination.Settings) }
             )
+
+            Destination.Settings -> SettingsScreen(contentPadding = padding)
 
             Destination.Guide -> GuideHomeScreen(
                 contentPadding = padding,

@@ -26,6 +26,8 @@ sealed class Destination(val title: String) {
      */
     data object UserProfile : Destination("Perfil")
 
+    data object Settings : Destination("Ajustes")
+
     data object Oracle : Destination("Oráculo")
 
     data object OracleDebug : Destination("Oracle debug")

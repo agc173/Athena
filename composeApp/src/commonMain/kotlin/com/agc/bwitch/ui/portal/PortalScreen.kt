@@ -42,7 +42,7 @@ fun PortalScreen(
         ),
         PortalItemConfig(
             title = "Perfil",
-            subtitle = "Nombre, foto y sincronización",
+            subtitle = "Avatar, signo y ajustes",
             destination = Destination.UserProfile,
             enabled = true
         ),
