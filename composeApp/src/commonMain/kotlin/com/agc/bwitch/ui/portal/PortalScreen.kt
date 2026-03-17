@@ -2,14 +2,11 @@ package com.agc.bwitch.ui.portal
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,6 +16,9 @@ import com.agc.bwitch.domain.session.ClearLocalUserDataUseCase
 import com.agc.bwitch.presentation.auth.SessionViewModel
 import com.agc.bwitch.presentation.navigation.Destination
 import com.agc.bwitch.ui.common.AppScaffold
+import com.agc.bwitch.ui.common.designsystem.BWitchCard
+import com.agc.bwitch.ui.common.designsystem.BWitchScreen
+import com.agc.bwitch.ui.common.designsystem.BWitchSectionHeader
 import com.agc.bwitch.ui.theme.BWitchThemeTokens
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
@@ -29,7 +29,6 @@ fun PortalScreen(
     onNavigate: (Destination) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val dimens = BWitchThemeTokens.dimens
     val extras = BWitchThemeTokens.extras
     val sessionVm: SessionViewModel = koinInject()
 
@@ -75,25 +74,20 @@ fun PortalScreen(
         onBack = {},
         modifier = modifier
     ) { scaffoldPadding ->
-        Column(
-            modifier = Modifier
-                .padding(scaffoldPadding)
-                .padding(contentPadding)
-                .padding(dimens.spacingMd),
-            verticalArrangement = Arrangement.spacedBy(dimens.spacingMd)
+        BWitchScreen(
+            contentPadding = scaffoldPadding,
+            modifier = Modifier.padding(contentPadding),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Column {
-                    Text("Portal", style = MaterialTheme.typography.headlineSmall)
-                    Text(
-                        "Elige un módulo",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = extras.textSecondary
-                    )
-                }
+                BWitchSectionHeader(
+                    title = "Portal",
+                    subtitle = "Elige un módulo",
+                    titleStyle = MaterialTheme.typography.headlineSmall,
+                    subtitleStyle = MaterialTheme.typography.bodyMedium,
+                )
 
                 Button(
                     onClick = {
@@ -108,7 +102,8 @@ fun PortalScreen(
                 }
             }
 
-            PortalSection(title = "Módulos") {
+            Column(verticalArrangement = Arrangement.spacedBy(BWitchThemeTokens.dimens.spacingSm)) {
+                Text("Módulos", style = MaterialTheme.typography.titleMedium, color = extras.textSecondary)
                 items.forEach { item ->
                     PortalItem(
                         title = item.title,
@@ -126,42 +121,21 @@ fun PortalScreen(
 }
 
 @Composable
-private fun PortalSection(
-    title: String,
-    content: @Composable ColumnScope.() -> Unit
-) {
-    val dimens = BWitchThemeTokens.dimens
-
-    Column(verticalArrangement = Arrangement.spacedBy(dimens.spacingSm)) {
-        Text(title, style = MaterialTheme.typography.titleMedium)
-        content()
-    }
-}
-
-@Composable
 private fun PortalItem(
     title: String,
     subtitle: String,
     onClick: () -> Unit,
     enabled: Boolean = true
 ) {
-    val dimens = BWitchThemeTokens.dimens
-
-    Card(
+    BWitchCard(
         onClick = onClick,
         enabled = enabled,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-            contentColor = MaterialTheme.colorScheme.onSurface
-        )
     ) {
-        Column(
-            Modifier.padding(dimens.spacingMd),
-            verticalArrangement = Arrangement.spacedBy(dimens.spacingXs)
-        ) {
-            Text(title, style = MaterialTheme.typography.titleMedium)
-            Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
+        Text(title, style = MaterialTheme.typography.titleMedium)
+        Text(
+            subtitle,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
-

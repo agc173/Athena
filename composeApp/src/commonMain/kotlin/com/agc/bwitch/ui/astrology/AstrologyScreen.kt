@@ -1,30 +1,23 @@
 package com.agc.bwitch.ui.astrology
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import com.agc.bwitch.presentation.navigation.Destination
-import com.agc.bwitch.ui.theme.BWitchThemeTokens
+import com.agc.bwitch.ui.common.designsystem.BWitchCard
+import com.agc.bwitch.ui.common.designsystem.BWitchScreen
+import com.agc.bwitch.ui.common.designsystem.BWitchSectionHeader
 
 @Composable
 fun AstrologyScreen(
     contentPadding: PaddingValues,
     onNavigate: (Destination) -> Unit
 ) {
-    val dimens = BWitchThemeTokens.dimens
-    val extras = BWitchThemeTokens.extras
-
-    Column(
-        modifier = Modifier
-            .padding(contentPadding)
-            .padding(dimens.spacingMd),
-        verticalArrangement = Arrangement.spacedBy(dimens.spacingSm + dimens.spacingXs)
-    ) {
-        Text(
-            "Elige una sección",
-            style = MaterialTheme.typography.bodyMedium,
-            color = extras.textSecondary
+    BWitchScreen(contentPadding = contentPadding) {
+        BWitchSectionHeader(
+            title = "Elige una sección",
+            titleStyle = MaterialTheme.typography.bodyMedium,
         )
 
         FeatureItem(
@@ -71,23 +64,15 @@ private fun FeatureItem(
     enabled: Boolean,
     onClick: () -> Unit
 ) {
-    val dimens = BWitchThemeTokens.dimens
-    val colors = MaterialTheme.colorScheme
-
-    Card(
+    BWitchCard(
         onClick = onClick,
         enabled = enabled,
-        colors = CardDefaults.cardColors(
-            containerColor = colors.surfaceVariant,
-            contentColor = colors.onSurface
-        )
     ) {
-        Column(
-            modifier = Modifier.padding(dimens.spacingMd),
-            verticalArrangement = Arrangement.spacedBy(dimens.spacingXs)
-        ) {
-            Text(title, style = MaterialTheme.typography.titleMedium)
-            Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
-        }
+        Text(title, style = MaterialTheme.typography.titleMedium)
+        Text(
+            subtitle,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
