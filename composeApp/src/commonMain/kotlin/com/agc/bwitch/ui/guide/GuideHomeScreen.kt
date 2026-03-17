@@ -5,28 +5,33 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import com.agc.bwitch.presentation.navigation.Destination
+import com.agc.bwitch.ui.theme.BWitchThemeTokens
 
 @Composable
 fun GuideHomeScreen(
     contentPadding: PaddingValues,
     onNavigate: (Destination) -> Unit,
 ) {
+    val dimens = BWitchThemeTokens.dimens
+    val extras = BWitchThemeTokens.extras
+
     Column(
         modifier = Modifier
             .padding(contentPadding)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+            .padding(dimens.spacingMd),
+        verticalArrangement = Arrangement.spacedBy(dimens.spacingSm + dimens.spacingXs),
     ) {
         Text("Guía", style = MaterialTheme.typography.headlineMedium)
         Text(
             "Busca orientación para lo que necesitas saber hoy",
             style = MaterialTheme.typography.bodyMedium,
+            color = extras.textSecondary,
         )
 
         GuideOptionCard(
@@ -58,15 +63,23 @@ private fun GuideOptionCard(
     details: String? = null,
     onClick: () -> Unit,
 ) {
-    Card(onClick = onClick) {
+    val dimens = BWitchThemeTokens.dimens
+
+    Card(
+        onClick = onClick,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            contentColor = MaterialTheme.colorScheme.onSurface
+        )
+    ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+            modifier = Modifier.padding(dimens.spacingMd),
+            verticalArrangement = Arrangement.spacedBy(dimens.spacingXs),
         ) {
             Text(title, style = MaterialTheme.typography.titleMedium)
-            Text(subtitle, style = MaterialTheme.typography.bodyMedium)
+            Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             if (!details.isNullOrBlank()) {
-                Text(details, style = MaterialTheme.typography.bodySmall)
+                Text(details, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }

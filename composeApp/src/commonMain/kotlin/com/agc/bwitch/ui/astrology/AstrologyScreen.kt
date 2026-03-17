@@ -4,21 +4,28 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import com.agc.bwitch.presentation.navigation.Destination
+import com.agc.bwitch.ui.theme.BWitchThemeTokens
 
 @Composable
 fun AstrologyScreen(
     contentPadding: PaddingValues,
     onNavigate: (Destination) -> Unit
 ) {
+    val dimens = BWitchThemeTokens.dimens
+    val extras = BWitchThemeTokens.extras
+
     Column(
         modifier = Modifier
             .padding(contentPadding)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+            .padding(dimens.spacingMd),
+        verticalArrangement = Arrangement.spacedBy(dimens.spacingSm + dimens.spacingXs)
     ) {
-        Text("Elige una sección", style = MaterialTheme.typography.bodyMedium)
+        Text(
+            "Elige una sección",
+            style = MaterialTheme.typography.bodyMedium,
+            color = extras.textSecondary
+        )
 
         FeatureItem(
             title = "Horóscopo diario",
@@ -64,16 +71,23 @@ private fun FeatureItem(
     enabled: Boolean,
     onClick: () -> Unit
 ) {
+    val dimens = BWitchThemeTokens.dimens
+    val colors = MaterialTheme.colorScheme
+
     Card(
         onClick = onClick,
-        enabled = enabled
+        enabled = enabled,
+        colors = CardDefaults.cardColors(
+            containerColor = colors.surfaceVariant,
+            contentColor = colors.onSurface
+        )
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            modifier = Modifier.padding(dimens.spacingMd),
+            verticalArrangement = Arrangement.spacedBy(dimens.spacingXs)
         ) {
             Text(title, style = MaterialTheme.typography.titleMedium)
-            Text(subtitle, style = MaterialTheme.typography.bodyMedium)
+            Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
         }
     }
 }

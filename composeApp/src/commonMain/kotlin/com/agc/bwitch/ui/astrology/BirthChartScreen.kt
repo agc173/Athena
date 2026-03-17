@@ -13,8 +13,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import com.agc.bwitch.presentation.astrology.birthchart.BirthChartViewModel
+import com.agc.bwitch.ui.theme.BWitchThemeTokens
 import org.koin.compose.koinInject
 
 @Composable
@@ -23,6 +23,8 @@ fun BirthChartScreen(
     modifier: Modifier = Modifier,
     viewModel: BirthChartViewModel = koinInject()
 ) {
+    val dimens = BWitchThemeTokens.dimens
+    val extras = BWitchThemeTokens.extras
     val state by viewModel.uiState.collectAsState()
 
     val inputsEnabled = !state.isLoading && !state.isBusy
@@ -30,10 +32,14 @@ fun BirthChartScreen(
     Column(
         modifier = modifier
             .padding(contentPadding)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+            .padding(dimens.spacingMd),
+        verticalArrangement = Arrangement.spacedBy(dimens.spacingSm + dimens.spacingXs)
     ) {
-        Text("Introduce tus datos de nacimiento", style = MaterialTheme.typography.bodyMedium)
+        Text(
+            "Introduce tus datos de nacimiento",
+            style = MaterialTheme.typography.bodyMedium,
+            color = extras.textSecondary
+        )
 
         OutlinedTextField(
             value = state.dateText,
@@ -79,6 +85,6 @@ fun BirthChartScreen(
         }
 
         state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-        state.savedMessage?.let { Text(it) }
+        state.savedMessage?.let { Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant) }
     }
 }

@@ -8,24 +8,29 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import com.agc.bwitch.domain.session.ClearLocalUserDataUseCase
 import com.agc.bwitch.presentation.auth.SessionViewModel
 import com.agc.bwitch.presentation.navigation.Destination
 import com.agc.bwitch.ui.common.AppScaffold
-import org.koin.compose.koinInject
-import com.agc.bwitch.domain.session.ClearLocalUserDataUseCase
+import com.agc.bwitch.ui.theme.BWitchThemeTokens
 import kotlinx.coroutines.launch
-import androidx.compose.runtime.rememberCoroutineScope
+import org.koin.compose.koinInject
 
 @Composable
 fun PortalScreen(
     contentPadding: PaddingValues,
-    onNavigate: (Destination) -> Unit
+    onNavigate: (Destination) -> Unit,
+    modifier: Modifier = Modifier
 ) {
+    val dimens = BWitchThemeTokens.dimens
+    val extras = BWitchThemeTokens.extras
     val sessionVm: SessionViewModel = koinInject()
 
     val clearLocalUserData: ClearLocalUserDataUseCase = koinInject()
@@ -67,14 +72,15 @@ fun PortalScreen(
     AppScaffold(
         title = "BWitch",
         canGoBack = false,
-        onBack = {}
+        onBack = {},
+        modifier = modifier
     ) { scaffoldPadding ->
         Column(
             modifier = Modifier
                 .padding(scaffoldPadding)
                 .padding(contentPadding)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(dimens.spacingMd),
+            verticalArrangement = Arrangement.spacedBy(dimens.spacingMd)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -82,7 +88,11 @@ fun PortalScreen(
             ) {
                 Column {
                     Text("Portal", style = MaterialTheme.typography.headlineSmall)
-                    Text("Elige un módulo", style = MaterialTheme.typography.bodyMedium)
+                    Text(
+                        "Elige un módulo",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = extras.textSecondary
+                    )
                 }
 
                 Button(
@@ -120,7 +130,9 @@ private fun PortalSection(
     title: String,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    val dimens = BWitchThemeTokens.dimens
+
+    Column(verticalArrangement = Arrangement.spacedBy(dimens.spacingSm)) {
         Text(title, style = MaterialTheme.typography.titleMedium)
         content()
     }
@@ -133,15 +145,23 @@ private fun PortalItem(
     onClick: () -> Unit,
     enabled: Boolean = true
 ) {
-    androidx.compose.material3.Card(
+    val dimens = BWitchThemeTokens.dimens
+
+    Card(
         onClick = onClick,
-        enabled = enabled
+        enabled = enabled,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            contentColor = MaterialTheme.colorScheme.onSurface
+        )
     ) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Column(
+            Modifier.padding(dimens.spacingMd),
+            verticalArrangement = Arrangement.spacedBy(dimens.spacingXs)
+        ) {
             Text(title, style = MaterialTheme.typography.titleMedium)
-            Text(subtitle, style = MaterialTheme.typography.bodyMedium)
+            Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
-
 

@@ -9,6 +9,7 @@ import androidx.compose.ui.unit.dp
 import com.agc.bwitch.platform.rememberPlatformContext
 import com.agc.bwitch.presentation.auth.GoogleIdTokenProvider
 import com.agc.bwitch.presentation.auth.SessionViewModel
+import com.agc.bwitch.ui.theme.BWitchThemeTokens
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.core.parameter.parametersOf
@@ -18,6 +19,8 @@ fun AuthScreen(
     modifier: Modifier = Modifier,
     viewModel: SessionViewModel = koinInject()
 ) {
+    val dimens = BWitchThemeTokens.dimens
+    val extras = BWitchThemeTokens.extras
     val state by viewModel.uiState.collectAsState()
 
     val context = rememberPlatformContext()
@@ -36,11 +39,15 @@ fun AuthScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+            .padding(dimens.spacingMd),
+        verticalArrangement = Arrangement.spacedBy(dimens.spacingSm + dimens.spacingXs)
     ) {
         Text("BWitch", style = MaterialTheme.typography.headlineMedium)
-        Text("Inicia sesión para sincronizar tus datos.")
+        Text(
+            "Inicia sesión para sincronizar tus datos.",
+            color = extras.textSecondary,
+            style = MaterialTheme.typography.bodyMedium
+        )
 
         OutlinedButton(
             onClick = {
@@ -90,7 +97,7 @@ fun AuthScreen(
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(dimens.spacingSm + dimens.spacingXs)
         ) {
             Button(
                 onClick = {
@@ -118,9 +125,9 @@ fun AuthScreen(
         }
 
         if (state.isLoading || isSubmitting) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                CircularProgressIndicator(modifier = Modifier.size(18.dp))
-                Text("Conectando…")
+            Row(horizontalArrangement = Arrangement.spacedBy(dimens.spacingSm)) {
+                CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                Text("Conectando…", color = extras.textSecondary)
             }
         }
 
