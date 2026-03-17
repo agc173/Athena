@@ -1,6 +1,8 @@
 package com.agc.bwitch.ui.userprofile
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -57,6 +59,9 @@ fun UserProfileScreen(
     }
 
     var isDirty by remember { mutableStateOf(false) }
+    var isEditing by remember { mutableStateOf(false) }
+    var saveRequested by remember { mutableStateOf(false) }
+    var saveInProgressAfterRequest by remember { mutableStateOf(false) }
 
     var displayName by remember { mutableStateOf("") }
     var photoUrl by remember { mutableStateOf("") }
@@ -112,6 +117,25 @@ fun UserProfileScreen(
         }
     }
 
+    LaunchedEffect(state.isSaving, state.error, saveRequested) {
+        if (!saveRequested) return@LaunchedEffect
+
+        if (state.isSaving) {
+            saveInProgressAfterRequest = true
+            return@LaunchedEffect
+        }
+
+        if (!saveInProgressAfterRequest) return@LaunchedEffect
+
+        if (state.error == null) {
+            isDirty = false
+            isEditing = false
+        }
+
+        saveRequested = false
+        saveInProgressAfterRequest = false
+    }
+
     Box(
         modifier = Modifier
             .padding(contentPadding)
@@ -120,7 +144,8 @@ fun UserProfileScreen(
         Column(
             modifier = Modifier
                 .padding(16.dp)
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text("Perfil")
@@ -145,126 +170,133 @@ fun UserProfileScreen(
                 AvatarPlaceholder(isLoading = false, displayName = normalizedName)
             }
 
-            OutlinedTextField(
-                value = displayName,
-                onValueChange = {
-                    displayName = it
-                    isDirty = true
-                },
-                enabled = inputsEnabled,
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text("Nombre") },
-                isError = nameTooLong,
-                supportingText = {
-                    val count = trimmedName.length
-                    val text = if (nameTooLong) {
-                        "Máximo $MAX_NAME_LEN caracteres ($count)"
+            if (isEditing) {
+                OutlinedTextField(
+                    value = displayName,
+                    onValueChange = {
+                        displayName = it
+                        isDirty = true
+                    },
+                    enabled = inputsEnabled,
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Nombre") },
+                    isError = nameTooLong,
+                    supportingText = {
+                        val count = trimmedName.length
+                        val text = if (nameTooLong) {
+                            "Máximo $MAX_NAME_LEN caracteres ($count)"
+                        } else {
+                            "$count / $MAX_NAME_LEN"
+                        }
+                        Text(text)
+                    }
+                )
+
+                OutlinedTextField(
+                    value = username,
+                    onValueChange = {
+                        username = it
+                        isDirty = true
+                    },
+                    enabled = inputsEnabled,
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Username (@)") },
+                    isError = usernameTooLong,
+                    supportingText = {
+                        val count = trimmedUsername.length
+                        val text = if (usernameTooLong) {
+                            "Máximo $MAX_USERNAME_LEN caracteres ($count)"
+                        } else {
+                            "$count / $MAX_USERNAME_LEN"
+                        }
+                        Text(text)
+                    }
+                )
+
+                OutlinedTextField(
+                    value = birthDate,
+                    onValueChange = {
+                        birthDate = it
+                        isDirty = true
+                    },
+                    enabled = inputsEnabled,
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Fecha de nacimiento") },
+                    placeholder = { Text("YYYY-MM-DD") },
+                    isError = !birthDateLooksValid,
+                    supportingText = {
+                        if (!birthDateLooksValid) {
+                            Text("Formato esperado: YYYY-MM-DD")
+                        }
+                    }
+                )
+
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    if (inputsEnabled) {
+                        AvatarPickerButton(enabled = inputsEnabled) { uriString, mimeType ->
+                            vm.uploadAvatarAndSave(uriString, mimeType)
+                        }
                     } else {
-                        "$count / $MAX_NAME_LEN"
-                    }
-                    Text(text)
-                }
-            )
-
-            OutlinedTextField(
-                value = username,
-                onValueChange = {
-                    username = it
-                    isDirty = true
-                },
-                enabled = inputsEnabled,
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text("Username (@)") },
-                isError = usernameTooLong,
-                supportingText = {
-                    val count = trimmedUsername.length
-                    val text = if (usernameTooLong) {
-                        "Máximo $MAX_USERNAME_LEN caracteres ($count)"
-                    } else {
-                        "$count / $MAX_USERNAME_LEN"
-                    }
-                    Text(text)
-                }
-            )
-
-            OutlinedTextField(
-                value = birthDate,
-                onValueChange = {
-                    birthDate = it
-                    isDirty = true
-                },
-                enabled = inputsEnabled,
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text("Fecha de nacimiento") },
-                placeholder = { Text("YYYY-MM-DD") },
-                isError = !birthDateLooksValid,
-                supportingText = {
-                    if (!birthDateLooksValid) {
-                        Text("Formato esperado: YYYY-MM-DD")
+                        Button(
+                            onClick = {},
+                            enabled = false,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            if (state.isUploadingAvatar) SmallSpinnerWithText("Subiendo…") else Text("Seleccionar avatar")
+                        }
                     }
                 }
-            )
 
-            state.profile?.zodiacSign?.let {
-                Text("Signo zodiacal: ${it.label}")
-            }
-
-            OutlinedTextField(
-                value = photoUrl,
-                onValueChange = {
-                    photoUrl = it
-                    isDirty = true
-                },
-                enabled = inputsEnabled,
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text("Photo URL") },
-                isError = !urlLooksValid,
-                supportingText = {
-                    if (!urlLooksValid) {
-                        Text("Debe empezar por http:// o https:// (o dejarlo vacío)")
-                    }
+                Button(
+                    onClick = {
+                        saveRequested = true
+                        saveInProgressAfterRequest = false
+                        vm.updateAndSave(
+                            displayName = normalizedName.ifBlank { null },
+                            photoUrl = trimmedUrl.ifBlank { null },
+                            email = email.trim().ifBlank { null },
+                            username = normalizedUsername.ifBlank { null },
+                            birthDateText = trimmedBirthDate.ifBlank { null }
+                        )
+                    },
+                    enabled = canSave,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    if (state.isSaving) SmallSpinnerWithText("Guardando…") else Text("Guardar")
                 }
-            )
 
-            OutlinedTextField(
-                value = email,
-                onValueChange = {},
-                enabled = false,
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text("Email") }
-            )
-
-            Box(modifier = Modifier.fillMaxWidth()) {
-                if (inputsEnabled) {
-                    AvatarPickerButton(enabled = inputsEnabled) { uriString, mimeType ->
-                        vm.uploadAvatarAndSave(uriString, mimeType)
-                    }
-                } else {
-                    Button(
-                        onClick = {},
-                        enabled = false,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        if (state.isUploadingAvatar) SmallSpinnerWithText("Subiendo…") else Text("Seleccionar avatar")
-                    }
+                Button(
+                    onClick = {
+                        isDirty = false
+                        displayName = state.profile?.displayName.orEmpty()
+                        photoUrl = state.profile?.photoUrl.orEmpty()
+                        email = state.profile?.email.orEmpty()
+                        username = state.profile?.username.orEmpty()
+                        birthDate = state.profile?.birthDate?.toString().orEmpty()
+                        isEditing = false
+                    },
+                    enabled = !isBusy,
+                    modifier = Modifier.fillMaxWidth()
+                ) { Text("Cancelar") }
+            } else {
+                Text("@${trimmedUsername.ifBlank { "sin_username" }}", style = MaterialTheme.typography.titleMedium)
+                Text(
+                    text = if (trimmedName.isBlank()) "Sin nombre" else trimmedName,
+                    style = MaterialTheme.typography.headlineSmall
+                )
+                Text("Email: ${email.ifBlank { "No disponible" }}")
+                Text("Fecha de nacimiento: ${birthDate.ifBlank { "No disponible" }}")
+                state.profile?.zodiacSign?.let {
+                    Text("Signo zodiacal: ${it.label}")
                 }
-            }
 
-            Button(
-                onClick = {
-                    isDirty = false
-                    vm.updateAndSave(
-                        displayName = normalizedName.ifBlank { null },
-                        photoUrl = trimmedUrl.ifBlank { null },
-                        email = email.trim().ifBlank { null },
-                        username = normalizedUsername.ifBlank { null },
-                        birthDateText = trimmedBirthDate.ifBlank { null }
-                    )
-                },
-                enabled = canSave,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                if (state.isSaving) SmallSpinnerWithText("Guardando…") else Text("Guardar")
+                Button(
+                    onClick = { isEditing = true },
+                    enabled = !isBusy,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Editar perfil")
+                }
             }
 
             Button(
