@@ -5,15 +5,20 @@ import com.agc.bwitch.domain.astrology.horoscope.HoroscopePullMarker
 import com.agc.bwitch.domain.astrology.horoscope.ObserveDailyHoroscopeUseCase
 import com.agc.bwitch.domain.astrology.horoscope.PullDailyHoroscopeUseCase
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
+import com.agc.bwitch.domain.astrology.horoscope.ZodiacSignResolver
+import com.agc.bwitch.domain.userprofile.ObserveUserProfileUseCase
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
@@ -25,6 +30,7 @@ class HoroscopeViewModel(
     private val getDailyHoroscopeUseCase: GetDailyHoroscopeUseCase,
     private val pullDailyHoroscopeUseCase: PullDailyHoroscopeUseCase,
     private val pullMarker: HoroscopePullMarker,
+    private val observeUserProfileUseCase: ObserveUserProfileUseCase,
     private val dispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + dispatcher)
@@ -33,18 +39,29 @@ class HoroscopeViewModel(
     val uiState: StateFlow<HoroscopeUiState> = _uiState.asStateFlow()
 
     private var observeJob: Job? = null
+    private var userHasManuallySelectedSign = false
 
     init {
         start(sign = _uiState.value.selectedSign)
 
+        scope.launch { pullTodayIfNeeded() }
+
         scope.launch {
-            pullTodayIfNeeded()
+            observeUserProfileUseCase()
+                .map { profile ->
+                    profile?.zodiacSign ?: profile?.birthDate?.let(ZodiacSignResolver::fromBirthDate)
+                }
+                .filterNotNull()
+                .collectLatest { profileSign ->
+                    if (userHasManuallySelectedSign) return@collectLatest
+                    if (_uiState.value.selectedSign == profileSign) return@collectLatest
+                    onSelectSign(profileSign, fromUserInteraction = false)
+                }
         }
     }
 
     fun onSelectSign(sign: ZodiacSign) {
-        _uiState.update { it.copy(selectedSign = sign, errorMessage = null, isLoading = true) }
-        start(sign)
+        onSelectSign(sign, fromUserInteraction = true)
     }
 
     fun onRefresh() {
@@ -54,7 +71,6 @@ class HoroscopeViewModel(
 
             _uiState.update { it.copy(errorMessage = null, infoMessage = null) }
 
-            // ✅ NUEVO: si no hay horóscopo cargado, NO confíes en el marker
             val hasCached = _uiState.value.horoscope != null
 
             if (lastPulled == today && hasCached) {
@@ -79,13 +95,20 @@ class HoroscopeViewModel(
         _uiState.update { it.copy(errorMessage = null) }
     }
 
+    private fun onSelectSign(sign: ZodiacSign, fromUserInteraction: Boolean) {
+        if (fromUserInteraction) {
+            userHasManuallySelectedSign = true
+        }
+        _uiState.update { it.copy(selectedSign = sign, errorMessage = null, isLoading = true) }
+        start(sign)
+    }
+
     private fun start(sign: ZodiacSign) {
         val dateIso = todayIso()
 
         observeJob?.cancel()
         observeJob = scope.launch {
             observeDailyHoroscopeUseCase(dateIso = dateIso, sign = sign).collect { cached ->
-
                 _uiState.update {
                     it.copy(
                         isLoading = false,
@@ -93,9 +116,6 @@ class HoroscopeViewModel(
                         errorMessage = null,
                     )
                 }
-
-                // Opcional (si quieres ver lo que queda en state)
-                // println("STATE_DATE sign=$sign stateDate=${_uiState.value.horoscope?.dateIso}")
             }
         }
 

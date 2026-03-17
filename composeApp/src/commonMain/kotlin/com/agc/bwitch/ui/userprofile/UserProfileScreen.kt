@@ -37,6 +37,7 @@ import io.kamel.image.asyncPainterResource
 import org.koin.compose.koinInject
 
 private const val MAX_NAME_LEN = 40
+private const val MAX_USERNAME_LEN = 30
 
 @Composable
 fun UserProfileScreen(
@@ -59,15 +60,25 @@ fun UserProfileScreen(
     var displayName by remember { mutableStateOf("") }
     var photoUrl by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
+    var username by remember { mutableStateOf("") }
+    var birthDate by remember { mutableStateOf("") }
 
     val isBusy = state.isSaving || state.isUploadingAvatar || state.isRefreshing
     val inputsEnabled = !state.isInitialLoading && !isBusy
 
     val trimmedName = displayName.trim()
     val trimmedUrl = photoUrl.trim()
+    val trimmedUsername = username.trim().removePrefix("@")
+    val trimmedBirthDate = birthDate.trim()
 
     val nameTooLong = trimmedName.length > MAX_NAME_LEN
+    val usernameTooLong = trimmedUsername.length > MAX_USERNAME_LEN
+    val birthDateLooksValid = trimmedBirthDate.isBlank() || runCatching {
+        kotlinx.datetime.LocalDate.parse(trimmedBirthDate)
+    }.isSuccess
+
     val normalizedName = if (nameTooLong) trimmedName.take(MAX_NAME_LEN) else trimmedName
+    val normalizedUsername = if (usernameTooLong) trimmedUsername.take(MAX_USERNAME_LEN) else trimmedUsername
 
     val urlLooksValid = trimmedUrl.isBlank() ||
             trimmedUrl.startsWith("https://", ignoreCase = true) ||
@@ -76,7 +87,9 @@ fun UserProfileScreen(
     val canSave = !state.isInitialLoading &&
             !isBusy &&
             !nameTooLong &&
-            urlLooksValid
+            !usernameTooLong &&
+            urlLooksValid &&
+            birthDateLooksValid
 
     val avatarUrl = trimmedUrl.takeIf { it.isNotBlank() }
 
@@ -93,6 +106,8 @@ fun UserProfileScreen(
             displayName = state.profile?.displayName.orEmpty()
             photoUrl = state.profile?.photoUrl.orEmpty()
             email = state.profile?.email.orEmpty()
+            username = state.profile?.username.orEmpty()
+            birthDate = state.profile?.birthDate?.toString().orEmpty()
         }
     }
 
@@ -109,7 +124,6 @@ fun UserProfileScreen(
         ) {
             Text("Perfil")
 
-            // Avatar (solo intentamos cargar si es http(s))
             val canLoadRemoteAvatar = avatarUrl != null &&
                     (avatarUrl.startsWith("https://", ignoreCase = true) || avatarUrl.startsWith("http://", ignoreCase = true))
 
@@ -152,6 +166,49 @@ fun UserProfileScreen(
             )
 
             OutlinedTextField(
+                value = username,
+                onValueChange = {
+                    username = it
+                    isDirty = true
+                },
+                enabled = inputsEnabled,
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Username (@)") },
+                isError = usernameTooLong,
+                supportingText = {
+                    val count = trimmedUsername.length
+                    val text = if (usernameTooLong) {
+                        "Máximo $MAX_USERNAME_LEN caracteres ($count)"
+                    } else {
+                        "$count / $MAX_USERNAME_LEN"
+                    }
+                    Text(text)
+                }
+            )
+
+            OutlinedTextField(
+                value = birthDate,
+                onValueChange = {
+                    birthDate = it
+                    isDirty = true
+                },
+                enabled = inputsEnabled,
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Fecha de nacimiento") },
+                placeholder = { Text("YYYY-MM-DD") },
+                isError = !birthDateLooksValid,
+                supportingText = {
+                    if (!birthDateLooksValid) {
+                        Text("Formato esperado: YYYY-MM-DD")
+                    }
+                }
+            )
+
+            state.profile?.zodiacSign?.let {
+                Text("Signo zodiacal: ${it.label}")
+            }
+
+            OutlinedTextField(
                 value = photoUrl,
                 onValueChange = {
                     photoUrl = it
@@ -176,7 +233,6 @@ fun UserProfileScreen(
                 label = { Text("Email") }
             )
 
-            // Avatar picker (si está busy, mostramos botón deshabilitado con feedback)
             Box(modifier = Modifier.fillMaxWidth()) {
                 if (inputsEnabled) {
                     AvatarPickerButton(enabled = inputsEnabled) { uriString, mimeType ->
@@ -199,7 +255,9 @@ fun UserProfileScreen(
                     vm.updateAndSave(
                         displayName = normalizedName.ifBlank { null },
                         photoUrl = trimmedUrl.ifBlank { null },
-                        email = email.trim().ifBlank { null }
+                        email = email.trim().ifBlank { null },
+                        username = normalizedUsername.ifBlank { null },
+                        birthDateText = trimmedBirthDate.ifBlank { null }
                     )
                 },
                 enabled = canSave,
