@@ -34,13 +34,13 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.agc.bwitch.presentation.userprofile.UserProfileViewModel
+import com.agc.bwitch.domain.userprofile.UsernameRules
 import io.kamel.image.KamelImage
 import io.kamel.image.asyncPainterResource
 import kotlinx.datetime.LocalDate
 import org.koin.compose.koinInject
 
 private const val MAX_NAME_LEN = 40
-private const val MAX_USERNAME_LEN = 30
 
 @Composable
 fun UserProfileScreen(
@@ -74,17 +74,17 @@ fun UserProfileScreen(
 
     val trimmedName = displayName.trim()
     val trimmedUrl = photoUrl.trim()
-    val trimmedUsername = username.trim().removePrefix("@")
+    val trimmedUsername = UsernameRules.normalize(username).orEmpty()
     val trimmedBirthDate = birthDate.trim()
 
     val nameTooLong = trimmedName.length > MAX_NAME_LEN
-    val usernameTooLong = trimmedUsername.length > MAX_USERNAME_LEN
+    val usernameInvalid = trimmedUsername.isNotBlank() && !UsernameRules.isValid(trimmedUsername)
     val birthDateLooksValid = trimmedBirthDate.isBlank() || runCatching {
         LocalDate.parse(trimmedBirthDate)
     }.isSuccess
 
     val normalizedName = if (nameTooLong) trimmedName.take(MAX_NAME_LEN) else trimmedName
-    val normalizedUsername = if (usernameTooLong) trimmedUsername.take(MAX_USERNAME_LEN) else trimmedUsername
+    val normalizedUsername = trimmedUsername
 
     val urlLooksValid = trimmedUrl.isBlank() ||
             trimmedUrl.startsWith("https://", ignoreCase = true) ||
@@ -93,7 +93,7 @@ fun UserProfileScreen(
     val canSave = !state.isInitialLoading &&
             !isBusy &&
             !nameTooLong &&
-            !usernameTooLong &&
+            !usernameInvalid &&
             urlLooksValid &&
             birthDateLooksValid
 
@@ -201,13 +201,12 @@ fun UserProfileScreen(
                     enabled = inputsEnabled,
                     modifier = Modifier.fillMaxWidth(),
                     label = { Text("Username (@)") },
-                    isError = usernameTooLong,
+                    isError = usernameInvalid,
                     supportingText = {
-                        val count = trimmedUsername.length
-                        val text = if (usernameTooLong) {
-                            "Máximo $MAX_USERNAME_LEN caracteres ($count)"
+                        val text = if (usernameInvalid) {
+                            "Usa 3-30 caracteres: letras, números, punto o guion bajo"
                         } else {
-                            "$count / $MAX_USERNAME_LEN"
+                            "Opcional"
                         }
                         Text(text)
                     }

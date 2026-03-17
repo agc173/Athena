@@ -25,7 +25,7 @@ Campos:
 
 Notas:
 - userId = uid auth (Firebase)
-- username único (si se requiere, ver estrategia en `rules/indexes`)
+- username único garantizado mediante `/usernames/{normalizedUsername}`
 
 ---
 
@@ -48,6 +48,22 @@ Notas:
 
 ---
 
+
+### /usernames/{normalizedUsername}
+Índice dedicado para unicidad real de username.
+
+Campos:
+- uid: string (owner del username)
+- username: string (normalized username, igual al id del documento)
+- updatedAt: timestamp
+
+Notas:
+- `normalizedUsername` se calcula como `trim + removePrefix("@") + lowercase`.
+- Validación backend: 3-30 chars con regex `^[a-z0-9._]+$`.
+- Se actualiza de forma transaccional junto a `/users/{uid}/profile/current` para reservar/cambiar/liberar username sin colisiones.
+
+---
+
 ### /posts/{postId}
 Post del feed de comunidad.
 
@@ -63,6 +79,8 @@ Campos:
 
 ---
 
+
+
 ### /posts/{postId}/comments/{commentId}
 Comentarios por post.
 
@@ -73,6 +91,8 @@ Campos:
 - status: string (active | deleted | flagged)
 
 ---
+
+
 
 ### /posts/{postId}/reactions/{userId}
 Reacciones (like) por usuario (evita duplicados).

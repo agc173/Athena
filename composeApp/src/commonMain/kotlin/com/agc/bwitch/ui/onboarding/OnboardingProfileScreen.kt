@@ -29,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.agc.bwitch.presentation.userprofile.OnboardingProfileViewModel
+import com.agc.bwitch.domain.userprofile.UsernameRules
 import com.agc.bwitch.ui.userprofile.AvatarPickerButton
 import io.kamel.image.KamelImage
 import io.kamel.image.asyncPainterResource
@@ -58,8 +59,8 @@ fun OnboardingProfileScreen(contentPadding: PaddingValues) {
         }
     }
 
-    val normalizedUsername = username.trim().removePrefix("@")
-    val usernameValid = normalizedUsername.isNotBlank()
+    val normalizedUsername = UsernameRules.normalize(username).orEmpty()
+    val usernameValid = normalizedUsername.isNotBlank() && UsernameRules.isValid(normalizedUsername)
     val birthDateParsed = runCatching { LocalDate.parse(birthDate.trim()) }.getOrNull()
     val birthDateValid = birthDateParsed != null
 
@@ -108,7 +109,7 @@ fun OnboardingProfileScreen(contentPadding: PaddingValues) {
             isError = touched && !usernameValid,
             supportingText = {
                 if (touched && !usernameValid) {
-                    Text("El username es obligatorio")
+                    Text("Usa 3-30 caracteres: letras, números, punto o guion bajo")
                 }
             }
         )
