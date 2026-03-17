@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -23,6 +22,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import com.agc.bwitch.presentation.oracle.OracleAskViewModel
+import com.agc.bwitch.ui.common.designsystem.BWitchCard
+import com.agc.bwitch.ui.common.designsystem.BWitchScreen
+import com.agc.bwitch.ui.common.designsystem.BWitchSectionHeader
 import com.agc.bwitch.ui.theme.BWitchThemeTokens
 import org.koin.compose.koinInject
 
@@ -33,22 +35,16 @@ fun OracleScreen(
     viewModel: OracleAskViewModel = koinInject(),
 ) {
     val dimens = BWitchThemeTokens.dimens
-    val extras = BWitchThemeTokens.extras
     val colors = MaterialTheme.colorScheme
     val state by viewModel.uiState.collectAsState()
 
-    Column(
-        modifier = modifier
-            .padding(contentPadding)
-            .verticalScroll(rememberScrollState())
-            .padding(dimens.spacingMd),
-        verticalArrangement = Arrangement.spacedBy(dimens.spacingSm + dimens.spacingXs),
+    BWitchScreen(
+        contentPadding = contentPadding,
+        modifier = modifier.verticalScroll(rememberScrollState()),
     ) {
-        Text("Oráculo", style = MaterialTheme.typography.headlineMedium)
-        Text(
-            "Haz una pregunta clara para recibir guía",
-            style = MaterialTheme.typography.bodyMedium,
-            color = extras.textSecondary
+        BWitchSectionHeader(
+            title = "Oráculo",
+            subtitle = "Haz una pregunta clara para recibir guía",
         )
 
         if (state.answer == null && state.error == null && !state.inProgress && !state.isLoading) {
@@ -105,61 +101,55 @@ fun OracleScreen(
         }
 
         state.answer?.let { answer ->
-            Card(
+            BWitchCard(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
             ) {
-                Column(
-                    modifier = Modifier.padding(dimens.spacingMd),
-                    verticalArrangement = Arrangement.spacedBy(dimens.spacingSm),
-                ) {
-                    answer.title?.let {
-                        Text(it, style = MaterialTheme.typography.titleLarge)
+                answer.title?.let {
+                    Text(it, style = MaterialTheme.typography.titleLarge)
+                }
+
+                Text("Guía", style = MaterialTheme.typography.titleMedium)
+                Text(answer.coreGuidance, style = MaterialTheme.typography.bodyLarge)
+
+                if (answer.doList.isNotEmpty()) {
+                    Text("Haz", style = MaterialTheme.typography.titleSmall)
+                    answer.doList.forEach { item ->
+                        Text("• $item", style = MaterialTheme.typography.bodyMedium)
                     }
+                }
 
-                    Text("Guía", style = MaterialTheme.typography.titleMedium)
-                    Text(answer.coreGuidance, style = MaterialTheme.typography.bodyLarge)
-
-                    if (answer.doList.isNotEmpty()) {
-                        Text("Haz", style = MaterialTheme.typography.titleSmall)
-                        answer.doList.forEach { item ->
-                            Text("• $item", style = MaterialTheme.typography.bodyMedium)
-                        }
+                if (answer.avoidList.isNotEmpty()) {
+                    Text("Evita", style = MaterialTheme.typography.titleSmall)
+                    answer.avoidList.forEach { item ->
+                        Text("• $item", style = MaterialTheme.typography.bodyMedium)
                     }
+                }
 
-                    if (answer.avoidList.isNotEmpty()) {
-                        Text("Evita", style = MaterialTheme.typography.titleSmall)
-                        answer.avoidList.forEach { item ->
-                            Text("• $item", style = MaterialTheme.typography.bodyMedium)
-                        }
+                answer.reflection?.let {
+                    Text("Reflexión", style = MaterialTheme.typography.titleSmall)
+                    Text(it, style = MaterialTheme.typography.bodyMedium)
+                }
+
+                state.quotaSnapshot?.let { quota ->
+                    val quotaLines = buildList {
+                        quota.maxRequestsRemaining?.let { add("Consultas restantes hoy: $it") }
+                        quota.adUnlockRemaining?.let { add("Desbloqueos por anuncio restantes: $it") }
                     }
-
-                    answer.reflection?.let {
-                        Text("Reflexión", style = MaterialTheme.typography.titleSmall)
-                        Text(it, style = MaterialTheme.typography.bodyMedium)
-                    }
-
-                    state.quotaSnapshot?.let { quota ->
-                        val quotaLines = buildList {
-                            quota.maxRequestsRemaining?.let { add("Consultas restantes hoy: $it") }
-                            quota.adUnlockRemaining?.let { add("Desbloqueos por anuncio restantes: $it") }
-                        }
-                        if (quotaLines.isNotEmpty()) {
-                            Surface(
-                                color = MaterialTheme.colorScheme.surface,
-                                shape = MaterialTheme.shapes.small,
+                    if (quotaLines.isNotEmpty()) {
+                        Surface(
+                            color = MaterialTheme.colorScheme.surface,
+                            shape = MaterialTheme.shapes.small,
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(dimens.spacingSm + dimens.spacingXs / 2),
+                                verticalArrangement = Arrangement.spacedBy(dimens.spacingXs / 2),
                             ) {
-                                Column(
-                                    modifier = Modifier.padding(dimens.spacingSm + dimens.spacingXs / 2),
-                                    verticalArrangement = Arrangement.spacedBy(dimens.spacingXs / 2),
-                                ) {
-                                    quotaLines.forEach { line ->
-                                        Text(
-                                            text = line,
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        )
-                                    }
+                                quotaLines.forEach { line ->
+                                    Text(
+                                        text = line,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
                                 }
                             }
                         }
@@ -177,26 +167,21 @@ fun OracleScreen(
         }
 
         state.error?.let { error ->
-            Card(
+            BWitchCard(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
             ) {
-                Column(
-                    modifier = Modifier.padding(dimens.spacingMd),
-                    verticalArrangement = Arrangement.spacedBy(dimens.spacingSm + dimens.spacingXs),
+                Text(
+                    text = error,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                )
+                Button(
+                    onClick = { viewModel.retry() },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !state.isLoading && !state.inProgress,
                 ) {
-                    Text(
-                        text = error,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onErrorContainer,
-                    )
-                    Button(
-                        onClick = { viewModel.retry() },
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = !state.isLoading && !state.inProgress,
-                    ) {
-                        Text("Reintentar")
-                    }
+                    Text("Reintentar")
                 }
             }
         }
