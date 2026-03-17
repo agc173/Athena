@@ -91,10 +91,10 @@ fun TarotScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text("Tarot", style = MaterialTheme.typography.headlineMedium)
                 Text(
                     "Revela tus cartas y explora su lectura",
                     style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
 

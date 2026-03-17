@@ -23,10 +23,10 @@ fun TarotHomeScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text("Tarot", style = MaterialTheme.typography.headlineMedium)
         Text(
             "Las cartas ofrecen una lectura simbólica para tu momento actual",
             style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
         TarotOptionCard(
