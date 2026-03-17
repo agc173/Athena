@@ -44,14 +44,12 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import bwitch.composeapp.generated.resources.*
 import com.agc.bwitch.audio.TarotHaptics
 import com.agc.bwitch.audio.TarotSoundPlayer
 import com.agc.bwitch.domain.tarot.TarotCardPosition
@@ -62,8 +60,8 @@ import com.agc.bwitch.presentation.tarot.TarotViewModel
 import com.agc.bwitch.ui.tarot.components.TarotCardView
 import com.agc.bwitch.ui.tarot.components.TarotLoadingDeck
 import com.agc.bwitch.ui.tarot.components.TarotMiniCard
+import com.agc.bwitch.ui.theme.bwitchDisplayFontFamily
 import kotlinx.coroutines.delay
-import org.jetbrains.compose.resources.Font
 import org.koin.compose.koinInject
 
 @Composable
@@ -509,16 +507,10 @@ private fun tarotOverlayTitleTextStyle(
     baseStyle: TextStyle,
     fontWeight: FontWeight,
 ): TextStyle = baseStyle.copy(
-    fontFamily = tarotTitleFontFamily(),
+    fontFamily = bwitchDisplayFontFamily(),
     fontWeight = fontWeight,
     letterSpacing = 0.08.em,
     textAlign = TextAlign.Center,
-)
-
-@Composable
-private fun tarotTitleFontFamily(): FontFamily = FontFamily(
-    Font(Res.allFontResources.getValue("cinzel_regular")),
-    Font(Res.allFontResources.getValue("cinzel_semibold"), weight = FontWeight.SemiBold),
 )
 
 @Composable
@@ -551,7 +543,7 @@ private fun TarotReadingSection(
                 text = "✦ ${title.uppercase()}",
                 modifier = Modifier.fillMaxWidth(),
                 style = MaterialTheme.typography.titleMedium.copy(
-                    fontFamily = tarotTitleFontFamily(),
+                    fontFamily = bwitchDisplayFontFamily(),
                     letterSpacing = 0.05.em,
                     textAlign = TextAlign.Center,
                 ),

@@ -2,18 +2,18 @@ package com.agc.bwitch.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val MysticBackground = Color(0xFF140F1D)
-val MysticSurface = Color(0xFF1D1628)
-val MysticSurfaceElevated = Color(0xFF2A2037)
+val MysticBackground = Color(0xFF1A1321)
+val MysticSurface = Color(0xFF241A2F)
+val MysticSurfaceElevated = Color(0xFF312342)
 
-val MysticPrimary = Color(0xFFA688D8)
-val MysticSecondary = Color(0xFF8F72C0)
-val MysticAccentGold = Color(0xFFE2C99A)
+val MysticPrimary = Color(0xFFBE9EE4)
+val MysticSecondary = Color(0xFF9F7FC9)
+val MysticAccentGold = Color(0xFFE6CEB0)
 
-val MysticTextPrimary = Color(0xFFF8F2FC)
-val MysticTextSecondary = Color(0xFFCDBFDD)
+val MysticTextPrimary = Color(0xFFFBF6FF)
+val MysticTextSecondary = Color(0xFFD9C8E8)
 
-val MysticBorderSubtle = Color(0x40E7D7FF)
+val MysticBorderSubtle = Color(0x52E4D1F7)
 val MysticError = Color(0xFFE57373)
 
-val MysticScrim = Color(0xCC090611)
+val MysticScrim = Color(0xCC0E0915)
