@@ -32,7 +32,7 @@ fun BWitchCard(
     val resolvedContentPadding = contentPadding ?: PaddingValues(dimens.spacingMd)
     val resolvedArrangement = contentVerticalArrangement ?: Arrangement.spacedBy(dimens.spacingXs)
 
-    val body: @Composable () -> Unit = {
+    val body: @Composable ColumnScope.() -> Unit = {
         Column(
             modifier = Modifier.padding(resolvedContentPadding),
             verticalArrangement = resolvedArrangement,
