@@ -40,6 +40,7 @@ Campos:
 - username: string (opcional)
 - birthDate: string ISO `YYYY-MM-DD` (opcional)
 - zodiacSign: string (enum en domain, opcional)
+- birthEssenceSummary: string (opcional, resumen de la esencia activa)
 - updatedAtEpochMillis: number
 
 Notas:
@@ -48,6 +49,26 @@ Notas:
 
 ---
 
+
+
+
+### /users/{userId}/birthEssence/current
+Esencia natal activa del usuario (única carta activa en V1).
+
+Campos:
+- sunSign: string (enum ZodiacSign, obligatorio)
+- moonSign: string (enum ZodiacSign, obligatorio)
+- risingSign: string (enum ZodiacSign, obligatorio)
+- interpretation: string (lectura breve generada por LLM)
+- archetype: string (opcional)
+- savedAtEpochMillis: number
+- updatedAtEpochMillis: number
+
+Notas:
+- Solo existe un documento activo (`current`) por usuario.
+- Cada nuevo guardado reemplaza la esencia activa anterior.
+
+---
 
 ### /usernames/{normalizedUsername}
 Índice dedicado para unicidad real de username.

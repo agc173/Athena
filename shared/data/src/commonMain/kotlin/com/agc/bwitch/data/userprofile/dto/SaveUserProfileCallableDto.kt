@@ -12,6 +12,7 @@ data class SaveUserProfileRequestDto(
     val username: String? = null,
     val birthDate: LocalDate? = null,
     val zodiacSign: ZodiacSign? = null,
+    val birthEssenceSummary: String? = null,
     val updatedAtEpochMillis: Long,
 )
 

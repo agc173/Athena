@@ -2,9 +2,9 @@ package com.agc.bwitch.domain.astrology.birthchart
 
 import kotlinx.coroutines.flow.Flow
 
-class ObserveBirthDataUseCase(
+class ObserveBirthEssenceUseCase(
     private val repository: BirthChartRepository
 ) {
-    operator fun invoke(): Flow<BirthData?> =
-        repository.observeBirthData()
+    operator fun invoke(): Flow<BirthEssenceProfile?> =
+        repository.observeBirthEssence()
 }

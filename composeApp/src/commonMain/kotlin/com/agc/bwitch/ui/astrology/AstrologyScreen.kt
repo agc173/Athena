@@ -28,8 +28,8 @@ fun AstrologyScreen(
         )
 
         FeatureItem(
-            title = "Carta astral",
-            subtitle = "Tu mapa natal (nacimiento)",
+            title = "Esencia natal",
+            subtitle = "Sol, Luna y Ascendente con lectura IA",
             enabled = true,
             onClick = { onNavigate(Destination.BirthChart) }
         )

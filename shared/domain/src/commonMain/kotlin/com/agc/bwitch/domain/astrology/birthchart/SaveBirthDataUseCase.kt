@@ -1,8 +1,8 @@
 package com.agc.bwitch.domain.astrology.birthchart
 
-class SaveBirthDataUseCase(
+class SaveBirthEssenceUseCase(
     private val repository: BirthChartRepository
 ) {
-    suspend operator fun invoke(data: BirthData) =
-        repository.saveBirthData(data)
+    suspend operator fun invoke(data: BirthEssenceDraft) =
+        repository.saveBirthEssence(data)
 }

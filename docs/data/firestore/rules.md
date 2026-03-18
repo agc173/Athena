@@ -27,3 +27,10 @@ NOTA: Estas reglas son un borrador; deben revisarse antes de producción.
     - read: true
     - create/delete: authenticated && request.auth.uid == uid
     - update: false
+
+
+- /users/{uid}/birthEssence/current
+    - read: authenticated && request.auth.uid == uid
+    - write: authenticated && request.auth.uid == uid
+    - validar tamaño de interpretation y signos permitidos
+

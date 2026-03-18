@@ -19,7 +19,7 @@ sealed class Destination(val title: String) {
 
     data object Astrology : Destination("Astrología")
 
-    data object BirthChart : Destination("Carta astral")
+    data object BirthChart : Destination("Esencia natal")
 
     /**
      * Próximo módulo

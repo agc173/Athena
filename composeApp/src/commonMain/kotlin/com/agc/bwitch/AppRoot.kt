@@ -107,7 +107,7 @@ fun AppRoot() {
     LaunchedEffect(session.uid) {
         if (session.uid == null || !isAuthenticated) return@LaunchedEffect
 
-        runCatching { birthChartRepository.getBirthData() }
+        runCatching { birthChartRepository.getBirthEssence() }
     }
 
     AppScaffold(

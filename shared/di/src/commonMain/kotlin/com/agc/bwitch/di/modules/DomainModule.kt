@@ -1,9 +1,10 @@
 package com.agc.bwitch.di.modules
 
-import com.agc.bwitch.domain.astrology.birthchart.GetBirthDataUseCase
-import com.agc.bwitch.domain.astrology.birthchart.ObserveBirthDataUseCase
-import com.agc.bwitch.domain.astrology.birthchart.PullBirthChartUseCase
-import com.agc.bwitch.domain.astrology.birthchart.SaveBirthDataUseCase
+import com.agc.bwitch.domain.astrology.birthchart.GenerateBirthEssenceUseCase
+import com.agc.bwitch.domain.astrology.birthchart.GetBirthEssenceUseCase
+import com.agc.bwitch.domain.astrology.birthchart.ObserveBirthEssenceUseCase
+import com.agc.bwitch.domain.astrology.birthchart.PullBirthEssenceUseCase
+import com.agc.bwitch.domain.astrology.birthchart.SaveBirthEssenceUseCase
 import com.agc.bwitch.domain.astrology.horoscope.DeriveZodiacSignUseCase
 import com.agc.bwitch.domain.astrology.horoscope.GetDailyHoroscopeUseCase
 import com.agc.bwitch.domain.astrology.horoscope.ObserveDailyHoroscopeUseCase
@@ -25,11 +26,12 @@ val domainModule: Module = module {
     factory { PullDailyHoroscopeUseCase(get()) }
     factory { DeriveZodiacSignUseCase() }
 
-    // BirthChart
-    factory { GetBirthDataUseCase(get()) }
-    factory { SaveBirthDataUseCase(get()) }
-    factory { ObserveBirthDataUseCase(get()) }
-    factory { PullBirthChartUseCase(get()) }
+    // Birth Essence
+    factory { GetBirthEssenceUseCase(get()) }
+    factory { SaveBirthEssenceUseCase(get()) }
+    factory { ObserveBirthEssenceUseCase(get()) }
+    factory { PullBirthEssenceUseCase(get()) }
+    factory { GenerateBirthEssenceUseCase(get()) }
 
     // User profile
     factory { ObserveUserProfileUseCase(get()) }
