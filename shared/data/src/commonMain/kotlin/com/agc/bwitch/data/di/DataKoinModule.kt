@@ -63,7 +63,7 @@ val dataKoinModule: Module = module {
     /**
      * BirthChart - SYNC (source of truth del dominio)
      */
-    single { SyncBirthChartRepository(get(), get()) }
+    single { SyncBirthChartRepository(get(), get(), get(), get()) }
     single<BirthChartRepository> { get<SyncBirthChartRepository>() }
     single<BirthChartSyncController> { get<SyncBirthChartRepository>() }
 

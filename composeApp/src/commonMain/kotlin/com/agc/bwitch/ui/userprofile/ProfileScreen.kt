@@ -39,6 +39,7 @@ fun ProfileScreen(
     val username = profile?.username?.takeIf { it.isNotBlank() } ?: "sin_username"
     val zodiac = profile?.zodiacSign?.label ?: "Signo pendiente"
     val avatarUrl = profile?.photoUrl?.takeIf { it.startsWith("http://") || it.startsWith("https://") }
+    val essenceSummary = profile?.birthEssenceSummary?.takeIf { it.isNotBlank() }
 
     Column(
         modifier = Modifier
@@ -83,6 +84,14 @@ fun ProfileScreen(
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.primary
         )
+
+        essenceSummary?.let {
+            Text(
+                text = "Esencia activa: $it",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
 
         Button(
             onClick = onOpenSettings,

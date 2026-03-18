@@ -9,6 +9,7 @@ import {buildRouter} from './llm/buildRouter';
 import {withRetry} from './utils/retry';
 export {oracleGetStatus, tarotDraw, oracleAsk} from './oracle';
 export {saveUserProfile} from './userprofile';
+export {birthEssenceGenerate} from './birthessence';
 
 initializeApp();
 assertEnvForLLM();

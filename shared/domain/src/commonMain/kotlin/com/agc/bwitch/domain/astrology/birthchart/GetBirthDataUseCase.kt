@@ -1,9 +1,8 @@
 package com.agc.bwitch.domain.astrology.birthchart
 
-class GetBirthDataUseCase(
+class GetBirthEssenceUseCase(
     private val repository: BirthChartRepository
 ) {
-    suspend operator fun invoke(): BirthData? =
-        repository.getBirthData()
+    suspend operator fun invoke(): BirthEssenceProfile? =
+        repository.getBirthEssence()
 }
-

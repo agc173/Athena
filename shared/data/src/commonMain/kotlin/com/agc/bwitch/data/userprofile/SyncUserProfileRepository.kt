@@ -112,6 +112,7 @@ class SyncUserProfileRepository(
             username = normalizedUsername,
             birthDate = value.birthDate,
             zodiacSign = value.zodiacSign,
+            birthEssenceSummary = value.birthEssenceSummary,
             updatedAtEpochMillis = updatedAtEpochMillis,
         )
 
@@ -160,6 +161,7 @@ data class UserProfileRemoteDto(
     val username: String? = null,
     val birthDate: LocalDate? = null,
     val zodiacSign: ZodiacSign? = null,
+    val birthEssenceSummary: String? = null,
     val updatedAtEpochMillis: Long
 ) {
     fun toUserProfile(): UserProfile =
@@ -169,7 +171,8 @@ data class UserProfileRemoteDto(
             email = email,
             username = username,
             birthDate = birthDate,
-            zodiacSign = zodiacSign
+            zodiacSign = zodiacSign,
+            birthEssenceSummary = birthEssenceSummary
         )
 
     companion object {
@@ -181,6 +184,7 @@ data class UserProfileRemoteDto(
                 username = profile.username,
                 birthDate = profile.birthDate,
                 zodiacSign = profile.zodiacSign,
+                birthEssenceSummary = profile.birthEssenceSummary,
                 updatedAtEpochMillis = updatedAtEpochMillis
             )
     }

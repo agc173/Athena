@@ -10,6 +10,18 @@
 "updatedAt": "<timestamp>"
 }
 
+## users/{uid}/profile/current
+{
+"displayName": "Alfonso",
+"photoUrl": "https://...",
+"email": "alfonso@example.com",
+"username": "alfonso",
+"birthDate": "1995-08-14",
+"zodiacSign": "leo",
+"birthEssenceSummary": "Leo · Piscis · Libra",
+"updatedAtEpochMillis": 1773792000000
+}
+
 ## posts/{postId}
 {
 "authorId": "<uid>",
@@ -65,4 +77,15 @@
 "reading": {"type": "TAROT_3"},
 "llmMeta": {"provider": "deepseek", "inputTokens": 900, "outputTokens": 420},
 "createdAt": "<timestamp>"
+}
+
+## users/{uid}/birthEssence/current
+{
+"sunSign": "leo",
+"moonSign": "pisces",
+"risingSign": "libra",
+"archetype": "Guardiana del Umbral",
+"interpretation": "Tu fuego solar impulsa acción, tu luna pisciana aporta intuición y tu ascendente libra armoniza tus vínculos.",
+"savedAtEpochMillis": 1773792000000,
+"updatedAtEpochMillis": 1773792000000
 }

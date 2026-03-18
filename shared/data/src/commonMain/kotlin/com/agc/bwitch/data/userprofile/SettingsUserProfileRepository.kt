@@ -54,6 +54,7 @@ class SettingsUserProfileRepository(
             username = profile.username,
             birthDate = profile.birthDate,
             zodiacSign = profile.zodiacSign,
+            birthEssenceSummary = profile.birthEssenceSummary,
             updatedAtEpochMillis = updatedAtEpochMillis
         )
 
@@ -93,7 +94,8 @@ class SettingsUserProfileRepository(
                 email = dto.email,
                 username = dto.username,
                 birthDate = dto.birthDate,
-                zodiacSign = dto.zodiacSign
+                zodiacSign = dto.zodiacSign,
+                birthEssenceSummary = dto.birthEssenceSummary
             )
         }.getOrNull()
     }
@@ -106,6 +108,7 @@ class SettingsUserProfileRepository(
         val username: String? = null,
         val birthDate: LocalDate? = null,
         val zodiacSign: ZodiacSign? = null,
+        val birthEssenceSummary: String? = null,
         val updatedAtEpochMillis: Long
     )
 }

@@ -10,6 +10,7 @@ type SaveUserProfileData = {
   username?: unknown;
   birthDate?: unknown;
   zodiacSign?: unknown;
+  birthEssenceSummary?: unknown;
   updatedAtEpochMillis?: unknown;
 };
 
@@ -20,6 +21,7 @@ type UserProfileDoc = {
   username?: string;
   birthDate?: string;
   zodiacSign?: string;
+  birthEssenceSummary?: string;
   updatedAtEpochMillis?: number;
   updatedAt?: Timestamp;
 };
@@ -53,6 +55,13 @@ function asOptionalBirthDate(value: unknown): string | null {
   return text;
 }
 
+
+function asOptionalBirthEssenceSummary(value: unknown): string | null {
+  const text = asOptionalTrimmedString(value);
+  if (!text) return null;
+  return text.slice(0, 120);
+}
+
 function asOptionalLong(value: unknown): number | null {
   if (typeof value !== 'number' || !Number.isFinite(value)) return null;
   return Math.trunc(value);
@@ -82,6 +91,7 @@ export const saveUserProfile = onCall(
       const email = asOptionalTrimmedString(data.email);
       const birthDate = asOptionalBirthDate(data.birthDate);
       const zodiacSign = asOptionalTrimmedString(data.zodiacSign);
+      const birthEssenceSummary = asOptionalBirthEssenceSummary(data.birthEssenceSummary);
       const updatedAtEpochMillis = asOptionalLong(data.updatedAtEpochMillis) ?? Date.now();
 
       const db = getFirestore();
@@ -93,6 +103,7 @@ export const saveUserProfile = onCall(
         email: email ?? undefined,
         birthDate: birthDate ?? undefined,
         zodiacSign: zodiacSign ?? undefined,
+        birthEssenceSummary: birthEssenceSummary ?? undefined,
         updatedAtEpochMillis,
         updatedAt: Timestamp.now(),
       };
