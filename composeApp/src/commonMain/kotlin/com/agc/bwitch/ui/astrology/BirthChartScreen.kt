@@ -1,17 +1,15 @@
 package com.agc.bwitch.ui.astrology
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenu
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -27,7 +25,6 @@ import com.agc.bwitch.ui.common.designsystem.BWitchPrimaryButton
 import com.agc.bwitch.ui.theme.BWitchThemeTokens
 import org.koin.compose.koinInject
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BirthChartScreen(
     contentPadding: PaddingValues,
@@ -123,7 +120,6 @@ fun BirthChartScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SignDropdown(
     label: String,
@@ -133,34 +129,40 @@ private fun SignDropdown(
 ) {
     var expanded by remember { mutableStateOf(false) }
 
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { if (enabled) expanded = !expanded },
+    Column(
+        verticalArrangement = Arrangement.spacedBy(BWitchThemeTokens.dimens.spacingXs)
     ) {
-        OutlinedTextField(
-            modifier = Modifier
-                .menuAnchor()
-                .fillMaxWidth(),
-            value = selected.toDisplayName(),
-            onValueChange = {},
-            label = { Text(label) },
-            readOnly = true,
-            enabled = enabled,
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-        ) {
-            ZodiacSign.entries.forEach { sign ->
-                DropdownMenuItem(
-                    text = { Text(sign.toDisplayName()) },
-                    onClick = {
-                        onSelect(sign)
-                        expanded = false
-                    }
+        Box(modifier = Modifier.fillMaxWidth()) {
+            OutlinedButton(
+                onClick = { expanded = !expanded },
+                enabled = enabled,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(
+                    text = selected.toDisplayName(),
+                    modifier = Modifier.fillMaxWidth(),
+                    color = MaterialTheme.colorScheme.onSurface
                 )
+            }
+            DropdownMenu(
+                modifier = Modifier.fillMaxWidth(),
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+            ) {
+                ZodiacSign.entries.forEach { sign ->
+                    DropdownMenuItem(
+                        text = { Text(sign.toDisplayName()) },
+                        onClick = {
+                            onSelect(sign)
+                            expanded = false
+                        }
+                    )
+                }
             }
         }
     }
