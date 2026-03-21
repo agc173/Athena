@@ -93,7 +93,7 @@ fun BirthChartScreen(
                     color = extras.textSecondary,
                 )
                 state.generatedArchetype?.let {
-                    Text("Arquetipo: $it", style = MaterialTheme.typography.titleSmall)
+                    Text("Arquetipo: ${it.displayNameEs}", style = MaterialTheme.typography.titleSmall)
                 }
                 Text(
                     text = state.generatedInterpretation.orEmpty(),
