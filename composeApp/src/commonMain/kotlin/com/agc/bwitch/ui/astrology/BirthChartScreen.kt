@@ -1,15 +1,15 @@
 package com.agc.bwitch.ui.astrology
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -18,6 +18,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
 import com.agc.bwitch.presentation.astrology.birthchart.BirthChartViewModel
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
@@ -137,31 +139,72 @@ private fun SignDropdown(
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        Box(modifier = Modifier.fillMaxWidth()) {
-            OutlinedButton(
-                onClick = { expanded = !expanded },
-                enabled = enabled,
+        OutlinedButton(
+            onClick = { expanded = true },
+            enabled = enabled,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(
+                text = selected.toDisplayName(),
                 modifier = Modifier.fillMaxWidth(),
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+
+        if (expanded) {
+            SignPickerDialog(
+                title = label,
+                selected = selected,
+                onSelect = {
+                    onSelect(it)
+                    expanded = false
+                },
+                onDismiss = { expanded = false }
+            )
+        }
+    }
+}
+
+@Composable
+private fun SignPickerDialog(
+    title: String,
+    selected: ZodiacSign,
+    onSelect: (ZodiacSign) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val spacing = BWitchThemeTokens.dimens
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = true)
+    ) {
+        Surface(
+            shape = MaterialTheme.shapes.large,
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = spacing.spacingXs,
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(spacing.spacingMd),
+                verticalArrangement = Arrangement.spacedBy(spacing.spacingXs)
             ) {
-                Text(
-                    text = selected.toDisplayName(),
-                    modifier = Modifier.fillMaxWidth(),
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
-            DropdownMenu(
-                modifier = Modifier.fillMaxWidth(),
-                expanded = expanded,
-                onDismissRequest = { expanded = false },
-            ) {
-                ZodiacSign.entries.forEach { sign ->
-                    DropdownMenuItem(
-                        text = { Text(sign.toDisplayName()) },
-                        onClick = {
-                            onSelect(sign)
-                            expanded = false
+                Text(text = title, style = MaterialTheme.typography.titleMedium)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(spacing.spacingXs)
+                ) {
+                    ZodiacSign.entries.forEach { sign ->
+                        OutlinedButton(
+                            onClick = { onSelect(sign) },
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            val text = if (sign == selected) "${sign.toDisplayName()} ✓" else sign.toDisplayName()
+                            Text(text)
                         }
-                    )
+                    }
                 }
             }
         }

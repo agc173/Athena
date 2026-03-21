@@ -8,6 +8,7 @@ import com.agc.bwitch.domain.astrology.birthchart.ObserveBirthEssenceUseCase
 import com.agc.bwitch.domain.astrology.birthchart.PullBirthEssenceUseCase
 import com.agc.bwitch.domain.astrology.birthchart.SaveBirthEssenceUseCase
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
+import com.agc.bwitch.domain.shared.ApiError
 import com.agc.bwitch.domain.shared.ApiResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -55,8 +56,21 @@ class BirthChartViewModel(
 
         _uiState.update { it.copy(isRefreshing = true, error = null, savedSummary = null) }
 
+        val localBeforeSync = runCatching { getBirthEssence() }.getOrNull()
+
         runCatching { pullBirthEssence() }
-            .onSuccess { _uiState.update { it.copy(savedSummary = "Esencia sincronizada") } }
+            .onSuccess {
+                val localAfterSync = runCatching { getBirthEssence() }.getOrNull()
+                val summary = when {
+                    localAfterSync == null -> "No había esencia para sincronizar"
+                    localBeforeSync == null -> "Esencia remota cargada"
+                    localAfterSync.updatedAtEpochMillis > (localBeforeSync.updatedAtEpochMillis) ->
+                        "Esencia actualizada desde sincronización"
+
+                    else -> "Tu esencia ya estaba al día"
+                }
+                _uiState.update { it.copy(savedSummary = summary) }
+            }
             .onFailure { e -> _uiState.update { it.copy(error = e.message ?: "No se pudo refrescar") } }
 
         _uiState.update { it.copy(isRefreshing = false) }
@@ -98,7 +112,7 @@ class BirthChartViewModel(
 
                 is ApiResult.Err -> {
                     _uiState.update {
-                        it.copy(error = result.error.message ?: "No se pudo generar la esencia")
+                        it.copy(error = mapGenerateError(result.error))
                     }
                 }
             }
@@ -143,5 +157,14 @@ class BirthChartViewModel(
 
             _uiState.update { it.copy(isSaving = false) }
         }
+    }
+
+    private fun mapGenerateError(error: ApiError): String {
+        val rawMessage = error.message.orEmpty()
+        if (rawMessage.contains("not_found", ignoreCase = true)) {
+            return "La generación de esencia no está disponible todavía"
+        }
+
+        return rawMessage.ifBlank { "No se pudo generar la esencia" }
     }
 }
