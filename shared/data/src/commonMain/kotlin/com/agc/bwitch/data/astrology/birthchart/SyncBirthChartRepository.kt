@@ -9,6 +9,7 @@ import com.agc.bwitch.domain.astrology.birthchart.BirthChartRepository
 import com.agc.bwitch.domain.astrology.birthchart.BirthChartSyncController
 import com.agc.bwitch.domain.astrology.birthchart.BirthEssenceDraft
 import com.agc.bwitch.domain.astrology.birthchart.BirthEssenceInput
+import com.agc.bwitch.domain.astrology.birthchart.BirthEssenceArchetype
 import com.agc.bwitch.domain.astrology.birthchart.BirthEssenceProfile
 import com.agc.bwitch.domain.astrology.birthchart.BirthEssenceReading
 import com.agc.bwitch.domain.auth.AuthRepository
@@ -102,6 +103,7 @@ class SyncBirthChartRepository(
                     sunSign = input.sunSign.name.uppercase(),
                     moonSign = input.moonSign.name.uppercase(),
                     risingSign = input.risingSign.name.uppercase(),
+                    archetype = input.archetypeHint?.name,
                 ),
                 requestSerializer = BirthEssenceGenerateRequestDto.serializer(),
                 responseSerializer = BirthEssenceGenerateResponseDto.serializer(),
@@ -112,7 +114,7 @@ class SyncBirthChartRepository(
                 ApiResult.Ok(
                     BirthEssenceReading(
                         interpretation = result.value.interpretation,
-                        archetype = result.value.archetype,
+                        archetype = null,
                     )
                 )
             }
@@ -180,7 +182,7 @@ data class BirthEssenceRemoteDto(
             moonSign = com.agc.bwitch.domain.astrology.horoscope.ZodiacSign.valueOf(moonSign.lowercase()),
             risingSign = com.agc.bwitch.domain.astrology.horoscope.ZodiacSign.valueOf(risingSign.lowercase()),
             interpretation = interpretation,
-            archetype = archetype,
+            archetype = BirthEssenceArchetype.fromRawOrNull(archetype),
             savedAtEpochMillis = savedAtEpochMillis,
             updatedAtEpochMillis = updatedAtEpochMillis,
         )
@@ -192,7 +194,7 @@ data class BirthEssenceRemoteDto(
                 moonSign = data.moonSign.name,
                 risingSign = data.risingSign.name,
                 interpretation = data.interpretation,
-                archetype = data.archetype,
+                archetype = data.archetype?.name,
                 savedAtEpochMillis = data.savedAtEpochMillis,
                 updatedAtEpochMillis = data.updatedAtEpochMillis,
             )
@@ -204,6 +206,7 @@ data class BirthEssenceGenerateRequestDto(
     val sunSign: String,
     val moonSign: String,
     val risingSign: String,
+    val archetype: String? = null,
 )
 
 @Serializable

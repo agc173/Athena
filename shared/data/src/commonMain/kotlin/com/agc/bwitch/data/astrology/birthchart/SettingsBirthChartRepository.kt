@@ -4,6 +4,7 @@ import com.agc.bwitch.data.storage.SettingsFactory
 import com.agc.bwitch.domain.astrology.birthchart.BirthChartRepository
 import com.agc.bwitch.domain.astrology.birthchart.BirthEssenceDraft
 import com.agc.bwitch.domain.astrology.birthchart.BirthEssenceInput
+import com.agc.bwitch.domain.astrology.birthchart.BirthEssenceArchetype
 import com.agc.bwitch.domain.astrology.birthchart.BirthEssenceProfile
 import com.agc.bwitch.domain.astrology.birthchart.BirthEssenceReading
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
@@ -58,7 +59,7 @@ class SettingsBirthChartRepository(
             sunSign = draft.sunSign.name,
             moonSign = draft.moonSign.name,
             risingSign = draft.risingSign.name,
-            archetype = draft.archetype,
+            archetype = draft.archetype?.name,
             interpretation = draft.interpretation,
             savedAtEpochMillis = savedAtEpochMillis,
             updatedAtEpochMillis = updatedAtEpochMillis,
@@ -106,7 +107,7 @@ class SettingsBirthChartRepository(
                 moonSign = moon,
                 risingSign = rising,
                 interpretation = interpretation,
-                archetype = archetype,
+                archetype = BirthEssenceArchetype.fromRawOrNull(archetype),
                 savedAtEpochMillis = savedAtEpochMillis,
                 updatedAtEpochMillis = updatedAtEpochMillis,
             )

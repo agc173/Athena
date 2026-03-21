@@ -5,6 +5,18 @@ import com.agc.bwitch.domain.shared.ApiResult
 class GenerateBirthEssenceUseCase(
     private val repository: BirthChartRepository,
 ) {
-    suspend operator fun invoke(input: BirthEssenceInput): ApiResult<BirthEssenceReading> =
-        repository.generateBirthEssence(input)
+    private val archetypeResolver = BirthEssenceArchetypeResolver()
+
+    suspend operator fun invoke(input: BirthEssenceInput): ApiResult<BirthEssenceReading> {
+        val resolvedArchetype = archetypeResolver.resolve(
+            sunSign = input.sunSign,
+            moonSign = input.moonSign,
+            risingSign = input.risingSign,
+        )
+
+        return when (val result = repository.generateBirthEssence(input.copy(archetypeHint = resolvedArchetype))) {
+            is ApiResult.Err -> result
+            is ApiResult.Ok -> ApiResult.Ok(result.value.copy(archetype = resolvedArchetype))
+        }
+    }
 }

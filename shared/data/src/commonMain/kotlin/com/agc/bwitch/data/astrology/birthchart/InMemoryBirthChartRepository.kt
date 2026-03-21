@@ -37,7 +37,7 @@ class InMemoryBirthChartRepository : BirthChartRepository {
         ApiResult.Ok(
             BirthEssenceReading(
                 interpretation = "Tu combinación ${input.sunSign.name.lowercase()}-${input.moonSign.name.lowercase()}-${input.risingSign.name.lowercase()} trae una energía versátil y en evolución.",
-                archetype = "Tejedora Astral"
+                archetype = null,
             )
         )
 }

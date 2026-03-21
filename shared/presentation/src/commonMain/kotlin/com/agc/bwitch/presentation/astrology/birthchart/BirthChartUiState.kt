@@ -1,6 +1,7 @@
 package com.agc.bwitch.presentation.astrology.birthchart
 
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
+import com.agc.bwitch.domain.astrology.birthchart.BirthEssenceArchetype
 
 data class BirthChartUiState(
     val isLoading: Boolean = false,
@@ -11,7 +12,7 @@ data class BirthChartUiState(
     val selectedMoonSign: ZodiacSign = ZodiacSign.aries,
     val selectedRisingSign: ZodiacSign = ZodiacSign.aries,
     val generatedInterpretation: String? = null,
-    val generatedArchetype: String? = null,
+    val generatedArchetype: BirthEssenceArchetype? = null,
     val hasSavedEssence: Boolean = false,
     val savedSummary: String? = null,
     val error: String? = null,

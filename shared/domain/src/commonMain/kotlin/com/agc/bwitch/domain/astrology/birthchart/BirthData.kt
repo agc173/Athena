@@ -6,11 +6,12 @@ data class BirthEssenceInput(
     val sunSign: ZodiacSign,
     val moonSign: ZodiacSign,
     val risingSign: ZodiacSign,
+    val archetypeHint: BirthEssenceArchetype? = null,
 )
 
 data class BirthEssenceReading(
     val interpretation: String,
-    val archetype: String? = null,
+    val archetype: BirthEssenceArchetype? = null,
 )
 
 data class BirthEssenceDraft(
@@ -18,7 +19,7 @@ data class BirthEssenceDraft(
     val moonSign: ZodiacSign,
     val risingSign: ZodiacSign,
     val interpretation: String,
-    val archetype: String? = null,
+    val archetype: BirthEssenceArchetype? = null,
 )
 
 data class BirthEssenceProfile(
@@ -26,7 +27,7 @@ data class BirthEssenceProfile(
     val moonSign: ZodiacSign,
     val risingSign: ZodiacSign,
     val interpretation: String,
-    val archetype: String? = null,
+    val archetype: BirthEssenceArchetype? = null,
     val savedAtEpochMillis: Long,
     val updatedAtEpochMillis: Long,
 )
