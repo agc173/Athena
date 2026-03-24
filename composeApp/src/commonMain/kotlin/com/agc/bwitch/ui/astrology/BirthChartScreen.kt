@@ -24,8 +24,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.agc.bwitch.domain.astrology.birthchart.BirthEssenceProfile
 import com.agc.bwitch.domain.astrology.birthchart.BirthEssenceArchetype
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
+import com.agc.bwitch.presentation.astrology.birthchart.BirthChartUiState
 import com.agc.bwitch.presentation.astrology.birthchart.BirthChartViewModel
 import com.agc.bwitch.ui.common.toVisualResource
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
@@ -122,6 +124,16 @@ fun BirthChartScreen(
                     Text(if (state.isSaving) "Guardando..." else "Guardar en mi perfil")
                 }
             }
+
+            Text(
+                text = "Vista compartible",
+                style = MaterialTheme.typography.labelLarge,
+                color = extras.textSecondary,
+            )
+            BirthEssenceShareCard(
+                essence = state.toPreviewEssence(),
+                modifier = Modifier.fillMaxWidth(),
+            )
         }
 
         BWitchPrimaryButton(
@@ -136,6 +148,16 @@ fun BirthChartScreen(
         state.savedSummary?.let { Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant) }
     }
 }
+
+private fun BirthChartUiState.toPreviewEssence(): BirthEssenceProfile = BirthEssenceProfile(
+    sunSign = selectedSunSign,
+    moonSign = selectedMoonSign,
+    risingSign = selectedRisingSign,
+    interpretation = generatedInterpretation.orEmpty(),
+    archetype = generatedArchetype,
+    savedAtEpochMillis = 0L,
+    updatedAtEpochMillis = 0L,
+)
 
 @Composable
 private fun SignDropdown(
