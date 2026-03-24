@@ -25,7 +25,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.agc.bwitch.domain.astrology.birthchart.BirthEssenceArchetype
+import com.agc.bwitch.domain.astrology.birthchart.BirthEssenceProfile
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
+import com.agc.bwitch.presentation.astrology.birthchart.BirthChartUiState
 import com.agc.bwitch.presentation.astrology.birthchart.BirthChartViewModel
 import com.agc.bwitch.ui.common.toVisualResource
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
@@ -43,7 +45,8 @@ fun BirthChartScreen(
     val dimens = BWitchThemeTokens.dimens
     val extras = BWitchThemeTokens.extras
     val state by viewModel.uiState.collectAsState()
-    val onShareEssenceClick: () -> Unit = {}
+    val shareLauncher = rememberBirthEssenceShareLauncher()
+    var shareError by remember { mutableStateOf<String?>(null) }
 
     Column(
         modifier = modifier
@@ -123,8 +126,21 @@ fun BirthChartScreen(
                     Text(if (state.isSaving) "Guardando..." else "Guardar en mi perfil")
                 }
                 BWitchPrimaryButton(
-                    onClick = onShareEssenceClick,
-                    enabled = !state.isBusy,
+                    onClick = {
+                        shareError = null
+                        val shareProfile = state.toShareProfileOrNull()
+                        if (shareProfile == null) {
+                            shareError = "Primero genera una esencia válida"
+                            return@BWitchPrimaryButton
+                        }
+
+                        shareLauncher
+                            .share(shareProfile)
+                            .onFailure {
+                                shareError = it.message ?: "No se pudo compartir la esencia"
+                            }
+                    },
+                    enabled = !state.isBusy && state.hasGeneratedResult,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Compartir esencia")
@@ -141,8 +157,24 @@ fun BirthChartScreen(
         }
 
         state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+        shareError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         state.savedSummary?.let { Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant) }
     }
+}
+
+private fun BirthChartUiState.toShareProfileOrNull(): BirthEssenceProfile? {
+    val interpretation = generatedInterpretation?.trim().orEmpty()
+    if (interpretation.isBlank()) return null
+
+    return BirthEssenceProfile(
+        sunSign = selectedSunSign,
+        moonSign = selectedMoonSign,
+        risingSign = selectedRisingSign,
+        interpretation = interpretation,
+        archetype = generatedArchetype,
+        savedAtEpochMillis = 0L,
+        updatedAtEpochMillis = 0L,
+    )
 }
 
 @Composable
