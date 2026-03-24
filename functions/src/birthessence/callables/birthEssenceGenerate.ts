@@ -120,18 +120,19 @@ export const birthEssenceGenerate = onCall(
 
       const response = await llm.generate({
         systemPrompt: [
-          'Eres BWitch, guía mística moderna.',
-          'Entrega salida breve y concreta en español.',
-          'Nunca menciones cálculo astral real ni coordenadas.',
-          'El arquetipo ya viene resuelto por lógica determinista de la app.',
-          'No elijas ni inventes arquetipo.',
-          'No uses encabezados como ARQUETIPO ni INTERPRETACIÓN.',
-          'No uses llaves, JSON ni listas.',
-          'Devuelve solo la interpretación limpia en 2-3 frases (máximo 70 palabras).',
+          'Eres BWitch, una guía mística moderna.',
+          'Escribe una interpretación breve y poderosa basada en Sol, Luna y Ascendente.',
+          'Reglas:',
+          '- 2 o 3 frases máximo',
+          '- tono íntimo, místico y empoderador',
+          '- habla en segunda persona (tú)',
+          '- no expliques astrología',
+          '- no uses etiquetas, encabezados ni formato',
+          '- no menciones arquetipos',
         ].join('\n'),
         userPrompt: [
           `Sol=${signLabel(sunSign)}, Luna=${signLabel(moonSign)}, Ascendente=${signLabel(risingSign)}.`,
-          archetypeHint ? `Arquetipo (contexto): ${archetypeHint}.` : null,
+          archetypeHint ? `Energía base: ${archetypeHint}.` : null,
         ].filter(Boolean).join('\n'),
         temperature: 0.5,
         maxOutputTokens: 180,
