@@ -1,6 +1,10 @@
 package com.agc.bwitch.domain.astrology.synastry
 
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
+import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
 interface SynastryNarrativeGenerator {
     fun generate(
@@ -52,15 +56,64 @@ class DefaultSynastryNarrativeGenerator : SynastryNarrativeGenerator {
 class SynastryReadingGenerator(
     private val compatibilityResolver: SynastryCompatibilityResolver = DefaultSynastryCompatibilityResolver(),
     private val narrativeGenerator: SynastryNarrativeGenerator = DefaultSynastryNarrativeGenerator(),
+    private val dailyOverlayGenerator: SynastryDailyOverlayGenerator = SynastryDailyOverlayGenerator(),
 ) {
-    operator fun invoke(input: SynastryInput): SynastryReading {
+    operator fun invoke(
+        input: SynastryInput,
+        today: LocalDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date,
+    ): SynastryReading {
         val structured = compatibilityResolver.resolve(input)
+        val dailyOverlay = dailyOverlayGenerator.generate(
+            input = input,
+            structured = structured,
+            date = today,
+        )
         return SynastryReading(
             personA = input.personA,
             personB = input.personB,
             structured = structured,
             narrative = narrativeGenerator.generate(input, structured),
+            dailyOverlay = dailyOverlay,
         )
+    }
+}
+
+class SynastryDailyOverlayGenerator {
+
+    fun generate(
+        input: SynastryInput,
+        structured: SynastryReadingStructured,
+        date: LocalDate,
+    ): SynastryDailyOverlay {
+        val ordered = structured.scores.entries.sortedByDescending { it.value.value }
+        val dimensions = SynastryDimension.entries
+        val seed = dailySeed(input, date)
+        val seedPositive = seed and Int.MAX_VALUE
+        val highlighted = dimensions[seedPositive % dimensions.size]
+        val sensitive = dimensions[(highlighted.ordinal + 1 + (seedPositive / dimensions.size) % (dimensions.size - 1)) % dimensions.size]
+        val energyLabel = DAILY_ENERGY_LABELS[seedPositive % DAILY_ENERGY_LABELS.size]
+        val guidance = DAILY_GUIDANCES[(seedPositive / 7) % DAILY_GUIDANCES.size]
+        val strongestBase = ordered.first().key
+        val weakestBase = ordered.last().key
+
+        return SynastryDailyOverlay(
+            dateIso = date.toString(),
+            highlightedDimension = highlighted,
+            sensitiveDimension = sensitive,
+            dailyEnergyLabel = energyLabel,
+            dailyGuidance = guidance,
+            dailyNarrativeFragment = buildString {
+                append("Hoy se activa especialmente ${highlighted.humanLabelWithArticle()}. ")
+                append("La zona más sensible es ${sensitive.humanLabelWithArticle()}. ")
+                append("Su base ya muestra fortaleza en ${strongestBase.humanLabel()} y mayor cuidado en ${weakestBase.humanLabel()}.")
+            },
+        )
+    }
+
+    private fun dailySeed(input: SynastryInput, date: LocalDate): Int {
+        val signs = listOf(input.personA.sunSign.name, input.personB.sunSign.name).sorted()
+        val key = "${signs[0]}|${signs[1]}|$date"
+        return key.fold(17) { acc, char -> (acc * 31) + char.code }
     }
 }
 
@@ -133,3 +186,21 @@ private fun ZodiacSign.humanLabel(): String = when (this) {
     ZodiacSign.aquarius -> "Acuario"
     ZodiacSign.pisces -> "Piscis"
 }
+
+private val DAILY_ENERGY_LABELS = listOf(
+    "Pulso expansivo",
+    "Clima de ajuste fino",
+    "Magnetismo en movimiento",
+    "Tono de consolidación",
+    "Momento de transformación consciente",
+    "Energía de claridad relacional",
+)
+
+private val DAILY_GUIDANCES = listOf(
+    "Prioricen una conversación breve y clara antes de reaccionar.",
+    "Hoy suma más escuchar el ritmo del otro que intentar imponer el propio.",
+    "Canalicen la intensidad hacia acuerdos concretos y alcanzables.",
+    "Una pequeña muestra de cuidado puede cambiar todo el tono del día.",
+    "Revisen expectativas y nombren una intención compartida para hoy.",
+    "Eviten suposiciones rápidas: verifiquen lo que cada uno quiso decir.",
+)

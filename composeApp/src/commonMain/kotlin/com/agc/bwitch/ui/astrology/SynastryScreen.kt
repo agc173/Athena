@@ -55,8 +55,13 @@ fun SynastryScreen(
         )
 
         Text(
-            text = "Compara dos energías y obtén una lectura local de compatibilidad.",
+            text = "Explora la dinámica entre dos signos y descubre qué áreas del vínculo se activan con más fuerza.",
             style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            text = "La lectura combina afinidad simbólica entre signos con un matiz energético diario del momento.",
+            style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
@@ -178,6 +183,31 @@ private fun SynastryResultCard(reading: SynastryReading) {
             text = reading.narrative,
             style = MaterialTheme.typography.bodyMedium,
         )
+
+        reading.dailyOverlay?.let { daily ->
+            Text(text = "Clima del vínculo hoy", style = MaterialTheme.typography.titleSmall)
+            Text(
+                text = "• Energía: ${daily.dailyEnergyLabel}",
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            Text(
+                text = "• Dimensión destacada: ${daily.highlightedDimension.toUiLabel()}",
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            Text(
+                text = "• Dimensión sensible: ${daily.sensitiveDimension.toUiLabel()}",
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            Text(
+                text = "• Consejo diario: ${daily.dailyGuidance}",
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            Text(
+                text = daily.dailyNarrativeFragment,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 
