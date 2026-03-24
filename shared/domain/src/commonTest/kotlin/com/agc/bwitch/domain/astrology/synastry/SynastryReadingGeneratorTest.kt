@@ -6,7 +6,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
-import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlinx.datetime.LocalDate
 
@@ -17,246 +16,195 @@ class SynastryReadingGeneratorTest {
     private val overlayGenerator = SynastryDailyOverlayGenerator()
 
     @Test
-    fun `with sun only depth is basic`() {
-        val input = SynastryInput(
-            personA = SynastryPersonInput(sunSign = ZodiacSign.aries),
-            personB = SynastryPersonInput(sunSign = ZodiacSign.libra),
-        )
-
-        val reading = generator(input)
-
-        assertEquals(SynastryReadingDepth.BASIC, reading.structured.depthInfo.depth)
-        assertEquals(2, reading.structured.depthInfo.availablePoints)
-    }
-
-    @Test
-    fun `with partial extra data depth is partial`() {
-        val input = SynastryInput(
-            personA = SynastryPersonInput(
-                sunSign = ZodiacSign.aries,
-                moonSign = ZodiacSign.gemini,
-            ),
-            personB = SynastryPersonInput(sunSign = ZodiacSign.libra),
-        )
-
-        val reading = generator(input)
-
-        assertEquals(SynastryReadingDepth.PARTIAL, reading.structured.depthInfo.depth)
-    }
-
-    @Test
-    fun `with all points depth is complete`() {
-        val input = SynastryInput(
-            personA = SynastryPersonInput(
-                sunSign = ZodiacSign.taurus,
-                moonSign = ZodiacSign.cancer,
-                risingSign = ZodiacSign.virgo,
-            ),
-            personB = SynastryPersonInput(
-                sunSign = ZodiacSign.cancer,
-                moonSign = ZodiacSign.pisces,
-                risingSign = ZodiacSign.capricorn,
-            ),
-        )
-
-        val reading = generator(input)
-
-        assertEquals(SynastryReadingDepth.COMPLETE, reading.structured.depthInfo.depth)
-        assertEquals(6, reading.structured.depthInfo.availablePoints)
-    }
-
-    @Test
-    fun `resolver always returns five dimensions and bounded scores`() {
-        val input = SynastryInput(
-            personA = SynastryPersonInput(sunSign = ZodiacSign.scorpio, moonSign = ZodiacSign.aries),
-            personB = SynastryPersonInput(sunSign = ZodiacSign.aquarius, risingSign = ZodiacSign.gemini),
-        )
-
-        val structured = resolver.resolve(input)
-
-        assertEquals(SynastryDimension.entries.size, structured.scores.size)
-        structured.scores.values.forEach { score ->
-            assertTrue(score.value in 0..100)
-        }
-        assertTrue(structured.overallScore.value in 0..100)
-        assertNotNull(structured.archetype)
-    }
-
-    @Test
-    fun `narrative uses zodiac anchors without person labels`() {
-        val input = SynastryInput(
-            personA = SynastryPersonInput(sunSign = ZodiacSign.aries),
-            personB = SynastryPersonInput(sunSign = ZodiacSign.leo),
-        )
-
-        val reading = generator(input)
-
-        assertTrue(reading.narrative.isNotBlank())
-        assertTrue(reading.narrative.contains("Aries y Leo"))
-        assertFalse(reading.narrative.contains("Persona A"))
-        assertFalse(reading.narrative.contains("Persona B"))
-        assertNotNull(reading.dailyOverlay)
-    }
-
-    @Test
-    fun `aries libra solar only returns valid reading`() {
-        val input = SynastryInput(
-            personA = SynastryPersonInput(sunSign = ZodiacSign.aries),
-            personB = SynastryPersonInput(sunSign = ZodiacSign.libra),
-        )
-
-        val reading = generator(input)
-
-        assertEquals(SynastryReadingDepth.BASIC, reading.structured.depthInfo.depth)
-        assertFalse(reading.structured.scores.isEmpty())
-        assertTrue(reading.structured.strengths.isNotEmpty() || reading.structured.tensions.isNotEmpty())
-    }
-
-    @Test
-    fun `taurus cancer richer data returns valid reading`() {
-        val input = SynastryInput(
-            personA = SynastryPersonInput(
-                sunSign = ZodiacSign.taurus,
-                moonSign = ZodiacSign.cancer,
-                risingSign = ZodiacSign.capricorn,
-            ),
-            personB = SynastryPersonInput(
-                sunSign = ZodiacSign.cancer,
-                moonSign = ZodiacSign.taurus,
-                risingSign = ZodiacSign.virgo,
-            ),
-        )
-
-        val reading = generator(input)
-
-        assertTrue(reading.structured.overallScore.value in 0..100)
-        assertNotNull(reading.structured.archetype)
-        assertTrue(reading.narrative.isNotBlank())
-    }
-
-    @Test
-    fun `solar only scoring is symmetric when swapping people`() {
-        val inputAB = SynastryInput(
-            personA = SynastryPersonInput(sunSign = ZodiacSign.aries),
-            personB = SynastryPersonInput(sunSign = ZodiacSign.libra),
-        )
-        val inputBA = SynastryInput(
-            personA = SynastryPersonInput(sunSign = ZodiacSign.libra),
-            personB = SynastryPersonInput(sunSign = ZodiacSign.aries),
-        )
-
-        val ab = resolver.resolve(inputAB)
-        val ba = resolver.resolve(inputBA)
-
-        assertEquals(ab.overallScore.value, ba.overallScore.value)
-        assertEquals(ab.scores, ba.scores)
-        assertEquals(ab.strengths, ba.strengths)
-        assertEquals(ab.tensions, ba.tensions)
-        assertEquals(ab.tags, ba.tags)
-    }
-
-    @Test
-    fun `partial and complete data scoring is symmetric when swapping people`() {
-        val inputAB = SynastryInput(
-            personA = SynastryPersonInput(
-                sunSign = ZodiacSign.scorpio,
-                moonSign = ZodiacSign.pisces,
-                risingSign = ZodiacSign.aries,
-            ),
-            personB = SynastryPersonInput(
-                sunSign = ZodiacSign.aquarius,
-                moonSign = ZodiacSign.gemini,
-                risingSign = ZodiacSign.leo,
-            ),
-        )
-        val inputBA = SynastryInput(
-            personA = inputAB.personB,
-            personB = inputAB.personA,
-        )
-
-        val ab = resolver.resolve(inputAB)
-        val ba = resolver.resolve(inputBA)
-
-        assertEquals(ab.overallScore.value, ba.overallScore.value)
-        assertEquals(ab.scores, ba.scores)
-        assertEquals(ab.strengths, ba.strengths)
-        assertEquals(ab.tensions, ba.tensions)
-    }
-
-    @Test
-    fun `representative case has meaningful score dispersion`() {
-        val structured = resolver.resolve(
-            SynastryInput(
-                personA = SynastryPersonInput(
-                    sunSign = ZodiacSign.aries,
-                    moonSign = ZodiacSign.cancer,
-                    risingSign = ZodiacSign.sagittarius,
-                ),
-                personB = SynastryPersonInput(
-                    sunSign = ZodiacSign.libra,
-                    moonSign = ZodiacSign.aquarius,
-                    risingSign = ZodiacSign.capricorn,
-                ),
-            )
-        )
-
-        val values = structured.scores.values.map { it.value }
-        val spread = values.max() - values.min()
-
-        assertTrue(spread >= 12, "Expected score dispersion >= 12, but was $spread with $values")
-        assertTrue(values.any { abs(it - values.average()) >= 6 })
-    }
-
-    @Test
-    fun `base result is stable for same inputs`() {
-        val input = SynastryInput(
-            personA = SynastryPersonInput(sunSign = ZodiacSign.aries, moonSign = ZodiacSign.scorpio),
-            personB = SynastryPersonInput(sunSign = ZodiacSign.libra, risingSign = ZodiacSign.gemini),
-        )
-
-        val first = resolver.resolve(input)
-        val second = resolver.resolve(input)
-
-        assertEquals(first.scores, second.scores)
-        assertEquals(first.overallScore.value, second.overallScore.value)
-        assertEquals(first.strengths, second.strengths)
-        assertEquals(first.tensions, second.tensions)
-    }
-
-    @Test
-    fun `daily overlay is deterministic for same date and input`() {
-        val input = SynastryInput(
-            personA = SynastryPersonInput(sunSign = ZodiacSign.taurus),
-            personB = SynastryPersonInput(sunSign = ZodiacSign.scorpio),
-        )
-        val structured = resolver.resolve(input)
+    fun `deterministic for same input and date`() {
+        val input = sampleInput()
         val date = LocalDate.parse("2026-03-24")
 
-        val first = overlayGenerator.generate(input, structured, date)
-        val second = overlayGenerator.generate(input, structured, date)
+        val first = resolver.resolve(input, date)
+        val second = resolver.resolve(input, date)
 
-        assertEquals(first, second)
-        assertNotEquals(first.highlightedDimension, first.sensitiveDimension)
+        assertEquals(first.scores, second.scores)
+        assertEquals(first.overallScore, second.overallScore)
+        assertEquals(first.baseProfile, second.baseProfile)
     }
 
     @Test
-    fun `daily overlay can vary with date`() {
-        val input = SynastryInput(
-            personA = SynastryPersonInput(sunSign = ZodiacSign.cancer),
-            personB = SynastryPersonInput(sunSign = ZodiacSign.capricorn),
-        )
-        val structured = resolver.resolve(input)
+    fun `varies across different dates`() {
+        val input = sampleInput()
 
-        val first = overlayGenerator.generate(input, structured, LocalDate.parse("2026-03-24"))
-        val second = overlayGenerator.generate(input, structured, LocalDate.parse("2026-03-25"))
+        val today = resolver.resolve(input, LocalDate.parse("2026-03-24"))
+        val nextWeek = resolver.resolve(input, LocalDate.parse("2026-03-31"))
 
-        val changed = first.dailyEnergyLabel != second.dailyEnergyLabel ||
-            first.highlightedDimension != second.highlightedDimension ||
-            first.sensitiveDimension != second.sensitiveDimension ||
-            first.dailyGuidance != second.dailyGuidance ||
-            first.dailyNarrativeFragment != second.dailyNarrativeFragment
-
-        assertTrue(changed, "Expected daily overlay to vary across dates")
-        assertNotEquals(second.highlightedDimension, second.sensitiveDimension)
+        assertNotEquals(today.scores, nextWeek.scores)
     }
+
+    @Test
+    fun `continuity between consecutive days stays reasonable`() {
+        val input = sampleInput()
+        val day1 = resolver.resolve(input, LocalDate.parse("2026-03-24"))
+        val day2 = resolver.resolve(input, LocalDate.parse("2026-03-25"))
+
+        SynastryDimension.entries.forEach { dimension ->
+            val delta = abs(day1.scores.getValue(dimension).toFiveStarRating() - day2.scores.getValue(dimension).toFiveStarRating())
+            assertTrue(delta <= 1.0, "delta too high on $dimension: $delta")
+        }
+    }
+
+    @Test
+    fun `always returns the 4 visible metrics in range`() {
+        val structured = resolver.resolve(sampleInput(), LocalDate.parse("2026-03-24"))
+
+        assertEquals(4, structured.scores.size)
+        assertEquals(SynastryDimension.entries.toSet(), structured.scores.keys)
+        structured.scores.values.forEach { assertTrue(it.value in 0..100) }
+        assertTrue(structured.strengths.isNotEmpty())
+        assertTrue(structured.tensions.isNotEmpty())
+        assertTrue(structured.guidance.isNotEmpty())
+    }
+
+    @Test
+    fun `star conversion supports half stars`() {
+        assertEquals(2.5, SynastryScore.from(49).toFiveStarRating())
+        assertEquals(3.0, SynastryScore.from(61).toFiveStarRating())
+        assertEquals(4.5, SynastryScore.from(89).toFiveStarRating())
+    }
+
+    @Test
+    fun `total stars are in reasonable band for representative cases`() {
+        val inputs = listOf(
+            SynastryInput(SynastryPersonInput(ZodiacSign.aries), SynastryPersonInput(ZodiacSign.libra)),
+            SynastryInput(SynastryPersonInput(ZodiacSign.taurus), SynastryPersonInput(ZodiacSign.scorpio)),
+            SynastryInput(SynastryPersonInput(ZodiacSign.gemini), SynastryPersonInput(ZodiacSign.virgo)),
+            SynastryInput(SynastryPersonInput(ZodiacSign.cancer), SynastryPersonInput(ZodiacSign.capricorn)),
+            SynastryInput(SynastryPersonInput(ZodiacSign.leo), SynastryPersonInput(ZodiacSign.aquarius)),
+        )
+
+        val totals = inputs.map { input ->
+            resolver.resolve(input, LocalDate.parse("2026-03-24")).scores.values.sumOf { it.toFiveStarRating() }
+        }
+
+        assertTrue(totals.all { it in 8.0..18.5 }, "Totals out of range: $totals")
+        assertTrue(totals.any { it in 11.0..16.0 })
+    }
+
+    @Test
+    fun `daily overlay is valid with distinct highlighted and sensitive`() {
+        val input = sampleInput()
+        val date = LocalDate.parse("2026-03-24")
+        val structured = resolver.resolve(input, date)
+
+        val overlay = overlayGenerator.generate(input, structured, date)
+
+        assertNotEquals(overlay.highlightedDimension, overlay.sensitiveDimension)
+        assertEquals(3, overlay.axes.size)
+        assertEquals(SynastryEnergyAxis.entries.toSet(), overlay.axes.map { it.axis }.toSet())
+        assertTrue(overlay.axes.all { it.value in -100..100 })
+    }
+
+    @Test
+    fun `overlay has autonomy and is not always top and bottom score`() {
+        val input = sampleInput()
+        val dates = listOf(
+            "2026-03-24",
+            "2026-03-25",
+            "2026-03-26",
+            "2026-03-27",
+            "2026-03-28",
+            "2026-03-29",
+            "2026-03-30",
+            "2026-03-31",
+            "2026-04-01",
+            "2026-04-02",
+            "2026-04-03",
+        )
+        val mismatches = dates.count { dateIso ->
+            val date = LocalDate.parse(dateIso)
+            val structured = resolver.resolve(input, date)
+            val overlay = overlayGenerator.generate(input, structured, date)
+            val topDimension = structured.scores.maxByOrNull { it.value.value }?.key
+            val bottomDimension = structured.scores.minByOrNull { it.value.value }?.key
+            overlay.highlightedDimension != topDimension || overlay.sensitiveDimension != bottomDimension
+        }
+
+        assertTrue(mismatches >= 2, "Overlay looks too tied to score ranking")
+    }
+
+    @Test
+    fun `symmetry on swapped people for same date`() {
+        val inputAB = sampleInput()
+        val inputBA = SynastryInput(personA = inputAB.personB, personB = inputAB.personA)
+        val date = LocalDate.parse("2026-03-24")
+
+        val ab = resolver.resolve(inputAB, date)
+        val ba = resolver.resolve(inputBA, date)
+
+        assertEquals(ab.scores, ba.scores)
+        assertEquals(ab.overallScore, ba.overallScore)
+        assertEquals(ab.baseProfile.familyKey, ba.baseProfile.familyKey)
+    }
+
+
+    @Test
+    fun `overlay keeps symmetry when swapping people`() {
+        val inputAB = sampleInput()
+        val inputBA = SynastryInput(personA = inputAB.personB, personB = inputAB.personA)
+        val date = LocalDate.parse("2026-03-27")
+        val abStructured = resolver.resolve(inputAB, date)
+        val baStructured = resolver.resolve(inputBA, date)
+
+        val overlayAB = overlayGenerator.generate(inputAB, abStructured, date)
+        val overlayBA = overlayGenerator.generate(inputBA, baStructured, date)
+
+        assertEquals(overlayAB.highlightedDimension, overlayBA.highlightedDimension)
+        assertEquals(overlayAB.sensitiveDimension, overlayBA.sensitiveDimension)
+        assertEquals(overlayAB.axes, overlayBA.axes)
+    }
+
+    @Test
+    fun `different pairs in same family get refined base profiles`() {
+        val date = LocalDate.parse("2026-03-24")
+        val ariesScorpio = resolver.resolve(
+            SynastryInput(SynastryPersonInput(ZodiacSign.aries), SynastryPersonInput(ZodiacSign.scorpio)),
+            date,
+        )
+        val leoCancer = resolver.resolve(
+            SynastryInput(SynastryPersonInput(ZodiacSign.leo), SynastryPersonInput(ZodiacSign.cancer)),
+            date,
+        )
+        val sagPisces = resolver.resolve(
+            SynastryInput(SynastryPersonInput(ZodiacSign.sagittarius), SynastryPersonInput(ZodiacSign.pisces)),
+            date,
+        )
+
+        assertNotEquals(ariesScorpio.baseProfile.metrics, leoCancer.baseProfile.metrics)
+        assertNotEquals(leoCancer.baseProfile.metrics, sagPisces.baseProfile.metrics)
+        assertNotEquals(ariesScorpio.baseProfile.familyKey, leoCancer.baseProfile.familyKey)
+    }
+
+    @Test
+    fun `generator keeps depth logic and daily overlay`() {
+        val input = SynastryInput(
+            personA = SynastryPersonInput(ZodiacSign.aries),
+            personB = SynastryPersonInput(ZodiacSign.libra),
+        )
+
+        val reading = generator(input, LocalDate.parse("2026-03-24"))
+
+        assertEquals(SynastryReadingDepth.BASIC, reading.structured.depthInfo.depth)
+        assertFalse(reading.narrative.isBlank())
+        assertTrue(reading.dailyOverlay != null)
+    }
+
+    private fun sampleInput(): SynastryInput = SynastryInput(
+        personA = SynastryPersonInput(
+            sunSign = ZodiacSign.aries,
+            moonSign = ZodiacSign.scorpio,
+            risingSign = ZodiacSign.sagittarius,
+        ),
+        personB = SynastryPersonInput(
+            sunSign = ZodiacSign.libra,
+            moonSign = ZodiacSign.gemini,
+            risingSign = ZodiacSign.capricorn,
+        ),
+    )
 }
