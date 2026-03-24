@@ -1,5 +1,7 @@
 package com.agc.bwitch.presentation.userprofile
 
+import com.agc.bwitch.domain.astrology.birthchart.BirthEssenceProfile
+import com.agc.bwitch.domain.astrology.birthchart.ObserveBirthEssenceUseCase
 import com.agc.bwitch.domain.astrology.horoscope.DeriveZodiacSignUseCase
 import com.agc.bwitch.domain.userprofile.GetUserProfileUseCase
 import com.agc.bwitch.domain.userprofile.ObserveUserProfileUseCase
@@ -32,6 +34,7 @@ data class UserProfileUiState(
     val isUploadingAvatar: Boolean = false,
     val isRefreshing: Boolean = false,
     val profile: UserProfile? = null,
+    val savedBirthEssence: BirthEssenceProfile? = null,
     val error: String? = null
 ) {
     val isBusy: Boolean get() = isSaving || isUploadingAvatar || isRefreshing
@@ -44,7 +47,8 @@ class UserProfileViewModel(
     private val sessionVm: SessionViewModel,
     private val uploadAvatar: UploadAvatarUseCase,
     private val pull: PullUserProfileUseCase,
-    private val deriveZodiacSign: DeriveZodiacSignUseCase
+    private val deriveZodiacSign: DeriveZodiacSignUseCase,
+    private val observeBirthEssence: ObserveBirthEssenceUseCase,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
@@ -62,6 +66,16 @@ class UserProfileViewModel(
     private var isSeeding: Boolean = false
 
     init {
+        scope.launch {
+            observeBirthEssence()
+                .catch { e ->
+                    _uiState.update { it.copy(error = e.message) }
+                }
+                .collectLatest { essence ->
+                    _uiState.update { it.copy(savedBirthEssence = essence) }
+                }
+        }
+
         scope.launch {
             observe()
                 .catch { e ->

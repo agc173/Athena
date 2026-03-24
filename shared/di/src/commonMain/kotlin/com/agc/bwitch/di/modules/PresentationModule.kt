@@ -41,7 +41,7 @@ val presentationModule: Module = module {
     factory { BirthChartViewModel(get(), get(), get(), get(), get()) }
 
 
-    factory { UserProfileViewModel(get(), get(), get(), get(), get(), get(), get()) }
+    factory { UserProfileViewModel(get(), get(), get(), get(), get(), get(), get(), get()) }
     factory { OnboardingProfileViewModel(get(), get(), get(), get(), get(), get()) }
 
     factory { OracleStatusViewModel(get()) }
@@ -50,5 +50,4 @@ val presentationModule: Module = module {
     factory { PendulumViewModel() }
 
 }
-
 

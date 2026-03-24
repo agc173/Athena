@@ -59,14 +59,10 @@ class SyncBirthChartRepository(
 
         override suspend fun push(value: BirthEssenceProfile, updatedAtEpochMillis: Long) {
             val uid = currentUidOrNull() ?: run {
-                println("BWITCH_BIRTH_SYNC push skipped: missing uid")
                 return
             }
             val dto = BirthEssenceRemoteDto.fromDomain(value.copy(updatedAtEpochMillis = updatedAtEpochMillis))
             runCatching { setRemote(uid, dto) }
-                .onSuccess {
-                    println("BWITCH_BIRTH_SYNC remote write ok uid=$uid updatedAt=$updatedAtEpochMillis")
-                }
                 .onFailure { error ->
                     println("BWITCH_BIRTH_SYNC remote write failed uid=$uid reason=${error.message}")
                 }
@@ -96,9 +92,7 @@ class SyncBirthChartRepository(
             updatedAtEpochMillis = now,
         )
 
-        println("BWITCH_BIRTH_SYNC save requested updatedAt=$now")
         engine.save(profile, now)
-        println("BWITCH_BIRTH_SYNC save local persisted; remote push delegated to engine")
         linkEssenceSummaryToProfile(profile)
     }
 
@@ -131,12 +125,7 @@ class SyncBirthChartRepository(
     override suspend fun pull() {
         engine.pull()
         val synced = localRepo.getBirthEssence()
-        if (synced == null) {
-            println("BWITCH_BIRTH_SYNC pull completed: no remote essence")
-            return
-        }
-
-        println("BWITCH_BIRTH_SYNC pull completed updatedAt=${synced.updatedAtEpochMillis}")
+        if (synced == null) return
         linkEssenceSummaryToProfile(synced)
     }
 
@@ -167,21 +156,15 @@ class SyncBirthChartRepository(
     private suspend fun linkEssenceSummaryToProfile(essence: BirthEssenceProfile) {
         val currentProfile = userProfileRepository.getUserProfile()
         if (currentProfile == null) {
-            println("BWITCH_BIRTH_SYNC profile summary skipped: profile unavailable")
             return
         }
         val summary = "${essence.sunSign.label} · ${essence.moonSign.label} · ${essence.risingSign.label}"
-        if (currentProfile.birthEssenceSummary == summary) {
-            println("BWITCH_BIRTH_SYNC profile summary unchanged")
-            return
-        }
+        if (currentProfile.birthEssenceSummary == summary) return
 
         runCatching {
             userProfileRepository.saveUserProfile(
                 currentProfile.copy(birthEssenceSummary = summary)
             )
-        }.onSuccess {
-            println("BWITCH_BIRTH_SYNC profile summary updated: $summary")
         }.onFailure { error ->
             println("BWITCH_BIRTH_SYNC profile summary update failed: ${error.message}")
         }
