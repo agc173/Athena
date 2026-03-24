@@ -20,7 +20,9 @@ import dev.gitlive.firebase.firestore.firestore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.datetime.Clock
 import kotlinx.serialization.Serializable
 
@@ -56,9 +58,18 @@ class SyncBirthChartRepository(
         }
 
         override suspend fun push(value: BirthEssenceProfile, updatedAtEpochMillis: Long) {
-            val uid = currentUidOrNull() ?: return
+            val uid = currentUidOrNull() ?: run {
+                println("BWITCH_BIRTH_SYNC push skipped: missing uid")
+                return
+            }
             val dto = BirthEssenceRemoteDto.fromDomain(value.copy(updatedAtEpochMillis = updatedAtEpochMillis))
             runCatching { setRemote(uid, dto) }
+                .onSuccess {
+                    println("BWITCH_BIRTH_SYNC remote write ok uid=$uid updatedAt=$updatedAtEpochMillis")
+                }
+                .onFailure { error ->
+                    println("BWITCH_BIRTH_SYNC remote write failed uid=$uid reason=${error.message}")
+                }
         }
     }
 
@@ -85,14 +96,10 @@ class SyncBirthChartRepository(
             updatedAtEpochMillis = now,
         )
 
+        println("BWITCH_BIRTH_SYNC save requested updatedAt=$now")
         engine.save(profile, now)
+        println("BWITCH_BIRTH_SYNC save local persisted; remote push delegated to engine")
         linkEssenceSummaryToProfile(profile)
-
-        val localUpdated = localRepo.getLocalUpdatedAtEpochMillisOrNull()
-        if (localUpdated == null) {
-            localRepo.saveBirthEssenceWithTimestamps(profile.toDraft(), profile.savedAtEpochMillis, now)
-            runCatching { remoteStore.push(profile, now) }
-        }
     }
 
     override suspend fun generateBirthEssence(input: BirthEssenceInput): ApiResult<BirthEssenceReading> {
@@ -123,10 +130,23 @@ class SyncBirthChartRepository(
 
     override suspend fun pull() {
         engine.pull()
+        val synced = localRepo.getBirthEssence()
+        if (synced == null) {
+            println("BWITCH_BIRTH_SYNC pull completed: no remote essence")
+            return
+        }
+
+        println("BWITCH_BIRTH_SYNC pull completed updatedAt=${synced.updatedAtEpochMillis}")
+        linkEssenceSummaryToProfile(synced)
     }
 
     private suspend fun currentUidOrNull(): String? =
-        authRepository.authState.first()?.uid
+        withTimeoutOrNull(2_000) {
+            authRepository.authState
+                .filterNotNull()
+                .first()
+                .uid
+        }
 
     private fun doc(uid: String) =
         firestore.collection("users")
@@ -145,14 +165,25 @@ class SyncBirthChartRepository(
     }
 
     private suspend fun linkEssenceSummaryToProfile(essence: BirthEssenceProfile) {
-        val currentProfile = userProfileRepository.getUserProfile() ?: return
+        val currentProfile = userProfileRepository.getUserProfile()
+        if (currentProfile == null) {
+            println("BWITCH_BIRTH_SYNC profile summary skipped: profile unavailable")
+            return
+        }
         val summary = "${essence.sunSign.label} · ${essence.moonSign.label} · ${essence.risingSign.label}"
-        if (currentProfile.birthEssenceSummary == summary) return
+        if (currentProfile.birthEssenceSummary == summary) {
+            println("BWITCH_BIRTH_SYNC profile summary unchanged")
+            return
+        }
 
         runCatching {
             userProfileRepository.saveUserProfile(
                 currentProfile.copy(birthEssenceSummary = summary)
             )
+        }.onSuccess {
+            println("BWITCH_BIRTH_SYNC profile summary updated: $summary")
+        }.onFailure { error ->
+            println("BWITCH_BIRTH_SYNC profile summary update failed: ${error.message}")
         }
     }
 
