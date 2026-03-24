@@ -1,8 +1,11 @@
 package com.agc.bwitch.ui.astrology
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -18,13 +21,24 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import bwitch.composeapp.generated.resources.Res
+import bwitch.composeapp.generated.resources.major_01_magician
+import bwitch.composeapp.generated.resources.major_02_high_priestess
+import bwitch.composeapp.generated.resources.major_07_chariot
+import bwitch.composeapp.generated.resources.major_09_hermit
+import bwitch.composeapp.generated.resources.major_14_temperance
+import bwitch.composeapp.generated.resources.major_19_sun
+import com.agc.bwitch.domain.astrology.birthchart.BirthEssenceArchetype
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
 import com.agc.bwitch.presentation.astrology.birthchart.BirthChartViewModel
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
 import com.agc.bwitch.ui.common.designsystem.BWitchPrimaryButton
 import com.agc.bwitch.ui.theme.BWitchThemeTokens
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 
 @Composable
@@ -93,7 +107,14 @@ fun BirthChartScreen(
                     color = extras.textSecondary,
                 )
                 state.generatedArchetype?.let {
-                    Text("Arquetipo: ${it.displayNameEs}", style = MaterialTheme.typography.titleSmall)
+                    Text("Arquetipo", style = MaterialTheme.typography.labelLarge, color = extras.textSecondary)
+                    Text(it.displayNameEs, style = MaterialTheme.typography.titleLarge)
+                    ArchetypeVisual(
+                        archetype = it,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(1.6f)
+                    )
                 }
                 Text(
                     text = state.generatedInterpretation.orEmpty(),
@@ -224,4 +245,30 @@ private fun ZodiacSign.toDisplayName(): String = when (this) {
     ZodiacSign.capricorn -> "Capricornio"
     ZodiacSign.aquarius -> "Acuario"
     ZodiacSign.pisces -> "Piscis"
+}
+
+@Composable
+private fun ArchetypeVisual(
+    archetype: BirthEssenceArchetype,
+    modifier: Modifier = Modifier,
+) {
+    Box(modifier = modifier) {
+        Image(
+            painter = painterResource(archetype.toVisualResource()),
+            contentDescription = "Visual ${archetype.displayNameEs}",
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(1.6f),
+            contentScale = ContentScale.Fit,
+        )
+    }
+}
+
+private fun BirthEssenceArchetype.toVisualResource(): DrawableResource = when (this) {
+    BirthEssenceArchetype.MISTICA -> Res.drawable.major_02_high_priestess
+    BirthEssenceArchetype.GUERRERA -> Res.drawable.major_07_chariot
+    BirthEssenceArchetype.SANADORA -> Res.drawable.major_14_temperance
+    BirthEssenceArchetype.VIDENTE -> Res.drawable.major_09_hermit
+    BirthEssenceArchetype.ALQUIMISTA -> Res.drawable.major_01_magician
+    BirthEssenceArchetype.GUARDIANA -> Res.drawable.major_19_sun
 }
