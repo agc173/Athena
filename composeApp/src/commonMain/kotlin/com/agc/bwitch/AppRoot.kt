@@ -23,6 +23,7 @@ import com.agc.bwitch.presentation.navigation.Navigator
 import com.agc.bwitch.ui.astrology.AstrologyScreen
 import com.agc.bwitch.ui.astrology.BirthChartScreen
 import com.agc.bwitch.ui.astrology.HoroscopeScreen
+import com.agc.bwitch.ui.astrology.SynastryScreen
 import com.agc.bwitch.ui.auth.AuthScreen
 import com.agc.bwitch.ui.common.AppScaffold
 import com.agc.bwitch.ui.guide.GuideHomeScreen
@@ -131,6 +132,8 @@ fun AppRoot() {
             )
 
             Destination.BirthChart -> BirthChartScreen(contentPadding = padding)
+
+            Destination.Synastry -> SynastryScreen(contentPadding = padding)
 
             is Destination.HoroscopeDaily -> HoroscopeScreen(
                 contentPadding = padding,

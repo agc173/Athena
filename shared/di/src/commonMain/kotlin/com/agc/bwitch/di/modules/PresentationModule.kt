@@ -2,6 +2,7 @@ package com.agc.bwitch.di.modules
 
 import com.agc.bwitch.presentation.astrology.birthchart.BirthChartViewModel
 import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeViewModel
+import com.agc.bwitch.presentation.astrology.synastry.SynastryViewModel
 import com.agc.bwitch.presentation.auth.SessionViewModel
 import com.agc.bwitch.presentation.navigation.Destination
 import com.agc.bwitch.presentation.oracle.OracleAskViewModel
@@ -40,6 +41,7 @@ val presentationModule: Module = module {
      */
     factory { BirthChartViewModel(get(), get(), get(), get(), get()) }
 
+    factory { SynastryViewModel(get()) }
 
     factory { UserProfileViewModel(get(), get(), get(), get(), get(), get(), get(), get()) }
     factory { OnboardingProfileViewModel(get(), get(), get(), get(), get(), get()) }
