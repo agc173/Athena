@@ -1,5 +1,7 @@
 package com.agc.bwitch.domain.astrology.synastry
 
+import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
+
 interface SynastryNarrativeGenerator {
     fun generate(
         input: SynastryInput,
@@ -13,8 +15,7 @@ class DefaultSynastryNarrativeGenerator : SynastryNarrativeGenerator {
         input: SynastryInput,
         structured: SynastryReadingStructured,
     ): String {
-        val personAName = input.personA.displayName ?: "Persona A"
-        val personBName = input.personB.displayName ?: "Persona B"
+        val pairLabel = "${input.personA.sunSign.humanLabel()} y ${input.personB.sunSign.humanLabel()}"
         val orderedDimensions = structured.scores.entries.sortedByDescending { it.value.value }
         val strongestDimension = orderedDimensions.first().key
         val challengeDimension = orderedDimensions.last().key
@@ -23,23 +24,21 @@ class DefaultSynastryNarrativeGenerator : SynastryNarrativeGenerator {
         val primaryGuidance = structured.guidance.firstOrNull()
 
         val paragraphOne = buildString {
-            append("$personAName y $personBName sostienen una energía ${structured.archetype.humanLabel()}. ")
-            append(structured.archetype.openingInsight())
-            append(" ")
-            append("La conexión se siente especialmente viva en ${strongestDimension.humanLabelWithArticle()}.")
+            append("$pairLabel muestran una dinámica con foco en ${strongestDimension.humanLabelWithArticle()}. ")
+            append("El tono general combina química, aprendizaje y margen real de construcción.")
         }
 
         val paragraphTwo = buildString {
-            append("Entre sus fortalezas destaca ${primaryStrength?.humanLabel() ?: strongestDimension.strengthFallbackCopy()}. ")
-            append("También hay un potencial claro en ${strongestDimension.humanLabel()} para construir acuerdos y sostener el vínculo con más presencia.")
+            append("Entre las fortalezas aparece ${primaryStrength?.humanLabel() ?: strongestDimension.strengthFallbackCopy()}. ")
+            append("Cuando esta área se cuida, el vínculo gana continuidad y dirección compartida.")
         }
 
         val paragraphThree = buildString {
             val tensionCopy = primaryTension?.humanLabel()
-                ?: "el vínculo pide atención consciente en ${challengeDimension.humanLabel()}"
-            append("Cuando aparece fricción, suele notarse en $tensionCopy. ")
+                ?: "retos visibles en ${challengeDimension.humanLabel()}"
+            append("La fricción tiende a notarse en $tensionCopy. ")
             append(
-                primaryGuidance?.let { "La clave está en ${it.humanLabel()}." }
+                primaryGuidance?.let { "La guía más útil es ${it.humanLabel()}." }
                     ?: challengeDimension.guidanceFallbackCopy()
             )
             append(" ")
@@ -65,28 +64,6 @@ class SynastryReadingGenerator(
     }
 }
 
-private fun SynastryBondArchetype.humanLabel(): String = when (this) {
-    SynastryBondArchetype.MAGNETIC -> "magnética"
-    SynastryBondArchetype.MIRROR -> "espejo"
-    SynastryBondArchetype.ALCHEMICAL -> "alquímica"
-    SynastryBondArchetype.ANCHOR -> "ancla"
-    SynastryBondArchetype.STORM -> "tormentosa"
-    SynastryBondArchetype.DEVOTIONAL -> "devocional"
-    SynastryBondArchetype.ELECTRIC -> "eléctrica"
-    SynastryBondArchetype.COSMIC_DANCE -> "de danza cósmica"
-}
-
-private fun SynastryBondArchetype.openingInsight(): String = when (this) {
-    SynastryBondArchetype.MAGNETIC -> "Hay atracción natural y una sensación de encuentro significativo."
-    SynastryBondArchetype.MIRROR -> "Se reflejan mutuamente y eso facilita comprenderse con profundidad."
-    SynastryBondArchetype.ALCHEMICAL -> "La relación invita a transformarse y a crecer a través de las diferencias."
-    SynastryBondArchetype.ANCHOR -> "Predomina una sensación de sostén, calma y construcción a largo plazo."
-    SynastryBondArchetype.STORM -> "La intensidad es alta y pide madurez emocional para canalizarla bien."
-    SynastryBondArchetype.DEVOTIONAL -> "Hay ternura, compromiso y un deseo genuino de cuidarse."
-    SynastryBondArchetype.ELECTRIC -> "La chispa mental y el dinamismo mantienen la conexión en movimiento."
-    SynastryBondArchetype.COSMIC_DANCE -> "El intercambio fluye con matices, combinando armonía y aprendizaje."
-}
-
 private fun SynastryDimension.humanLabel(): String = when (this) {
     SynastryDimension.EMOTIONAL -> "resonancia emocional"
     SynastryDimension.COMMUNICATION -> "comunicación"
@@ -104,11 +81,11 @@ private fun SynastryDimension.humanLabelWithArticle(): String = when (this) {
 }
 
 private fun SynastryDimension.strengthFallbackCopy(): String = when (this) {
-    SynastryDimension.EMOTIONAL -> "la facilidad para conectar desde lo sensible"
-    SynastryDimension.COMMUNICATION -> "la forma en que dialogan y se entienden"
-    SynastryDimension.ATTRACTION -> "la química que aparece entre ambos"
-    SynastryDimension.STABILITY -> "la capacidad de sostenerse con constancia"
-    SynastryDimension.GROWTH -> "la apertura para evolucionar juntos"
+    SynastryDimension.EMOTIONAL -> "una sensibilidad compartida"
+    SynastryDimension.COMMUNICATION -> "una forma de diálogo que puede ordenarse rápido"
+    SynastryDimension.ATTRACTION -> "una química presente desde el inicio"
+    SynastryDimension.STABILITY -> "la capacidad de sostener acuerdos concretos"
+    SynastryDimension.GROWTH -> "la apertura para evolucionar sin estancarse"
 }
 
 private fun SynastryDimension.guidanceFallbackCopy(): String = when (this) {
@@ -137,7 +114,22 @@ private fun SynastrySignal.humanLabel(): String = when (this) {
 }
 
 private fun SynastryReadingDepth.closingCopy(): String = when (this) {
-    SynastryReadingDepth.BASIC -> "Con la Luna y el Ascendente de ambas personas, esta lectura podría revelar matices más profundos."
+    SynastryReadingDepth.BASIC -> "Con la Luna y el Ascendente de ambas cartas, esta lectura podría revelar matices más profundos."
     SynastryReadingDepth.PARTIAL -> "Con los datos faltantes, la lectura puede ganar precisión y mostrar matices más finos."
     SynastryReadingDepth.COMPLETE -> "Con la información disponible, el mapa del vínculo se percibe sólido y bien delineado."
+}
+
+private fun ZodiacSign.humanLabel(): String = when (this) {
+    ZodiacSign.aries -> "Aries"
+    ZodiacSign.taurus -> "Tauro"
+    ZodiacSign.gemini -> "Géminis"
+    ZodiacSign.cancer -> "Cáncer"
+    ZodiacSign.leo -> "Leo"
+    ZodiacSign.virgo -> "Virgo"
+    ZodiacSign.libra -> "Libra"
+    ZodiacSign.scorpio -> "Escorpio"
+    ZodiacSign.sagittarius -> "Sagitario"
+    ZodiacSign.capricorn -> "Capricornio"
+    ZodiacSign.aquarius -> "Acuario"
+    ZodiacSign.pisces -> "Piscis"
 }

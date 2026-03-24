@@ -19,9 +19,6 @@ class SynastryViewModel(
     private val _uiState = MutableStateFlow(SynastryUiState())
     val uiState: StateFlow<SynastryUiState> = _uiState
 
-    fun onPersonANameChange(value: String) =
-        _uiState.update { it.copy(personA = it.personA.copy(name = value), error = null) }
-
     fun onPersonASunSignChange(value: ZodiacSign?) =
         _uiState.update { it.copy(personA = it.personA.copy(sunSign = value), error = null) }
 
@@ -30,9 +27,6 @@ class SynastryViewModel(
 
     fun onPersonARisingSignChange(value: ZodiacSign?) =
         _uiState.update { it.copy(personA = it.personA.copy(risingSign = value), error = null) }
-
-    fun onPersonBNameChange(value: String) =
-        _uiState.update { it.copy(personB = it.personB.copy(name = value), error = null) }
 
     fun onPersonBSunSignChange(value: ZodiacSign?) =
         _uiState.update { it.copy(personB = it.personB.copy(sunSign = value), error = null) }
@@ -64,13 +58,11 @@ class SynastryViewModel(
                 readingGenerator(
                     SynastryInput(
                         personA = SynastryPersonInput(
-                            displayName = state.personA.name.trim().ifBlank { null },
                             sunSign = personASun,
                             moonSign = state.personA.moonSign,
                             risingSign = state.personA.risingSign,
                         ),
                         personB = SynastryPersonInput(
-                            displayName = state.personB.name.trim().ifBlank { null },
                             sunSign = personBSun,
                             moonSign = state.personB.moonSign,
                             risingSign = state.personB.risingSign,

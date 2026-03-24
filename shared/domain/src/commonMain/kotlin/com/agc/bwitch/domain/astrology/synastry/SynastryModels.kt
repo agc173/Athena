@@ -3,7 +3,6 @@ package com.agc.bwitch.domain.astrology.synastry
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
 
 data class SynastryPersonInput(
-    val displayName: String? = null,
     val sunSign: ZodiacSign,
     val moonSign: ZodiacSign? = null,
     val risingSign: ZodiacSign? = null,
