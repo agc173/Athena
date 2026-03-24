@@ -54,7 +54,8 @@ fun BirthChartScreen(
     Column(
         modifier = modifier
             .padding(contentPadding)
-            .padding(dimens.spacingMd),
+            .padding(dimens.spacingMd)
+            .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(dimens.spacingSm + dimens.spacingXs)
     ) {
         Text(
