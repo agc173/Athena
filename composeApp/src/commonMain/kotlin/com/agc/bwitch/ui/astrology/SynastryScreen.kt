@@ -21,7 +21,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
-import com.agc.bwitch.domain.astrology.synastry.SynastryBondArchetype
 import com.agc.bwitch.domain.astrology.synastry.SynastryDimension
 import com.agc.bwitch.domain.astrology.synastry.SynastryReading
 import com.agc.bwitch.domain.astrology.synastry.SynastryReadingDepth
@@ -30,7 +29,6 @@ import com.agc.bwitch.presentation.astrology.synastry.SynastryPersonForm
 import com.agc.bwitch.presentation.astrology.synastry.SynastryViewModel
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
 import com.agc.bwitch.ui.common.designsystem.BWitchPrimaryButton
-import com.agc.bwitch.ui.common.designsystem.BWitchTextField
 import com.agc.bwitch.ui.theme.BWitchThemeTokens
 import org.koin.compose.koinInject
 
@@ -63,18 +61,16 @@ fun SynastryScreen(
         )
 
         PersonFormCard(
-            title = "Persona A",
+            title = "Carta A",
             form = state.personA,
-            onNameChange = viewModel::onPersonANameChange,
             onSunChange = viewModel::onPersonASunSignChange,
             onMoonChange = viewModel::onPersonAMoonSignChange,
             onRisingChange = viewModel::onPersonARisingSignChange,
         )
 
         PersonFormCard(
-            title = "Persona B",
+            title = "Carta B",
             form = state.personB,
-            onNameChange = viewModel::onPersonBNameChange,
             onSunChange = viewModel::onPersonBSunSignChange,
             onMoonChange = viewModel::onPersonBMoonSignChange,
             onRisingChange = viewModel::onPersonBRisingSignChange,
@@ -106,21 +102,12 @@ fun SynastryScreen(
 private fun PersonFormCard(
     title: String,
     form: SynastryPersonForm,
-    onNameChange: (String) -> Unit,
     onSunChange: (ZodiacSign?) -> Unit,
     onMoonChange: (ZodiacSign?) -> Unit,
     onRisingChange: (ZodiacSign?) -> Unit,
 ) {
     BWitchCard {
         Text(text = title, style = MaterialTheme.typography.titleMedium)
-
-        BWitchTextField(
-            value = form.name,
-            onValueChange = onNameChange,
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text("Nombre (opcional)") },
-        )
 
         SignDropdown(
             label = "Signo solar (obligatorio)",
@@ -151,10 +138,6 @@ private fun SynastryResultCard(reading: SynastryReading) {
 
     BWitchCard {
         Text(text = "Resultado", style = MaterialTheme.typography.titleMedium)
-        Text(
-            text = "Arquetipo: ${structured.archetype.toUiLabel()}",
-            style = MaterialTheme.typography.bodyLarge,
-        )
         Text(
             text = structured.depthInfo.depth.toUiDepthLabel(),
             style = MaterialTheme.typography.bodyMedium,
@@ -312,17 +295,6 @@ private fun SynastryReadingDepth.toUiDepthLabel(): String = when (this) {
     SynastryReadingDepth.BASIC -> "Lectura esencial"
     SynastryReadingDepth.PARTIAL -> "Lectura ampliada"
     SynastryReadingDepth.COMPLETE -> "Lectura completa"
-}
-
-private fun SynastryBondArchetype.toUiLabel(): String = when (this) {
-    SynastryBondArchetype.MAGNETIC -> "Magnética"
-    SynastryBondArchetype.MIRROR -> "Espejo"
-    SynastryBondArchetype.ALCHEMICAL -> "Alquímica"
-    SynastryBondArchetype.ANCHOR -> "Ancla"
-    SynastryBondArchetype.STORM -> "Tormentosa"
-    SynastryBondArchetype.DEVOTIONAL -> "Devocional"
-    SynastryBondArchetype.ELECTRIC -> "Eléctrica"
-    SynastryBondArchetype.COSMIC_DANCE -> "Danza cósmica"
 }
 
 private fun SynastryDimension.toUiLabel(): String = when (this) {

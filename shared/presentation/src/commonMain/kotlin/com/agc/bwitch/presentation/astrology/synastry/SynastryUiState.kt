@@ -4,7 +4,6 @@ import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
 import com.agc.bwitch.domain.astrology.synastry.SynastryReading
 
 data class SynastryPersonForm(
-    val name: String = "",
     val sunSign: ZodiacSign? = null,
     val moonSign: ZodiacSign? = null,
     val risingSign: ZodiacSign? = null,
