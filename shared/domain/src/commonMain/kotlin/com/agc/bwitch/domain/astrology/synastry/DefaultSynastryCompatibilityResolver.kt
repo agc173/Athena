@@ -12,13 +12,14 @@ class DefaultSynastryCompatibilityResolver : SynastryCompatibilityResolver {
 
     override fun resolve(input: SynastryInput): SynastryReadingStructured {
         val completeness = buildCompleteness(input)
-        val scores = linkedMapOf(
+        val baseScores = linkedMapOf(
             SynastryDimension.EMOTIONAL to emotionalScore(input),
             SynastryDimension.COMMUNICATION to communicationScore(input),
             SynastryDimension.ATTRACTION to attractionScore(input),
             SynastryDimension.STABILITY to stabilityScore(input),
             SynastryDimension.GROWTH to growthScore(input),
         )
+        val scores = applySolarProfileContrast(input, baseScores)
 
         val overallScore = SynastryScore.from(scores.values.map { it.value }.average().roundToInt())
         val archetype = resolveArchetype(scores, overallScore)
@@ -39,6 +40,27 @@ class DefaultSynastryCompatibilityResolver : SynastryCompatibilityResolver {
             guidance = guidance,
             tags = tags,
         )
+    }
+
+    private fun applySolarProfileContrast(
+        input: SynastryInput,
+        baseScores: Map<SynastryDimension, SynastryScore>,
+    ): Map<SynastryDimension, SynastryScore> {
+        val profile = resolveSolarProfile(input.personA.sunSign, input.personB.sunSign)
+        return linkedMapOf<SynastryDimension, SynastryScore>().apply {
+            SynastryDimension.entries.forEach { dimension ->
+                val base = baseScores.require(dimension).value
+                val stretched = stretchContrast(base)
+                val adjusted = stretched + profile.offsets.getValue(dimension)
+                put(dimension, SynastryScore.from(adjusted))
+            }
+        }
+    }
+
+    private fun stretchContrast(base: Int): Int {
+        val centered = base - 50
+        val factor = 1.18
+        return (50 + (centered * factor)).roundToInt()
     }
 
     private fun buildCompleteness(input: SynastryInput): SynastryDataCompleteness {
@@ -391,6 +413,88 @@ class DefaultSynastryCompatibilityResolver : SynastryCompatibilityResolver {
         return (50 + elementScore + modalityScore).coerceIn(0, 100)
     }
 
+    private fun resolveSolarProfile(signA: ZodiacSign, signB: ZodiacSign): SolarCombinationProfile {
+        val elementPair = setOf(signA.element, signB.element)
+        val sameElement = signA.element == signB.element
+        val opposite = areOpposite(signA, signB)
+
+        val baseProfile = when (elementPair) {
+            setOf(AstroElement.FIRE, AstroElement.AIR) -> SolarCombinationProfile(
+                offsets = mapOf(
+                    SynastryDimension.EMOTIONAL to -6,
+                    SynastryDimension.COMMUNICATION to 10,
+                    SynastryDimension.ATTRACTION to 12,
+                    SynastryDimension.STABILITY to -14,
+                    SynastryDimension.GROWTH to 9,
+                )
+            )
+
+            setOf(AstroElement.EARTH, AstroElement.WATER) -> SolarCombinationProfile(
+                offsets = mapOf(
+                    SynastryDimension.EMOTIONAL to 10,
+                    SynastryDimension.COMMUNICATION to -2,
+                    SynastryDimension.ATTRACTION to -4,
+                    SynastryDimension.STABILITY to 13,
+                    SynastryDimension.GROWTH to 2,
+                )
+            )
+
+            setOf(AstroElement.FIRE, AstroElement.WATER) -> SolarCombinationProfile(
+                offsets = mapOf(
+                    SynastryDimension.EMOTIONAL to -8,
+                    SynastryDimension.COMMUNICATION to -4,
+                    SynastryDimension.ATTRACTION to 11,
+                    SynastryDimension.STABILITY to -10,
+                    SynastryDimension.GROWTH to 12,
+                )
+            )
+
+            setOf(AstroElement.AIR, AstroElement.EARTH) -> SolarCombinationProfile(
+                offsets = mapOf(
+                    SynastryDimension.EMOTIONAL to -5,
+                    SynastryDimension.COMMUNICATION to 5,
+                    SynastryDimension.ATTRACTION to 1,
+                    SynastryDimension.STABILITY to -8,
+                    SynastryDimension.GROWTH to 9,
+                )
+            )
+
+            else -> SolarCombinationProfile()
+        }
+
+        val sameElementOffsets = if (sameElement) {
+            mapOf(
+                SynastryDimension.EMOTIONAL to 4,
+                SynastryDimension.COMMUNICATION to 3,
+                SynastryDimension.ATTRACTION to -2,
+                SynastryDimension.STABILITY to 6,
+                SynastryDimension.GROWTH to -1,
+            )
+        } else {
+            emptyMap()
+        }
+
+        val oppositeOffsets = if (opposite) {
+            mapOf(
+                SynastryDimension.EMOTIONAL to -2,
+                SynastryDimension.COMMUNICATION to 4,
+                SynastryDimension.ATTRACTION to 8,
+                SynastryDimension.STABILITY to -9,
+                SynastryDimension.GROWTH to 11,
+            )
+        } else {
+            emptyMap()
+        }
+
+        return SolarCombinationProfile(
+            offsets = SynastryDimension.entries.associateWith { dimension ->
+                baseProfile.offsets.getValue(dimension) +
+                    sameElementOffsets.getOrDefault(dimension, 0) +
+                    oppositeOffsets.getOrDefault(dimension, 0)
+            }
+        )
+    }
+
     private fun elementAffinity(a: AstroElement, b: AstroElement): Int {
         if (a == b) return 18
 
@@ -424,6 +528,10 @@ class DefaultSynastryCompatibilityResolver : SynastryCompatibilityResolver {
     private fun Map<SynastryDimension, SynastryScore>.require(dimension: SynastryDimension): SynastryScore =
         getValue(dimension)
 }
+
+private data class SolarCombinationProfile(
+    val offsets: Map<SynastryDimension, Int> = SynastryDimension.entries.associateWith { 0 },
+)
 
 internal enum class AstroElement {
     FIRE,

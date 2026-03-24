@@ -5,13 +5,16 @@ import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+import kotlinx.datetime.LocalDate
 
 class SynastryReadingGeneratorTest {
 
     private val resolver = DefaultSynastryCompatibilityResolver()
     private val generator = SynastryReadingGenerator()
+    private val overlayGenerator = SynastryDailyOverlayGenerator()
 
     @Test
     fun `with sun only depth is basic`() {
@@ -92,6 +95,7 @@ class SynastryReadingGeneratorTest {
         assertTrue(reading.narrative.contains("Aries y Leo"))
         assertFalse(reading.narrative.contains("Persona A"))
         assertFalse(reading.narrative.contains("Persona B"))
+        assertNotNull(reading.dailyOverlay)
     }
 
     @Test
@@ -201,5 +205,58 @@ class SynastryReadingGeneratorTest {
 
         assertTrue(spread >= 12, "Expected score dispersion >= 12, but was $spread with $values")
         assertTrue(values.any { abs(it - values.average()) >= 6 })
+    }
+
+    @Test
+    fun `base result is stable for same inputs`() {
+        val input = SynastryInput(
+            personA = SynastryPersonInput(sunSign = ZodiacSign.aries, moonSign = ZodiacSign.scorpio),
+            personB = SynastryPersonInput(sunSign = ZodiacSign.libra, risingSign = ZodiacSign.gemini),
+        )
+
+        val first = resolver.resolve(input)
+        val second = resolver.resolve(input)
+
+        assertEquals(first.scores, second.scores)
+        assertEquals(first.overallScore.value, second.overallScore.value)
+        assertEquals(first.strengths, second.strengths)
+        assertEquals(first.tensions, second.tensions)
+    }
+
+    @Test
+    fun `daily overlay is deterministic for same date and input`() {
+        val input = SynastryInput(
+            personA = SynastryPersonInput(sunSign = ZodiacSign.taurus),
+            personB = SynastryPersonInput(sunSign = ZodiacSign.scorpio),
+        )
+        val structured = resolver.resolve(input)
+        val date = LocalDate.parse("2026-03-24")
+
+        val first = overlayGenerator.generate(input, structured, date)
+        val second = overlayGenerator.generate(input, structured, date)
+
+        assertEquals(first, second)
+        assertNotEquals(first.highlightedDimension, first.sensitiveDimension)
+    }
+
+    @Test
+    fun `daily overlay can vary with date`() {
+        val input = SynastryInput(
+            personA = SynastryPersonInput(sunSign = ZodiacSign.cancer),
+            personB = SynastryPersonInput(sunSign = ZodiacSign.capricorn),
+        )
+        val structured = resolver.resolve(input)
+
+        val first = overlayGenerator.generate(input, structured, LocalDate.parse("2026-03-24"))
+        val second = overlayGenerator.generate(input, structured, LocalDate.parse("2026-03-25"))
+
+        val changed = first.dailyEnergyLabel != second.dailyEnergyLabel ||
+            first.highlightedDimension != second.highlightedDimension ||
+            first.sensitiveDimension != second.sensitiveDimension ||
+            first.dailyGuidance != second.dailyGuidance ||
+            first.dailyNarrativeFragment != second.dailyNarrativeFragment
+
+        assertTrue(changed, "Expected daily overlay to vary across dates")
+        assertNotEquals(second.highlightedDimension, second.sensitiveDimension)
     }
 }

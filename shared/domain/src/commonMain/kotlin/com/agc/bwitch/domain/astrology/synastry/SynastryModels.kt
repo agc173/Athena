@@ -104,4 +104,14 @@ data class SynastryReading(
     val personB: SynastryPersonInput,
     val structured: SynastryReadingStructured,
     val narrative: String,
+    val dailyOverlay: SynastryDailyOverlay? = null,
+)
+
+data class SynastryDailyOverlay(
+    val dateIso: String,
+    val highlightedDimension: SynastryDimension,
+    val sensitiveDimension: SynastryDimension,
+    val dailyEnergyLabel: String,
+    val dailyGuidance: String,
+    val dailyNarrativeFragment: String,
 )
