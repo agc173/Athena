@@ -21,7 +21,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.agc.bwitch.domain.astrology.birthchart.BirthEssenceArchetype
@@ -47,6 +49,7 @@ fun BirthChartScreen(
     val state by viewModel.uiState.collectAsState()
     val shareLauncher = rememberBirthEssenceShareLauncher()
     var shareError by remember { mutableStateOf<String?>(null) }
+    var sharePreviewEssence by remember { mutableStateOf<BirthEssenceProfile?>(null) }
 
     Column(
         modifier = modifier
@@ -133,12 +136,7 @@ fun BirthChartScreen(
                             shareError = "Primero genera una esencia válida"
                             return@BWitchPrimaryButton
                         }
-
-                        shareLauncher
-                            .share(shareProfile)
-                            .onFailure {
-                                shareError = it.message ?: "No se pudo compartir la esencia"
-                            }
+                        sharePreviewEssence = shareProfile
                     },
                     enabled = !state.isBusy && state.hasGeneratedResult,
                     modifier = Modifier.fillMaxWidth()
@@ -159,6 +157,19 @@ fun BirthChartScreen(
         state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         shareError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         state.savedSummary?.let { Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+    }
+
+    sharePreviewEssence?.let { essence ->
+        ShareEssencePreviewDialog(
+            essence = essence,
+            onDismiss = { sharePreviewEssence = null },
+            onShareNow = { captureBounds ->
+                shareLauncher
+                    .share(essence = essence, captureBounds = captureBounds)
+                    .onSuccess { sharePreviewEssence = null }
+                    .onFailure { shareError = it.message ?: "No se pudo compartir la esencia" }
+            }
+        )
     }
 }
 
@@ -279,6 +290,68 @@ private fun ZodiacSign.toDisplayName(): String = when (this) {
     ZodiacSign.capricorn -> "Capricornio"
     ZodiacSign.aquarius -> "Acuario"
     ZodiacSign.pisces -> "Piscis"
+}
+
+@Composable
+private fun ShareEssencePreviewDialog(
+    essence: BirthEssenceProfile,
+    onDismiss: () -> Unit,
+    onShareNow: (ShareCaptureBounds) -> Unit,
+) {
+    val spacing = BWitchThemeTokens.dimens
+    var captureBounds by remember { mutableStateOf<ShareCaptureBounds?>(null) }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = true)
+    ) {
+        Surface(
+            shape = MaterialTheme.shapes.large,
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = spacing.spacingXs,
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(spacing.spacingMd),
+                verticalArrangement = Arrangement.spacedBy(spacing.spacingSm)
+            ) {
+                Text(
+                    text = "Preview para compartir",
+                    style = MaterialTheme.typography.titleMedium
+                )
+                BirthEssenceShareCard(
+                    essence = essence,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .onGloballyPositioned { coordinates ->
+                            val rect = coordinates.boundsInWindow()
+                            captureBounds = ShareCaptureBounds(
+                                left = rect.left.toInt(),
+                                top = rect.top.toInt(),
+                                width = rect.width.toInt(),
+                                height = rect.height.toInt(),
+                            )
+                        },
+                )
+                BWitchPrimaryButton(
+                    onClick = {
+                        captureBounds?.let(onShareNow)
+                    },
+                    enabled = captureBounds != null,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text("Compartir ahora")
+                }
+                OutlinedButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text("Cancelar")
+                }
+            }
+        }
+    }
 }
 
 @Composable

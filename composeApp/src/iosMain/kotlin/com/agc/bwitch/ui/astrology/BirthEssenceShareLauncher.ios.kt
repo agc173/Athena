@@ -9,6 +9,6 @@ actual fun rememberBirthEssenceShareLauncher(): BirthEssenceShareLauncher =
     remember { IosBirthEssenceShareLauncher }
 
 private data object IosBirthEssenceShareLauncher : BirthEssenceShareLauncher {
-    override fun share(essence: BirthEssenceProfile): Result<Unit> =
+    override fun share(essence: BirthEssenceProfile, captureBounds: ShareCaptureBounds): Result<Unit> =
         Result.failure(NotImplementedError("El share de esencia solo está implementado en Android"))
 }
