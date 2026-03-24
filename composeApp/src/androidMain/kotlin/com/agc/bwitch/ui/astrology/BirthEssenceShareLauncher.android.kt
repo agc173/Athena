@@ -4,61 +4,64 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Rect
 import android.net.Uri
 import android.view.View
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.core.content.FileProvider
 import com.agc.bwitch.domain.astrology.birthchart.BirthEssenceProfile
-import com.agc.bwitch.ui.theme.BWitchTheme
 import java.io.File
 import java.io.FileOutputStream
 
 @Composable
 actual fun rememberBirthEssenceShareLauncher(): BirthEssenceShareLauncher {
     val appContext = LocalContext.current.applicationContext
-    return remember(appContext) { AndroidBirthEssenceShareLauncher(appContext) }
+    val rootView = LocalView.current.rootView
+    return remember(appContext, rootView) { AndroidBirthEssenceShareLauncher(appContext, rootView) }
 }
 
 private class AndroidBirthEssenceShareLauncher(
     private val context: Context,
+    private val rootView: View,
 ) : BirthEssenceShareLauncher {
-    override fun share(essence: BirthEssenceProfile): Result<Unit> = runCatching {
-        val bitmap = renderCardBitmap(context, essence)
+    override fun share(_essence: BirthEssenceProfile, captureBounds: ShareCaptureBounds): Result<Unit> = runCatching {
+        val bitmap = captureAttachedCardBitmap(rootView, captureBounds)
         val imageUri = persistBitmapInCache(context, bitmap)
         launchNativeShare(context, imageUri)
     }
 }
 
-private fun renderCardBitmap(context: Context, essence: BirthEssenceProfile): Bitmap {
-    val composeView = ComposeView(context).apply {
-        setContent {
-            BWitchTheme {
-                BirthEssenceShareCard(
-                    essence = essence,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-        }
+private fun captureAttachedCardBitmap(rootView: View, captureBounds: ShareCaptureBounds): Bitmap {
+    check(rootView.width > 0 && rootView.height > 0) {
+        "La pantalla aún no está lista para capturar"
+    }
+    check(captureBounds.width > 0 && captureBounds.height > 0) {
+        "La carta de esencia no tiene tamaño válido para compartir"
     }
 
-    val displayWidth = context.resources.displayMetrics.widthPixels
-    val targetWidth = displayWidth.coerceIn(minimumValue = 720, maximumValue = 1080)
+    val windowBitmap = Bitmap.createBitmap(rootView.width, rootView.height, Bitmap.Config.ARGB_8888)
+    rootView.draw(Canvas(windowBitmap))
 
-    val widthSpec = View.MeasureSpec.makeMeasureSpec(targetWidth, View.MeasureSpec.EXACTLY)
-    val heightSpec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
-
-    composeView.measure(widthSpec, heightSpec)
-    val measuredHeight = composeView.measuredHeight.coerceAtLeast(1)
-    composeView.layout(0, 0, targetWidth, measuredHeight)
-
-    return Bitmap.createBitmap(targetWidth, measuredHeight, Bitmap.Config.ARGB_8888).also { bitmap ->
-        composeView.draw(Canvas(bitmap))
+    val sourceRect = Rect(
+        captureBounds.left.coerceIn(0, rootView.width - 1),
+        captureBounds.top.coerceIn(0, rootView.height - 1),
+        (captureBounds.left + captureBounds.width).coerceIn(1, rootView.width),
+        (captureBounds.top + captureBounds.height).coerceIn(1, rootView.height),
+    )
+    check(sourceRect.width() > 0 && sourceRect.height() > 0) {
+        "No fue posible determinar el área visible para compartir"
     }
+
+    return Bitmap.createBitmap(
+        windowBitmap,
+        sourceRect.left,
+        sourceRect.top,
+        sourceRect.width(),
+        sourceRect.height(),
+    )
 }
 
 private fun persistBitmapInCache(context: Context, bitmap: Bitmap): Uri {
