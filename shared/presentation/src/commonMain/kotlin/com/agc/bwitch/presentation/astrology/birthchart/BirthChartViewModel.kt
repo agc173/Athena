@@ -170,7 +170,8 @@ class BirthChartViewModel(
     }
 
     private fun String.sanitizeInterpretation(): String {
-        val labelRegex = Regex("^\\s*INTERPRETACI[ÓO]N\\b\\s*[:\\-–—]?\\s*", RegexOption.IGNORE_CASE)
+        val interpretationPrefixRegex =
+            Regex("^\\s*interpretaci[oó]n\\b\\s*[:\\-–—]?\\s*", RegexOption.IGNORE_CASE)
         return this
             .replace("\r\n", "\n")
             .replace('\r', '\n')
@@ -181,12 +182,7 @@ class BirthChartViewModel(
             .mapNotNull { line ->
                 when {
                     line.startsWith("ARQUETIPO", ignoreCase = true) -> null
-                    line.startsWith("INTERPRETACION", ignoreCase = true) ||
-                        line.startsWith("INTERPRETACIÓN", ignoreCase = true) -> {
-                        line.replace(labelRegex, "").trim().ifBlank { null }
-                    }
-
-                    else -> line.ifBlank { null }
+                    else -> line.replace(interpretationPrefixRegex, "").trim().ifBlank { null }
                 }
             }
             .joinToString("\n")
