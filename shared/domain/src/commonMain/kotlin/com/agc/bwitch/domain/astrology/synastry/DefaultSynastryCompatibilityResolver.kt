@@ -8,7 +8,7 @@ import kotlin.math.sin
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toEpochDays
+import kotlinx.datetime.daysUntil
 import kotlinx.datetime.toLocalDateTime
 
 interface SynastryCompatibilityResolver {
@@ -19,6 +19,8 @@ interface SynastryCompatibilityResolver {
 }
 
 class DefaultSynastryCompatibilityResolver : SynastryCompatibilityResolver {
+
+    private val epochBaseDate = LocalDate(1970, 1, 1)
 
     override fun resolve(input: SynastryInput, date: LocalDate): SynastryReadingStructured {
         val completeness = buildCompleteness(input)
@@ -55,7 +57,7 @@ class DefaultSynastryCompatibilityResolver : SynastryCompatibilityResolver {
     }
 
     private fun metricValueForDay(profile: SynastryMetricProfile, date: LocalDate, seed: Int): Double {
-        val t = date.toEpochDays().toDouble()
+        val t = date.dayIndex().toDouble()
         val longPhase = phase(seed, 0.11)
         val shortPhase = phase(seed, 0.29)
         val microPhase = phase(seed, 0.53)
@@ -316,7 +318,7 @@ class DefaultSynastryCompatibilityResolver : SynastryCompatibilityResolver {
         date: LocalDate,
         seed: Int,
     ): List<SynastryDailyAxisState> {
-        val t = date.toEpochDays().toDouble()
+        val t = date.dayIndex().toDouble()
         val harmonyIntensity = (
             ((scores.require(SynastryDimension.ATTRACTION).value + scores.require(SynastryDimension.COMMUNICATION).value) / 2.0 - 55.0) * 1.9 +
                 sin((2 * PI * t / 6.0) + phase(seed, 0.33)) * 14.0
@@ -377,6 +379,8 @@ class DefaultSynastryCompatibilityResolver : SynastryCompatibilityResolver {
             depth = depth,
         )
     }
+
+    private fun LocalDate.dayIndex(): Int = epochBaseDate.daysUntil(this)
 
     private fun confidenceFor(depth: SynastryReadingDepth): SynastryConfidenceLevel = when (depth) {
         SynastryReadingDepth.BASIC -> SynastryConfidenceLevel.LOW
