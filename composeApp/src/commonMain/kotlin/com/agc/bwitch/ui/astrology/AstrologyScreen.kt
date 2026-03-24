@@ -37,8 +37,8 @@ fun AstrologyScreen(
         FeatureItem(
             title = "Compatibilidad",
             subtitle = "Sinastría básica entre dos personas",
-            enabled = false,
-            onClick = { }
+            enabled = true,
+            onClick = { onNavigate(Destination.Synastry) }
         )
 
         FeatureItem(

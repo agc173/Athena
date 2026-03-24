@@ -21,6 +21,8 @@ sealed class Destination(val title: String) {
 
     data object BirthChart : Destination("Esencia natal")
 
+    data object Synastry : Destination("Sinastría")
+
     /**
      * Próximo módulo
      */

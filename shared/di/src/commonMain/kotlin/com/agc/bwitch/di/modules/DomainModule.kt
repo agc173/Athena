@@ -9,6 +9,7 @@ import com.agc.bwitch.domain.astrology.horoscope.DeriveZodiacSignUseCase
 import com.agc.bwitch.domain.astrology.horoscope.GetDailyHoroscopeUseCase
 import com.agc.bwitch.domain.astrology.horoscope.ObserveDailyHoroscopeUseCase
 import com.agc.bwitch.domain.astrology.horoscope.PullDailyHoroscopeUseCase
+import com.agc.bwitch.domain.astrology.synastry.SynastryReadingGenerator
 import com.agc.bwitch.domain.session.ClearLocalUserDataUseCase
 import com.agc.bwitch.domain.userprofile.GetUserProfileUseCase
 import com.agc.bwitch.domain.userprofile.ObserveUserProfileUseCase
@@ -32,6 +33,9 @@ val domainModule: Module = module {
     factory { ObserveBirthEssenceUseCase(get()) }
     factory { PullBirthEssenceUseCase(get()) }
     factory { GenerateBirthEssenceUseCase(get()) }
+
+    // Synastry
+    factory { SynastryReadingGenerator() }
 
     // User profile
     factory { ObserveUserProfileUseCase(get()) }
