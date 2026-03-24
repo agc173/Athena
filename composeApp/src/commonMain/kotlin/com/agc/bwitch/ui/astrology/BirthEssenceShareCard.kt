@@ -55,7 +55,7 @@ fun BirthEssenceShareCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .aspectRatio(1.6f),
-                    contentScale = ContentScale.Crop,
+                    contentScale = ContentScale.Fit,
                 )
             }
 
