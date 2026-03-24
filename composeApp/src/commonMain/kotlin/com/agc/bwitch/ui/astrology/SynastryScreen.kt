@@ -2,8 +2,10 @@ package com.agc.bwitch.ui.astrology
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -21,8 +23,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
+import com.agc.bwitch.domain.astrology.synastry.SynastryDailyAxisState
 import com.agc.bwitch.domain.astrology.synastry.SynastryDimension
+import com.agc.bwitch.domain.astrology.synastry.SynastryEnergyAxis
 import com.agc.bwitch.domain.astrology.synastry.SynastryReading
+import com.agc.bwitch.domain.astrology.synastry.toFiveStarRating
 import com.agc.bwitch.domain.astrology.synastry.SynastryReadingDepth
 import com.agc.bwitch.domain.astrology.synastry.SynastrySignal
 import com.agc.bwitch.presentation.astrology.synastry.SynastryPersonForm
@@ -149,12 +154,10 @@ private fun SynastryResultCard(reading: SynastryReading) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
-        Text(text = "Scores por dimensión", style = MaterialTheme.typography.titleSmall)
-        structured.scores.forEach { (dimension, score) ->
-            Text(
-                text = "• ${dimension.toUiLabel()}: ${score.value}/100",
-                style = MaterialTheme.typography.bodyMedium,
-            )
+        Text(text = "Métricas del vínculo", style = MaterialTheme.typography.titleSmall)
+        metricOrder.forEach { dimension ->
+            val score = structured.scores[dimension] ?: return@forEach
+            MetricStarsRow(dimension = dimension, stars = score.toFiveStarRating())
         }
 
         Text(text = "Fortalezas", style = MaterialTheme.typography.titleSmall)
@@ -198,6 +201,12 @@ private fun SynastryResultCard(reading: SynastryReading) {
                 text = "• Dimensión sensible: ${daily.sensitiveDimension.toUiLabel()}",
                 style = MaterialTheme.typography.bodyMedium,
             )
+            daily.axes.forEach { axis ->
+                Text(
+                    text = "• ${axis.toUiLabel()}",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
             Text(
                 text = "• Consejo diario: ${daily.dailyGuidance}",
                 style = MaterialTheme.typography.bodyMedium,
@@ -210,6 +219,39 @@ private fun SynastryResultCard(reading: SynastryReading) {
         }
     }
 }
+
+
+
+@Composable
+private fun MetricStarsRow(dimension: SynastryDimension, stars: Double) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(text = dimension.toUiLabel(), style = MaterialTheme.typography.bodyMedium)
+        StarRating(stars = stars)
+    }
+}
+
+@Composable
+private fun StarRating(stars: Double) {
+    val full = stars.toInt()
+    val hasHalf = stars - full >= 0.5
+    val empty = 5 - full - if (hasHalf) 1 else 0
+
+    Row(modifier = Modifier.width(BWitchThemeTokens.dimens.spacingMd * 10)) {
+        repeat(full) { Text("★") }
+        if (hasHalf) Text("⯨")
+        repeat(empty) { Text("☆") }
+    }
+}
+
+private val metricOrder = listOf(
+    SynastryDimension.ATTRACTION,
+    SynastryDimension.EMOTIONAL,
+    SynastryDimension.COMMUNICATION,
+    SynastryDimension.GROWTH,
+)
 
 @Composable
 private fun SignDropdown(
@@ -328,11 +370,16 @@ private fun SynastryReadingDepth.toUiDepthLabel(): String = when (this) {
 }
 
 private fun SynastryDimension.toUiLabel(): String = when (this) {
-    SynastryDimension.EMOTIONAL -> "Emocional"
-    SynastryDimension.COMMUNICATION -> "Comunicación"
     SynastryDimension.ATTRACTION -> "Atracción"
-    SynastryDimension.STABILITY -> "Estabilidad"
-    SynastryDimension.GROWTH -> "Crecimiento"
+    SynastryDimension.EMOTIONAL -> "Sintonía emocional"
+    SynastryDimension.COMMUNICATION -> "Comunicación"
+    SynastryDimension.GROWTH -> "Potencial de crecimiento"
+}
+
+private fun SynastryDailyAxisState.toUiLabel(): String = when (axis) {
+    SynastryEnergyAxis.HARMONY_INTENSITY -> if (value >= 0) "Armonía ←→ Intensidad: más Intensidad" else "Armonía ←→ Intensidad: más Armonía"
+    SynastryEnergyAxis.STABILITY_TRANSFORMATION -> if (value >= 0) "Estabilidad ←→ Transformación: más Transformación" else "Estabilidad ←→ Transformación: más Estabilidad"
+    SynastryEnergyAxis.CALM_MOVEMENT -> if (value >= 0) "Calma ←→ Movimiento: más Movimiento" else "Calma ←→ Movimiento: más Calma"
 }
 
 private fun SynastrySignal.toUiLabel(): String = when (this) {

@@ -62,7 +62,7 @@ class SynastryReadingGenerator(
         input: SynastryInput,
         today: LocalDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date,
     ): SynastryReading {
-        val structured = compatibilityResolver.resolve(input)
+        val structured = compatibilityResolver.resolve(input, today)
         val dailyOverlay = dailyOverlayGenerator.generate(
             input = input,
             structured = structured,
@@ -85,16 +85,38 @@ class SynastryDailyOverlayGenerator {
         structured: SynastryReadingStructured,
         date: LocalDate,
     ): SynastryDailyOverlay {
-        val ordered = structured.scores.entries.sortedByDescending { it.value.value }
-        val dimensions = SynastryDimension.entries
         val seed = dailySeed(input, date)
-        val seedPositive = seed and Int.MAX_VALUE
-        val highlighted = dimensions[seedPositive % dimensions.size]
-        val sensitive = dimensions[(highlighted.ordinal + 1 + (seedPositive / dimensions.size) % (dimensions.size - 1)) % dimensions.size]
-        val energyLabel = DAILY_ENERGY_LABELS[seedPositive % DAILY_ENERGY_LABELS.size]
-        val guidance = DAILY_GUIDANCES[(seedPositive / 7) % DAILY_GUIDANCES.size]
-        val strongestBase = ordered.first().key
-        val weakestBase = ordered.last().key
+        val resolver = DefaultSynastryCompatibilityResolver()
+        val axes = resolver.resolveAxisStates(
+            scores = structured.scores,
+            baseProfile = structured.baseProfile,
+            date = date,
+            seed = seed,
+        )
+
+        val highlightedRanking = rankDimensions(
+            dimensions = structured.scores.keys.toList(),
+            baseScores = structured.scores,
+            axes = axes,
+            seed = seed,
+            highlighted = true,
+        )
+        val highlighted = highlightedRanking.first()
+
+        val sensitiveRanking = rankDimensions(
+            dimensions = structured.scores.keys.toList(),
+            baseScores = structured.scores,
+            axes = axes,
+            seed = seed + 911,
+            highlighted = false,
+        )
+        val sensitive = sensitiveRanking.firstOrNull { it != highlighted }
+            ?: highlightedRanking.firstOrNull { it != highlighted }
+            ?: SynastryDimension.entries.first { it != highlighted }
+
+        val primaryAxis = axes.maxByOrNull { kotlin.math.abs(it.value) } ?: axes.first()
+        val energyLabel = axisEnergyLabel(primaryAxis)
+        val guidance = DAILY_GUIDANCES[(seed and Int.MAX_VALUE) % DAILY_GUIDANCES.size]
 
         return SynastryDailyOverlay(
             dateIso = date.toString(),
@@ -105,23 +127,91 @@ class SynastryDailyOverlayGenerator {
             dailyNarrativeFragment = buildString {
                 append("Hoy se activa especialmente ${highlighted.humanLabelWithArticle()}. ")
                 append("La zona más sensible es ${sensitive.humanLabelWithArticle()}. ")
-                append("Su base ya muestra fortaleza en ${strongestBase.humanLabel()} y mayor cuidado en ${weakestBase.humanLabel()}.")
+                append("El eje dominante marca ${primaryAxis.toAxisSentence()}.")
             },
+            axes = axes,
         )
     }
 
-    private fun dailySeed(input: SynastryInput, date: LocalDate): Int {
-        val signs = listOf(input.personA.sunSign.name, input.personB.sunSign.name).sorted()
-        val key = "${signs[0]}|${signs[1]}|$date"
-        return key.fold(17) { acc, char -> (acc * 31) + char.code }
+    private fun rankDimensions(
+        dimensions: List<SynastryDimension>,
+        baseScores: Map<SynastryDimension, SynastryScore>,
+        axes: List<SynastryDailyAxisState>,
+        seed: Int,
+        highlighted: Boolean,
+    ): List<SynastryDimension> {
+        return dimensions.sortedByDescending { dimension ->
+            val scorePart = if (highlighted) {
+                baseScores.getValue(dimension).value * 0.7
+            } else {
+                (100 - baseScores.getValue(dimension).value) * 0.7
+            }
+            val axisPart = axisInfluence(dimension, axes, highlighted) * 0.2
+            val bias = deterministicDimensionBias(seed, dimension) * 0.1
+            scorePart + axisPart + bias
+        }
     }
+
+    private fun axisInfluence(
+        dimension: SynastryDimension,
+        axes: List<SynastryDailyAxisState>,
+        highlighted: Boolean,
+    ): Double {
+        val harmony = axes.firstOrNull { it.axis == SynastryEnergyAxis.HARMONY_INTENSITY }?.value ?: 0
+        val stability = axes.firstOrNull { it.axis == SynastryEnergyAxis.STABILITY_TRANSFORMATION }?.value ?: 0
+        val movement = axes.firstOrNull { it.axis == SynastryEnergyAxis.CALM_MOVEMENT }?.value ?: 0
+
+        val attractionBias = (harmony * 0.32) + (movement * 0.28) + (stability * 0.12)
+        val emotionalBias = (-harmony * 0.22) + (-movement * 0.3) + (-stability * 0.18)
+        val communicationBias = (harmony * 0.26) + (movement * 0.18) + (-stability * 0.14)
+        val growthBias = (stability * 0.36) + (-harmony * 0.12) + (movement * 0.08)
+
+        val raw = when (dimension) {
+            SynastryDimension.ATTRACTION -> attractionBias
+            SynastryDimension.EMOTIONAL -> emotionalBias
+            SynastryDimension.COMMUNICATION -> communicationBias
+            SynastryDimension.GROWTH -> growthBias
+        }
+
+        return if (highlighted) raw else -raw
+    }
+
+    private fun deterministicDimensionBias(seed: Int, dimension: SynastryDimension): Double {
+        val value = (seed * 31) + (dimension.ordinal * 997)
+        val normalized = ((value and Int.MAX_VALUE) % 1000) / 1000.0
+        return (normalized * 24.0) - 12.0
+    }
+
+    private fun dailySeed(input: SynastryInput, date: LocalDate): Int {
+        val tokens = listOf(
+            input.personA.sunSign.name,
+            input.personB.sunSign.name,
+            input.personA.moonSign?.name ?: "_",
+            input.personB.moonSign?.name ?: "_",
+            input.personA.risingSign?.name ?: "_",
+            input.personB.risingSign?.name ?: "_",
+        ).sorted()
+        val key = tokens.joinToString("|") + "|$date"
+        return key.fold(23) { acc, c -> (acc * 37) + c.code }
+    }
+
+    private fun axisEnergyLabel(primaryAxis: SynastryDailyAxisState): String = when (primaryAxis.axis) {
+        SynastryEnergyAxis.HARMONY_INTENSITY -> if (primaryAxis.value >= 0) "Energía de intensidad creativa" else "Energía de armonización"
+        SynastryEnergyAxis.STABILITY_TRANSFORMATION -> if (primaryAxis.value >= 0) "Energía de transformación" else "Energía de estabilidad"
+        SynastryEnergyAxis.CALM_MOVEMENT -> if (primaryAxis.value >= 0) "Energía de movimiento" else "Energía de calma"
+    }
+}
+
+private fun SynastryDailyAxisState.toAxisSentence(): String = when (axis) {
+    SynastryEnergyAxis.HARMONY_INTENSITY -> if (value >= 0) "más Intensidad que Armonía" else "más Armonía que Intensidad"
+    SynastryEnergyAxis.STABILITY_TRANSFORMATION -> if (value >= 0) "más Transformación que Estabilidad" else "más Estabilidad que Transformación"
+    SynastryEnergyAxis.CALM_MOVEMENT -> if (value >= 0) "más Movimiento que Calma" else "más Calma que Movimiento"
 }
 
 private fun SynastryDimension.humanLabel(): String = when (this) {
     SynastryDimension.EMOTIONAL -> "resonancia emocional"
     SynastryDimension.COMMUNICATION -> "comunicación"
     SynastryDimension.ATTRACTION -> "atracción"
-    SynastryDimension.STABILITY -> "estabilidad"
     SynastryDimension.GROWTH -> "crecimiento"
 }
 
@@ -129,7 +219,6 @@ private fun SynastryDimension.humanLabelWithArticle(): String = when (this) {
     SynastryDimension.EMOTIONAL -> "la resonancia emocional"
     SynastryDimension.COMMUNICATION -> "la comunicación"
     SynastryDimension.ATTRACTION -> "la atracción"
-    SynastryDimension.STABILITY -> "la estabilidad"
     SynastryDimension.GROWTH -> "el crecimiento"
 }
 
@@ -137,7 +226,6 @@ private fun SynastryDimension.strengthFallbackCopy(): String = when (this) {
     SynastryDimension.EMOTIONAL -> "una sensibilidad compartida"
     SynastryDimension.COMMUNICATION -> "una forma de diálogo que puede ordenarse rápido"
     SynastryDimension.ATTRACTION -> "una química presente desde el inicio"
-    SynastryDimension.STABILITY -> "la capacidad de sostener acuerdos concretos"
     SynastryDimension.GROWTH -> "la apertura para evolucionar sin estancarse"
 }
 
@@ -145,7 +233,6 @@ private fun SynastryDimension.guidanceFallbackCopy(): String = when (this) {
     SynastryDimension.EMOTIONAL -> "Conviene crear espacios seguros para nombrar lo que sienten con honestidad."
     SynastryDimension.COMMUNICATION -> "Conviene revisar tiempos y formas de diálogo para evitar malentendidos."
     SynastryDimension.ATTRACTION -> "Conviene cuidar el ritmo del vínculo para que la intensidad no opaque la escucha."
-    SynastryDimension.STABILITY -> "Conviene construir pequeñas rutinas compartidas que den más sostén."
     SynastryDimension.GROWTH -> "Conviene mantener conversaciones abiertas sobre expectativas y dirección común."
 }
 
@@ -186,15 +273,6 @@ private fun ZodiacSign.humanLabel(): String = when (this) {
     ZodiacSign.aquarius -> "Acuario"
     ZodiacSign.pisces -> "Piscis"
 }
-
-private val DAILY_ENERGY_LABELS = listOf(
-    "Pulso expansivo",
-    "Clima de ajuste fino",
-    "Magnetismo en movimiento",
-    "Tono de consolidación",
-    "Momento de transformación consciente",
-    "Energía de claridad relacional",
-)
 
 private val DAILY_GUIDANCES = listOf(
     "Prioricen una conversación breve y clara antes de reaccionar.",

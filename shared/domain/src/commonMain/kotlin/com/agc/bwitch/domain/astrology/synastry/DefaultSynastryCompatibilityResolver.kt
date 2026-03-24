@@ -1,31 +1,42 @@
 package com.agc.bwitch.domain.astrology.synastry
 
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
+import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.roundToInt
+import kotlin.math.sin
+import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toEpochDays
+import kotlinx.datetime.toLocalDateTime
 
 interface SynastryCompatibilityResolver {
-    fun resolve(input: SynastryInput): SynastryReadingStructured
+    fun resolve(
+        input: SynastryInput,
+        date: LocalDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date,
+    ): SynastryReadingStructured
 }
 
 class DefaultSynastryCompatibilityResolver : SynastryCompatibilityResolver {
 
-    override fun resolve(input: SynastryInput): SynastryReadingStructured {
+    override fun resolve(input: SynastryInput, date: LocalDate): SynastryReadingStructured {
         val completeness = buildCompleteness(input)
-        val baseScores = linkedMapOf(
-            SynastryDimension.EMOTIONAL to emotionalScore(input),
-            SynastryDimension.COMMUNICATION to communicationScore(input),
-            SynastryDimension.ATTRACTION to attractionScore(input),
-            SynastryDimension.STABILITY to stabilityScore(input),
-            SynastryDimension.GROWTH to growthScore(input),
-        )
-        val scores = applySolarProfileContrast(input, baseScores)
+        val family = resolveFamily(input.personA.sunSign, input.personB.sunSign)
+        val baseProfile = buildBaseProfile(input, family, input.personA.sunSign, input.personB.sunSign)
+        val seed = deterministicSeed(input)
+
+        val scores = SynastryDimension.entries.associateWith { dimension ->
+            val profile = baseProfile.metrics.getValue(dimension)
+            val raw = metricValueForDay(profile, date, seed + dimension.ordinal * 997)
+            SynastryScore.from(raw.roundToInt())
+        }
 
         val overallScore = SynastryScore.from(scores.values.map { it.value }.average().roundToInt())
         val archetype = resolveArchetype(scores, overallScore)
-
-        val strengths = resolveStrengths(scores)
-        val tensions = resolveTensions(scores)
+        val axisStates = resolveAxisStates(scores, baseProfile, date, seed)
+        val strengths = resolveStrengths(scores, axisStates)
+        val tensions = resolveTensions(scores, axisStates)
         val guidance = resolveGuidance(tensions)
         val tags = resolveTags(scores, overallScore, completeness.depth)
 
@@ -35,6 +46,7 @@ class DefaultSynastryCompatibilityResolver : SynastryCompatibilityResolver {
             archetype = archetype,
             overallScore = overallScore,
             scores = scores,
+            baseProfile = baseProfile,
             strengths = strengths,
             tensions = tensions,
             guidance = guidance,
@@ -42,25 +54,306 @@ class DefaultSynastryCompatibilityResolver : SynastryCompatibilityResolver {
         )
     }
 
-    private fun applySolarProfileContrast(
+    private fun metricValueForDay(profile: SynastryMetricProfile, date: LocalDate, seed: Int): Double {
+        val t = date.toEpochDays().toDouble()
+        val longPhase = phase(seed, 0.11)
+        val shortPhase = phase(seed, 0.29)
+        val microPhase = phase(seed, 0.53)
+
+        val longWave = sin((2 * PI * t / profile.longPeriodDays) + longPhase) * profile.longAmplitude
+        val shortWave = sin((2 * PI * t / profile.shortPeriodDays) + shortPhase) * profile.shortAmplitude
+        val micro = sin((2 * PI * t / 3.0) + microPhase) * profile.microAmplitude
+
+        return (profile.center + longWave + shortWave + micro).coerceIn(15.0, 92.0)
+    }
+
+    private fun buildBaseProfile(
         input: SynastryInput,
-        baseScores: Map<SynastryDimension, SynastryScore>,
-    ): Map<SynastryDimension, SynastryScore> {
-        val profile = resolveSolarProfile(input.personA.sunSign, input.personB.sunSign)
-        return linkedMapOf<SynastryDimension, SynastryScore>().apply {
-            SynastryDimension.entries.forEach { dimension ->
-                val base = baseScores.require(dimension).value
-                val stretched = stretchContrast(base)
-                val adjusted = stretched + profile.offsets.getValue(dimension)
-                put(dimension, SynastryScore.from(adjusted))
+        family: PairFamily,
+        sunA: ZodiacSign,
+        sunB: ZodiacSign,
+    ): SynastryBaseProfile {
+        val moonInfluence = optionalPairAverage(input.personA.moonSign, input.personB.moonSign)?.let { (it - 50) / 10 } ?: 0
+        val risingInfluence = optionalPairAverage(input.personA.risingSign, input.personB.risingSign)?.let { (it - 50) / 12 } ?: 0
+        val microProfile = resolveSolarMicroProfile(sunA, sunB)
+
+        val familyCenters = family.centers
+        val centers = mapOf(
+            SynastryDimension.ATTRACTION to (
+                familyCenters.getValue(SynastryDimension.ATTRACTION) + risingInfluence + microProfile.centerOffsets.getValue(SynastryDimension.ATTRACTION)
+                ),
+            SynastryDimension.EMOTIONAL to (
+                familyCenters.getValue(SynastryDimension.EMOTIONAL) + moonInfluence + microProfile.centerOffsets.getValue(SynastryDimension.EMOTIONAL)
+                ),
+            SynastryDimension.COMMUNICATION to (
+                familyCenters.getValue(SynastryDimension.COMMUNICATION) + risingInfluence / 2 + microProfile.centerOffsets.getValue(SynastryDimension.COMMUNICATION)
+                ),
+            SynastryDimension.GROWTH to (
+                familyCenters.getValue(SynastryDimension.GROWTH) + ((moonInfluence + risingInfluence) / 2) + microProfile.centerOffsets.getValue(SynastryDimension.GROWTH)
+                ),
+        ).mapValues { it.value.coerceIn(35, 75) }
+
+        val metrics = SynastryDimension.entries.associateWith { dimension ->
+            SynastryMetricProfile(
+                center = centers.getValue(dimension),
+                longAmplitude = (family.longAmplitude.getValue(dimension) + microProfile.longAmplitudeOffsets.getValue(dimension)).coerceIn(8.0, 20.0),
+                shortAmplitude = (family.shortAmplitude.getValue(dimension) + microProfile.shortAmplitudeOffsets.getValue(dimension)).coerceIn(3.0, 8.0),
+                microAmplitude = (family.microAmplitude + microProfile.microAmplitudeShift).coerceIn(1.2, 3.0),
+                longPeriodDays = family.longPeriodDays,
+                shortPeriodDays = family.shortPeriodDays,
+            )
+        }
+
+        return SynastryBaseProfile(
+            familyKey = "${family.key}_${microProfile.key}",
+            metrics = metrics,
+        )
+    }
+
+    private fun resolveSolarMicroProfile(sunA: ZodiacSign, sunB: ZodiacSign): SolarMicroProfile {
+        val distanceRaw = abs(sunA.ordinal - sunB.ordinal)
+        val distance = minOf(distanceRaw, 12 - distanceRaw)
+        val sameSign = sunA == sunB
+        val opposite = areOpposite(sunA, sunB)
+        val sameElement = sunA.element == sunB.element
+        val modalities = setOf(sunA.modality, sunB.modality)
+
+        val centerOffsets = mutableMapOf(
+            SynastryDimension.ATTRACTION to 0,
+            SynastryDimension.EMOTIONAL to 0,
+            SynastryDimension.COMMUNICATION to 0,
+            SynastryDimension.GROWTH to 0,
+        )
+        val longOffsets = mutableMapOf(
+            SynastryDimension.ATTRACTION to 0.0,
+            SynastryDimension.EMOTIONAL to 0.0,
+            SynastryDimension.COMMUNICATION to 0.0,
+            SynastryDimension.GROWTH to 0.0,
+        )
+        val shortOffsets = mutableMapOf(
+            SynastryDimension.ATTRACTION to 0.0,
+            SynastryDimension.EMOTIONAL to 0.0,
+            SynastryDimension.COMMUNICATION to 0.0,
+            SynastryDimension.GROWTH to 0.0,
+        )
+        var microShift = 0.0
+
+        if (sameSign) {
+            centerOffsets[SynastryDimension.EMOTIONAL] = centerOffsets.getValue(SynastryDimension.EMOTIONAL) + 6
+            centerOffsets[SynastryDimension.COMMUNICATION] = centerOffsets.getValue(SynastryDimension.COMMUNICATION) + 5
+            centerOffsets[SynastryDimension.GROWTH] = centerOffsets.getValue(SynastryDimension.GROWTH) - 3
+            longOffsets[SynastryDimension.GROWTH] = longOffsets.getValue(SynastryDimension.GROWTH) - 1.2
+            microShift -= 0.2
+        }
+
+        if (opposite) {
+            centerOffsets[SynastryDimension.ATTRACTION] = centerOffsets.getValue(SynastryDimension.ATTRACTION) + 4
+            centerOffsets[SynastryDimension.GROWTH] = centerOffsets.getValue(SynastryDimension.GROWTH) + 5
+            shortOffsets[SynastryDimension.ATTRACTION] = shortOffsets.getValue(SynastryDimension.ATTRACTION) + 1.0
+            shortOffsets[SynastryDimension.GROWTH] = shortOffsets.getValue(SynastryDimension.GROWTH) + 1.0
+            microShift += 0.2
+        }
+
+        when (distance) {
+            1, 2 -> {
+                centerOffsets[SynastryDimension.ATTRACTION] = centerOffsets.getValue(SynastryDimension.ATTRACTION) + 3
+                centerOffsets[SynastryDimension.EMOTIONAL] = centerOffsets.getValue(SynastryDimension.EMOTIONAL) - 2
+                shortOffsets[SynastryDimension.ATTRACTION] = shortOffsets.getValue(SynastryDimension.ATTRACTION) + 0.6
             }
+
+            3, 4 -> {
+                centerOffsets[SynastryDimension.COMMUNICATION] = centerOffsets.getValue(SynastryDimension.COMMUNICATION) + 2
+                centerOffsets[SynastryDimension.GROWTH] = centerOffsets.getValue(SynastryDimension.GROWTH) + 2
+                longOffsets[SynastryDimension.GROWTH] = longOffsets.getValue(SynastryDimension.GROWTH) + 0.8
+            }
+
+            5 -> {
+                centerOffsets[SynastryDimension.EMOTIONAL] = centerOffsets.getValue(SynastryDimension.EMOTIONAL) + 2
+                centerOffsets[SynastryDimension.COMMUNICATION] = centerOffsets.getValue(SynastryDimension.COMMUNICATION) - 1
+            }
+        }
+
+        if (sameElement && sunA.modality != sunB.modality) {
+            centerOffsets[SynastryDimension.GROWTH] = centerOffsets.getValue(SynastryDimension.GROWTH) + 3
+            centerOffsets[SynastryDimension.COMMUNICATION] = centerOffsets.getValue(SynastryDimension.COMMUNICATION) + 2
+            longOffsets[SynastryDimension.GROWTH] = longOffsets.getValue(SynastryDimension.GROWTH) + 0.7
+        }
+
+        if (modalities.size == 1) {
+            when (sunA.modality) {
+                AstroModality.FIXED -> {
+                    centerOffsets[SynastryDimension.EMOTIONAL] = centerOffsets.getValue(SynastryDimension.EMOTIONAL) + 1
+                    centerOffsets[SynastryDimension.GROWTH] = centerOffsets.getValue(SynastryDimension.GROWTH) - 2
+                }
+
+                AstroModality.CARDINAL -> {
+                    centerOffsets[SynastryDimension.ATTRACTION] = centerOffsets.getValue(SynastryDimension.ATTRACTION) + 2
+                    shortOffsets[SynastryDimension.ATTRACTION] = shortOffsets.getValue(SynastryDimension.ATTRACTION) + 0.5
+                }
+
+                AstroModality.MUTABLE -> {
+                    centerOffsets[SynastryDimension.GROWTH] = centerOffsets.getValue(SynastryDimension.GROWTH) + 2
+                    centerOffsets[SynastryDimension.EMOTIONAL] = centerOffsets.getValue(SynastryDimension.EMOTIONAL) - 1
+                    microShift += 0.1
+                }
+            }
+        }
+
+        val modalityKey = listOf(sunA.modality.name.lowercase(), sunB.modality.name.lowercase()).sorted().joinToString("_")
+        return SolarMicroProfile(
+            key = "d${distance}_${modalityKey}_${if (sameSign) "same" else "diff"}",
+            centerOffsets = centerOffsets,
+            longAmplitudeOffsets = longOffsets,
+            shortAmplitudeOffsets = shortOffsets,
+            microAmplitudeShift = microShift,
+        )
+    }
+
+    private fun resolveArchetype(
+        scores: Map<SynastryDimension, SynastryScore>,
+        overallScore: SynastryScore,
+    ): SynastryBondArchetype {
+        val emotional = scores.require(SynastryDimension.EMOTIONAL).value
+        val communication = scores.require(SynastryDimension.COMMUNICATION).value
+        val attraction = scores.require(SynastryDimension.ATTRACTION).value
+        val growth = scores.require(SynastryDimension.GROWTH).value
+
+        val tension = ((100 - emotional) + (100 - communication) + (100 - growth)) / 3
+
+        return when {
+            attraction >= 72 && tension >= 36 -> SynastryBondArchetype.STORM
+            emotional >= 70 && communication >= 66 -> SynastryBondArchetype.DEVOTIONAL
+            growth >= 70 && abs(growth - emotional) >= 12 -> SynastryBondArchetype.ALCHEMICAL
+            communication >= 70 && attraction >= 66 -> SynastryBondArchetype.ELECTRIC
+            overallScore.value >= 68 -> SynastryBondArchetype.MAGNETIC
+            abs(emotional - communication) <= 5 -> SynastryBondArchetype.MIRROR
+            growth >= 65 -> SynastryBondArchetype.COSMIC_DANCE
+            else -> SynastryBondArchetype.ANCHOR
         }
     }
 
-    private fun stretchContrast(base: Int): Int {
-        val centered = base - 50
-        val factor = 1.18
-        return (50 + (centered * factor)).roundToInt()
+    private fun resolveStrengths(
+        scores: Map<SynastryDimension, SynastryScore>,
+        axes: List<SynastryDailyAxisState>,
+    ): List<SynastrySignal> {
+        val strengths = linkedSetOf<SynastrySignal>()
+
+        if (scores.require(SynastryDimension.EMOTIONAL).value >= 63) strengths += SynastrySignal.STRONG_EMOTIONAL_RESONANCE
+        if (scores.require(SynastryDimension.ATTRACTION).value >= 65) strengths += SynastrySignal.NATURAL_SPARK
+        if (scores.require(SynastryDimension.COMMUNICATION).value >= 62) {
+            strengths += SynastrySignal.COMMUNICATION_FLOW
+            strengths += SynastrySignal.MENTAL_STIMULATION
+        }
+        if (scores.require(SynastryDimension.GROWTH).value >= 62) strengths += SynastrySignal.GROWTH_THROUGH_DIFFERENCE
+        if (axes.find { it.axis == SynastryEnergyAxis.STABILITY_TRANSFORMATION }?.value ?: 0 <= -25) {
+            strengths += SynastrySignal.GROUNDING_BOND
+            strengths += SynastrySignal.STABILITY_POTENTIAL
+        }
+
+        if (strengths.isEmpty()) strengths += SynastrySignal.NATURAL_SPARK
+        return strengths.toList()
+    }
+
+    private fun resolveTensions(
+        scores: Map<SynastryDimension, SynastryScore>,
+        axes: List<SynastryDailyAxisState>,
+    ): List<SynastrySignal> {
+        val tensions = linkedSetOf<SynastrySignal>()
+
+        if (scores.require(SynastryDimension.EMOTIONAL).value <= 52) tensions += SynastrySignal.DIFFERENT_EMOTIONAL_RHYTHMS
+        if (scores.require(SynastryDimension.COMMUNICATION).value <= 53) tensions += SynastrySignal.NEED_FOR_PATIENCE
+        if (scores.require(SynastryDimension.ATTRACTION).value >= 70 && scores.require(SynastryDimension.GROWTH).value <= 55) {
+            tensions += SynastrySignal.HIGH_INTENSITY
+        }
+        if (axes.find { it.axis == SynastryEnergyAxis.CALM_MOVEMENT }?.value ?: 0 >= 40) {
+            tensions += SynastrySignal.SLOW_DOWN_REACTIVITY
+        }
+
+        if (tensions.isEmpty()) tensions += SynastrySignal.CREATE_SHARED_RHYTHM
+        return tensions.toList()
+    }
+
+    private fun resolveGuidance(tensions: List<SynastrySignal>): List<SynastrySignal> {
+        val guidance = linkedSetOf<SynastrySignal>()
+
+        tensions.forEach { tension ->
+            when (tension) {
+                SynastrySignal.DIFFERENT_EMOTIONAL_RHYTHMS -> guidance += SynastrySignal.PROTECT_THE_SOFTNESS
+                SynastrySignal.NEED_FOR_PATIENCE -> guidance += SynastrySignal.CREATE_SHARED_RHYTHM
+                SynastrySignal.HIGH_INTENSITY,
+                SynastrySignal.SLOW_DOWN_REACTIVITY,
+                -> guidance += SynastrySignal.SLOW_DOWN_REACTIVITY
+
+                else -> guidance += SynastrySignal.USE_DIFFERENCE_AS_GROWTH
+            }
+        }
+
+        if (guidance.isEmpty()) guidance += SynastrySignal.USE_DIFFERENCE_AS_GROWTH
+        return guidance.toList()
+    }
+
+    private fun resolveTags(
+        scores: Map<SynastryDimension, SynastryScore>,
+        overallScore: SynastryScore,
+        depth: SynastryReadingDepth,
+    ): List<SynastryInsightTag> {
+        val tags = linkedSetOf<SynastryInsightTag>()
+
+        if (overallScore.value >= 70) tags += SynastryInsightTag.HARMONIOUS
+        if (scores.require(SynastryDimension.ATTRACTION).value >= 68) tags += SynastryInsightTag.INTENSE
+        if (scores.require(SynastryDimension.GROWTH).value >= 64) tags += SynastryInsightTag.EVOLUTIVE
+        if (scores.require(SynastryDimension.COMMUNICATION).value >= 62) tags += SynastryInsightTag.COMMUNICATIVE
+        if (scores.require(SynastryDimension.EMOTIONAL).value >= 62) tags += SynastryInsightTag.EMOTIONAL
+        if (depth != SynastryReadingDepth.COMPLETE || overallScore.value < 58) tags += SynastryInsightTag.NEEDS_PRACTICE
+        if (overallScore.value in 58..70) tags += SynastryInsightTag.GROUNDING
+
+        return tags.toList()
+    }
+
+    internal fun resolveAxisStates(
+        scores: Map<SynastryDimension, SynastryScore>,
+        baseProfile: SynastryBaseProfile,
+        date: LocalDate,
+        seed: Int,
+    ): List<SynastryDailyAxisState> {
+        val t = date.toEpochDays().toDouble()
+        val harmonyIntensity = (
+            ((scores.require(SynastryDimension.ATTRACTION).value + scores.require(SynastryDimension.COMMUNICATION).value) / 2.0 - 55.0) * 1.9 +
+                sin((2 * PI * t / 6.0) + phase(seed, 0.33)) * 14.0
+            ).roundToInt().coerceIn(-100, 100)
+
+        val avgCenter = baseProfile.metrics.values.map { it.center }.average()
+        val stabilityTransformation = (
+            ((scores.require(SynastryDimension.GROWTH).value - avgCenter) * 2.1) +
+                sin((2 * PI * t / 10.0) + phase(seed, 0.71)) * 18.0
+            ).roundToInt().coerceIn(-100, 100)
+
+        val calmMovement = (
+            sin((2 * PI * t / 4.0) + phase(seed, 0.47)) * 34.0 +
+                ((scores.require(SynastryDimension.ATTRACTION).value - scores.require(SynastryDimension.EMOTIONAL).value) * 0.9)
+            ).roundToInt().coerceIn(-100, 100)
+
+        return listOf(
+            SynastryDailyAxisState(SynastryEnergyAxis.HARMONY_INTENSITY, harmonyIntensity),
+            SynastryDailyAxisState(SynastryEnergyAxis.STABILITY_TRANSFORMATION, stabilityTransformation),
+            SynastryDailyAxisState(SynastryEnergyAxis.CALM_MOVEMENT, calmMovement),
+        )
+    }
+
+    private fun resolveFamily(signA: ZodiacSign, signB: ZodiacSign): PairFamily {
+        val pair = setOf(signA.element, signB.element)
+        val same = signA.element == signB.element
+        val opposite = areOpposite(signA, signB)
+
+        return when {
+            same -> PairFamily.sameElement(signA.element)
+            opposite -> PairFamily.opposed
+            pair == setOf(AstroElement.FIRE, AstroElement.AIR) -> PairFamily.fireAir
+            pair == setOf(AstroElement.EARTH, AstroElement.WATER) -> PairFamily.earthWater
+            pair == setOf(AstroElement.FIRE, AstroElement.WATER) -> PairFamily.fireWater
+            pair == setOf(AstroElement.AIR, AstroElement.EARTH) -> PairFamily.airEarth
+            else -> PairFamily.mixed
+        }
     }
 
     private fun buildCompleteness(input: SynastryInput): SynastryDataCompleteness {
@@ -91,408 +384,13 @@ class DefaultSynastryCompatibilityResolver : SynastryCompatibilityResolver {
         SynastryReadingDepth.COMPLETE -> SynastryConfidenceLevel.HIGH
     }
 
-    private fun emotionalScore(input: SynastryInput): SynastryScore {
-        val a = input.personA
-        val b = input.personB
-
-        val moonMoon = optionalPairAverage(a.moonSign, b.moonSign)
-        val moonSunCross = availableAverage(
-            optionalPairValue(a.moonSign, b.sunSign),
-            optionalPairValue(b.moonSign, a.sunSign),
-        )
-        val solarFallback = pairScore(a.sunSign, b.sunSign)
-
-        val base = when {
-            moonMoon != null && moonSunCross != null -> weightedAverage(0.65 to moonMoon, 0.35 to moonSunCross)
-            moonMoon != null -> weightedAverage(0.80 to moonMoon, 0.20 to solarFallback)
-            moonSunCross != null -> weightedAverage(0.70 to moonSunCross, 0.30 to solarFallback)
-            else -> weightedAverage(0.70 to solarFallback, 0.30 to 50)
-        }
-
-        val allEmotionalSigns = listOfNotNull(a.moonSign, b.moonSign, a.sunSign, b.sunSign)
-        val waterCount = allEmotionalSigns.count { it.element == AstroElement.WATER }
-        val earthCount = allEmotionalSigns.count { it.element == AstroElement.EARTH }
-        val fireCount = allEmotionalSigns.count { it.element == AstroElement.FIRE }
-        val airCount = allEmotionalSigns.count { it.element == AstroElement.AIR }
-
-        val bonus = when {
-            waterCount >= 3 -> 14
-            waterCount >= 2 && earthCount >= 1 -> 10
-            else -> 0
-        }
-
-        val penalty = when {
-            waterCount > 0 && fireCount >= 2 -> 13
-            waterCount > 0 && airCount >= 2 -> 11
-            else -> 0
-        }
-
-        return SynastryScore.from(base + bonus - penalty)
-    }
-
-    private fun communicationScore(input: SynastryInput): SynastryScore {
-        val a = input.personA
-        val b = input.personB
-
-        val sunSun = pairScore(a.sunSign, b.sunSign)
-        val ascAsc = optionalPairAverage(a.risingSign, b.risingSign) ?: 50
-        val sunAscCross = availableAverage(
-            optionalPairValue(a.sunSign, b.risingSign),
-            optionalPairValue(b.sunSign, a.risingSign),
-        ) ?: 50
-
-        val base = weightedAverage(
-            0.40 to sunSun,
-            0.35 to ascAsc,
-            0.25 to sunAscCross,
-        )
-
-        val signs = listOfNotNull(a.sunSign, b.sunSign, a.risingSign, b.risingSign)
-        val airFireCount = signs.count { it.element == AstroElement.AIR || it.element == AstroElement.FIRE }
-        val waterCount = signs.count { it.element == AstroElement.WATER }
-
-        val bonus = when {
-            airFireCount >= 4 -> 14
-            airFireCount >= 3 -> 9
-            else -> 0
-        }
-
-        val penalty = when {
-            waterCount >= 3 && airFireCount <= 1 -> 8
-            else -> 0
-        }
-
-        return SynastryScore.from(base + bonus - penalty)
-    }
-
-    private fun attractionScore(input: SynastryInput): SynastryScore {
-        val a = input.personA
-        val b = input.personB
-
-        val sunSun = pairScore(a.sunSign, b.sunSign)
-        val ascAsc = optionalPairAverage(a.risingSign, b.risingSign) ?: 50
-        val sunAscCross = availableAverage(
-            optionalPairValue(a.sunSign, b.risingSign),
-            optionalPairValue(b.sunSign, a.risingSign),
-        ) ?: 50
-
-        var score = weightedAverage(
-            0.30 to sunSun,
-            0.30 to ascAsc,
-            0.40 to sunAscCross,
-        )
-
-        if (areOpposite(a.sunSign, b.sunSign)) score += 18
-
-        val fireAirCoupling = setOf(a.sunSign.element, b.sunSign.element) == setOf(AstroElement.FIRE, AstroElement.AIR)
-        if (fireAirCoupling) score += 12
-
-        if (a.risingSign != null && b.risingSign != null && areOpposite(a.risingSign, b.risingSign)) score += 10
-
-        val earthyWaterySunPair = setOf(a.sunSign.element, b.sunSign.element) == setOf(AstroElement.EARTH, AstroElement.WATER)
-        if (earthyWaterySunPair) score -= 7
-
-        return SynastryScore.from(score)
-    }
-
-    private fun stabilityScore(input: SynastryInput): SynastryScore {
-        val a = input.personA
-        val b = input.personB
-
-        val sunSun = pairScore(a.sunSign, b.sunSign)
-        val moonMoon = optionalPairAverage(a.moonSign, b.moonSign) ?: 50
-        val ascAsc = optionalPairAverage(a.risingSign, b.risingSign) ?: 50
-
-        var score = weightedAverage(
-            0.45 to sunSun,
-            0.30 to moonMoon,
-            0.25 to ascAsc,
-        )
-
-        val primarySigns = listOf(a.sunSign, b.sunSign)
-        val earthWaterCount = primarySigns.count { it.element == AstroElement.EARTH || it.element == AstroElement.WATER }
-        val fixedCount = primarySigns.count { it.modality == AstroModality.FIXED }
-        val cardinalMutableMix = primarySigns.map { it.modality }.toSet() == setOf(AstroModality.CARDINAL, AstroModality.MUTABLE)
-
-        if (earthWaterCount == 2) score += 14
-        if (fixedCount == 2) score += 8
-        if (cardinalMutableMix) score -= 10
-        if (setOf(a.sunSign.element, b.sunSign.element) == setOf(AstroElement.FIRE, AstroElement.AIR)) score -= 9
-
-        return SynastryScore.from(score)
-    }
-
-    private fun growthScore(input: SynastryInput): SynastryScore {
-        val a = input.personA
-        val b = input.personB
-
-        val sunSun = pairScore(a.sunSign, b.sunSign)
-        val moonSunCross = availableAverage(
-            optionalPairValue(a.moonSign, b.sunSign),
-            optionalPairValue(b.moonSign, a.sunSign),
-        ) ?: 50
-        val ascSunCross = availableAverage(
-            optionalPairValue(a.risingSign, b.sunSign),
-            optionalPairValue(b.risingSign, a.sunSign),
-        ) ?: 50
-
-        var score = weightedAverage(
-            0.35 to sunSun,
-            0.35 to moonSunCross,
-            0.30 to ascSunCross,
-        )
-
-        if (areOpposite(a.sunSign, b.sunSign)) score += 15
-
-        val modalities = setOf(a.sunSign.modality, b.sunSign.modality)
-        if (modalities.size == 2) score += 6
-
-        val elementalContrast = a.sunSign.element != b.sunSign.element
-        if (elementalContrast) score += 6
-
-        if (setOf(a.sunSign.element, b.sunSign.element) == setOf(AstroElement.EARTH, AstroElement.WATER)) score -= 6
-
-        return SynastryScore.from(score)
-    }
-
-    private fun resolveArchetype(
-        scores: Map<SynastryDimension, SynastryScore>,
-        overallScore: SynastryScore,
-    ): SynastryBondArchetype {
-        val emotional = scores.require(SynastryDimension.EMOTIONAL).value
-        val communication = scores.require(SynastryDimension.COMMUNICATION).value
-        val attraction = scores.require(SynastryDimension.ATTRACTION).value
-        val stability = scores.require(SynastryDimension.STABILITY).value
-        val growth = scores.require(SynastryDimension.GROWTH).value
-
-        val friction = ((100 - emotional) + (100 - stability) + (100 - communication)) / 3
-        val resonanceSpread = maxOf(
-            abs(emotional - communication),
-            abs(emotional - stability),
-            abs(communication - growth),
-        )
-
-        val rankedArchetypes = linkedMapOf(
-            SynastryBondArchetype.STORM to ((attraction * 3) + ((100 - stability) * 2) + friction),
-            SynastryBondArchetype.DEVOTIONAL to ((emotional * 3) + (stability * 3) + communication - (friction * 2)),
-            SynastryBondArchetype.ANCHOR to ((stability * 3) + (overallScore.value * 2) + emotional - (friction * 2)),
-            SynastryBondArchetype.ALCHEMICAL to ((growth * 3) + (friction * 2) + (abs(growth - stability) * 2)),
-            SynastryBondArchetype.ELECTRIC to ((communication * 3) + (attraction * 3) + (growth * 2) - stability),
-            SynastryBondArchetype.MAGNETIC to ((attraction * 3) + (overallScore.value * 2) + emotional),
-            SynastryBondArchetype.MIRROR to (((100 - resonanceSpread) * 3) + emotional + communication + growth),
-            SynastryBondArchetype.COSMIC_DANCE to ((overallScore.value * 3) + ((100 - resonanceSpread) * 2) + growth + communication),
-        )
-
-        val eligibility = mapOf(
-            SynastryBondArchetype.STORM to (attraction >= 72 && stability <= 60 && friction >= 38),
-            SynastryBondArchetype.DEVOTIONAL to (emotional >= 70 && stability >= 68 && friction <= 36),
-            SynastryBondArchetype.ANCHOR to (stability >= 70 && emotional >= 58),
-            SynastryBondArchetype.ALCHEMICAL to (growth >= 66 && friction >= 34),
-            SynastryBondArchetype.ELECTRIC to (communication >= 68 && attraction >= 68),
-            SynastryBondArchetype.MAGNETIC to (attraction >= 68 && overallScore.value >= 64),
-            SynastryBondArchetype.MIRROR to (resonanceSpread <= 9 && overallScore.value >= 60),
-            SynastryBondArchetype.COSMIC_DANCE to true,
-        )
-
-        return rankedArchetypes
-            .asSequence()
-            .filter { (archetype, _) -> eligibility.getValue(archetype) }
-            .maxByOrNull { it.value }
-            ?.key
-            ?: SynastryBondArchetype.COSMIC_DANCE
-    }
-
-    private fun resolveStrengths(scores: Map<SynastryDimension, SynastryScore>): List<SynastrySignal> {
-        val strengths = linkedSetOf<SynastrySignal>()
-        val emotional = scores.require(SynastryDimension.EMOTIONAL).value
-        val communication = scores.require(SynastryDimension.COMMUNICATION).value
-        val attraction = scores.require(SynastryDimension.ATTRACTION).value
-        val stability = scores.require(SynastryDimension.STABILITY).value
-        val growth = scores.require(SynastryDimension.GROWTH).value
-
-        if (emotional >= 66) strengths += SynastrySignal.STRONG_EMOTIONAL_RESONANCE
-        if (attraction >= 68) strengths += SynastrySignal.NATURAL_SPARK
-        if (communication >= 64) {
-            strengths += SynastrySignal.COMMUNICATION_FLOW
-            strengths += SynastrySignal.MENTAL_STIMULATION
-        }
-        if (stability >= 64) {
-            strengths += SynastrySignal.STABILITY_POTENTIAL
-            strengths += SynastrySignal.GROUNDING_BOND
-        }
-        if (growth >= 64) strengths += SynastrySignal.GROWTH_THROUGH_DIFFERENCE
-
-        if (emotional >= 70 && communication >= 62) strengths += SynastrySignal.PROTECT_THE_SOFTNESS
-
-        return strengths.toList()
-    }
-
-    private fun resolveTensions(scores: Map<SynastryDimension, SynastryScore>): List<SynastrySignal> {
-        val tensions = linkedSetOf<SynastrySignal>()
-        val emotional = scores.require(SynastryDimension.EMOTIONAL).value
-        val communication = scores.require(SynastryDimension.COMMUNICATION).value
-        val attraction = scores.require(SynastryDimension.ATTRACTION).value
-        val stability = scores.require(SynastryDimension.STABILITY).value
-        val growth = scores.require(SynastryDimension.GROWTH).value
-
-        if (emotional <= 55) tensions += SynastrySignal.DIFFERENT_EMOTIONAL_RHYTHMS
-        if (attraction >= 72 && stability <= 56) tensions += SynastrySignal.HIGH_INTENSITY
-        if (communication <= 56 || stability <= 56) tensions += SynastrySignal.NEED_FOR_PATIENCE
-        if (emotional >= 70 && communication <= 52) tensions += SynastrySignal.CREATE_SHARED_RHYTHM
-        if (stability >= 72 && growth <= 52) tensions += SynastrySignal.USE_DIFFERENCE_AS_GROWTH
-
-        return tensions.toList()
-    }
-
-    private fun resolveGuidance(tensions: List<SynastrySignal>): List<SynastrySignal> {
-        val guidance = linkedSetOf<SynastrySignal>()
-
-        tensions.forEach { tension ->
-            when (tension) {
-                SynastrySignal.DIFFERENT_EMOTIONAL_RHYTHMS -> {
-                    guidance += SynastrySignal.CREATE_SHARED_RHYTHM
-                    guidance += SynastrySignal.PROTECT_THE_SOFTNESS
-                }
-
-                SynastrySignal.HIGH_INTENSITY -> guidance += SynastrySignal.SLOW_DOWN_REACTIVITY
-                SynastrySignal.NEED_FOR_PATIENCE -> {
-                    guidance += SynastrySignal.USE_DIFFERENCE_AS_GROWTH
-                    guidance += SynastrySignal.CREATE_SHARED_RHYTHM
-                }
-
-                SynastrySignal.CREATE_SHARED_RHYTHM -> guidance += SynastrySignal.PROTECT_THE_SOFTNESS
-                SynastrySignal.USE_DIFFERENCE_AS_GROWTH -> guidance += SynastrySignal.USE_DIFFERENCE_AS_GROWTH
-                else -> Unit
-            }
-        }
-
-        if (guidance.isEmpty()) guidance += SynastrySignal.USE_DIFFERENCE_AS_GROWTH
-
-        return guidance.toList()
-    }
-
-    private fun resolveTags(
-        scores: Map<SynastryDimension, SynastryScore>,
-        overallScore: SynastryScore,
-        depth: SynastryReadingDepth,
-    ): List<SynastryInsightTag> {
-        val tags = linkedSetOf<SynastryInsightTag>()
-
-        if (overallScore.value >= 70) tags += SynastryInsightTag.HARMONIOUS
-        if (scores.require(SynastryDimension.ATTRACTION).value >= 70) tags += SynastryInsightTag.INTENSE
-        if (scores.require(SynastryDimension.STABILITY).value >= 66) tags += SynastryInsightTag.GROUNDING
-        if (scores.require(SynastryDimension.GROWTH).value >= 64) tags += SynastryInsightTag.EVOLUTIVE
-        if (scores.require(SynastryDimension.COMMUNICATION).value >= 64) tags += SynastryInsightTag.COMMUNICATIVE
-        if (scores.require(SynastryDimension.EMOTIONAL).value >= 64) tags += SynastryInsightTag.EMOTIONAL
-        if (depth != SynastryReadingDepth.COMPLETE || overallScore.value < 58) tags += SynastryInsightTag.NEEDS_PRACTICE
-
-        return tags.toList()
-    }
-
     private fun optionalPairAverage(signA: ZodiacSign?, signB: ZodiacSign?): Int? =
         if (signA == null || signB == null) null else pairScore(signA, signB)
-
-    private fun optionalPairValue(signA: ZodiacSign?, signB: ZodiacSign?): Int? =
-        if (signA == null || signB == null) null else pairScore(signA, signB)
-
-    private fun availableAverage(vararg values: Int?): Int? {
-        val available = values.filterNotNull()
-        if (available.isEmpty()) return null
-        return available.average().roundToInt()
-    }
-
-    private fun weightedAverage(vararg weightedValues: Pair<Double, Int>): Int {
-        val totalWeight = weightedValues.sumOf { it.first }
-        val weightedSum = weightedValues.sumOf { (weight, value) -> weight * value }
-        return (weightedSum / totalWeight).roundToInt()
-    }
 
     private fun pairScore(signA: ZodiacSign, signB: ZodiacSign): Int {
         val elementScore = elementAffinity(signA.element, signB.element)
         val modalityScore = modalityAffinity(signA.modality, signB.modality)
         return (50 + elementScore + modalityScore).coerceIn(0, 100)
-    }
-
-    private fun resolveSolarProfile(signA: ZodiacSign, signB: ZodiacSign): SolarCombinationProfile {
-        val elementPair = setOf(signA.element, signB.element)
-        val sameElement = signA.element == signB.element
-        val opposite = areOpposite(signA, signB)
-
-        val baseProfile = when (elementPair) {
-            setOf(AstroElement.FIRE, AstroElement.AIR) -> SolarCombinationProfile(
-                offsets = mapOf(
-                    SynastryDimension.EMOTIONAL to -6,
-                    SynastryDimension.COMMUNICATION to 10,
-                    SynastryDimension.ATTRACTION to 12,
-                    SynastryDimension.STABILITY to -14,
-                    SynastryDimension.GROWTH to 9,
-                )
-            )
-
-            setOf(AstroElement.EARTH, AstroElement.WATER) -> SolarCombinationProfile(
-                offsets = mapOf(
-                    SynastryDimension.EMOTIONAL to 10,
-                    SynastryDimension.COMMUNICATION to -2,
-                    SynastryDimension.ATTRACTION to -4,
-                    SynastryDimension.STABILITY to 13,
-                    SynastryDimension.GROWTH to 2,
-                )
-            )
-
-            setOf(AstroElement.FIRE, AstroElement.WATER) -> SolarCombinationProfile(
-                offsets = mapOf(
-                    SynastryDimension.EMOTIONAL to -8,
-                    SynastryDimension.COMMUNICATION to -4,
-                    SynastryDimension.ATTRACTION to 11,
-                    SynastryDimension.STABILITY to -10,
-                    SynastryDimension.GROWTH to 12,
-                )
-            )
-
-            setOf(AstroElement.AIR, AstroElement.EARTH) -> SolarCombinationProfile(
-                offsets = mapOf(
-                    SynastryDimension.EMOTIONAL to -5,
-                    SynastryDimension.COMMUNICATION to 5,
-                    SynastryDimension.ATTRACTION to 1,
-                    SynastryDimension.STABILITY to -8,
-                    SynastryDimension.GROWTH to 9,
-                )
-            )
-
-            else -> SolarCombinationProfile()
-        }
-
-        val sameElementOffsets = if (sameElement) {
-            mapOf(
-                SynastryDimension.EMOTIONAL to 4,
-                SynastryDimension.COMMUNICATION to 3,
-                SynastryDimension.ATTRACTION to -2,
-                SynastryDimension.STABILITY to 6,
-                SynastryDimension.GROWTH to -1,
-            )
-        } else {
-            emptyMap()
-        }
-
-        val oppositeOffsets = if (opposite) {
-            mapOf(
-                SynastryDimension.EMOTIONAL to -2,
-                SynastryDimension.COMMUNICATION to 4,
-                SynastryDimension.ATTRACTION to 8,
-                SynastryDimension.STABILITY to -9,
-                SynastryDimension.GROWTH to 11,
-            )
-        } else {
-            emptyMap()
-        }
-
-        return SolarCombinationProfile(
-            offsets = SynastryDimension.entries.associateWith { dimension ->
-                baseProfile.offsets.getValue(dimension) +
-                    sameElementOffsets.getOrDefault(dimension, 0) +
-                    oppositeOffsets.getOrDefault(dimension, 0)
-            }
-        )
     }
 
     private fun elementAffinity(a: AstroElement, b: AstroElement): Int {
@@ -525,13 +423,157 @@ class DefaultSynastryCompatibilityResolver : SynastryCompatibilityResolver {
         return distance == 6
     }
 
+    private fun deterministicSeed(input: SynastryInput): Int {
+        val canonical = listOf(
+            input.personA.sunSign.name,
+            input.personB.sunSign.name,
+            input.personA.moonSign?.name ?: "_",
+            input.personB.moonSign?.name ?: "_",
+            input.personA.risingSign?.name ?: "_",
+            input.personB.risingSign?.name ?: "_",
+        ).sorted().joinToString("|")
+
+        return canonical.fold(97) { acc, char -> (acc * 31) + char.code }
+    }
+
+    private fun phase(seed: Int, factor: Double): Double = ((seed and Int.MAX_VALUE) * factor) % (2 * PI)
+
     private fun Map<SynastryDimension, SynastryScore>.require(dimension: SynastryDimension): SynastryScore =
         getValue(dimension)
 }
 
-private data class SolarCombinationProfile(
-    val offsets: Map<SynastryDimension, Int> = SynastryDimension.entries.associateWith { 0 },
+
+private data class SolarMicroProfile(
+    val key: String,
+    val centerOffsets: Map<SynastryDimension, Int>,
+    val longAmplitudeOffsets: Map<SynastryDimension, Double>,
+    val shortAmplitudeOffsets: Map<SynastryDimension, Double>,
+    val microAmplitudeShift: Double,
 )
+
+private data class PairFamily(
+    val key: String,
+    val centers: Map<SynastryDimension, Int>,
+    val longAmplitude: Map<SynastryDimension, Double>,
+    val shortAmplitude: Map<SynastryDimension, Double>,
+    val microAmplitude: Double,
+    val longPeriodDays: Int,
+    val shortPeriodDays: Int,
+) {
+    companion object {
+        val fireAir = PairFamily(
+            key = "fire_air",
+            centers = mapOf(
+                SynastryDimension.ATTRACTION to 66,
+                SynastryDimension.EMOTIONAL to 50,
+                SynastryDimension.COMMUNICATION to 68,
+                SynastryDimension.GROWTH to 63,
+            ),
+            longAmplitude = amplitudes(14.0, 11.0, 12.0, 14.0),
+            shortAmplitude = amplitudes(5.0, 4.0, 6.0, 5.0),
+            microAmplitude = 2.2,
+            longPeriodDays = 31,
+            shortPeriodDays = 7,
+        )
+        val earthWater = PairFamily(
+            key = "earth_water",
+            centers = mapOf(
+                SynastryDimension.ATTRACTION to 52,
+                SynastryDimension.EMOTIONAL to 67,
+                SynastryDimension.COMMUNICATION to 54,
+                SynastryDimension.GROWTH to 56,
+            ),
+            longAmplitude = amplitudes(9.0, 13.0, 9.0, 10.0),
+            shortAmplitude = amplitudes(4.0, 4.0, 3.0, 4.0),
+            microAmplitude = 1.8,
+            longPeriodDays = 35,
+            shortPeriodDays = 8,
+        )
+        val fireWater = PairFamily(
+            key = "fire_water",
+            centers = mapOf(
+                SynastryDimension.ATTRACTION to 64,
+                SynastryDimension.EMOTIONAL to 47,
+                SynastryDimension.COMMUNICATION to 49,
+                SynastryDimension.GROWTH to 66,
+            ),
+            longAmplitude = amplitudes(16.0, 14.0, 11.0, 17.0),
+            shortAmplitude = amplitudes(6.0, 5.0, 4.0, 6.0),
+            microAmplitude = 2.5,
+            longPeriodDays = 29,
+            shortPeriodDays = 6,
+        )
+        val airEarth = PairFamily(
+            key = "air_earth",
+            centers = mapOf(
+                SynastryDimension.ATTRACTION to 55,
+                SynastryDimension.EMOTIONAL to 48,
+                SynastryDimension.COMMUNICATION to 62,
+                SynastryDimension.GROWTH to 61,
+            ),
+            longAmplitude = amplitudes(10.0, 10.0, 13.0, 12.0),
+            shortAmplitude = amplitudes(4.0, 4.0, 5.0, 5.0),
+            microAmplitude = 2.0,
+            longPeriodDays = 33,
+            shortPeriodDays = 7,
+        )
+        val opposed = PairFamily(
+            key = "opposed",
+            centers = mapOf(
+                SynastryDimension.ATTRACTION to 67,
+                SynastryDimension.EMOTIONAL to 52,
+                SynastryDimension.COMMUNICATION to 58,
+                SynastryDimension.GROWTH to 68,
+            ),
+            longAmplitude = amplitudes(18.0, 14.0, 13.0, 18.0),
+            shortAmplitude = amplitudes(6.0, 5.0, 5.0, 7.0),
+            microAmplitude = 2.7,
+            longPeriodDays = 28,
+            shortPeriodDays = 6,
+        )
+        fun sameElement(element: AstroElement): PairFamily = PairFamily(
+            key = "same_${element.name.lowercase()}",
+            centers = mapOf(
+                SynastryDimension.ATTRACTION to 58,
+                SynastryDimension.EMOTIONAL to 60,
+                SynastryDimension.COMMUNICATION to 60,
+                SynastryDimension.GROWTH to 54,
+            ),
+            longAmplitude = amplitudes(10.0, 9.0, 9.0, 11.0),
+            shortAmplitude = amplitudes(3.5, 3.5, 3.5, 4.0),
+            microAmplitude = 1.5,
+            longPeriodDays = 36,
+            shortPeriodDays = 9,
+        )
+
+        val mixed = PairFamily(
+            key = "mixed",
+            centers = mapOf(
+                SynastryDimension.ATTRACTION to 57,
+                SynastryDimension.EMOTIONAL to 55,
+                SynastryDimension.COMMUNICATION to 56,
+                SynastryDimension.GROWTH to 58,
+            ),
+            longAmplitude = amplitudes(11.0, 11.0, 11.0, 12.0),
+            shortAmplitude = amplitudes(4.0, 4.0, 4.0, 5.0),
+            microAmplitude = 2.0,
+            longPeriodDays = 32,
+            shortPeriodDays = 7,
+        )
+
+        private fun amplitudes(
+            attraction: Double,
+            emotional: Double,
+            communication: Double,
+            growth: Double,
+        ): Map<SynastryDimension, Double> = mapOf(
+            SynastryDimension.ATTRACTION to attraction,
+            SynastryDimension.EMOTIONAL to emotional,
+            SynastryDimension.COMMUNICATION to communication,
+            SynastryDimension.GROWTH to growth,
+        )
+    }
+}
 
 internal enum class AstroElement {
     FIRE,

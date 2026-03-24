@@ -1,6 +1,7 @@
 package com.agc.bwitch.domain.astrology.synastry
 
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
+import kotlin.math.round
 
 data class SynastryPersonInput(
     val sunSign: ZodiacSign,
@@ -26,11 +27,16 @@ enum class SynastryConfidenceLevel {
 }
 
 enum class SynastryDimension {
+    ATTRACTION,
     EMOTIONAL,
     COMMUNICATION,
-    ATTRACTION,
-    STABILITY,
     GROWTH,
+}
+
+enum class SynastryEnergyAxis {
+    HARMONY_INTENSITY,
+    STABILITY_TRANSFORMATION,
+    CALM_MOVEMENT,
 }
 
 enum class SynastryBondArchetype {
@@ -87,12 +93,42 @@ data class SynastryDataCompleteness(
     val depth: SynastryReadingDepth,
 )
 
+data class SynastryMetricProfile(
+    val center: Int,
+    val longAmplitude: Double,
+    val shortAmplitude: Double,
+    val microAmplitude: Double,
+    val longPeriodDays: Int,
+    val shortPeriodDays: Int,
+)
+
+data class SynastryBaseProfile(
+    val familyKey: String,
+    val metrics: Map<SynastryDimension, SynastryMetricProfile>,
+)
+
+data class SynastryDailyAxisState(
+    val axis: SynastryEnergyAxis,
+    val value: Int,
+)
+
+data class SynastryDailyOverlay(
+    val dateIso: String,
+    val highlightedDimension: SynastryDimension,
+    val sensitiveDimension: SynastryDimension,
+    val dailyEnergyLabel: String,
+    val dailyGuidance: String,
+    val dailyNarrativeFragment: String,
+    val axes: List<SynastryDailyAxisState>,
+)
+
 data class SynastryReadingStructured(
     val depthInfo: SynastryDataCompleteness,
     val confidenceLevel: SynastryConfidenceLevel,
     val archetype: SynastryBondArchetype,
     val overallScore: SynastryScore,
     val scores: Map<SynastryDimension, SynastryScore>,
+    val baseProfile: SynastryBaseProfile,
     val strengths: List<SynastrySignal>,
     val tensions: List<SynastrySignal>,
     val guidance: List<SynastrySignal>,
@@ -107,11 +143,5 @@ data class SynastryReading(
     val dailyOverlay: SynastryDailyOverlay? = null,
 )
 
-data class SynastryDailyOverlay(
-    val dateIso: String,
-    val highlightedDimension: SynastryDimension,
-    val sensitiveDimension: SynastryDimension,
-    val dailyEnergyLabel: String,
-    val dailyGuidance: String,
-    val dailyNarrativeFragment: String,
-)
+fun SynastryScore.toFiveStarRating(): Double =
+    (round(((value / 20.0) * 2.0)) / 2.0).coerceIn(0.0, 5.0)
