@@ -52,11 +52,37 @@ function signLabel(sign: string): string {
   return sign.toLowerCase();
 }
 
-function parseModelOutput(raw: string): {archetype: null; interpretation: string} {
-  const text = raw.trim();
-  const interpretationMatch = text.match(/INTERPRETACI[ÓO]N:\s*([\s\S]+)/i);
+function cleanInterpretation(raw: string): string {
+  let text = raw.trim();
 
-  const interpretation = interpretationMatch?.[1]?.trim() || text;
+  if (text.startsWith('{') && text.endsWith('}')) {
+    const parsed = runCatchingJsonParse(text);
+    if (typeof parsed?.interpretation === 'string') {
+      text = parsed.interpretation.trim();
+    }
+  }
+
+  text = text
+      .replace(/^\{+|\}+$/g, '')
+      .replace(/^\s*ARQUETIPO\s*:\s*.*$/gim, '')
+      .replace(/^\s*INTERPRETACI[ÓO]N\s*:\s*/i, '')
+      .trim();
+
+  return text;
+}
+
+function runCatchingJsonParse(value: string): Record<string, unknown> | null {
+  try {
+    const parsed = JSON.parse(value);
+    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) return null;
+    return parsed as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
+function parseModelOutput(raw: string): {archetype: null; interpretation: string} {
+  const interpretation = cleanInterpretation(raw);
 
   if (!interpretation) {
     throw new HttpsError('internal', 'Empty interpretation from model');
@@ -99,8 +125,9 @@ export const birthEssenceGenerate = onCall(
           'Nunca menciones cálculo astral real ni coordenadas.',
           'El arquetipo ya viene resuelto por lógica determinista de la app.',
           'No elijas ni inventes arquetipo.',
-          'Formato obligatorio:',
-          'INTERPRETACIÓN: <2-3 frases, máximo 70 palabras>',
+          'No uses encabezados como ARQUETIPO ni INTERPRETACIÓN.',
+          'No uses llaves, JSON ni listas.',
+          'Devuelve solo la interpretación limpia en 2-3 frases (máximo 70 palabras).',
         ].join('\n'),
         userPrompt: [
           `Sol=${signLabel(sunSign)}, Luna=${signLabel(moonSign)}, Ascendente=${signLabel(risingSign)}.`,

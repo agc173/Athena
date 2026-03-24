@@ -39,7 +39,8 @@ class BirthChartViewModel(
                         selectedSunSign = essence?.sunSign ?: s.selectedSunSign,
                         selectedMoonSign = essence?.moonSign ?: s.selectedMoonSign,
                         selectedRisingSign = essence?.risingSign ?: s.selectedRisingSign,
-                        generatedInterpretation = essence?.interpretation ?: s.generatedInterpretation,
+                        generatedInterpretation = essence?.interpretation?.sanitizeInterpretation()
+                            ?: s.generatedInterpretation,
                         generatedArchetype = essence?.archetype ?: s.generatedArchetype,
                         hasSavedEssence = essence != null,
                     )
@@ -104,7 +105,7 @@ class BirthChartViewModel(
                 is ApiResult.Ok -> {
                     _uiState.update {
                         it.copy(
-                            generatedInterpretation = result.value.interpretation,
+                            generatedInterpretation = result.value.interpretation.sanitizeInterpretation(),
                             generatedArchetype = result.value.archetype,
                         )
                     }
@@ -166,5 +167,14 @@ class BirthChartViewModel(
         }
 
         return rawMessage.ifBlank { "No se pudo generar la esencia" }
+    }
+
+    private fun String.sanitizeInterpretation(): String {
+        return this
+            .trim()
+            .removeSurrounding("{", "}")
+            .replace(Regex("(?im)^\\s*ARQUETIPO\\s*:\\s*.*$"), "")
+            .replace(Regex("(?im)^\\s*INTERPRETACI[ÓO]N\\s*:\\s*"), "")
+            .trim()
     }
 }
