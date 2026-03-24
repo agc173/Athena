@@ -172,6 +172,8 @@ class BirthChartViewModel(
     private fun String.sanitizeInterpretation(): String {
         val interpretationPrefixRegex =
             Regex("^\\s*interpretaci[oó]n\\b\\s*[:\\-–—]?\\s*", RegexOption.IGNORE_CASE)
+        val interpretationJsonKeyValueRegex =
+            Regex("^\\s*[\"']?\\s*interpretaci[oó]n\\s*[\"']?\\s*:\\s*(.+?)\\s*$", RegexOption.IGNORE_CASE)
         return this
             .replace("\r\n", "\n")
             .replace('\r', '\n')
@@ -182,10 +184,24 @@ class BirthChartViewModel(
             .mapNotNull { line ->
                 when {
                     line.startsWith("ARQUETIPO", ignoreCase = true) -> null
-                    else -> line.replace(interpretationPrefixRegex, "").trim().ifBlank { null }
+                    else -> {
+                        val extractedValue =
+                            interpretationJsonKeyValueRegex.matchEntire(line)?.groupValues?.get(1)
+                                ?: line.replace(interpretationPrefixRegex, "")
+
+                        extractedValue.trim().removeSurroundingQuote().ifBlank { null }
+                    }
                 }
             }
             .joinToString("\n")
             .trim()
+            .removeSurroundingQuote()
     }
+
+    private fun String.removeSurroundingQuote(): String =
+        when {
+            length >= 2 && startsWith("\"") && endsWith("\"") -> substring(1, length - 1).trim()
+            length >= 2 && startsWith("'") && endsWith("'") -> substring(1, length - 1).trim()
+            else -> this
+        }
 }
