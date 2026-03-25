@@ -5,14 +5,18 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -21,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
@@ -31,6 +36,7 @@ import com.agc.bwitch.presentation.navigation.Destination
 import com.agc.bwitch.ui.common.AppScaffold
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
 import com.agc.bwitch.ui.theme.BWitchThemeTokens
+import com.agc.bwitch.ui.theme.bwitchDisplayFontFamily
 
 @Composable
 fun PortalScreen(
@@ -99,13 +105,13 @@ fun PortalScreen(
                     .verticalScroll(rememberScrollState())
                     .padding(scaffoldPadding)
                     .padding(horizontal = BWitchThemeTokens.dimens.spacingMd)
-                    .padding(top = BWitchThemeTokens.dimens.spacingSm, bottom = BWitchThemeTokens.dimens.spacingSm),
-                verticalArrangement = Arrangement.spacedBy(BWitchThemeTokens.dimens.spacingMd),
+                    .padding(top = 4.dp, bottom = BWitchThemeTokens.dimens.spacingSm),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 PortalHeader()
 
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(BWitchThemeTokens.dimens.spacingSm)
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     portalModules.forEach { module ->
                         PortalModuleCard(
@@ -127,23 +133,49 @@ private fun PortalHeader(modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(top = 2.dp, bottom = 8.dp),
+            .padding(top = 2.dp, bottom = 2.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(2.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Text(
-            text = "PORTAL",
-            style = MaterialTheme.typography.headlineMedium.copy(
-                fontWeight = FontWeight.SemiBold,
-                letterSpacing = 8.sp,
-            ),
-            textAlign = TextAlign.Center,
-        )
-        Text(
-            text = "Elige tu camino",
-            style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 1.4.sp),
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.72f),
-            textAlign = TextAlign.Center,
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            Text(
+                text = "✦",
+                style = MaterialTheme.typography.labelMedium.copy(
+                    letterSpacing = 0.6.sp,
+                ),
+                color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.7f),
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(
+                text = "PORTAL",
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    fontFamily = bwitchDisplayFontFamily(),
+                    fontWeight = FontWeight.SemiBold,
+                    letterSpacing = 5.sp,
+                    fontSize = 30.sp,
+                    lineHeight = 36.sp,
+                ),
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.98f),
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(
+                text = "✦",
+                style = MaterialTheme.typography.labelMedium.copy(
+                    letterSpacing = 0.6.sp,
+                ),
+                color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.7f),
+            )
+        }
+        HorizontalDivider(
+            modifier = Modifier
+                .fillMaxWidth(0.48f)
+                .padding(top = 2.dp),
+            thickness = 1.dp,
+            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.52f),
         )
     }
 }
@@ -155,30 +187,41 @@ private fun PortalModuleCard(
     modifier: Modifier = Modifier,
 ) {
     val isEnabled = module.enabled && module.destination != null && onClick != null
-    val cardShape = RoundedCornerShape(22.dp)
+    val cardShape = RoundedCornerShape(16.dp)
+    val baseSurface = MaterialTheme.colorScheme.surfaceVariant
+    val enabledContainer = blendColors(
+        base = baseSurface,
+        overlay = MaterialTheme.colorScheme.primary,
+        overlayAlpha = 0.08f,
+    )
+    val disabledContainer = blendColors(
+        base = baseSurface,
+        overlay = MaterialTheme.colorScheme.onSurfaceVariant,
+        overlayAlpha = 0.04f,
+    )
 
     BWitchCard(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = 104.dp),
+            .heightIn(min = 90.dp),
         onClick = if (isEnabled) onClick else null,
         enabled = isEnabled,
         shape = cardShape,
         colors = CardDefaults.cardColors(
             containerColor = if (isEnabled) {
-                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.96f)
+                enabledContainer
             } else {
-                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.62f)
+                disabledContainer.copy(alpha = 0.78f)
             },
             contentColor = MaterialTheme.colorScheme.onSurface,
-            disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.62f),
+            disabledContainerColor = disabledContainer.copy(alpha = 0.78f),
             disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.92f),
         ),
         contentPadding = PaddingValues(
-            horizontal = BWitchThemeTokens.dimens.spacingLg,
-            vertical = BWitchThemeTokens.dimens.spacingMd,
+            horizontal = BWitchThemeTokens.dimens.spacingMd + 2.dp,
+            vertical = 13.dp,
         ),
-        contentVerticalArrangement = Arrangement.spacedBy(6.dp),
+        contentVerticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
             CardOrnament(
@@ -192,14 +235,16 @@ private fun PortalModuleCard(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(end = 88.dp),
-                verticalArrangement = Arrangement.spacedBy(2.dp),
+                    .padding(end = 86.dp),
+                verticalArrangement = Arrangement.Center,
             ) {
                 Text(
                     text = module.title,
                     style = MaterialTheme.typography.titleLarge.copy(
+                        fontSize = 21.sp,
+                        lineHeight = 27.sp,
                         fontWeight = if (isEnabled) FontWeight.SemiBold else FontWeight.Medium,
-                        letterSpacing = 0.2.sp,
+                        letterSpacing = 0.12.sp,
                     ),
                     color = if (isEnabled) {
                         MaterialTheme.colorScheme.onSurface
@@ -209,9 +254,12 @@ private fun PortalModuleCard(
                 )
                 Text(
                     text = module.subtitle,
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        lineHeight = 17.sp,
+                        letterSpacing = 0.16.sp,
+                    ),
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(
-                        alpha = if (isEnabled) 0.88f else 0.72f,
+                        alpha = if (isEnabled) 0.9f else 0.76f,
                     ),
                 )
             }
@@ -225,8 +273,8 @@ private fun CardOrnament(
     isEnabled: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    val strokeColor = MaterialTheme.colorScheme.onSurface.copy(alpha = if (isEnabled) 0.16f else 0.1f)
-    val softColor = MaterialTheme.colorScheme.primary.copy(alpha = if (isEnabled) 0.12f else 0.08f)
+    val strokeColor = MaterialTheme.colorScheme.onSurface.copy(alpha = if (isEnabled) 0.14f else 0.085f)
+    val softColor = MaterialTheme.colorScheme.primary.copy(alpha = if (isEnabled) 0.085f else 0.055f)
 
     Canvas(modifier = modifier) {
         val w = size.width
@@ -378,4 +426,18 @@ private fun CardOrnament(
             }
         }
     }
+}
+
+private fun blendColors(
+    base: Color,
+    overlay: Color,
+    overlayAlpha: Float,
+): Color {
+    val clampedAlpha = overlayAlpha.coerceIn(0f, 1f)
+    return Color(
+        red = (base.red * (1f - clampedAlpha)) + (overlay.red * clampedAlpha),
+        green = (base.green * (1f - clampedAlpha)) + (overlay.green * clampedAlpha),
+        blue = (base.blue * (1f - clampedAlpha)) + (overlay.blue * clampedAlpha),
+        alpha = 1f,
+    )
 }
