@@ -364,6 +364,14 @@ private fun DailyEnergyAxisRow(axis: SynastryDailyAxisState) {
     val markerSize = 20.dp
     var showAxisInfo by remember(axis.axis) { mutableStateOf(false) }
 
+    val moonColor = MaterialTheme.colorScheme.tertiary
+    val moonCutoutColor = MaterialTheme.colorScheme.surface
+    val markerBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f)
+    val axisLineColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f)
+    val axisLeftColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.65f)
+    val axisCenterColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.95f)
+    val axisRightColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.65f)
+
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -432,9 +440,9 @@ private fun DailyEnergyAxisRow(axis: SynastryDailyAxisState) {
                     .background(
                         Brush.horizontalGradient(
                             colors = listOf(
-                                MaterialTheme.colorScheme.tertiary.copy(alpha = 0.65f),
-                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.95f),
-                                MaterialTheme.colorScheme.primary.copy(alpha = 0.65f),
+                                axisLeftColor,
+                                axisCenterColor,
+                                axisRightColor,
                             )
                         )
                     ),
@@ -444,7 +452,7 @@ private fun DailyEnergyAxisRow(axis: SynastryDailyAxisState) {
                     .align(Alignment.Center)
                     .width(2.dp)
                     .height(16.dp)
-                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f)),
+                    .background(axisLineColor),
             )
             Box(
                 modifier = Modifier
@@ -452,8 +460,8 @@ private fun DailyEnergyAxisRow(axis: SynastryDailyAxisState) {
                     .offset(x = markerOffset)
                     .size(markerSize)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surface)
-                    .border(1.5.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f), CircleShape),
+                    .background(moonCutoutColor)
+                    .border(1.5.dp, markerBorderColor, CircleShape),
             )
             Canvas(
                 modifier = Modifier
@@ -461,9 +469,9 @@ private fun DailyEnergyAxisRow(axis: SynastryDailyAxisState) {
                     .offset(x = markerOffset + 2.dp, y = 2.dp)
                     .size(markerSize - 4.dp),
             ) {
-                drawCircle(color = MaterialTheme.colorScheme.tertiary)
+                drawCircle(color = moonColor)
                 drawCircle(
-                    color = MaterialTheme.colorScheme.surface,
+                    color = moonCutoutColor,
                     radius = size.minDimension * 0.42f,
                     center = Offset(size.width * 0.64f, size.height * 0.5f),
                 )
