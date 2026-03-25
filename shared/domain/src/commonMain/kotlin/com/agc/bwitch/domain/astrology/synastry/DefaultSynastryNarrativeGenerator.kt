@@ -22,32 +22,20 @@ class DefaultSynastryNarrativeGenerator : SynastryNarrativeGenerator {
         val pairLabel = "${input.personA.sunSign.humanLabel()} y ${input.personB.sunSign.humanLabel()}"
         val orderedDimensions = structured.scores.entries.sortedByDescending { it.value.value }
         val strongestDimension = orderedDimensions.first().key
+        val secondDimension = orderedDimensions.getOrNull(1)?.key ?: strongestDimension
         val challengeDimension = orderedDimensions.last().key
-        val primaryStrength = structured.strengths.firstOrNull()
-        val primaryTension = structured.tensions.firstOrNull()
-        val primaryGuidance = structured.guidance.firstOrNull()
 
         val paragraphOne = buildString {
-            append("$pairLabel muestran una dinámica con foco en ${strongestDimension.humanLabelWithArticle()}. ")
-            append("El tono general combina química, aprendizaje y margen real de construcción.")
+            append("$pairLabel forman una combinación de ${strongestDimension.humanLabel()} y ${secondDimension.humanLabel()}. ")
+            append("El vínculo se percibe vivo cuando alternan impulso y escucha con un ritmo compartido.")
         }
 
         val paragraphTwo = buildString {
-            append("Entre las fortalezas aparece ${primaryStrength?.humanLabel() ?: strongestDimension.strengthFallbackCopy()}. ")
-            append("Cuando esta área se cuida, el vínculo gana continuidad y dirección compartida.")
+            append("El equilibrio general mejora cuando las diferencias se usan para ajustar expectativas, en lugar de forzar respuestas rápidas. ")
+            append("La zona que pide más conciencia es ${challengeDimension.humanLabelWithArticle()}, porque ahí suele definirse el tono de fondo de la relación.")
         }
 
-        val paragraphThree = buildString {
-            val tensionCopy = primaryTension?.humanLabel()
-                ?: "retos visibles en ${challengeDimension.humanLabel()}"
-            append("La fricción tiende a notarse en $tensionCopy. ")
-            append(
-                primaryGuidance?.let { "La guía más útil es ${it.humanLabel()}." }
-                    ?: challengeDimension.guidanceFallbackCopy()
-            )
-            append(" ")
-            append(structured.depthInfo.depth.closingCopy())
-        }
+        val paragraphThree = structured.depthInfo.depth.closingCopy()
 
         return listOf(paragraphOne, paragraphTwo, paragraphThree).joinToString("\n\n")
     }
@@ -125,9 +113,8 @@ class SynastryDailyOverlayGenerator {
             dailyEnergyLabel = energyLabel,
             dailyGuidance = guidance,
             dailyNarrativeFragment = buildString {
-                append("Hoy se activa especialmente ${highlighted.humanLabelWithArticle()}. ")
-                append("La zona más sensible es ${sensitive.humanLabelWithArticle()}. ")
-                append("El eje dominante marca ${primaryAxis.toAxisSentence()}.")
+                append("El clima de hoy se define por ${primaryAxis.toAxisSentence()}. ")
+                append("Conviene ajustar el ritmo entre iniciativa y receptividad para sostener el equilibrio.")
             },
             axes = axes,
         )
