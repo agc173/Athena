@@ -34,9 +34,12 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -89,19 +92,14 @@ fun SynastryScreen(
         )
 
         PersonFormCard(
-            title = "Carta A",
-            form = state.personA,
-            onSunChange = viewModel::onPersonASunSignChange,
-            onMoonChange = viewModel::onPersonAMoonSignChange,
-            onRisingChange = viewModel::onPersonARisingSignChange,
-        )
-
-        PersonFormCard(
-            title = "Carta B",
-            form = state.personB,
-            onSunChange = viewModel::onPersonBSunSignChange,
-            onMoonChange = viewModel::onPersonBMoonSignChange,
-            onRisingChange = viewModel::onPersonBRisingSignChange,
+            personA = state.personA,
+            personB = state.personB,
+            onPersonASunChange = viewModel::onPersonASunSignChange,
+            onPersonAMoonChange = viewModel::onPersonAMoonSignChange,
+            onPersonARisingChange = viewModel::onPersonARisingSignChange,
+            onPersonBSunChange = viewModel::onPersonBSunSignChange,
+            onPersonBMoonChange = viewModel::onPersonBMoonSignChange,
+            onPersonBRisingChange = viewModel::onPersonBRisingSignChange,
         )
 
         BWitchPrimaryButton(
@@ -128,35 +126,119 @@ fun SynastryScreen(
 
 @Composable
 private fun PersonFormCard(
-    title: String,
-    form: SynastryPersonForm,
-    onSunChange: (ZodiacSign?) -> Unit,
-    onMoonChange: (ZodiacSign?) -> Unit,
-    onRisingChange: (ZodiacSign?) -> Unit,
+    personA: SynastryPersonForm,
+    personB: SynastryPersonForm,
+    onPersonASunChange: (ZodiacSign?) -> Unit,
+    onPersonAMoonChange: (ZodiacSign?) -> Unit,
+    onPersonARisingChange: (ZodiacSign?) -> Unit,
+    onPersonBSunChange: (ZodiacSign?) -> Unit,
+    onPersonBMoonChange: (ZodiacSign?) -> Unit,
+    onPersonBRisingChange: (ZodiacSign?) -> Unit,
 ) {
     BWitchCard {
-        Text(text = title, style = MaterialTheme.typography.titleMedium)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = "Carta A",
+                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                modifier = Modifier.weight(1f),
+            )
+            Box(
+                modifier = Modifier
+                    .size(30.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f))
+                    .border(
+                        width = 1.dp,
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f),
+                        shape = CircleShape,
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = "↔",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
+            Text(
+                text = "Carta B",
+                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                textAlign = TextAlign.End,
+                modifier = Modifier.weight(1f),
+            )
+        }
 
-        SignDropdown(
-            label = "Signo solar (obligatorio)",
-            selected = form.sunSign,
+        ComparativeSignRow(
+            label = "☀ Signo solar (obligatorio)",
+            aSelected = personA.sunSign,
+            bSelected = personB.sunSign,
             allowEmpty = false,
-            onSelect = onSunChange,
+            onSelectA = onPersonASunChange,
+            onSelectB = onPersonBSunChange,
         )
 
-        SignDropdown(
-            label = "Luna (opcional)",
-            selected = form.moonSign,
+        ComparativeSignRow(
+            label = "☾ Luna (opcional)",
+            aSelected = personA.moonSign,
+            bSelected = personB.moonSign,
             allowEmpty = true,
-            onSelect = onMoonChange,
+            onSelectA = onPersonAMoonChange,
+            onSelectB = onPersonBMoonChange,
         )
 
-        SignDropdown(
-            label = "Ascendente (opcional)",
-            selected = form.risingSign,
+        ComparativeSignRow(
+            label = "↑ Ascendente (opcional)",
+            aSelected = personA.risingSign,
+            bSelected = personB.risingSign,
             allowEmpty = true,
-            onSelect = onRisingChange,
+            onSelectA = onPersonARisingChange,
+            onSelectB = onPersonBRisingChange,
         )
+    }
+}
+
+@Composable
+private fun ComparativeSignRow(
+    label: String,
+    aSelected: ZodiacSign?,
+    bSelected: ZodiacSign?,
+    allowEmpty: Boolean,
+    onSelectA: (ZodiacSign?) -> Unit,
+    onSelectB: (ZodiacSign?) -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center,
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            SignDropdown(
+                label = "Carta A",
+                selected = aSelected,
+                allowEmpty = allowEmpty,
+                onSelect = onSelectA,
+                showLabel = false,
+                modifier = Modifier.weight(1f),
+            )
+            SignDropdown(
+                label = "Carta B",
+                selected = bSelected,
+                allowEmpty = allowEmpty,
+                onSelect = onSelectB,
+                showLabel = false,
+                modifier = Modifier.weight(1f),
+            )
+        }
     }
 }
 
@@ -165,13 +247,21 @@ private fun SynastryResultCard(reading: SynastryReading) {
     val structured = reading.structured
 
     BWitchCard {
-        Text(text = "Resultado", style = MaterialTheme.typography.titleMedium)
+        Text(
+            text = "Resultado",
+            style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center,
+        )
         Text(
             text = structured.depthInfo.depth.toUiDepthLabel(),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center,
         )
 
+        SectionSeparator()
         Text(text = "Métricas del vínculo", style = MaterialTheme.typography.titleSmall)
         metricOrder.forEach { dimension ->
             val score = structured.scores[dimension] ?: return@forEach
@@ -189,12 +279,17 @@ private fun SynastryResultCard(reading: SynastryReading) {
                 DailyEnergyAxisRow(axis)
             }
             Text(
-                text = "Guía de hoy: ${daily.dailyGuidance}",
-                style = MaterialTheme.typography.bodySmall,
+                text = "Consejo del día",
+                style = MaterialTheme.typography.titleSmall,
+            )
+            Text(
+                text = daily.dailyGuidance,
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
 
+        SectionSeparator()
         Text(text = "Fortaleza principal", style = MaterialTheme.typography.titleSmall)
         Text(
             text = reading.primaryStrengthCopy(),
@@ -213,6 +308,7 @@ private fun SynastryResultCard(reading: SynastryReading) {
             style = MaterialTheme.typography.bodyMedium,
         )
 
+        SectionSeparator()
         Text(text = "Narrativa", style = MaterialTheme.typography.titleSmall)
         Text(
             text = reading.narrative,
@@ -226,6 +322,7 @@ private fun MetricStarsRow(dimension: SynastryDimension, stars: Double) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(text = dimension.toUiLabel(), style = MaterialTheme.typography.bodyMedium)
         StarRating(stars = stars)
@@ -271,41 +368,25 @@ private fun DailyEnergyAxisRow(axis: SynastryDailyAxisState) {
     var showAxisInfo by remember(axis.axis) { mutableStateOf(false) }
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Row(
+        Box(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically,
+            contentAlignment = Alignment.Center,
         ) {
             Text(
                 text = axis.axis.axisTitle(),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center,
             )
-            Box(modifier = Modifier.width(6.dp))
-            AxisInfoButton(onClick = { showAxisInfo = true })
-        }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = axis.leftLabel(),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Text(
-                text = axis.rightLabel(),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            Box(modifier = Modifier.align(Alignment.CenterEnd)) {
+                AxisInfoButton(onClick = { showAxisInfo = true })
+            }
         }
 
         BoxWithConstraints(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(24.dp),
+                .height(30.dp),
         ) {
             val travelRange = (maxWidth - markerSize).coerceAtLeast(0.dp)
             val markerOffset = travelRange * position
@@ -314,16 +395,24 @@ private fun DailyEnergyAxisRow(axis: SynastryDailyAxisState) {
                 modifier = Modifier
                     .align(Alignment.Center)
                     .fillMaxWidth()
-                    .height(4.dp)
+                    .height(10.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                    .background(
+                        Brush.horizontalGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.tertiary.copy(alpha = 0.45f),
+                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.75f),
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.45f),
+                            )
+                        )
+                    ),
             )
             Box(
                 modifier = Modifier
                     .align(Alignment.Center)
-                    .width(1.dp)
-                    .height(10.dp)
-                    .background(MaterialTheme.colorScheme.outlineVariant),
+                    .width(2.dp)
+                    .height(16.dp)
+                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f)),
             )
             Box(
                 modifier = Modifier
@@ -331,16 +420,32 @@ private fun DailyEnergyAxisRow(axis: SynastryDailyAxisState) {
                     .offset(x = markerOffset)
                     .size(markerSize)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
+                    .background(MaterialTheme.colorScheme.surface)
+                    .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.4f), CircleShape),
             )
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterStart)
-                    .offset(x = markerOffset + 2.dp, y = 2.dp)
+                    .offset(x = markerOffset + 3.dp, y = 3.dp)
                     .size(markerSize - 4.dp)
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.primary)
-                    .border(1.dp, MaterialTheme.colorScheme.surface, CircleShape),
+            )
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = axis.leftLabel(),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                text = axis.rightLabel(),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
 
@@ -366,6 +471,16 @@ private fun AxisInfoButton(onClick: () -> Unit) {
             color = MaterialTheme.colorScheme.onPrimaryContainer,
         )
     }
+}
+
+@Composable
+private fun SectionSeparator() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(1.dp)
+            .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.8f))
+    )
 }
 
 @Composable
@@ -418,10 +533,10 @@ private fun buildStarPath(width: Float, height: Float): Path {
 
     repeat(10) { index ->
         val isOuter = index % 2 == 0
-        val radius = if (isOuter) outerRadius else innerRadius
+        val radius = if (isOuter) outerRadius.toDouble() else innerRadius.toDouble()
         val angle = (-90.0 + index * 36.0) * (kotlin.math.PI / 180.0)
-        val x = (center.x + (kotlin.math.cos(angle) * radius)).toFloat()
-        val y = (center.y + (kotlin.math.sin(angle) * radius)).toFloat()
+        val x = center.x + (kotlin.math.cos(angle) * radius).toFloat()
+        val y = center.y + (kotlin.math.sin(angle) * radius).toFloat()
         if (index == 0) {
             path.moveTo(x, y)
         } else {
@@ -582,15 +697,22 @@ private fun SignDropdown(
     selected: ZodiacSign?,
     allowEmpty: Boolean,
     onSelect: (ZodiacSign?) -> Unit,
+    showLabel: Boolean = true,
+    modifier: Modifier = Modifier,
 ) {
     var expanded by remember { mutableStateOf(false) }
 
-    Column(verticalArrangement = Arrangement.spacedBy(BWitchThemeTokens.dimens.spacingXs)) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(BWitchThemeTokens.dimens.spacingXs)
+    ) {
+        if (showLabel) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
 
         OutlinedButton(
             onClick = { expanded = true },
