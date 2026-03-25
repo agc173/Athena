@@ -1,13 +1,20 @@
 package com.agc.bwitch.ui.astrology
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -19,7 +26,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
@@ -27,9 +39,9 @@ import com.agc.bwitch.domain.astrology.synastry.SynastryDailyAxisState
 import com.agc.bwitch.domain.astrology.synastry.SynastryDimension
 import com.agc.bwitch.domain.astrology.synastry.SynastryEnergyAxis
 import com.agc.bwitch.domain.astrology.synastry.SynastryReading
-import com.agc.bwitch.domain.astrology.synastry.toFiveStarRating
 import com.agc.bwitch.domain.astrology.synastry.SynastryReadingDepth
 import com.agc.bwitch.domain.astrology.synastry.SynastrySignal
+import com.agc.bwitch.domain.astrology.synastry.toFiveStarRating
 import com.agc.bwitch.presentation.astrology.synastry.SynastryPersonForm
 import com.agc.bwitch.presentation.astrology.synastry.SynastryViewModel
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
@@ -160,67 +172,51 @@ private fun SynastryResultCard(reading: SynastryReading) {
             MetricStarsRow(dimension = dimension, stars = score.toFiveStarRating())
         }
 
-        Text(text = "Fortalezas", style = MaterialTheme.typography.titleSmall)
-        if (structured.strengths.isEmpty()) {
-            Text("• No se detectaron fortalezas dominantes en esta lectura.")
-        } else {
-            structured.strengths.forEach { Text("• ${it.toUiLabel()}") }
+        reading.dailyOverlay?.let { daily ->
+            Text(text = "Energía del día", style = MaterialTheme.typography.titleSmall)
+            Text(
+                text = daily.dailyEnergyLabel,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            daily.axes.forEach { axis ->
+                DailyEnergyAxisRow(axis)
+            }
+            Text(
+                text = "Guía de hoy: ${daily.dailyGuidance}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
 
-        Text(text = "Tensiones", style = MaterialTheme.typography.titleSmall)
-        if (structured.tensions.isEmpty()) {
-            Text("• No se detectaron tensiones principales.")
-        } else {
-            structured.tensions.forEach { Text("• ${it.toUiLabel()}") }
-        }
+        Text(text = "Fortaleza principal", style = MaterialTheme.typography.titleSmall)
+        Text(
+            text = structured.strengths.firstOrNull()?.toUiLabel()
+                ?: "No se detectó una fortaleza dominante en esta lectura.",
+            style = MaterialTheme.typography.bodyMedium,
+        )
 
-        Text(text = "Guía", style = MaterialTheme.typography.titleSmall)
-        if (structured.guidance.isEmpty()) {
-            Text("• Mantengan una comunicación presente y honesta.")
-        } else {
-            structured.guidance.forEach { Text("• ${it.toUiLabel()}") }
-        }
+        Text(text = "Tensión principal", style = MaterialTheme.typography.titleSmall)
+        Text(
+            text = structured.tensions.firstOrNull()?.toUiLabel()
+                ?: "No se detectó una tensión dominante en esta lectura.",
+            style = MaterialTheme.typography.bodyMedium,
+        )
+
+        Text(text = "Guía principal", style = MaterialTheme.typography.titleSmall)
+        Text(
+            text = structured.guidance.firstOrNull()?.toUiLabel()
+                ?: "Mantengan una comunicación presente y honesta.",
+            style = MaterialTheme.typography.bodyMedium,
+        )
 
         Text(text = "Narrativa", style = MaterialTheme.typography.titleSmall)
         Text(
             text = reading.narrative,
             style = MaterialTheme.typography.bodyMedium,
         )
-
-        reading.dailyOverlay?.let { daily ->
-            Text(text = "Clima del vínculo hoy", style = MaterialTheme.typography.titleSmall)
-            Text(
-                text = "• Energía: ${daily.dailyEnergyLabel}",
-                style = MaterialTheme.typography.bodyMedium,
-            )
-            Text(
-                text = "• Dimensión destacada: ${daily.highlightedDimension.toUiLabel()}",
-                style = MaterialTheme.typography.bodyMedium,
-            )
-            Text(
-                text = "• Dimensión sensible: ${daily.sensitiveDimension.toUiLabel()}",
-                style = MaterialTheme.typography.bodyMedium,
-            )
-            daily.axes.forEach { axis ->
-                Text(
-                    text = "• ${axis.toUiLabel()}",
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            }
-            Text(
-                text = "• Consejo diario: ${daily.dailyGuidance}",
-                style = MaterialTheme.typography.bodyMedium,
-            )
-            Text(
-                text = daily.dailyNarrativeFragment,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
     }
 }
-
-
 
 @Composable
 private fun MetricStarsRow(dimension: SynastryDimension, stars: Double) {
@@ -235,14 +231,95 @@ private fun MetricStarsRow(dimension: SynastryDimension, stars: Double) {
 
 @Composable
 private fun StarRating(stars: Double) {
-    val full = stars.toInt()
-    val hasHalf = stars - full >= 0.5
-    val empty = 5 - full - if (hasHalf) 1 else 0
+    val normalized = stars.coerceIn(0.0, 5.0)
 
-    Row(modifier = Modifier.width(BWitchThemeTokens.dimens.spacingMd * 10)) {
-        repeat(full) { Text("★") }
-        if (hasHalf) Text("⯨")
-        repeat(empty) { Text("☆") }
+    Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+        repeat(5) { index ->
+            val fillFraction = (normalized - index).coerceIn(0.0, 1.0).toFloat()
+            StarCell(fillFraction = fillFraction)
+        }
+    }
+}
+
+@Composable
+private fun StarCell(fillFraction: Float) {
+    Box {
+        Text(
+            text = "☆",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.outline,
+        )
+        if (fillFraction > 0f) {
+            Box(modifier = Modifier.fillMaxWidth(fillFraction).clipToBounds()) {
+                Text(
+                    text = "★",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun DailyEnergyAxisRow(axis: SynastryDailyAxisState) {
+    val position = ((axis.value + 100f) / 200f).coerceIn(0f, 1f)
+    val markerSize = 16.dp
+
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text(
+                text = axis.leftLabel(),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                text = axis.rightLabel(),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+
+        BoxWithConstraints(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(28.dp),
+        ) {
+            val travelRange = (maxWidth - markerSize).coerceAtLeast(0.dp)
+            val markerOffset = travelRange * position
+
+            Box(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .fillMaxWidth()
+                    .height(8.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
+            )
+            Box(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .width(2.dp)
+                    .height(14.dp)
+                    .background(MaterialTheme.colorScheme.outline),
+            )
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .offset(x = markerOffset)
+                    .size(markerSize)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary),
+            )
+        }
+
+        Text(
+            text = axis.positionLabel(),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 }
 
@@ -294,7 +371,6 @@ private fun SignDropdown(
         }
     }
 }
-
 
 @Composable
 private fun SignPickerDialog(
@@ -376,10 +452,22 @@ private fun SynastryDimension.toUiLabel(): String = when (this) {
     SynastryDimension.GROWTH -> "Potencial de crecimiento"
 }
 
-private fun SynastryDailyAxisState.toUiLabel(): String = when (axis) {
-    SynastryEnergyAxis.HARMONY_INTENSITY -> if (value >= 0) "Armonía ←→ Intensidad: más Intensidad" else "Armonía ←→ Intensidad: más Armonía"
-    SynastryEnergyAxis.STABILITY_TRANSFORMATION -> if (value >= 0) "Estabilidad ←→ Transformación: más Transformación" else "Estabilidad ←→ Transformación: más Estabilidad"
-    SynastryEnergyAxis.CALM_MOVEMENT -> if (value >= 0) "Calma ←→ Movimiento: más Movimiento" else "Calma ←→ Movimiento: más Calma"
+private fun SynastryDailyAxisState.leftLabel(): String = when (axis) {
+    SynastryEnergyAxis.HARMONY_INTENSITY -> "Armonía"
+    SynastryEnergyAxis.STABILITY_TRANSFORMATION -> "Estabilidad"
+    SynastryEnergyAxis.CALM_MOVEMENT -> "Calma"
+}
+
+private fun SynastryDailyAxisState.rightLabel(): String = when (axis) {
+    SynastryEnergyAxis.HARMONY_INTENSITY -> "Intensidad"
+    SynastryEnergyAxis.STABILITY_TRANSFORMATION -> "Transformación"
+    SynastryEnergyAxis.CALM_MOVEMENT -> "Movimiento"
+}
+
+private fun SynastryDailyAxisState.positionLabel(): String = when {
+    value in -12..12 -> "Eje equilibrado"
+    value > 0 -> "Más cerca de ${rightLabel()}"
+    else -> "Más cerca de ${leftLabel()}"
 }
 
 private fun SynastrySignal.toUiLabel(): String = when (this) {
