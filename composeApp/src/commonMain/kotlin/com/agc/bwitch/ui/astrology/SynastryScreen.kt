@@ -1,6 +1,8 @@
 package com.agc.bwitch.ui.astrology
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -15,6 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -27,10 +30,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Fill
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -191,22 +197,19 @@ private fun SynastryResultCard(reading: SynastryReading) {
 
         Text(text = "Fortaleza principal", style = MaterialTheme.typography.titleSmall)
         Text(
-            text = structured.strengths.firstOrNull()?.toUiLabel()
-                ?: "No se detectó una fortaleza dominante en esta lectura.",
+            text = reading.primaryStrengthCopy(),
             style = MaterialTheme.typography.bodyMedium,
         )
 
         Text(text = "Tensión principal", style = MaterialTheme.typography.titleSmall)
         Text(
-            text = structured.tensions.firstOrNull()?.toUiLabel()
-                ?: "No se detectó una tensión dominante en esta lectura.",
+            text = reading.primaryTensionCopy(),
             style = MaterialTheme.typography.bodyMedium,
         )
 
         Text(text = "Guía principal", style = MaterialTheme.typography.titleSmall)
         Text(
-            text = structured.guidance.firstOrNull()?.toUiLabel()
-                ?: "Mantengan una comunicación presente y honesta.",
+            text = reading.primaryGuidanceCopy(),
             style = MaterialTheme.typography.bodyMedium,
         )
 
@@ -233,7 +236,7 @@ private fun MetricStarsRow(dimension: SynastryDimension, stars: Double) {
 private fun StarRating(stars: Double) {
     val normalized = stars.coerceIn(0.0, 5.0)
 
-    Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         repeat(5) { index ->
             val fillFraction = (normalized - index).coerceIn(0.0, 1.0).toFloat()
             StarCell(fillFraction = fillFraction)
@@ -243,31 +246,50 @@ private fun StarRating(stars: Double) {
 
 @Composable
 private fun StarCell(fillFraction: Float) {
-    Box {
-        Text(
-            text = "☆",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.outline,
-        )
-        if (fillFraction > 0f) {
-            Box(modifier = Modifier.fillMaxWidth(fillFraction).clipToBounds()) {
-                Text(
-                    text = "★",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                )
+    val inactiveColor = MaterialTheme.colorScheme.outlineVariant
+    val activeColor = MaterialTheme.colorScheme.primary
+
+    Box(
+        modifier = Modifier
+            .size(16.dp)
+            .drawWithContent {
+                val starPath = buildStarPath(size.width, size.height)
+                drawPath(path = starPath, color = inactiveColor, style = Fill)
+                if (fillFraction > 0f) {
+                    clipRect(left = 0f, top = 0f, right = size.width * fillFraction, bottom = size.height) {
+                        drawPath(path = starPath, color = activeColor, style = Fill)
+                    }
+                }
             }
-        }
-    }
+    )
 }
 
 @Composable
 private fun DailyEnergyAxisRow(axis: SynastryDailyAxisState) {
     val position = ((axis.value + 100f) / 200f).coerceIn(0f, 1f)
-    val markerSize = 16.dp
+    val markerSize = 14.dp
+    var showAxisInfo by remember(axis.axis) { mutableStateOf(false) }
 
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = axis.axis.axisTitle(),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Box(modifier = Modifier.width(6.dp))
+            AxisInfoButton(onClick = { showAxisInfo = true })
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Text(
                 text = axis.leftLabel(),
                 style = MaterialTheme.typography.labelSmall,
@@ -283,7 +305,7 @@ private fun DailyEnergyAxisRow(axis: SynastryDailyAxisState) {
         BoxWithConstraints(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(28.dp),
+                .height(24.dp),
         ) {
             val travelRange = (maxWidth - markerSize).coerceAtLeast(0.dp)
             val markerOffset = travelRange * position
@@ -292,16 +314,16 @@ private fun DailyEnergyAxisRow(axis: SynastryDailyAxisState) {
                 modifier = Modifier
                     .align(Alignment.Center)
                     .fillMaxWidth()
-                    .height(8.dp)
+                    .height(4.dp)
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.surfaceVariant),
             )
             Box(
                 modifier = Modifier
                     .align(Alignment.Center)
-                    .width(2.dp)
-                    .height(14.dp)
-                    .background(MaterialTheme.colorScheme.outline),
+                    .width(1.dp)
+                    .height(10.dp)
+                    .background(MaterialTheme.colorScheme.outlineVariant),
             )
             Box(
                 modifier = Modifier
@@ -309,19 +331,243 @@ private fun DailyEnergyAxisRow(axis: SynastryDailyAxisState) {
                     .offset(x = markerOffset)
                     .size(markerSize)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary),
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
+            )
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .offset(x = markerOffset + 2.dp, y = 2.dp)
+                    .size(markerSize - 4.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary)
+                    .border(1.dp, MaterialTheme.colorScheme.surface, CircleShape),
             )
         }
 
+        if (showAxisInfo) {
+            AxisInfoDialog(axis = axis.axis, onDismiss = { showAxisInfo = false })
+        }
+    }
+}
+
+@Composable
+private fun AxisInfoButton(onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .size(16.dp)
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.primaryContainer)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
         Text(
-            text = axis.positionLabel(),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth(),
+            text = "i",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onPrimaryContainer,
         )
     }
 }
+
+@Composable
+private fun AxisInfoDialog(
+    axis: SynastryEnergyAxis,
+    onDismiss: () -> Unit,
+) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .clip(RoundedCornerShape(20.dp)),
+            tonalElevation = 6.dp,
+            shape = RoundedCornerShape(20.dp),
+        ) {
+            Column(
+                modifier = Modifier.padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Text(
+                    text = axis.axisTitle(),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Text(
+                    text = axis.axisInfoDescription(),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                OutlinedButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.align(Alignment.End),
+                ) {
+                    Text("Cerrar")
+                }
+            }
+        }
+    }
+}
+
+private fun buildStarPath(width: Float, height: Float): Path {
+    val center = Offset(width / 2f, height / 2f)
+    val outerRadius = minOf(width, height) / 2f
+    val innerRadius = outerRadius * 0.5f
+    val path = Path()
+
+    repeat(10) { index ->
+        val isOuter = index % 2 == 0
+        val radius = if (isOuter) outerRadius else innerRadius
+        val angle = (-90.0 + index * 36.0) * (kotlin.math.PI / 180.0)
+        val x = (center.x + (kotlin.math.cos(angle) * radius)).toFloat()
+        val y = (center.y + (kotlin.math.sin(angle) * radius)).toFloat()
+        if (index == 0) {
+            path.moveTo(x, y)
+        } else {
+            path.lineTo(x, y)
+        }
+    }
+    path.close()
+    return path
+}
+
+private fun SynastryEnergyAxis.axisTitle(): String = when (this) {
+    SynastryEnergyAxis.HARMONY_INTENSITY -> "Armonía ↔ Intensidad"
+    SynastryEnergyAxis.STABILITY_TRANSFORMATION -> "Estabilidad ↔ Transformación"
+    SynastryEnergyAxis.CALM_MOVEMENT -> "Calma ↔ Movimiento"
+}
+
+private fun SynastryEnergyAxis.axisInfoDescription(): String = when (this) {
+    SynastryEnergyAxis.HARMONY_INTENSITY -> "Mide si hoy el vínculo fluye desde equilibrio y facilidad, o desde una chispa emocional más intensa."
+    SynastryEnergyAxis.STABILITY_TRANSFORMATION -> "Indica si la energía del día favorece sostener lo construido o abrir cambios y redefinir acuerdos."
+    SynastryEnergyAxis.CALM_MOVEMENT -> "Refleja si conviene priorizar pausa y contención, o activar más movimiento, iniciativa y acción compartida."
+}
+
+private fun synastryReadingPrimaryCopy(
+    signals: List<SynastrySignal>,
+    axis: SynastryDailyAxisState?,
+    seedBase: Int,
+    fallback: String,
+): String {
+    val primarySignal = signals.firstOrNull() ?: return fallback
+    val variants = primarySignal.copyVariants(axis)
+    val index = ((seedBase * 31) + primarySignal.ordinal + (axis?.value ?: 0)).absolutePositive() % variants.size
+    return variants[index]
+}
+
+private fun SynastrySignal.copyVariants(axis: SynastryDailyAxisState?): List<String> = when (this) {
+    SynastrySignal.STRONG_EMOTIONAL_RESONANCE -> listOf(
+        "Hay una sintonía emocional que facilita comprenderse sin demasiadas explicaciones.",
+        "La conexión sensible aparece como un punto fuerte: captan rápido lo que el otro siente.",
+        "La base emocional se percibe cercana y eso ayuda a sostener momentos exigentes.",
+    )
+
+    SynastrySignal.DIFFERENT_EMOTIONAL_RHYTHMS -> listOf(
+        "Los tiempos emocionales no siempre coinciden, y eso puede generar cruces si no se nombran.",
+        "La tensión principal está en cómo cada persona procesa lo que siente y cuándo lo expresa.",
+        "Se nota diferencia de ritmo emocional: conviene validar tiempos distintos sin forzar respuestas.",
+    )
+
+    SynastrySignal.NATURAL_SPARK -> listOf(
+        "La atracción aparece de forma natural y mantiene vivo el interés entre ambos.",
+        "Hay química espontánea, con capacidad de renovar el vínculo cuando se cuida el ritmo.",
+        "La chispa está presente y aporta impulso para acercarse con más facilidad.",
+    )
+
+    SynastrySignal.COMMUNICATION_FLOW -> listOf(
+        "El diálogo tiende a fluir y eso vuelve más simples los ajustes cotidianos.",
+        "Existe una base de comunicación clara que ayuda a ordenar decisiones en conjunto.",
+        "Hablarse suele resultar natural, lo que fortalece la coordinación entre ambos.",
+    )
+
+    SynastrySignal.STABILITY_POTENTIAL -> listOf(
+        "Se percibe potencial para construir una base estable sin perder cercanía.",
+        "Hay condiciones para sostener acuerdos en el tiempo con constancia y cuidado.",
+        "El vínculo muestra capacidad de anclaje y continuidad cuando priorizan lo esencial.",
+    )
+
+    SynastrySignal.GROWTH_THROUGH_DIFFERENCE -> listOf(
+        "Las diferencias pueden convertirse en evolución si se usan como aprendizaje mutuo.",
+        "Existe potencial de crecimiento compartido cuando no intentan pensar igual en todo.",
+        "El vínculo se fortalece al integrar perspectivas distintas en lugar de competir por ellas.",
+    )
+
+    SynastrySignal.HIGH_INTENSITY -> listOf(
+        "La intensidad es alta y puede desbordar si no acompañan con pausas conscientes.",
+        "La carga emocional del vínculo sube rápido; conviene evitar decisiones impulsivas.",
+        "Hay mucha chispa, pero también riesgo de reactividad si falta regulación conjunta.",
+    )
+
+    SynastrySignal.NEED_FOR_PATIENCE -> listOf(
+        "La comunicación pide más paciencia para evitar interpretaciones rápidas.",
+        "El principal reto está en sostener conversaciones sin apurar conclusiones.",
+        "Conviene bajar el apuro al dialogar para que los matices no se pierdan.",
+    )
+
+    SynastrySignal.GROUNDING_BOND -> listOf(
+        "Predomina una energía de anclaje que ayuda a bajar ruido y enfocarse en lo importante.",
+        "El vínculo ofrece una cualidad de calma práctica que ordena el día a día.",
+        "Hay una base aterrizada que favorece decisiones más serenas y consistentes.",
+    )
+
+    SynastrySignal.MENTAL_STIMULATION -> listOf(
+        "Hay estímulo mental mutuo y eso mantiene viva la curiosidad entre ambos.",
+        "La conexión intelectual suma dinamismo y abre conversaciones nutritivas.",
+        "Se desafían de forma constructiva, lo que renueva ideas y perspectivas.",
+    )
+
+    SynastrySignal.CREATE_SHARED_RHYTHM -> listOf(
+        "La clave es crear un ritmo compartido para no entrar en sincronías forzadas.",
+        "Conviene acordar tiempos comunes para que la relación gane estabilidad diaria.",
+        "Un pulso común, aunque sea simple, puede reducir fricción y mejorar coordinación.",
+    )
+
+    SynastrySignal.USE_DIFFERENCE_AS_GROWTH -> listOf(
+        "La guía principal es usar la diferencia como recurso de crecimiento.",
+        "Lo más útil hoy es convertir los contrastes en acuerdos más inteligentes.",
+        "Tomar lo distinto como aprendizaje puede elevar el tono general del vínculo.",
+    )
+
+    SynastrySignal.PROTECT_THE_SOFTNESS -> listOf(
+        "Conviene cuidar la parte sensible del vínculo antes de discutir formas.",
+        "La guía es proteger la sensibilidad mutua y priorizar tono sobre velocidad.",
+        "Sostener un clima seguro ayuda a que lo importante pueda decirse mejor.",
+    )
+
+    SynastrySignal.SLOW_DOWN_REACTIVITY -> listOf(
+        if ((axis?.value ?: 0) >= 0) {
+            "La guía es bajar un punto la aceleración para responder con más conciencia."
+        } else {
+            "Conviene pausar antes de reaccionar para que el diálogo no se tense de más."
+        },
+        "Tomarse un segundo antes de responder puede cambiar por completo el resultado.",
+        "Reducir reactividad mejora el clima y evita escalar roces innecesarios.",
+    )
+}
+
+private fun Int.absolutePositive(): Int = kotlin.math.abs(this)
+
+private fun SynastryReading.primaryStrengthCopy(): String = synastryReadingPrimaryCopy(
+    signals = structured.strengths,
+    axis = dailyOverlay?.axes?.maxByOrNull { kotlin.math.abs(it.value) },
+    seedBase = structured.overallScore.value + personA.sunSign.ordinal + personB.sunSign.ordinal,
+    fallback = "No se detectó una fortaleza dominante en esta lectura.",
+)
+
+private fun SynastryReading.primaryTensionCopy(): String = synastryReadingPrimaryCopy(
+    signals = structured.tensions,
+    axis = dailyOverlay?.axes?.maxByOrNull { kotlin.math.abs(it.value) },
+    seedBase = structured.overallScore.value + (personA.sunSign.ordinal * 7) + personB.sunSign.ordinal,
+    fallback = "No se detectó una tensión dominante en esta lectura.",
+)
+
+private fun SynastryReading.primaryGuidanceCopy(): String = synastryReadingPrimaryCopy(
+    signals = structured.guidance,
+    axis = dailyOverlay?.axes?.firstOrNull(),
+    seedBase = structured.overallScore.value + (personA.sunSign.ordinal * 17) + personB.sunSign.ordinal,
+    fallback = "Mantengan una comunicación presente y honesta.",
+)
 
 private val metricOrder = listOf(
     SynastryDimension.ATTRACTION,
@@ -462,27 +708,4 @@ private fun SynastryDailyAxisState.rightLabel(): String = when (axis) {
     SynastryEnergyAxis.HARMONY_INTENSITY -> "Intensidad"
     SynastryEnergyAxis.STABILITY_TRANSFORMATION -> "Transformación"
     SynastryEnergyAxis.CALM_MOVEMENT -> "Movimiento"
-}
-
-private fun SynastryDailyAxisState.positionLabel(): String = when {
-    value in -12..12 -> "Eje equilibrado"
-    value > 0 -> "Más cerca de ${rightLabel()}"
-    else -> "Más cerca de ${leftLabel()}"
-}
-
-private fun SynastrySignal.toUiLabel(): String = when (this) {
-    SynastrySignal.STRONG_EMOTIONAL_RESONANCE -> "Resonancia emocional fuerte"
-    SynastrySignal.DIFFERENT_EMOTIONAL_RHYTHMS -> "Ritmos emocionales diferentes"
-    SynastrySignal.NATURAL_SPARK -> "Chispa natural"
-    SynastrySignal.COMMUNICATION_FLOW -> "Comunicación fluida"
-    SynastrySignal.STABILITY_POTENTIAL -> "Potencial de estabilidad"
-    SynastrySignal.GROWTH_THROUGH_DIFFERENCE -> "Crecimiento a través de la diferencia"
-    SynastrySignal.HIGH_INTENSITY -> "Intensidad alta"
-    SynastrySignal.NEED_FOR_PATIENCE -> "Necesidad de paciencia"
-    SynastrySignal.GROUNDING_BOND -> "Vínculo de anclaje"
-    SynastrySignal.MENTAL_STIMULATION -> "Estimulación mental"
-    SynastrySignal.CREATE_SHARED_RHYTHM -> "Crear ritmo compartido"
-    SynastrySignal.USE_DIFFERENCE_AS_GROWTH -> "Usar la diferencia para crecer"
-    SynastrySignal.PROTECT_THE_SOFTNESS -> "Proteger la parte sensible"
-    SynastrySignal.SLOW_DOWN_REACTIVITY -> "Bajar la reactividad"
 }

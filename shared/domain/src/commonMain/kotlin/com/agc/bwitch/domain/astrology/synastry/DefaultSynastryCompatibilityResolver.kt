@@ -37,9 +37,9 @@ class DefaultSynastryCompatibilityResolver : SynastryCompatibilityResolver {
         val overallScore = SynastryScore.from(scores.values.map { it.value }.average().roundToInt())
         val archetype = resolveArchetype(scores, overallScore)
         val axisStates = resolveAxisStates(scores, baseProfile, date, seed)
-        val strengths = resolveStrengths(scores, axisStates)
-        val tensions = resolveTensions(scores, axisStates)
-        val guidance = resolveGuidance(tensions)
+        val strengths = resolveStrengths(scores, axisStates, seed, date)
+        val tensions = resolveTensions(scores, axisStates, seed, date)
+        val guidance = resolveGuidance(tensions, axisStates, seed, date)
         val tags = resolveTags(scores, overallScore, completeness.depth)
 
         return SynastryReadingStructured(
@@ -237,8 +237,10 @@ class DefaultSynastryCompatibilityResolver : SynastryCompatibilityResolver {
     private fun resolveStrengths(
         scores: Map<SynastryDimension, SynastryScore>,
         axes: List<SynastryDailyAxisState>,
+        seed: Int,
+        date: LocalDate,
     ): List<SynastrySignal> {
-        val strengths = linkedSetOf<SynastrySignal>()
+        val strengths = mutableSetOf<SynastrySignal>()
 
         if (scores.require(SynastryDimension.EMOTIONAL).value >= 63) strengths += SynastrySignal.STRONG_EMOTIONAL_RESONANCE
         if (scores.require(SynastryDimension.ATTRACTION).value >= 65) strengths += SynastrySignal.NATURAL_SPARK
@@ -253,14 +255,16 @@ class DefaultSynastryCompatibilityResolver : SynastryCompatibilityResolver {
         }
 
         if (strengths.isEmpty()) strengths += SynastrySignal.NATURAL_SPARK
-        return strengths.toList()
+        return strengths.sortedByDescending { strengthWeight(it, scores, axes, seed, date) }
     }
 
     private fun resolveTensions(
         scores: Map<SynastryDimension, SynastryScore>,
         axes: List<SynastryDailyAxisState>,
+        seed: Int,
+        date: LocalDate,
     ): List<SynastrySignal> {
-        val tensions = linkedSetOf<SynastrySignal>()
+        val tensions = mutableSetOf<SynastrySignal>()
 
         if (scores.require(SynastryDimension.EMOTIONAL).value <= 52) tensions += SynastrySignal.DIFFERENT_EMOTIONAL_RHYTHMS
         if (scores.require(SynastryDimension.COMMUNICATION).value <= 53) tensions += SynastrySignal.NEED_FOR_PATIENCE
@@ -272,11 +276,16 @@ class DefaultSynastryCompatibilityResolver : SynastryCompatibilityResolver {
         }
 
         if (tensions.isEmpty()) tensions += SynastrySignal.CREATE_SHARED_RHYTHM
-        return tensions.toList()
+        return tensions.sortedByDescending { tensionWeight(it, scores, axes, seed, date) }
     }
 
-    private fun resolveGuidance(tensions: List<SynastrySignal>): List<SynastrySignal> {
-        val guidance = linkedSetOf<SynastrySignal>()
+    private fun resolveGuidance(
+        tensions: List<SynastrySignal>,
+        axes: List<SynastryDailyAxisState>,
+        seed: Int,
+        date: LocalDate,
+    ): List<SynastrySignal> {
+        val guidance = mutableSetOf<SynastrySignal>()
 
         tensions.forEach { tension ->
             when (tension) {
@@ -291,7 +300,80 @@ class DefaultSynastryCompatibilityResolver : SynastryCompatibilityResolver {
         }
 
         if (guidance.isEmpty()) guidance += SynastrySignal.USE_DIFFERENCE_AS_GROWTH
-        return guidance.toList()
+        return guidance.sortedByDescending { guidanceWeight(it, axes, seed, date) }
+    }
+
+    private fun strengthWeight(
+        signal: SynastrySignal,
+        scores: Map<SynastryDimension, SynastryScore>,
+        axes: List<SynastryDailyAxisState>,
+        seed: Int,
+        date: LocalDate,
+    ): Int {
+        val harmony = axes.firstOrNull { it.axis == SynastryEnergyAxis.HARMONY_INTENSITY }?.value ?: 0
+        val stability = axes.firstOrNull { it.axis == SynastryEnergyAxis.STABILITY_TRANSFORMATION }?.value ?: 0
+        val base = when (signal) {
+            SynastrySignal.STRONG_EMOTIONAL_RESONANCE -> scores.require(SynastryDimension.EMOTIONAL).value
+            SynastrySignal.NATURAL_SPARK -> scores.require(SynastryDimension.ATTRACTION).value + kotlin.math.abs(harmony / 5)
+            SynastrySignal.COMMUNICATION_FLOW,
+            SynastrySignal.MENTAL_STIMULATION,
+            -> scores.require(SynastryDimension.COMMUNICATION).value
+
+            SynastrySignal.GROWTH_THROUGH_DIFFERENCE -> scores.require(SynastryDimension.GROWTH).value + kotlin.math.abs(stability / 6)
+            SynastrySignal.GROUNDING_BOND,
+            SynastrySignal.STABILITY_POTENTIAL,
+            -> scores.require(SynastryDimension.GROWTH).value + (-stability / 3)
+
+            else -> 45
+        }
+        return base + deterministicSignalBias(seed, date, signal)
+    }
+
+    private fun tensionWeight(
+        signal: SynastrySignal,
+        scores: Map<SynastryDimension, SynastryScore>,
+        axes: List<SynastryDailyAxisState>,
+        seed: Int,
+        date: LocalDate,
+    ): Int {
+        val movement = axes.firstOrNull { it.axis == SynastryEnergyAxis.CALM_MOVEMENT }?.value ?: 0
+        val base = when (signal) {
+            SynastrySignal.DIFFERENT_EMOTIONAL_RHYTHMS -> 100 - scores.require(SynastryDimension.EMOTIONAL).value
+            SynastrySignal.NEED_FOR_PATIENCE -> 100 - scores.require(SynastryDimension.COMMUNICATION).value
+            SynastrySignal.HIGH_INTENSITY -> scores.require(SynastryDimension.ATTRACTION).value - scores.require(SynastryDimension.GROWTH).value + 40
+            SynastrySignal.SLOW_DOWN_REACTIVITY -> kotlin.math.abs(movement) + 40
+            SynastrySignal.CREATE_SHARED_RHYTHM -> 55
+            else -> 48
+        }
+        return base + deterministicSignalBias(seed + 101, date, signal)
+    }
+
+    private fun guidanceWeight(
+        signal: SynastrySignal,
+        axes: List<SynastryDailyAxisState>,
+        seed: Int,
+        date: LocalDate,
+    ): Int {
+        val dominantAxis = axes.maxByOrNull { kotlin.math.abs(it.value) }
+        val axisBoost = when (signal) {
+            SynastrySignal.SLOW_DOWN_REACTIVITY ->
+                if (dominantAxis?.axis == SynastryEnergyAxis.CALM_MOVEMENT && (dominantAxis.value > 20)) 12 else 0
+
+            SynastrySignal.PROTECT_THE_SOFTNESS ->
+                if (dominantAxis?.axis == SynastryEnergyAxis.HARMONY_INTENSITY && (dominantAxis.value < -15)) 10 else 0
+
+            SynastrySignal.CREATE_SHARED_RHYTHM ->
+                if (dominantAxis?.axis == SynastryEnergyAxis.STABILITY_TRANSFORMATION) 8 else 0
+
+            else -> 0
+        }
+        return 60 + axisBoost + deterministicSignalBias(seed + 211, date, signal)
+    }
+
+    private fun deterministicSignalBias(seed: Int, date: LocalDate, signal: SynastrySignal): Int {
+        val dayToken = date.dayOfMonth + (date.monthNumber * 31) + (date.year * 3)
+        val mixed = (seed * 43) + (signal.ordinal * 97) + dayToken
+        return ((mixed and Int.MAX_VALUE) % 11) - 5
     }
 
     private fun resolveTags(
