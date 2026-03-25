@@ -262,14 +262,15 @@ private fun SynastryResultCard(reading: SynastryReading) {
         )
 
         SectionSeparator()
-        Text(text = "Métricas del vínculo", style = MaterialTheme.typography.titleSmall)
+        ResultBlockTitle("Métricas del vínculo")
         metricOrder.forEach { dimension ->
             val score = structured.scores[dimension] ?: return@forEach
             MetricStarsRow(dimension = dimension, stars = score.toFiveStarRating())
         }
 
         reading.dailyOverlay?.let { daily ->
-            Text(text = "Energía del día", style = MaterialTheme.typography.titleSmall)
+            SectionSeparator()
+            ResultBlockTitle("Energía del día")
             Text(
                 text = daily.dailyEnergyLabel,
                 style = MaterialTheme.typography.bodyMedium,
@@ -278,10 +279,7 @@ private fun SynastryResultCard(reading: SynastryReading) {
             daily.axes.forEach { axis ->
                 DailyEnergyAxisRow(axis)
             }
-            Text(
-                text = "Consejo del día",
-                style = MaterialTheme.typography.titleSmall,
-            )
+            ResultBlockTitle("Consejo del día")
             Text(
                 text = daily.dailyGuidance,
                 style = MaterialTheme.typography.bodyMedium,
@@ -290,26 +288,26 @@ private fun SynastryResultCard(reading: SynastryReading) {
         }
 
         SectionSeparator()
-        Text(text = "Fortaleza principal", style = MaterialTheme.typography.titleSmall)
+        ResultBlockTitle("Fortaleza principal")
         Text(
             text = reading.primaryStrengthCopy(),
             style = MaterialTheme.typography.bodyMedium,
         )
 
-        Text(text = "Tensión principal", style = MaterialTheme.typography.titleSmall)
+        ResultBlockTitle("Tensión principal")
         Text(
             text = reading.primaryTensionCopy(),
             style = MaterialTheme.typography.bodyMedium,
         )
 
-        Text(text = "Guía principal", style = MaterialTheme.typography.titleSmall)
+        ResultBlockTitle("Guía principal")
         Text(
             text = reading.primaryGuidanceCopy(),
             style = MaterialTheme.typography.bodyMedium,
         )
 
         SectionSeparator()
-        Text(text = "Narrativa", style = MaterialTheme.typography.titleSmall)
+        ResultBlockTitle("Narrativa")
         Text(
             text = reading.narrative,
             style = MaterialTheme.typography.bodyMedium,
@@ -368,19 +366,39 @@ private fun DailyEnergyAxisRow(axis: SynastryDailyAxisState) {
     var showAxisInfo by remember(axis.axis) { mutableStateOf(false) }
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Box(
+        Row(
             modifier = Modifier.fillMaxWidth(),
-            contentAlignment = Alignment.Center,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = axis.axis.axisTitle(),
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.onSurface,
-                textAlign = TextAlign.Center,
+                text = axis.leftLabel(),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Box(modifier = Modifier.align(Alignment.CenterEnd)) {
-                AxisInfoButton(onClick = { showAxisInfo = true })
-            }
+            Text(
+                text = "· · ·",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.outline,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 6.dp),
+                textAlign = TextAlign.End,
+            )
+            AxisInfoButton(onClick = { showAxisInfo = true })
+            Text(
+                text = "· · ·",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.outline,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 6.dp),
+            )
+            Text(
+                text = axis.rightLabel(),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.End,
+            )
         }
 
         BoxWithConstraints(
@@ -432,22 +450,6 @@ private fun DailyEnergyAxisRow(axis: SynastryDailyAxisState) {
                     .background(MaterialTheme.colorScheme.primary)
             )
         }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = axis.leftLabel(),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Text(
-                text = axis.rightLabel(),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
 
         if (showAxisInfo) {
             AxisInfoDialog(axis = axis.axis, onDismiss = { showAxisInfo = false })
@@ -459,7 +461,7 @@ private fun DailyEnergyAxisRow(axis: SynastryDailyAxisState) {
 private fun AxisInfoButton(onClick: () -> Unit) {
     Box(
         modifier = Modifier
-            .size(16.dp)
+            .size(18.dp)
             .clip(CircleShape)
             .background(MaterialTheme.colorScheme.primaryContainer)
             .clickable(onClick = onClick),
@@ -475,11 +477,27 @@ private fun AxisInfoButton(onClick: () -> Unit) {
 
 @Composable
 private fun SectionSeparator() {
-    Box(
+    Text(
+        text = "✦  ✦  ✦",
+        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+        color = MaterialTheme.colorScheme.outline,
         modifier = Modifier
             .fillMaxWidth()
-            .height(1.dp)
-            .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.8f))
+            .padding(vertical = 4.dp),
+        textAlign = TextAlign.Center,
+    )
+}
+
+@Composable
+private fun ResultBlockTitle(text: String) {
+    Text(
+        text = text.uppercase(),
+        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+        color = MaterialTheme.colorScheme.onSurface,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 4.dp),
+        textAlign = TextAlign.Center,
     )
 }
 
