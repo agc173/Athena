@@ -9,7 +9,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -87,26 +89,32 @@ fun PortalScreen(
         onBack = {},
         modifier = modifier
     ) { scaffoldPadding ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(scaffoldPadding)
-                .padding(contentPadding)
-                .padding(horizontal = BWitchThemeTokens.dimens.spacingMd)
-                .padding(top = BWitchThemeTokens.dimens.spacingXs, bottom = BWitchThemeTokens.dimens.spacingSm),
-            verticalArrangement = Arrangement.spacedBy(BWitchThemeTokens.dimens.spacingSm),
         ) {
-            PortalHeader()
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(scaffoldPadding)
+                    .padding(contentPadding)
+                    .padding(horizontal = BWitchThemeTokens.dimens.spacingMd)
+                    .padding(bottom = BWitchThemeTokens.dimens.spacingSm),
+                verticalArrangement = Arrangement.spacedBy(BWitchThemeTokens.dimens.spacingXs),
+            ) {
+                PortalHeader()
 
-            Column(verticalArrangement = Arrangement.spacedBy(BWitchThemeTokens.dimens.spacingSm)) {
-                portalModules.forEach { module ->
-                    PortalModuleCard(
-                        module = module,
-                        onClick = {
-                            val destination = module.destination ?: return@PortalModuleCard
-                            onNavigate(destination)
-                        },
-                    )
+                Column(verticalArrangement = Arrangement.spacedBy(BWitchThemeTokens.dimens.spacingXs)) {
+                    portalModules.forEach { module ->
+                        PortalModuleCard(
+                            module = module,
+                            onClick = {
+                                val destination = module.destination ?: return@PortalModuleCard
+                                onNavigate(destination)
+                            },
+                        )
+                    }
                 }
             }
         }
@@ -117,10 +125,9 @@ fun PortalScreen(
 private fun PortalHeader(modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
-            .fillMaxWidth()
-            .padding(top = 2.dp, bottom = 2.dp),
+            .fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(2.dp),
+        verticalArrangement = Arrangement.spacedBy(1.dp),
     ) {
         Text(
             text = "PORTAL",
