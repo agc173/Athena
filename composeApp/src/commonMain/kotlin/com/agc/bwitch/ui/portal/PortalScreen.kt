@@ -98,14 +98,15 @@ fun PortalScreen(
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
                     .padding(scaffoldPadding)
-                    .padding(contentPadding)
                     .padding(horizontal = BWitchThemeTokens.dimens.spacingMd)
-                    .padding(bottom = BWitchThemeTokens.dimens.spacingSm),
-                verticalArrangement = Arrangement.spacedBy(BWitchThemeTokens.dimens.spacingXs),
+                    .padding(top = BWitchThemeTokens.dimens.spacingSm, bottom = BWitchThemeTokens.dimens.spacingSm),
+                verticalArrangement = Arrangement.spacedBy(BWitchThemeTokens.dimens.spacingMd),
             ) {
                 PortalHeader()
 
-                Column(verticalArrangement = Arrangement.spacedBy(BWitchThemeTokens.dimens.spacingXs)) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(BWitchThemeTokens.dimens.spacingSm)
+                ) {
                     portalModules.forEach { module ->
                         PortalModuleCard(
                             module = module,
@@ -125,9 +126,10 @@ fun PortalScreen(
 private fun PortalHeader(modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            .padding(top = 2.dp, bottom = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(1.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         Text(
             text = "PORTAL",
