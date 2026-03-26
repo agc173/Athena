@@ -3,8 +3,6 @@ package com.agc.bwitch.ui.common
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -16,6 +14,8 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
 import com.agc.bwitch.ui.theme.BWitchThemeTokens
 
@@ -55,7 +55,7 @@ fun AppScaffold(
                     if (canGoBack) {
                         IconButton(onClick = onBack) {
                             Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                imageVector = BackChevronIcon,
                                 contentDescription = "Back",
                             )
                         }
@@ -72,3 +72,24 @@ fun AppScaffold(
         content = content,
     )
 }
+
+private val BackChevronIcon: ImageVector = ImageVector.Builder(
+    name = "BackChevronIcon",
+    defaultWidth = 24.dp,
+    defaultHeight = 24.dp,
+    viewportWidth = 24f,
+    viewportHeight = 24f,
+).apply {
+    path {
+        moveTo(20f, 11f)
+        lineTo(7.83f, 11f)
+        lineTo(13.42f, 5.41f)
+        lineTo(12f, 4f)
+        lineTo(4f, 12f)
+        lineTo(12f, 20f)
+        lineTo(13.41f, 18.59f)
+        lineTo(7.83f, 13f)
+        lineTo(20f, 13f)
+        close()
+    }
+}.build()
