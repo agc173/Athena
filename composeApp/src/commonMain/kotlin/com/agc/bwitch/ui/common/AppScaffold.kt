@@ -47,7 +47,7 @@ fun AppScaffold(
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = extras.topBarContainer,
                     titleContentColor = colorScheme.onSurface,
-                    navigationIconContentColor = colorScheme.onSurface,
+                    navigationIconContentColor = extras.topBarIconColor,
                     actionIconContentColor = colorScheme.onSurfaceVariant,
                 ),
                 modifier = Modifier.padding(horizontal = dimens.topBarHorizontalPadding),

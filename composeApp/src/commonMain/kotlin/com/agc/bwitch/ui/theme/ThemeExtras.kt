@@ -17,6 +17,7 @@ data class BWitchThemeExtras(
     val glowAlpha: Float,
     val topBarContainer: Color,
     val topBarDivider: Color,
+    val topBarIconColor: Color,
     val navBarContainer: Color,
     val navBarBorder: Color,
 )
@@ -34,6 +35,7 @@ val LocalBWitchThemeExtras = compositionLocalOf {
         glowAlpha = 0.14f,
         topBarContainer = PearlSurface,
         topBarDivider = NeutralBorderSubtle,
+        topBarIconColor = WarmTextPrimary.copy(alpha = 0.9f),
         navBarContainer = PearlSurface,
         navBarBorder = NeutralBorderSubtle,
     )
