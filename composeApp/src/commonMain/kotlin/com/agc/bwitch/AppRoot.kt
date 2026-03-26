@@ -35,6 +35,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathOperation
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
@@ -325,7 +326,6 @@ private fun MainBottomBar(
                         BottomTabIcon(
                             tab = tab,
                             tint = tint,
-                            cutoutColor = background,
                         )
                     }
 
@@ -335,9 +335,9 @@ private fun MainBottomBar(
                         text = tab.label,
                         textAlign = TextAlign.Center,
                         style = MaterialTheme.typography.labelMedium.copy(
-                            fontSize = 12.sp,
+                            fontSize = 13.sp,
                             fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                            lineHeight = 13.sp,
+                            lineHeight = 14.sp,
                         ),
                         color = tint,
                     )
@@ -351,11 +351,10 @@ private fun MainBottomBar(
 private fun BottomTabIcon(
     tab: MainTab,
     tint: Color,
-    cutoutColor: Color,
 ) {
     when (tab) {
         MainTab.profile -> ProfileIcon(tint = tint)
-        MainTab.astrology -> AstrologyIcon(tint = tint, cutoutColor = cutoutColor)
+        MainTab.astrology -> AstrologyIcon(tint = tint)
         MainTab.guide -> GuideIcon(tint = tint)
         MainTab.rituals -> RitualsIcon(tint = tint)
         else -> ProfileIcon(tint = tint)
@@ -396,30 +395,32 @@ private fun ProfileIcon(
 @Composable
 private fun AstrologyIcon(
     tint: Color,
-    cutoutColor: Color,
     modifier: Modifier = Modifier,
 ) {
     Canvas(modifier = modifier.size(24.dp)) {
-        val stroke = Stroke(width = size.minDimension * 0.09f, cap = StrokeCap.Round)
-        drawArc(
-            color = tint,
-            startAngle = 78f,
-            sweepAngle = 204f,
-            useCenter = false,
-            topLeft = Offset(size.width * 0.2f, size.height * 0.14f),
-            size = Size(size.width * 0.56f, size.height * 0.72f),
-            style = stroke,
-        )
-        drawCircle(
-            color = cutoutColor,
-            radius = size.minDimension * 0.235f,
-            center = Offset(size.width * 0.58f, size.height * 0.5f),
-        )
+        val moonOuter = Path().apply {
+            addOval(
+                androidx.compose.ui.geometry.Rect(
+                    offset = Offset(size.width * 0.16f, size.height * 0.14f),
+                    size = Size(size.width * 0.58f, size.height * 0.72f),
+                ),
+            )
+        }
+        val moonInner = Path().apply {
+            addOval(
+                androidx.compose.ui.geometry.Rect(
+                    offset = Offset(size.width * 0.33f, size.height * 0.16f),
+                    size = Size(size.width * 0.54f, size.height * 0.68f),
+                ),
+            )
+        }
+        val crescent = Path.combine(PathOperation.Difference, moonOuter, moonInner)
+        drawPath(path = crescent, color = tint)
+
         drawCircle(
             color = tint,
             radius = size.minDimension * 0.045f,
             center = Offset(size.width * 0.76f, size.height * 0.28f),
-            style = stroke,
         )
         drawLine(
             color = tint,
@@ -457,6 +458,29 @@ private fun GuideIcon(
             radius = size.minDimension * 0.1f,
             center = Offset(size.width * 0.5f, size.height * 0.5f),
             style = stroke,
+        )
+
+        val rayStroke = size.minDimension * 0.06f
+        drawLine(
+            color = tint,
+            start = Offset(size.width * 0.5f, size.height * 0.12f),
+            end = Offset(size.width * 0.5f, size.height * 0.22f),
+            strokeWidth = rayStroke,
+            cap = StrokeCap.Round,
+        )
+        drawLine(
+            color = tint,
+            start = Offset(size.width * 0.41f, size.height * 0.15f),
+            end = Offset(size.width * 0.45f, size.height * 0.23f),
+            strokeWidth = rayStroke,
+            cap = StrokeCap.Round,
+        )
+        drawLine(
+            color = tint,
+            start = Offset(size.width * 0.59f, size.height * 0.15f),
+            end = Offset(size.width * 0.55f, size.height * 0.23f),
+            strokeWidth = rayStroke,
+            cap = StrokeCap.Round,
         )
     }
 }
