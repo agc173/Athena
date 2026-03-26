@@ -1,9 +1,11 @@
 package com.agc.bwitch.ui.common
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -19,7 +21,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
 import com.agc.bwitch.ui.theme.BWitchThemeTokens
-import com.agc.bwitch.ui.theme.BWitchTopBarTitleTextStyle
+import com.agc.bwitch.ui.theme.BWitchTopBarBackTitleTextStyle
+import com.agc.bwitch.ui.theme.BWitchTopBarRootTitleTextStyle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,6 +38,11 @@ fun AppScaffold(
     val colorScheme = MaterialTheme.colorScheme
     val extras = BWitchThemeTokens.extras
     val dimens = BWitchThemeTokens.dimens
+    val topBarTitleStyle = if (canGoBack) {
+        BWitchTopBarBackTitleTextStyle
+    } else {
+        BWitchTopBarRootTitleTextStyle()
+    }
 
     Scaffold(
         topBar = {
@@ -42,7 +50,7 @@ fun AppScaffold(
                 title = {
                     Text(
                         text = title,
-                        style = BWitchTopBarTitleTextStyle,
+                        style = topBarTitleStyle,
                         modifier = Modifier.padding(start = dimens.topBarTitleStartPadding),
                     )
                 },
@@ -55,7 +63,15 @@ fun AppScaffold(
                 modifier = Modifier.padding(horizontal = dimens.topBarHorizontalPadding),
                 navigationIcon = {
                     if (canGoBack) {
-                        IconButton(onClick = onBack) {
+                        IconButton(
+                            onClick = onBack,
+                            modifier = Modifier
+                                .size(dimens.topBarBackButtonSize)
+                                .background(
+                                    color = extras.topBarBackButtonContainer,
+                                    shape = CircleShape,
+                                ),
+                        ) {
                             Icon(
                                 imageVector = BackChevronIcon,
                                 contentDescription = "Back",

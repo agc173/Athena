@@ -86,11 +86,20 @@ val BWitchTypography = Typography(
     ),
 )
 
-val BWitchTopBarTitleTextStyle = TextStyle(
+val BWitchTopBarBackTitleTextStyle = TextStyle(
     fontWeight = FontWeight.SemiBold,
     fontSize = 19.sp,
     lineHeight = 24.sp,
     letterSpacing = 0.16.sp,
+)
+
+@Composable
+fun BWitchTopBarRootTitleTextStyle(): TextStyle = TextStyle(
+    fontFamily = bwitchDisplayFontFamily(),
+    fontWeight = FontWeight.SemiBold,
+    fontSize = 22.sp,
+    lineHeight = 28.sp,
+    letterSpacing = 0.22.sp,
 )
 
 @OptIn(ExperimentalResourceApi::class)

@@ -56,6 +56,7 @@ fun BWitchTheme(
             topBarContainer = PearlSurface,
             topBarDivider = NeutralBorderSubtle,
             topBarIconColor = WarmTextPrimary,
+            topBarBackButtonContainer = PearlSurfaceElevated,
             navBarContainer = PearlSurface,
             navBarBorder = NeutralBorderSubtle,
         ),
