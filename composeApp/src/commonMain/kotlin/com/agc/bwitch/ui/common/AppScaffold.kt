@@ -17,6 +17,9 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathFillType
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
@@ -100,16 +103,16 @@ private val BackChevronIcon: ImageVector = ImageVector.Builder(
     viewportWidth = 24f,
     viewportHeight = 24f,
 ).apply {
-    path {
-        moveTo(20f, 10f)
-        lineTo(9.4f, 10f)
-        lineTo(13.9f, 5.5f)
-        lineTo(12f, 3.6f)
-        lineTo(4f, 11.6f)
-        lineTo(12f, 19.6f)
-        lineTo(13.9f, 17.7f)
-        lineTo(9.4f, 13.2f)
-        lineTo(20f, 13.2f)
+    path(
+        fill = SolidColor(Color.Black),
+        pathFillType = PathFillType.NonZero,
+    ) {
+        moveTo(15.6f, 4.8f)
+        lineTo(17f, 6.2f)
+        lineTo(10.8f, 12.4f)
+        lineTo(17f, 18.6f)
+        lineTo(15.6f, 20f)
+        lineTo(8f, 12.4f)
         close()
     }
 }.build()
