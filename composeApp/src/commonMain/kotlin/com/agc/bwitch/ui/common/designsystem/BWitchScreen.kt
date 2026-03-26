@@ -21,9 +21,8 @@ fun BWitchScreen(
     Column(
         modifier = modifier
             .padding(contentPadding)
-            .padding(dimens.spacingMd),
-        verticalArrangement = verticalArrangement
-            ?: Arrangement.spacedBy(dimens.spacingSm + dimens.spacingXs),
+            .padding(horizontal = dimens.screenHorizontalPadding, vertical = dimens.screenVerticalPadding),
+        verticalArrangement = verticalArrangement ?: Arrangement.spacedBy(dimens.sectionSpacing),
         content = content,
     )
 }

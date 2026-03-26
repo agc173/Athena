@@ -22,15 +22,17 @@ fun BWitchCard(
     contentPadding: PaddingValues? = null,
     contentVerticalArrangement: Arrangement.Vertical? = null,
     colors: CardColors = CardDefaults.cardColors(
-        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+        containerColor = MaterialTheme.colorScheme.surface,
         contentColor = MaterialTheme.colorScheme.onSurface,
+        disabledContainerColor = BWitchThemeTokens.extras.surfaceMuted,
+        disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
     ),
     shape: Shape = MaterialTheme.shapes.medium,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val dimens = BWitchThemeTokens.dimens
     val resolvedContentPadding = contentPadding ?: PaddingValues(dimens.spacingMd)
-    val resolvedArrangement = contentVerticalArrangement ?: Arrangement.spacedBy(dimens.spacingXs)
+    val resolvedArrangement = contentVerticalArrangement ?: Arrangement.spacedBy(dimens.spacingSm)
 
     val body: @Composable ColumnScope.() -> Unit = {
         Column(
@@ -47,6 +49,7 @@ fun BWitchCard(
             enabled = enabled,
             colors = colors,
             shape = shape,
+            elevation = CardDefaults.cardElevation(defaultElevation = dimens.elevationSm),
             content = body,
         )
     } else {
@@ -54,6 +57,7 @@ fun BWitchCard(
             modifier = modifier,
             colors = colors,
             shape = shape,
+            elevation = CardDefaults.cardElevation(defaultElevation = dimens.elevationSm),
             content = body,
         )
     }

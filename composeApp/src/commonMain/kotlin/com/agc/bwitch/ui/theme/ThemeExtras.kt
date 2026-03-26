@@ -8,21 +8,33 @@ import androidx.compose.ui.graphics.Color
 data class BWitchThemeExtras(
     val screenBackground: Color,
     val surfaceElevated: Color,
+    val surfaceMuted: Color,
+    val accentSoft: Color,
     val accentGold: Color,
     val textSecondary: Color,
     val borderSubtle: Color,
     val scrim: Color,
     val glowAlpha: Float,
+    val topBarContainer: Color,
+    val topBarDivider: Color,
+    val navBarContainer: Color,
+    val navBarBorder: Color,
 )
 
 val LocalBWitchThemeExtras = compositionLocalOf {
     BWitchThemeExtras(
-        screenBackground = MysticBackground,
-        surfaceElevated = MysticSurfaceElevated,
-        accentGold = MysticAccentGold,
-        textSecondary = MysticTextSecondary,
-        borderSubtle = MysticBorderSubtle,
-        scrim = MysticScrim,
-        glowAlpha = 0.24f,
+        screenBackground = PearlBackground,
+        surfaceElevated = PearlSurfaceElevated,
+        surfaceMuted = PearlSurfaceContainer,
+        accentSoft = AquaAccent,
+        accentGold = PremiumGoldAccent,
+        textSecondary = WarmTextSecondary,
+        borderSubtle = NeutralBorderSubtle,
+        scrim = SoftScrim,
+        glowAlpha = 0.14f,
+        topBarContainer = PearlSurface,
+        topBarDivider = NeutralBorderSubtle,
+        navBarContainer = PearlSurface,
+        navBarBorder = NeutralBorderSubtle,
     )
 }
