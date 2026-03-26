@@ -15,8 +15,6 @@ sealed class Destination(val title: String) {
     /**
      * Main app destinations
      */
-    data object Portal : Destination("BWitch")
-
     data object Astrology : Destination("Astrología")
 
     data object BirthChart : Destination("Esencia natal")

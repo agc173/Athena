@@ -72,9 +72,9 @@ class Navigator(
     }
 
     /**
-     * Cambia el root (AuthGate/Portal/etc) y resetea el stack.
+     * Cambia el root y resetea el stack.
      */
-    fun resetToRoot(root: Destination = Destination.Portal) {
+    fun resetToRoot(root: Destination = Destination.UserProfile) {
         backStack.clear()
         backStack.addLast(root)
         if (root in topLevelRoots) {

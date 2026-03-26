@@ -34,7 +34,6 @@ import com.agc.bwitch.ui.guide.PendulumScreen
 import com.agc.bwitch.ui.onboarding.OnboardingProfileScreen
 import com.agc.bwitch.ui.oracle.OracleDebugScreen
 import com.agc.bwitch.ui.oracle.OracleScreen
-import com.agc.bwitch.ui.portal.PortalScreen
 import com.agc.bwitch.ui.rituals.RitualsPlaceholderScreen
 import com.agc.bwitch.ui.tarot.TarotHomeScreen
 import com.agc.bwitch.ui.tarot.TarotScreen
@@ -142,11 +141,6 @@ fun AppRoot() {
             Destination.AuthGate -> AuthScreen()
 
             Destination.OnboardingProfile -> OnboardingProfileScreen(contentPadding = padding)
-
-            Destination.Portal -> PortalScreen(
-                contentPadding = padding,
-                onNavigate = { navigator.navigate(it) }
-            )
 
             Destination.Astrology -> AstrologyScreen(
                 contentPadding = padding,
