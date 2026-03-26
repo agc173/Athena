@@ -28,6 +28,7 @@ data class BWitchDimens(
     val topBarHeight: Dp = 60.dp,
     val topBarHorizontalPadding: Dp = 8.dp,
     val topBarTitleStartPadding: Dp = 4.dp,
+    val topBarBackButtonSize: Dp = 40.dp,
     val topBarBackIconSize: Dp = 24.dp,
     val buttonMinHeight: Dp = 46.dp,
     val textFieldMinHeight: Dp = 52.dp,
