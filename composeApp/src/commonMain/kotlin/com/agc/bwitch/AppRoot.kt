@@ -401,7 +401,7 @@ private fun AstrologyIcon(
         drawArc(
             color = tint,
             startAngle = 102f,
-            sweepAngle = 248f,
+            sweepAngle = 260f,
             useCenter = false,
             topLeft = Offset(size.width * 0.14f, size.height * 0.13f),
             size = Size(size.width * 0.62f, size.height * 0.74f),
