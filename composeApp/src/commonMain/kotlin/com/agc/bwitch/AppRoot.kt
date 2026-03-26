@@ -2,19 +2,22 @@ package com.agc.bwitch
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.NavigationBarDefaults
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.Surface
 import androidx.compose.material3.MaterialTheme
@@ -36,6 +39,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.agc.bwitch.domain.astrology.birthchart.BirthChartRepository
@@ -267,78 +271,76 @@ private fun MainBottomBar(
     val background = Color(0xFFFFFFFF)
     val activeColor = Color(0xFF6FAFC7)
     val inactiveColor = Color(0xFFAFA4B5)
-    val itemColors = NavigationBarItemDefaults.colors(
-        selectedIconColor = activeColor,
-        unselectedIconColor = inactiveColor,
-        selectedTextColor = activeColor,
-        unselectedTextColor = inactiveColor,
-        indicatorColor = Color.Transparent,
-    )
 
     Surface(
         color = background,
         shadowElevation = 2.dp,
         modifier = Modifier.fillMaxWidth(),
     ) {
-        NavigationBar(
-            containerColor = background,
-            tonalElevation = 0.dp,
-            windowInsets = NavigationBarDefaults.windowInsets,
-            modifier = Modifier.padding(vertical = 1.dp),
+        Row(
+            modifier = Modifier
+                .windowInsetsPadding(WindowInsets(bottom = 0.dp))
+                .padding(horizontal = 10.dp, vertical = 6.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             MainTab.items.forEach { tab ->
                 val isSelected = tab == selectedTab
                 val tint = if (isSelected) activeColor else inactiveColor
 
-                NavigationBarItem(
-                    modifier = Modifier.height(54.dp),
-                    selected = isSelected,
-                    onClick = { onTabSelected(tab) },
-                    colors = itemColors,
-                    icon = {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Box(
-                                modifier = Modifier
-                                    .size(30.dp)
-                                    .clip(CircleShape),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                if (isSelected) {
-                                    Canvas(modifier = Modifier.size(30.dp)) {
-                                        drawCircle(
-                                            brush = Brush.radialGradient(
-                                                colors = listOf(
-                                                    activeColor.copy(alpha = 0.16f),
-                                                    activeColor.copy(alpha = 0.04f),
-                                                    Color.Transparent,
-                                                ),
-                                                center = center,
-                                                radius = size.minDimension * 0.52f,
-                                            ),
-                                            radius = size.minDimension * 0.5f,
-                                            center = center,
-                                        )
-                                    }
-                                }
-                                BottomTabIcon(
-                                    tab = tab,
-                                    tint = tint,
-                                    cutoutColor = background,
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(58.dp)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = { onTabSelected(tab) },
+                        ),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(34.dp)
+                            .clip(CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (isSelected) {
+                            Canvas(modifier = Modifier.size(34.dp)) {
+                                drawCircle(
+                                    brush = Brush.radialGradient(
+                                        colors = listOf(
+                                            activeColor.copy(alpha = 0.16f),
+                                            activeColor.copy(alpha = 0.04f),
+                                            Color.Transparent,
+                                        ),
+                                        center = center,
+                                        radius = size.minDimension * 0.52f,
+                                    ),
+                                    radius = size.minDimension * 0.5f,
+                                    center = center,
                                 )
                             }
-                            Spacer(modifier = Modifier.height(1.dp))
                         }
-                    },
-                    label = {
-                        Text(
-                            text = tab.label,
-                            style = MaterialTheme.typography.labelMedium.copy(
-                                fontSize = 12.sp,
-                                fontWeight = if (isSelected) FontWeight.Medium else FontWeight.Normal,
-                            ),
+                        BottomTabIcon(
+                            tab = tab,
+                            tint = tint,
+                            cutoutColor = background,
                         )
-                    },
-                )
+                    }
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = tab.label,
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.labelMedium.copy(
+                            fontSize = 13.sp,
+                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
+                            lineHeight = 15.sp,
+                        ),
+                        color = tint,
+                    )
+                }
             }
         }
     }
@@ -364,7 +366,7 @@ private fun ProfileIcon(
     tint: Color,
     modifier: Modifier = Modifier,
 ) {
-    Canvas(modifier = modifier.size(21.dp)) {
+    Canvas(modifier = modifier.size(24.dp)) {
         val stroke = Stroke(width = size.minDimension * 0.1f, cap = StrokeCap.Round)
         drawCircle(
             color = tint,
@@ -396,7 +398,7 @@ private fun AstrologyIcon(
     cutoutColor: Color,
     modifier: Modifier = Modifier,
 ) {
-    Canvas(modifier = modifier.size(21.dp)) {
+    Canvas(modifier = modifier.size(24.dp)) {
         val stroke = Stroke(width = size.minDimension * 0.1f, cap = StrokeCap.Round)
         drawArc(
             color = tint,
@@ -425,7 +427,7 @@ private fun GuideIcon(
     tint: Color,
     modifier: Modifier = Modifier,
 ) {
-    Canvas(modifier = modifier.size(21.dp)) {
+    Canvas(modifier = modifier.size(24.dp)) {
         val stroke = Stroke(width = size.minDimension * 0.1f, cap = StrokeCap.Round)
         val eyePath = Path().apply {
             moveTo(size.width * 0.15f, size.height * 0.5f)
@@ -447,7 +449,7 @@ private fun RitualsIcon(
     tint: Color,
     modifier: Modifier = Modifier,
 ) {
-    Canvas(modifier = modifier.size(21.dp)) {
+    Canvas(modifier = modifier.size(24.dp)) {
         val stroke = Stroke(width = size.minDimension * 0.1f, cap = StrokeCap.Round)
         drawRoundRect(
             color = tint,
