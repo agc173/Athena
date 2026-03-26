@@ -1,26 +1,25 @@
 package com.agc.bwitch
 
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Text
-import androidx.compose.material3.Surface
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -137,7 +136,6 @@ fun AppRoot() {
 
     LaunchedEffect(session.uid) {
         if (session.uid == null || !isAuthenticated) return@LaunchedEffect
-
         runCatching { birthChartRepository.getBirthEssence() }
     }
 
@@ -236,9 +234,9 @@ private data class MainTab(
             rootDestination = Destination.Astrology,
             matches = { destination ->
                 destination == Destination.Astrology ||
-                    destination == Destination.BirthChart ||
-                    destination == Destination.Synastry ||
-                    destination is Destination.HoroscopeDaily
+                        destination == Destination.BirthChart ||
+                        destination == Destination.Synastry ||
+                        destination is Destination.HoroscopeDaily
             },
         )
         val guide = MainTab(
@@ -246,11 +244,11 @@ private data class MainTab(
             rootDestination = Destination.Guide,
             matches = { destination ->
                 destination == Destination.Guide ||
-                    destination == Destination.TarotHome ||
-                    destination == Destination.Oracle ||
-                    destination == Destination.OracleDebug ||
-                    destination == Destination.Pendulum ||
-                    destination is Destination.Tarot
+                        destination == Destination.TarotHome ||
+                        destination == Destination.Oracle ||
+                        destination == Destination.OracleDebug ||
+                        destination == Destination.Pendulum ||
+                        destination is Destination.Tarot
             },
         )
         val rituals = MainTab(
@@ -280,8 +278,9 @@ private fun MainBottomBar(
         Row(
             modifier = Modifier
                 .windowInsetsPadding(WindowInsets(bottom = 0.dp))
-                .padding(horizontal = 10.dp, vertical = 6.dp)
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 6.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically,
         ) {
             MainTab.items.forEach { tab ->
@@ -290,13 +289,13 @@ private fun MainBottomBar(
 
                 Column(
                     modifier = Modifier
-                        .weight(1f)
                         .height(58.dp)
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,
                             onClick = { onTabSelected(tab) },
-                        ),
+                        )
+                        .padding(horizontal = 8.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                 ) {
@@ -329,7 +328,9 @@ private fun MainBottomBar(
                             cutoutColor = background,
                         )
                     }
+
                     Spacer(modifier = Modifier.height(2.dp))
+
                     Text(
                         text = tab.label,
                         textAlign = TextAlign.Center,
