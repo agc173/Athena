@@ -400,8 +400,8 @@ private fun AstrologyIcon(
         val moonStroke = size.minDimension * 0.075f
         drawArc(
             color = tint,
-            startAngle = 102f,
-            sweepAngle = 260f,
+            startAngle = 50f,
+            sweepAngle = 220f,
             useCenter = false,
             topLeft = Offset(size.width * 0.14f, size.height * 0.13f),
             size = Size(size.width * 0.62f, size.height * 0.74f),
@@ -409,10 +409,10 @@ private fun AstrologyIcon(
         )
         drawArc(
             color = tint,
-            startAngle = 114f,
-            sweepAngle = 220f,
+            startAngle = 70f,
+            sweepAngle = 190f,
             useCenter = false,
-            topLeft = Offset(size.width * 0.31f, size.height * 0.15f),
+            topLeft = Offset(size.width * 0.31f, size.height * 0.11f),
             size = Size(size.width * 0.52f, size.height * 0.7f),
             style = Stroke(width = moonStroke, cap = StrokeCap.Round),
         )
@@ -447,38 +447,38 @@ private fun GuideIcon(
     Canvas(modifier = modifier.size(24.dp)) {
         val stroke = Stroke(width = size.minDimension * 0.09f, cap = StrokeCap.Round)
         val eyePath = Path().apply {
-            moveTo(size.width * 0.1f, size.height * 0.52f)
-            quadraticBezierTo(size.width * 0.5f, size.height * 0.2f, size.width * 0.9f, size.height * 0.52f)
-            quadraticBezierTo(size.width * 0.5f, size.height * 0.84f, size.width * 0.1f, size.height * 0.52f)
+            moveTo(size.width * 0.1f, size.height * 0.67f)
+            quadraticBezierTo(size.width * 0.5f, size.height * 0.35f, size.width * 0.9f, size.height * 0.67f)
+            quadraticBezierTo(size.width * 0.5f, size.height * 0.99f, size.width * 0.1f, size.height * 0.67f)
             close()
         }
         drawPath(path = eyePath, color = tint, style = stroke)
         drawCircle(
             color = tint,
             radius = size.minDimension * 0.12f,
-            center = Offset(size.width * 0.5f, size.height * 0.52f),
+            center = Offset(size.width * 0.5f, size.height * 0.67f),
             style = stroke,
         )
 
         val rayStroke = size.minDimension * 0.075f
         drawLine(
             color = tint,
-            start = Offset(size.width * 0.5f, size.height * 0.05f),
-            end = Offset(size.width * 0.5f, size.height * 0.19f),
+            start = Offset(size.width * 0.5f, size.height * 0.04f),
+            end = Offset(size.width * 0.5f, size.height * 0.22f),
             strokeWidth = rayStroke,
             cap = StrokeCap.Round,
         )
         drawLine(
             color = tint,
-            start = Offset(size.width * 0.36f, size.height * 0.1f),
-            end = Offset(size.width * 0.44f, size.height * 0.21f),
+            start = Offset(size.width * 0.36f, size.height * 0.08f),
+            end = Offset(size.width * 0.44f, size.height * 0.24f),
             strokeWidth = rayStroke,
             cap = StrokeCap.Round,
         )
         drawLine(
             color = tint,
-            start = Offset(size.width * 0.64f, size.height * 0.1f),
-            end = Offset(size.width * 0.56f, size.height * 0.21f),
+            start = Offset(size.width * 0.64f, size.height * 0.08f),
+            end = Offset(size.width * 0.56f, size.height * 0.24f),
             strokeWidth = rayStroke,
             cap = StrokeCap.Round,
         )
@@ -495,7 +495,7 @@ private fun RitualsIcon(
         drawRoundRect(
             color = tint,
             topLeft = Offset(size.width * 0.36f, size.height * 0.46f),
-            size = Size(size.width * 0.28f, size.height * 0.32f),
+            size = Size(size.width * 0.28f, size.height * 0.55f),
             style = stroke,
         )
         val flamePath = Path().apply {
