@@ -279,7 +279,7 @@ private fun MainBottomBar(
             modifier = Modifier
                 .windowInsetsPadding(WindowInsets(bottom = 0.dp))
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 6.dp),
+                .padding(horizontal = 6.dp, vertical = 6.dp),
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -289,7 +289,7 @@ private fun MainBottomBar(
 
                 Column(
                     modifier = Modifier
-                        .height(58.dp)
+                        .height(54.dp)
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,
@@ -310,12 +310,12 @@ private fun MainBottomBar(
                                 drawCircle(
                                     brush = Brush.radialGradient(
                                         colors = listOf(
-                                            activeColor.copy(alpha = 0.16f),
+                                            activeColor.copy(alpha = 0.12f),
                                             activeColor.copy(alpha = 0.04f),
                                             Color.Transparent,
                                         ),
                                         center = center,
-                                        radius = size.minDimension * 0.52f,
+                                        radius = size.minDimension * 0.45f,
                                     ),
                                     radius = size.minDimension * 0.5f,
                                     center = center,
@@ -329,15 +329,15 @@ private fun MainBottomBar(
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(2.dp))
+                    Spacer(modifier = Modifier.height(1.dp))
 
                     Text(
                         text = tab.label,
                         textAlign = TextAlign.Center,
                         style = MaterialTheme.typography.labelMedium.copy(
-                            fontSize = 13.sp,
-                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
-                            lineHeight = 15.sp,
+                            fontSize = 12.sp,
+                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                            lineHeight = 13.sp,
                         ),
                         color = tint,
                     )
@@ -368,26 +368,26 @@ private fun ProfileIcon(
     modifier: Modifier = Modifier,
 ) {
     Canvas(modifier = modifier.size(24.dp)) {
-        val stroke = Stroke(width = size.minDimension * 0.1f, cap = StrokeCap.Round)
+        val stroke = Stroke(width = size.minDimension * 0.09f, cap = StrokeCap.Round)
         drawCircle(
             color = tint,
-            radius = size.minDimension * 0.22f,
-            center = Offset(size.width / 2f, size.height * 0.45f),
+            radius = size.minDimension * 0.24f,
+            center = Offset(size.width / 2f, size.height * 0.62f),
             style = stroke,
         )
         drawCircle(
             color = tint,
-            radius = size.minDimension * 0.12f,
-            center = Offset(size.width / 2f, size.height * 0.13f),
+            radius = size.minDimension * 0.105f,
+            center = Offset(size.width / 2f, size.height * 0.24f),
             style = stroke,
         )
         drawArc(
             color = tint,
-            startAngle = 205f,
-            sweepAngle = 130f,
+            startAngle = 206f,
+            sweepAngle = 128f,
             useCenter = false,
-            topLeft = Offset(size.width * 0.2f, size.height * 0.5f),
-            size = Size(size.width * 0.6f, size.height * 0.35f),
+            topLeft = Offset(size.width * 0.23f, size.height * 0.49f),
+            size = Size(size.width * 0.54f, size.height * 0.33f),
             style = stroke,
         )
     }
@@ -400,25 +400,40 @@ private fun AstrologyIcon(
     modifier: Modifier = Modifier,
 ) {
     Canvas(modifier = modifier.size(24.dp)) {
-        val stroke = Stroke(width = size.minDimension * 0.1f, cap = StrokeCap.Round)
+        val stroke = Stroke(width = size.minDimension * 0.09f, cap = StrokeCap.Round)
         drawArc(
             color = tint,
-            startAngle = 65f,
-            sweepAngle = 230f,
+            startAngle = 78f,
+            sweepAngle = 204f,
             useCenter = false,
-            topLeft = Offset(size.width * 0.18f, size.height * 0.15f),
-            size = Size(size.width * 0.55f, size.height * 0.7f),
+            topLeft = Offset(size.width * 0.2f, size.height * 0.14f),
+            size = Size(size.width * 0.56f, size.height * 0.72f),
             style = stroke,
         )
         drawCircle(
             color = cutoutColor,
-            radius = size.minDimension * 0.2f,
-            center = Offset(size.width * 0.55f, size.height * 0.48f),
+            radius = size.minDimension * 0.235f,
+            center = Offset(size.width * 0.58f, size.height * 0.5f),
         )
         drawCircle(
             color = tint,
-            radius = size.minDimension * 0.07f,
-            center = Offset(size.width * 0.78f, size.height * 0.28f),
+            radius = size.minDimension * 0.045f,
+            center = Offset(size.width * 0.76f, size.height * 0.28f),
+            style = stroke,
+        )
+        drawLine(
+            color = tint,
+            start = Offset(size.width * 0.76f, size.height * 0.2f),
+            end = Offset(size.width * 0.76f, size.height * 0.36f),
+            strokeWidth = size.minDimension * 0.07f,
+            cap = StrokeCap.Round,
+        )
+        drawLine(
+            color = tint,
+            start = Offset(size.width * 0.68f, size.height * 0.28f),
+            end = Offset(size.width * 0.84f, size.height * 0.28f),
+            strokeWidth = size.minDimension * 0.07f,
+            cap = StrokeCap.Round,
         )
     }
 }
@@ -429,18 +444,19 @@ private fun GuideIcon(
     modifier: Modifier = Modifier,
 ) {
     Canvas(modifier = modifier.size(24.dp)) {
-        val stroke = Stroke(width = size.minDimension * 0.1f, cap = StrokeCap.Round)
+        val stroke = Stroke(width = size.minDimension * 0.09f, cap = StrokeCap.Round)
         val eyePath = Path().apply {
-            moveTo(size.width * 0.15f, size.height * 0.5f)
-            quadraticBezierTo(size.width * 0.5f, size.height * 0.15f, size.width * 0.85f, size.height * 0.5f)
-            quadraticBezierTo(size.width * 0.5f, size.height * 0.85f, size.width * 0.15f, size.height * 0.5f)
+            moveTo(size.width * 0.14f, size.height * 0.5f)
+            quadraticBezierTo(size.width * 0.5f, size.height * 0.24f, size.width * 0.86f, size.height * 0.5f)
+            quadraticBezierTo(size.width * 0.5f, size.height * 0.76f, size.width * 0.14f, size.height * 0.5f)
             close()
         }
         drawPath(path = eyePath, color = tint, style = stroke)
         drawCircle(
             color = tint,
-            radius = size.minDimension * 0.11f,
+            radius = size.minDimension * 0.1f,
             center = Offset(size.width * 0.5f, size.height * 0.5f),
+            style = stroke,
         )
     }
 }
@@ -451,25 +467,25 @@ private fun RitualsIcon(
     modifier: Modifier = Modifier,
 ) {
     Canvas(modifier = modifier.size(24.dp)) {
-        val stroke = Stroke(width = size.minDimension * 0.1f, cap = StrokeCap.Round)
+        val stroke = Stroke(width = size.minDimension * 0.09f, cap = StrokeCap.Round)
         drawRoundRect(
             color = tint,
-            topLeft = Offset(size.width * 0.32f, size.height * 0.44f),
-            size = Size(size.width * 0.36f, size.height * 0.36f),
+            topLeft = Offset(size.width * 0.36f, size.height * 0.46f),
+            size = Size(size.width * 0.28f, size.height * 0.32f),
             style = stroke,
         )
         val flamePath = Path().apply {
-            moveTo(size.width * 0.5f, size.height * 0.18f)
-            quadraticBezierTo(size.width * 0.66f, size.height * 0.34f, size.width * 0.5f, size.height * 0.44f)
-            quadraticBezierTo(size.width * 0.34f, size.height * 0.34f, size.width * 0.5f, size.height * 0.18f)
+            moveTo(size.width * 0.5f, size.height * 0.14f)
+            quadraticBezierTo(size.width * 0.61f, size.height * 0.28f, size.width * 0.52f, size.height * 0.44f)
+            quadraticBezierTo(size.width * 0.38f, size.height * 0.29f, size.width * 0.5f, size.height * 0.14f)
             close()
         }
         drawPath(path = flamePath, color = tint, style = stroke)
         drawLine(
             color = tint,
             start = Offset(size.width * 0.5f, size.height * 0.44f),
-            end = Offset(size.width * 0.5f, size.height * 0.38f),
-            strokeWidth = size.minDimension * 0.08f,
+            end = Offset(size.width * 0.5f, size.height * 0.37f),
+            strokeWidth = size.minDimension * 0.07f,
             cap = StrokeCap.Round,
         )
     }
