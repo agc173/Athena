@@ -1,6 +1,7 @@
 package com.agc.bwitch.domain.astrology.synastry
 
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
+import kotlin.jvm.JvmInline
 import kotlin.math.round
 
 data class SynastryPersonInput(
