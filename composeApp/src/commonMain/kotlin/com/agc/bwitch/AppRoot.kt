@@ -1,11 +1,23 @@
 package com.agc.bwitch
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.Canvas
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.NavigationBarDefaults
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.Surface
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -15,6 +27,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import com.agc.bwitch.domain.astrology.birthchart.BirthChartRepository
 import com.agc.bwitch.domain.userprofile.GetUserProfileUseCase
 import com.agc.bwitch.domain.userprofile.ObserveUserProfileUseCase
@@ -241,14 +263,208 @@ private fun MainBottomBar(
     selectedTab: MainTab,
     onTabSelected: (MainTab) -> Unit,
 ) {
-    NavigationBar {
-        MainTab.items.forEach { tab ->
-            NavigationBarItem(
-                selected = tab == selectedTab,
-                onClick = { onTabSelected(tab) },
-                icon = { Text("•") },
-                label = { Text(tab.label) },
-            )
+    val background = Color(0xFFFFFFFF)
+    val activeColor = Color(0xFF6FAFC7)
+    val inactiveColor = Color(0xFFAFA4B5)
+    val itemColors = NavigationBarItemDefaults.colors(
+        selectedIconColor = activeColor,
+        unselectedIconColor = inactiveColor,
+        selectedTextColor = activeColor,
+        unselectedTextColor = inactiveColor,
+        indicatorColor = Color.Transparent,
+    )
+
+    Surface(
+        color = background,
+        shadowElevation = 4.dp,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        NavigationBar(
+            containerColor = background,
+            tonalElevation = 0.dp,
+            windowInsets = NavigationBarDefaults.windowInsets,
+            modifier = Modifier.padding(vertical = 4.dp),
+        ) {
+            MainTab.items.forEach { tab ->
+                val isSelected = tab == selectedTab
+                val tint = if (isSelected) activeColor else inactiveColor
+
+                NavigationBarItem(
+                    selected = isSelected,
+                    onClick = { onTabSelected(tab) },
+                    colors = itemColors,
+                    icon = {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Box(
+                                modifier = Modifier
+                                    .size(34.dp)
+                                    .clip(CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (isSelected) {
+                                    Canvas(modifier = Modifier.size(34.dp)) {
+                                        drawCircle(
+                                            brush = Brush.radialGradient(
+                                                colors = listOf(
+                                                    activeColor.copy(alpha = 0.16f),
+                                                    activeColor.copy(alpha = 0.04f),
+                                                    Color.Transparent,
+                                                ),
+                                                center = center,
+                                                radius = size.minDimension * 0.52f,
+                                            ),
+                                            radius = size.minDimension * 0.5f,
+                                            center = center,
+                                        )
+                                    }
+                                }
+                                BottomTabIcon(
+                                    tab = tab,
+                                    tint = tint,
+                                    cutoutColor = background,
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(2.dp))
+                        }
+                    },
+                    label = {
+                        Text(
+                            text = tab.label,
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                fontWeight = if (isSelected) FontWeight.Medium else FontWeight.Normal,
+                            ),
+                        )
+                    },
+                )
+            }
         }
+    }
+}
+
+@Composable
+private fun BottomTabIcon(
+    tab: MainTab,
+    tint: Color,
+    cutoutColor: Color,
+) {
+    when (tab) {
+        MainTab.profile -> ProfileIcon(tint = tint)
+        MainTab.astrology -> AstrologyIcon(tint = tint, cutoutColor = cutoutColor)
+        MainTab.guide -> GuideIcon(tint = tint)
+        MainTab.rituals -> RitualsIcon(tint = tint)
+        else -> ProfileIcon(tint = tint)
+    }
+}
+
+@Composable
+private fun ProfileIcon(
+    tint: Color,
+    modifier: Modifier = Modifier,
+) {
+    Canvas(modifier = modifier.size(19.dp)) {
+        val stroke = Stroke(width = size.minDimension * 0.1f, cap = StrokeCap.Round)
+        drawCircle(
+            color = tint,
+            radius = size.minDimension * 0.22f,
+            center = Offset(size.width / 2f, size.height * 0.45f),
+            style = stroke,
+        )
+        drawCircle(
+            color = tint,
+            radius = size.minDimension * 0.12f,
+            center = Offset(size.width / 2f, size.height * 0.13f),
+            style = stroke,
+        )
+        drawArc(
+            color = tint,
+            startAngle = 205f,
+            sweepAngle = 130f,
+            useCenter = false,
+            topLeft = Offset(size.width * 0.2f, size.height * 0.5f),
+            size = Size(size.width * 0.6f, size.height * 0.35f),
+            style = stroke,
+        )
+    }
+}
+
+@Composable
+private fun AstrologyIcon(
+    tint: Color,
+    cutoutColor: Color,
+    modifier: Modifier = Modifier,
+) {
+    Canvas(modifier = modifier.size(19.dp)) {
+        val stroke = Stroke(width = size.minDimension * 0.1f, cap = StrokeCap.Round)
+        drawArc(
+            color = tint,
+            startAngle = 65f,
+            sweepAngle = 230f,
+            useCenter = false,
+            topLeft = Offset(size.width * 0.18f, size.height * 0.15f),
+            size = Size(size.width * 0.55f, size.height * 0.7f),
+            style = stroke,
+        )
+        drawCircle(
+            color = cutoutColor,
+            radius = size.minDimension * 0.2f,
+            center = Offset(size.width * 0.55f, size.height * 0.48f),
+        )
+        drawCircle(
+            color = tint,
+            radius = size.minDimension * 0.07f,
+            center = Offset(size.width * 0.78f, size.height * 0.28f),
+        )
+    }
+}
+
+@Composable
+private fun GuideIcon(
+    tint: Color,
+    modifier: Modifier = Modifier,
+) {
+    Canvas(modifier = modifier.size(19.dp)) {
+        val stroke = Stroke(width = size.minDimension * 0.1f, cap = StrokeCap.Round)
+        val eyePath = Path().apply {
+            moveTo(size.width * 0.15f, size.height * 0.5f)
+            quadraticBezierTo(size.width * 0.5f, size.height * 0.15f, size.width * 0.85f, size.height * 0.5f)
+            quadraticBezierTo(size.width * 0.5f, size.height * 0.85f, size.width * 0.15f, size.height * 0.5f)
+            close()
+        }
+        drawPath(path = eyePath, color = tint, style = stroke)
+        drawCircle(
+            color = tint,
+            radius = size.minDimension * 0.11f,
+            center = Offset(size.width * 0.5f, size.height * 0.5f),
+        )
+    }
+}
+
+@Composable
+private fun RitualsIcon(
+    tint: Color,
+    modifier: Modifier = Modifier,
+) {
+    Canvas(modifier = modifier.size(19.dp)) {
+        val stroke = Stroke(width = size.minDimension * 0.1f, cap = StrokeCap.Round)
+        drawRoundRect(
+            color = tint,
+            topLeft = Offset(size.width * 0.32f, size.height * 0.44f),
+            size = Size(size.width * 0.36f, size.height * 0.36f),
+            style = stroke,
+        )
+        val flamePath = Path().apply {
+            moveTo(size.width * 0.5f, size.height * 0.18f)
+            quadraticBezierTo(size.width * 0.66f, size.height * 0.34f, size.width * 0.5f, size.height * 0.44f)
+            quadraticBezierTo(size.width * 0.34f, size.height * 0.34f, size.width * 0.5f, size.height * 0.18f)
+            close()
+        }
+        drawPath(path = flamePath, color = tint, style = stroke)
+        drawLine(
+            color = tint,
+            start = Offset(size.width * 0.5f, size.height * 0.44f),
+            end = Offset(size.width * 0.5f, size.height * 0.38f),
+            strokeWidth = size.minDimension * 0.08f,
+            cap = StrokeCap.Round,
+        )
     }
 }
