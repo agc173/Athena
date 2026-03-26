@@ -3,6 +3,9 @@ package com.agc.bwitch
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -32,6 +35,7 @@ import com.agc.bwitch.ui.onboarding.OnboardingProfileScreen
 import com.agc.bwitch.ui.oracle.OracleDebugScreen
 import com.agc.bwitch.ui.oracle.OracleScreen
 import com.agc.bwitch.ui.portal.PortalScreen
+import com.agc.bwitch.ui.rituals.RitualsPlaceholderScreen
 import com.agc.bwitch.ui.tarot.TarotHomeScreen
 import com.agc.bwitch.ui.tarot.TarotScreen
 import com.agc.bwitch.ui.userprofile.ProfileScreen
@@ -101,7 +105,7 @@ fun AppRoot() {
         }
 
         if (dest == Destination.AuthGate || dest == Destination.OnboardingProfile) {
-            navigator.resetToRoot(Destination.Portal)
+            navigator.resetToRoot(Destination.UserProfile)
         }
     }
 
@@ -111,10 +115,28 @@ fun AppRoot() {
         runCatching { birthChartRepository.getBirthEssence() }
     }
 
+    val currentMainTab = remember(dest) { MainTab.items.firstOrNull { it.matches(dest) } }
+
     AppScaffold(
         title = dest.title,
         canGoBack = navigator.canGoBack(),
-        onBack = { navigator.goBack() }
+        onBack = { navigator.goBack() },
+        bottomBar = {
+            if (currentMainTab != null) {
+                MainBottomBar(
+                    selectedTab = currentMainTab,
+                    onTabSelected = { selected ->
+                        if (selected == currentMainTab) {
+                            if (!navigator.isAtRootOf(selected.rootDestination)) {
+                                navigator.popToRoot()
+                            }
+                        } else {
+                            navigator.switchTopLevel(selected.rootDestination)
+                        }
+                    }
+                )
+            }
+        }
     ) { padding ->
         when (dest) {
             Destination.AuthGate -> AuthScreen()
@@ -169,6 +191,70 @@ fun AppRoot() {
             )
 
             Destination.Pendulum -> PendulumScreen(contentPadding = padding)
+
+            Destination.Rituals -> RitualsPlaceholderScreen(contentPadding = padding)
+        }
+    }
+}
+
+private data class MainTab(
+    val label: String,
+    val rootDestination: Destination,
+    val matches: (Destination) -> Boolean,
+) {
+    companion object {
+        val profile = MainTab(
+            label = "Perfil",
+            rootDestination = Destination.UserProfile,
+            matches = { destination ->
+                destination == Destination.UserProfile || destination == Destination.Settings
+            },
+        )
+        val astrology = MainTab(
+            label = "Astro",
+            rootDestination = Destination.Astrology,
+            matches = { destination ->
+                destination == Destination.Astrology ||
+                    destination == Destination.BirthChart ||
+                    destination == Destination.Synastry ||
+                    destination is Destination.HoroscopeDaily
+            },
+        )
+        val guide = MainTab(
+            label = "Guía",
+            rootDestination = Destination.Guide,
+            matches = { destination ->
+                destination == Destination.Guide ||
+                    destination == Destination.TarotHome ||
+                    destination == Destination.Oracle ||
+                    destination == Destination.OracleDebug ||
+                    destination == Destination.Pendulum ||
+                    destination is Destination.Tarot
+            },
+        )
+        val rituals = MainTab(
+            label = "Rituales",
+            rootDestination = Destination.Rituals,
+            matches = { destination -> destination == Destination.Rituals },
+        )
+
+        val items = listOf(profile, astrology, guide, rituals)
+    }
+}
+
+@Composable
+private fun MainBottomBar(
+    selectedTab: MainTab,
+    onTabSelected: (MainTab) -> Unit,
+) {
+    NavigationBar {
+        MainTab.items.forEach { tab ->
+            NavigationBarItem(
+                selected = tab == selectedTab,
+                onClick = { onTabSelected(tab) },
+                icon = { Text("•") },
+                label = { Text(tab.label) },
+            )
         }
     }
 }

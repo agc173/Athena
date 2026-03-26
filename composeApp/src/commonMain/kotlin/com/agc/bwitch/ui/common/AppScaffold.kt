@@ -19,6 +19,7 @@ fun AppScaffold(
     canGoBack: Boolean,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    bottomBar: @Composable () -> Unit = {},
     content: @Composable (padding: PaddingValues) -> Unit
 ) {
     val colorScheme = MaterialTheme.colorScheme
@@ -48,6 +49,7 @@ fun AppScaffold(
                 }
             )
         },
+        bottomBar = bottomBar,
         containerColor = extras.screenBackground,
         contentColor = colorScheme.onBackground,
         modifier = modifier,

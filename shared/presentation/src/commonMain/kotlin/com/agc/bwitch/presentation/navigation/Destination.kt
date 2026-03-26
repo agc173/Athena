@@ -36,6 +36,8 @@ sealed class Destination(val title: String) {
 
     data object Guide : Destination("Guía")
 
+    data object Rituals : Destination("Rituales")
+
     data object TarotHome : Destination("Tarot")
 
     data class Tarot(
@@ -51,4 +53,3 @@ sealed class Destination(val title: String) {
         val preselectedSign: ZodiacSign? = null
     ) : Destination("Horóscopo diario")
 }
-
