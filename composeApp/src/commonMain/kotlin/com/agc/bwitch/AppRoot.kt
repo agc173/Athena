@@ -37,6 +37,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.agc.bwitch.domain.astrology.birthchart.BirthChartRepository
 import com.agc.bwitch.domain.userprofile.GetUserProfileUseCase
 import com.agc.bwitch.domain.userprofile.ObserveUserProfileUseCase
@@ -276,20 +277,21 @@ private fun MainBottomBar(
 
     Surface(
         color = background,
-        shadowElevation = 4.dp,
+        shadowElevation = 2.dp,
         modifier = Modifier.fillMaxWidth(),
     ) {
         NavigationBar(
             containerColor = background,
             tonalElevation = 0.dp,
             windowInsets = NavigationBarDefaults.windowInsets,
-            modifier = Modifier.padding(vertical = 4.dp),
+            modifier = Modifier.padding(vertical = 1.dp),
         ) {
             MainTab.items.forEach { tab ->
                 val isSelected = tab == selectedTab
                 val tint = if (isSelected) activeColor else inactiveColor
 
                 NavigationBarItem(
+                    modifier = Modifier.height(54.dp),
                     selected = isSelected,
                     onClick = { onTabSelected(tab) },
                     colors = itemColors,
@@ -297,12 +299,12 @@ private fun MainBottomBar(
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Box(
                                 modifier = Modifier
-                                    .size(34.dp)
+                                    .size(30.dp)
                                     .clip(CircleShape),
                                 contentAlignment = Alignment.Center
                             ) {
                                 if (isSelected) {
-                                    Canvas(modifier = Modifier.size(34.dp)) {
+                                    Canvas(modifier = Modifier.size(30.dp)) {
                                         drawCircle(
                                             brush = Brush.radialGradient(
                                                 colors = listOf(
@@ -324,13 +326,14 @@ private fun MainBottomBar(
                                     cutoutColor = background,
                                 )
                             }
-                            Spacer(modifier = Modifier.height(2.dp))
+                            Spacer(modifier = Modifier.height(1.dp))
                         }
                     },
                     label = {
                         Text(
                             text = tab.label,
                             style = MaterialTheme.typography.labelMedium.copy(
+                                fontSize = 12.sp,
                                 fontWeight = if (isSelected) FontWeight.Medium else FontWeight.Normal,
                             ),
                         )
@@ -361,7 +364,7 @@ private fun ProfileIcon(
     tint: Color,
     modifier: Modifier = Modifier,
 ) {
-    Canvas(modifier = modifier.size(19.dp)) {
+    Canvas(modifier = modifier.size(21.dp)) {
         val stroke = Stroke(width = size.minDimension * 0.1f, cap = StrokeCap.Round)
         drawCircle(
             color = tint,
@@ -393,7 +396,7 @@ private fun AstrologyIcon(
     cutoutColor: Color,
     modifier: Modifier = Modifier,
 ) {
-    Canvas(modifier = modifier.size(19.dp)) {
+    Canvas(modifier = modifier.size(21.dp)) {
         val stroke = Stroke(width = size.minDimension * 0.1f, cap = StrokeCap.Round)
         drawArc(
             color = tint,
@@ -422,7 +425,7 @@ private fun GuideIcon(
     tint: Color,
     modifier: Modifier = Modifier,
 ) {
-    Canvas(modifier = modifier.size(19.dp)) {
+    Canvas(modifier = modifier.size(21.dp)) {
         val stroke = Stroke(width = size.minDimension * 0.1f, cap = StrokeCap.Round)
         val eyePath = Path().apply {
             moveTo(size.width * 0.15f, size.height * 0.5f)
@@ -444,7 +447,7 @@ private fun RitualsIcon(
     tint: Color,
     modifier: Modifier = Modifier,
 ) {
-    Canvas(modifier = modifier.size(19.dp)) {
+    Canvas(modifier = modifier.size(21.dp)) {
         val stroke = Stroke(width = size.minDimension * 0.1f, cap = StrokeCap.Round)
         drawRoundRect(
             color = tint,
