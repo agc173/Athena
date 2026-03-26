@@ -31,9 +31,9 @@ val BWitchTypography = Typography(
         letterSpacing = 0.05.sp,
     ),
     titleLarge = TextStyle(
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 19.sp,
-        lineHeight = 26.sp,
+        fontWeight = FontWeight.Bold,
+        fontSize = 20.sp,
+        lineHeight = 28.sp,
         letterSpacing = 0.08.sp,
     ),
     titleMedium = TextStyle(

@@ -55,6 +55,7 @@ fun BWitchTheme(
             glowAlpha = 0.14f,
             topBarContainer = PearlSurface,
             topBarDivider = NeutralBorderSubtle,
+            topBarIconColor = WarmTextPrimary.copy(alpha = 0.9f),
             navBarContainer = PearlSurface,
             navBarBorder = NeutralBorderSubtle,
         ),
@@ -64,7 +65,6 @@ fun BWitchTheme(
             colorScheme = BWitchColorScheme,
             typography = BWitchTypography.copy(
                 headlineLarge = BWitchTypography.headlineLarge.copy(fontFamily = displayFont),
-                titleLarge = BWitchTypography.titleLarge.copy(fontFamily = displayFont),
             ),
             shapes = Shapes(
                 extraSmall = RoundedCornerShape(dimens.radiusSm),
