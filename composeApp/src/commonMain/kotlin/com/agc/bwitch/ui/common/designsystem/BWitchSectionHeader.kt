@@ -15,7 +15,7 @@ fun BWitchSectionHeader(
     title: String,
     subtitle: String? = null,
     modifier: Modifier = Modifier,
-    titleStyle: TextStyle = MaterialTheme.typography.headlineMedium,
+    titleStyle: TextStyle = MaterialTheme.typography.headlineSmall,
     subtitleStyle: TextStyle = MaterialTheme.typography.bodyMedium,
 ) {
     val dimens = BWitchThemeTokens.dimens

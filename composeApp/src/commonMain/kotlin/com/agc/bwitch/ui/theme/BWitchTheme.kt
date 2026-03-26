@@ -1,33 +1,36 @@
 package com.agc.bwitch.ui.theme
 
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.Shapes
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
 
-private val BWitchColorScheme = darkColorScheme(
-    primary = MysticPrimary,
-    onPrimary = MysticBackground,
-    primaryContainer = MysticSecondary,
-    onPrimaryContainer = MysticTextPrimary,
-    secondary = MysticSecondary,
-    onSecondary = MysticTextPrimary,
-    secondaryContainer = MysticSurfaceElevated,
-    onSecondaryContainer = MysticTextPrimary,
-    tertiary = MysticAccentGold,
-    onTertiary = MysticBackground,
-    background = MysticBackground,
-    onBackground = MysticTextPrimary,
-    surface = MysticSurface,
-    onSurface = MysticTextPrimary,
-    surfaceVariant = MysticSurfaceElevated,
-    onSurfaceVariant = MysticTextSecondary,
-    outline = MysticBorderSubtle,
-    error = MysticError,
-    onError = MysticTextPrimary,
+private val BWitchColorScheme = lightColorScheme(
+    primary = AquaPrimary,
+    onPrimary = PearlSurface,
+    primaryContainer = AquaAccent,
+    onPrimaryContainer = WarmTextPrimary,
+    secondary = AquaPrimaryStrong,
+    onSecondary = PearlSurface,
+    secondaryContainer = PearlSurfaceContainer,
+    onSecondaryContainer = WarmTextPrimary,
+    tertiary = PremiumGoldAccent,
+    onTertiary = WarmTextPrimary,
+    background = PearlBackground,
+    onBackground = WarmTextPrimary,
+    surface = PearlSurface,
+    onSurface = WarmTextPrimary,
+    surfaceVariant = PearlSurfaceElevated,
+    onSurfaceVariant = WarmTextSecondary,
+    outline = NeutralBorderSubtle,
+    error = WarmError,
+    onError = PearlSurface,
+    scrim = SoftScrim,
 )
 
 private val LocalBWitchDimens = staticCompositionLocalOf { DefaultBWitchDimens }
@@ -36,21 +39,40 @@ private val LocalBWitchDimens = staticCompositionLocalOf { DefaultBWitchDimens }
 fun BWitchTheme(
     content: @Composable () -> Unit,
 ) {
+    val dimens = DefaultBWitchDimens
+    val displayFont = bwitchDisplayFontFamily()
+
     CompositionLocalProvider(
         LocalBWitchThemeExtras provides BWitchThemeExtras(
-            screenBackground = MysticBackground,
-            surfaceElevated = MysticSurfaceElevated,
-            accentGold = MysticAccentGold,
-            textSecondary = MysticTextSecondary,
-            borderSubtle = MysticBorderSubtle,
-            scrim = MysticScrim,
-            glowAlpha = 0.24f,
+            screenBackground = PearlBackground,
+            surfaceElevated = PearlSurfaceElevated,
+            surfaceMuted = PearlSurfaceContainer,
+            accentSoft = AquaAccent,
+            accentGold = PremiumGoldAccent,
+            textSecondary = WarmTextSecondary,
+            borderSubtle = NeutralBorderSubtle,
+            scrim = SoftScrim,
+            glowAlpha = 0.14f,
+            topBarContainer = PearlSurface,
+            topBarDivider = NeutralBorderSubtle,
+            navBarContainer = PearlSurface,
+            navBarBorder = NeutralBorderSubtle,
         ),
-        LocalBWitchDimens provides DefaultBWitchDimens,
+        LocalBWitchDimens provides dimens,
     ) {
         MaterialTheme(
             colorScheme = BWitchColorScheme,
-            typography = BWitchTypography,
+            typography = BWitchTypography.copy(
+                headlineLarge = BWitchTypography.headlineLarge.copy(fontFamily = displayFont),
+                titleLarge = BWitchTypography.titleLarge.copy(fontFamily = displayFont),
+            ),
+            shapes = Shapes(
+                extraSmall = RoundedCornerShape(dimens.radiusSm),
+                small = RoundedCornerShape(dimens.radiusMd),
+                medium = RoundedCornerShape(dimens.radiusLg),
+                large = RoundedCornerShape(dimens.radiusXl),
+                extraLarge = RoundedCornerShape(dimens.radiusXl),
+            ),
             content = content,
         )
     }
@@ -68,3 +90,4 @@ object BWitchThemeTokens {
         @ReadOnlyComposable
         get() = LocalBWitchDimens.current
 }
+

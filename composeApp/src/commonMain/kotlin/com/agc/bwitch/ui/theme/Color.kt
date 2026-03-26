@@ -2,18 +2,36 @@ package com.agc.bwitch.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val MysticBackground = Color(0xFF1A1321)
-val MysticSurface = Color(0xFF241A2F)
-val MysticSurfaceElevated = Color(0xFF312342)
+val PearlBackground = Color(0xFFF6F0E8)
+val PearlSurface = Color(0xFFFFFAF3)
+val PearlSurfaceElevated = Color(0xFFF3E9DE)
+val PearlSurfaceContainer = Color(0xFFEDE1D4)
 
-val MysticPrimary = Color(0xFFBE9EE4)
-val MysticSecondary = Color(0xFF9F7FC9)
-val MysticAccentGold = Color(0xFFE6CEB0)
+val AquaPrimary = Color(0xFF6EA7A4)
+val AquaPrimaryStrong = Color(0xFF5A8E8B)
+val AquaAccent = Color(0xFF8CBFBC)
 
-val MysticTextPrimary = Color(0xFFFBF6FF)
-val MysticTextSecondary = Color(0xFFD9C8E8)
+val WarmTextPrimary = Color(0xFF3E3530)
+val WarmTextSecondary = Color(0xFF6F625A)
 
-val MysticBorderSubtle = Color(0x52E4D1F7)
-val MysticError = Color(0xFFE57373)
+val NeutralBorderSubtle = Color(0xFFCEC0B1)
+val PremiumGoldAccent = Color(0xFFD9C3A8)
+val WarmError = Color(0xFFB55E58)
 
-val MysticScrim = Color(0xCC0E0915)
+val SoftScrim = Color(0x8A2F2722)
+
+// Legacy aliases for progressive migration compatibility.
+val MysticBackground = PearlBackground
+val MysticSurface = PearlSurface
+val MysticSurfaceElevated = PearlSurfaceElevated
+
+val MysticPrimary = AquaPrimary
+val MysticSecondary = AquaPrimaryStrong
+val MysticAccentGold = PremiumGoldAccent
+
+val MysticTextPrimary = WarmTextPrimary
+val MysticTextSecondary = WarmTextSecondary
+
+val MysticBorderSubtle = NeutralBorderSubtle
+val MysticError = WarmError
+val MysticScrim = SoftScrim
