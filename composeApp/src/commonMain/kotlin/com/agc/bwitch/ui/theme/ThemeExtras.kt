@@ -35,7 +35,7 @@ val LocalBWitchThemeExtras = compositionLocalOf {
         glowAlpha = 0.14f,
         topBarContainer = PearlSurface,
         topBarDivider = NeutralBorderSubtle,
-        topBarIconColor = WarmTextPrimary.copy(alpha = 0.9f),
+        topBarIconColor = WarmTextPrimary,
         navBarContainer = PearlSurface,
         navBarBorder = NeutralBorderSubtle,
     )

@@ -3,6 +3,7 @@ package com.agc.bwitch.ui.common
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -18,6 +19,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
 import com.agc.bwitch.ui.theme.BWitchThemeTokens
+import com.agc.bwitch.ui.theme.BWitchTopBarTitleTextStyle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,7 +42,7 @@ fun AppScaffold(
                 title = {
                     Text(
                         text = title,
-                        style = MaterialTheme.typography.titleLarge,
+                        style = BWitchTopBarTitleTextStyle,
                         modifier = Modifier.padding(start = dimens.topBarTitleStartPadding),
                     )
                 },
@@ -57,6 +59,8 @@ fun AppScaffold(
                             Icon(
                                 imageVector = BackChevronIcon,
                                 contentDescription = "Back",
+                                tint = extras.topBarIconColor,
+                                modifier = Modifier.size(dimens.topBarBackIconSize),
                             )
                         }
                     }
@@ -81,15 +85,15 @@ private val BackChevronIcon: ImageVector = ImageVector.Builder(
     viewportHeight = 24f,
 ).apply {
     path {
-        moveTo(20f, 11f)
-        lineTo(7.83f, 11f)
-        lineTo(13.42f, 5.41f)
-        lineTo(12f, 4f)
-        lineTo(4f, 12f)
-        lineTo(12f, 20f)
-        lineTo(13.41f, 18.59f)
-        lineTo(7.83f, 13f)
-        lineTo(20f, 13f)
+        moveTo(20f, 10f)
+        lineTo(9.4f, 10f)
+        lineTo(13.9f, 5.5f)
+        lineTo(12f, 3.6f)
+        lineTo(4f, 11.6f)
+        lineTo(12f, 19.6f)
+        lineTo(13.9f, 17.7f)
+        lineTo(9.4f, 13.2f)
+        lineTo(20f, 13.2f)
         close()
     }
 }.build()
