@@ -130,6 +130,10 @@ fun PortalScreen(
 
 @Composable
 private fun PortalHeader(modifier: Modifier = Modifier) {
+    val headerAccent = Color(0xFF8B6D8F)
+    val dividerColor = Color(0xFFBDAFB7)
+    val titleColor = Color(0xFF2F2830)
+
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -146,7 +150,7 @@ private fun PortalHeader(modifier: Modifier = Modifier) {
                 style = MaterialTheme.typography.labelMedium.copy(
                     letterSpacing = 0.6.sp,
                 ),
-                color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.7f),
+                color = headerAccent.copy(alpha = 0.72f),
             )
             Spacer(modifier = Modifier.width(12.dp))
             Text(
@@ -159,7 +163,7 @@ private fun PortalHeader(modifier: Modifier = Modifier) {
                     lineHeight = 36.sp,
                 ),
                 textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.98f),
+                color = titleColor.copy(alpha = 0.98f),
             )
             Spacer(modifier = Modifier.width(12.dp))
             Text(
@@ -167,7 +171,7 @@ private fun PortalHeader(modifier: Modifier = Modifier) {
                 style = MaterialTheme.typography.labelMedium.copy(
                     letterSpacing = 0.6.sp,
                 ),
-                color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.7f),
+                color = headerAccent.copy(alpha = 0.72f),
             )
         }
         HorizontalDivider(
@@ -175,7 +179,7 @@ private fun PortalHeader(modifier: Modifier = Modifier) {
                 .fillMaxWidth(0.48f)
                 .padding(top = 2.dp),
             thickness = 1.dp,
-            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.52f),
+            color = dividerColor.copy(alpha = 0.56f),
         )
     }
 }
@@ -187,23 +191,18 @@ private fun PortalModuleCard(
     modifier: Modifier = Modifier,
 ) {
     val isEnabled = module.enabled && module.destination != null && onClick != null
-    val cardShape = RoundedCornerShape(16.dp)
-    val baseSurface = MaterialTheme.colorScheme.surfaceVariant
-    val enabledContainer = blendColors(
-        base = baseSurface,
-        overlay = MaterialTheme.colorScheme.primary,
-        overlayAlpha = 0.08f,
-    )
-    val disabledContainer = blendColors(
-        base = baseSurface,
-        overlay = MaterialTheme.colorScheme.onSurfaceVariant,
-        overlayAlpha = 0.04f,
-    )
+    val cardShape = RoundedCornerShape(18.dp)
+    val enabledContainer = Color(0xFFF6F0F2)
+    val disabledContainer = Color(0xFFEDE5E8)
+    val enabledTitleColor = Color(0xFF2F2830)
+    val disabledTitleColor = Color(0xFF5E525C)
+    val enabledSubtitleColor = Color(0xFF5A4B57)
+    val disabledSubtitleColor = Color(0xFF7A6E77)
 
     BWitchCard(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = 90.dp),
+            .heightIn(min = 88.dp),
         onClick = if (isEnabled) onClick else null,
         enabled = isEnabled,
         shape = cardShape,
@@ -211,19 +210,23 @@ private fun PortalModuleCard(
             containerColor = if (isEnabled) {
                 enabledContainer
             } else {
-                disabledContainer.copy(alpha = 0.78f)
+                disabledContainer
             },
-            contentColor = MaterialTheme.colorScheme.onSurface,
-            disabledContainerColor = disabledContainer.copy(alpha = 0.78f),
-            disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.92f),
+            contentColor = enabledTitleColor,
+            disabledContainerColor = disabledContainer,
+            disabledContentColor = disabledTitleColor,
         ),
         contentPadding = PaddingValues(
             horizontal = BWitchThemeTokens.dimens.spacingMd + 2.dp,
-            vertical = 13.dp,
+            vertical = 10.dp,
         ),
-        contentVerticalArrangement = Arrangement.spacedBy(4.dp),
+        contentVerticalArrangement = Arrangement.Center,
     ) {
-        Box(modifier = Modifier.fillMaxWidth()) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 68.dp),
+        ) {
             CardOrnament(
                 ornament = module.ornament,
                 isEnabled = isEnabled,
@@ -235,8 +238,9 @@ private fun PortalModuleCard(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(end = 86.dp),
-                verticalArrangement = Arrangement.Center,
+                    .padding(end = 86.dp)
+                    .align(Alignment.CenterStart),
+                verticalArrangement = Arrangement.spacedBy(3.dp),
             ) {
                 Text(
                     text = module.title,
@@ -247,9 +251,9 @@ private fun PortalModuleCard(
                         letterSpacing = 0.12.sp,
                     ),
                     color = if (isEnabled) {
-                        MaterialTheme.colorScheme.onSurface
+                        enabledTitleColor
                     } else {
-                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.82f)
+                        disabledTitleColor
                     },
                 )
                 Text(
@@ -258,9 +262,7 @@ private fun PortalModuleCard(
                         lineHeight = 17.sp,
                         letterSpacing = 0.16.sp,
                     ),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(
-                        alpha = if (isEnabled) 0.9f else 0.76f,
-                    ),
+                    color = if (isEnabled) enabledSubtitleColor else disabledSubtitleColor,
                 )
             }
         }
@@ -273,8 +275,16 @@ private fun CardOrnament(
     isEnabled: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    val strokeColor = MaterialTheme.colorScheme.onSurface.copy(alpha = if (isEnabled) 0.14f else 0.085f)
-    val softColor = MaterialTheme.colorScheme.primary.copy(alpha = if (isEnabled) 0.085f else 0.055f)
+    val strokeColor = if (isEnabled) {
+        Color(0xFF7E6978).copy(alpha = 0.28f)
+    } else {
+        Color(0xFF8F7E89).copy(alpha = 0.2f)
+    }
+    val softColor = if (isEnabled) {
+        Color(0xFFB79AAA).copy(alpha = 0.2f)
+    } else {
+        Color(0xFFC4B1BC).copy(alpha = 0.14f)
+    }
 
     Canvas(modifier = modifier) {
         val w = size.width
@@ -426,18 +436,4 @@ private fun CardOrnament(
             }
         }
     }
-}
-
-private fun blendColors(
-    base: Color,
-    overlay: Color,
-    overlayAlpha: Float,
-): Color {
-    val clampedAlpha = overlayAlpha.coerceIn(0f, 1f)
-    return Color(
-        red = (base.red * (1f - clampedAlpha)) + (overlay.red * clampedAlpha),
-        green = (base.green * (1f - clampedAlpha)) + (overlay.green * clampedAlpha),
-        blue = (base.blue * (1f - clampedAlpha)) + (overlay.blue * clampedAlpha),
-        alpha = 1f,
-    )
 }
