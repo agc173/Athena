@@ -16,7 +16,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
@@ -127,118 +126,135 @@ private fun CardOrnament(
         when (ornament) {
             AstrologyCardOrnament.Horoscope -> {
                 drawCircle(
-                    color = primary.copy(alpha = 0.22f),
-                    radius = size.minDimension * 0.46f,
-                    center = Offset(size.width * 0.89f, size.height * 0.18f)
-                )
-                drawArc(
-                    color = primary.copy(alpha = 0.32f),
-                    startAngle = 18f,
-                    sweepAngle = 300f,
-                    useCenter = false,
-                    topLeft = Offset(size.width * 0.56f, size.height * -0.06f),
-                    size = Size(size.width * 0.56f, size.width * 0.56f),
-                    style = Stroke(width = size.minDimension * 0.07f, cap = StrokeCap.Round)
+                    color = primary.copy(alpha = 0.28f),
+                    radius = size.minDimension * 0.56f,
+                    center = Offset(size.width * 1.02f, size.height * 0.2f)
                 )
                 drawCircle(
-                    color = primary.copy(alpha = 0.3f),
-                    radius = size.minDimension * 0.26f,
-                    center = Offset(size.width * 0.82f, size.height * 0.64f)
-                )
-                drawCircle(
-                    color = surface,
+                    color = primary.copy(alpha = 0.52f),
                     radius = size.minDimension * 0.22f,
-                    center = Offset(size.width * 0.9f, size.height * 0.64f)
+                    center = Offset(size.width * 0.83f, size.height * 0.38f)
                 )
                 drawCircle(
                     color = primary.copy(alpha = 0.5f),
-                    radius = size.minDimension * 0.03f,
-                    center = Offset(size.width * 0.65f, size.height * 0.58f)
+                    radius = size.minDimension * 0.24f,
+                    center = Offset(size.width * 0.85f, size.height * 0.68f)
                 )
                 drawCircle(
-                    color = primary.copy(alpha = 0.45f),
-                    radius = size.minDimension * 0.025f,
-                    center = Offset(size.width * 0.75f, size.height * 0.44f)
+                    color = surface,
+                    radius = size.minDimension * 0.2f,
+                    center = Offset(size.width * 0.94f, size.height * 0.66f)
                 )
                 drawCircle(
-                    color = primary.copy(alpha = 0.4f),
-                    radius = size.minDimension * 0.022f,
-                    center = Offset(size.width * 0.83f, size.height * 0.56f)
+                    color = primary.copy(alpha = 0.58f),
+                    radius = size.minDimension * 0.028f,
+                    center = Offset(size.width * 0.7f, size.height * 0.56f)
+                )
+                drawCircle(
+                    color = primary.copy(alpha = 0.52f),
+                    radius = size.minDimension * 0.023f,
+                    center = Offset(size.width * 0.77f, size.height * 0.42f)
+                )
+                drawCircle(
+                    color = primary.copy(alpha = 0.48f),
+                    radius = size.minDimension * 0.02f,
+                    center = Offset(size.width * 0.86f, size.height * 0.52f)
                 )
             }
 
             AstrologyCardOrnament.BirthEssence -> {
                 val haloBrush = Brush.radialGradient(
-                    colors = listOf(primary.copy(alpha = 0.38f), Color.Transparent),
-                    center = Offset(size.width * 0.8f, size.height * 0.4f),
-                    radius = size.minDimension * 0.7f,
+                    colors = listOf(
+                        primary.copy(alpha = 0.55f),
+                        primary.copy(alpha = 0.28f),
+                        Color.Transparent,
+                    ),
+                    center = Offset(size.width * 0.8f, size.height * 0.5f),
+                    radius = size.minDimension * 0.78f,
                 )
                 drawCircle(
                     brush = haloBrush,
-                    radius = size.minDimension * 0.7f,
-                    center = Offset(size.width * 0.8f, size.height * 0.4f)
+                    radius = size.minDimension * 0.78f,
+                    center = Offset(size.width * 0.8f, size.height * 0.5f)
                 )
                 drawCircle(
                     color = primary.copy(alpha = 0.48f),
-                    radius = size.minDimension * 0.17f,
-                    center = Offset(size.width * 0.8f, size.height * 0.4f)
+                    radius = size.minDimension * 0.25f,
+                    center = Offset(size.width * 0.8f, size.height * 0.5f)
+                )
+                drawCircle(
+                    color = primary.copy(alpha = 0.66f),
+                    radius = size.minDimension * 0.13f,
+                    center = Offset(size.width * 0.8f, size.height * 0.5f)
                 )
 
                 val spiral = Path().apply {
-                    moveTo(size.width * 0.56f, size.height * 1.02f)
+                    moveTo(size.width * 0.54f, size.height * 0.94f)
                     cubicTo(
-                        size.width * 1.03f,
-                        size.height * 0.96f,
-                        size.width * 0.95f,
-                        size.height * 0.12f,
-                        size.width * 0.73f,
-                        size.height * 0.25f,
+                        size.width * 0.98f,
+                        size.height * 0.88f,
+                        size.width * 0.96f,
+                        size.height * 0.14f,
+                        size.width * 0.75f,
+                        size.height * 0.26f,
                     )
                     cubicTo(
-                        size.width * 0.61f,
-                        size.height * 0.35f,
-                        size.width * 0.7f,
-                        size.height * 0.59f,
-                        size.width * 0.83f,
-                        size.height * 0.51f,
+                        size.width * 0.64f,
+                        size.height * 0.36f,
+                        size.width * 0.72f,
+                        size.height * 0.61f,
+                        size.width * 0.86f,
+                        size.height * 0.54f,
                     )
                 }
                 drawPath(
                     path = spiral,
-                    color = primary.copy(alpha = 0.44f),
-                    style = Stroke(width = size.minDimension * 0.055f, cap = StrokeCap.Round)
+                    color = primary.copy(alpha = 0.34f),
+                    style = Stroke(width = size.minDimension * 0.05f, cap = StrokeCap.Round)
                 )
             }
 
             AstrologyCardOrnament.Synastry -> {
                 drawCircle(
-                    color = primary.copy(alpha = 0.42f),
-                    radius = size.minDimension * 0.35f,
-                    center = Offset(size.width * 0.72f, size.height * 0.52f),
-                    style = Stroke(width = size.minDimension * 0.068f)
+                    color = primary.copy(alpha = 0.44f),
+                    radius = size.minDimension * 0.31f,
+                    center = Offset(size.width * 0.72f, size.height * 0.54f)
                 )
                 drawCircle(
-                    color = primary.copy(alpha = 0.42f),
-                    radius = size.minDimension * 0.3f,
-                    center = Offset(size.width * 0.88f, size.height * 0.52f),
-                    style = Stroke(width = size.minDimension * 0.068f)
+                    color = primary.copy(alpha = 0.44f),
+                    radius = size.minDimension * 0.31f,
+                    center = Offset(size.width * 0.9f, size.height * 0.54f)
+                )
+                drawCircle(
+                    color = primary.copy(alpha = 0.62f),
+                    radius = size.minDimension * 0.16f,
+                    center = Offset(size.width * 0.81f, size.height * 0.54f)
                 )
 
                 val bridge = Path().apply {
-                    moveTo(size.width * 0.68f, size.height * 0.8f)
+                    moveTo(size.width * 0.66f, size.height * 0.8f)
                     cubicTo(
-                        size.width * 0.78f,
-                        size.height * 0.94f,
-                        size.width * 0.9f,
-                        size.height * 0.15f,
-                        size.width * 1.0f,
-                        size.height * 0.28f,
+                        size.width * 0.74f,
+                        size.height * 0.9f,
+                        size.width * 0.88f,
+                        size.height * 0.25f,
+                        size.width * 0.96f,
+                        size.height * 0.34f,
                     )
+                    lineTo(size.width * 0.95f, size.height * 0.44f)
+                    cubicTo(
+                        size.width * 0.89f,
+                        size.height * 0.37f,
+                        size.width * 0.77f,
+                        size.height * 0.8f,
+                        size.width * 0.69f,
+                        size.height * 0.73f,
+                    )
+                    close()
                 }
                 drawPath(
                     path = bridge,
-                    color = primary.copy(alpha = 0.46f),
-                    style = Stroke(width = size.minDimension * 0.055f, cap = StrokeCap.Round)
+                    color = primary.copy(alpha = 0.36f)
                 )
             }
         }
