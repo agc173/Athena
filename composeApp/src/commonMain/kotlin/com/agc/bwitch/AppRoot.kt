@@ -185,7 +185,9 @@ fun AppRoot() {
 
             Destination.UserProfile -> ProfileScreen(
                 contentPadding = padding,
-                onOpenSettings = { navigator.navigate(Destination.Settings) }
+                onOpenSettings = { navigator.navigate(Destination.Settings) },
+                onEditProfile = { navigator.navigate(Destination.Settings) },
+                onDiscoverEssence = { navigator.navigate(Destination.Astrology) },
             )
 
             Destination.Settings -> SettingsScreen(contentPadding = padding)
