@@ -365,7 +365,7 @@ private fun ProfileIcon(
     tint: Color,
     modifier: Modifier = Modifier,
 ) {
-    Canvas(modifier = modifier.size(24.dp)) {
+    Canvas(modifier = modifier.size(25.dp)) {
         val stroke = Stroke(width = size.minDimension * 0.09f, cap = StrokeCap.Round)
         drawCircle(
             color = tint,
@@ -396,7 +396,7 @@ private fun AstrologyIcon(
     tint: Color,
     modifier: Modifier = Modifier,
 ) {
-    Canvas(modifier = modifier.size(24.dp)) {
+    Canvas(modifier = modifier.size(25.dp)) {
         val moonStroke = size.minDimension * 0.075f
         drawArc(
             color = tint,
@@ -444,41 +444,41 @@ private fun GuideIcon(
     tint: Color,
     modifier: Modifier = Modifier,
 ) {
-    Canvas(modifier = modifier.size(24.dp)) {
+    Canvas(modifier = modifier.size(25.dp)) {
         val stroke = Stroke(width = size.minDimension * 0.09f, cap = StrokeCap.Round)
         val eyePath = Path().apply {
-            moveTo(size.width * 0.1f, size.height * 0.67f)
-            quadraticBezierTo(size.width * 0.5f, size.height * 0.35f, size.width * 0.9f, size.height * 0.67f)
-            quadraticBezierTo(size.width * 0.5f, size.height * 0.99f, size.width * 0.1f, size.height * 0.67f)
+            moveTo(size.width * 0.1f, size.height * 0.76f)
+            quadraticBezierTo(size.width * 0.4f, size.height * 0.46f, size.width * 0.9f, size.height * 0.76f)
+            quadraticBezierTo(size.width * 0.4f, size.height * 1.1f, size.width * 0.1f, size.height * 0.77f)
             close()
         }
         drawPath(path = eyePath, color = tint, style = stroke)
         drawCircle(
             color = tint,
             radius = size.minDimension * 0.12f,
-            center = Offset(size.width * 0.5f, size.height * 0.67f),
+            center = Offset(size.width * 0.48f, size.height * 0.77f),
             style = stroke,
         )
 
         val rayStroke = size.minDimension * 0.075f
         drawLine(
             color = tint,
-            start = Offset(size.width * 0.5f, size.height * 0.04f),
-            end = Offset(size.width * 0.5f, size.height * 0.22f),
+            start = Offset(size.width * 0.5f, size.height * 0.14f),
+            end = Offset(size.width * 0.5f, size.height * 0.35f),
             strokeWidth = rayStroke,
             cap = StrokeCap.Round,
         )
         drawLine(
             color = tint,
-            start = Offset(size.width * 0.36f, size.height * 0.08f),
-            end = Offset(size.width * 0.44f, size.height * 0.24f),
+            start = Offset(size.width * 0.30f, size.height * 0.18f),
+            end = Offset(size.width * 0.38f, size.height * 0.37f),
             strokeWidth = rayStroke,
             cap = StrokeCap.Round,
         )
         drawLine(
             color = tint,
-            start = Offset(size.width * 0.64f, size.height * 0.08f),
-            end = Offset(size.width * 0.56f, size.height * 0.24f),
+            start = Offset(size.width * 0.70f, size.height * 0.18f),
+            end = Offset(size.width * 0.62f, size.height * 0.37f),
             strokeWidth = rayStroke,
             cap = StrokeCap.Round,
         )
@@ -490,7 +490,7 @@ private fun RitualsIcon(
     tint: Color,
     modifier: Modifier = Modifier,
 ) {
-    Canvas(modifier = modifier.size(24.dp)) {
+    Canvas(modifier = modifier.size(25.dp)) {
         val stroke = Stroke(width = size.minDimension * 0.09f, cap = StrokeCap.Round)
         drawRoundRect(
             color = tint,
