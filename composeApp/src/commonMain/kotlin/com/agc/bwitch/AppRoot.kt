@@ -1,6 +1,7 @@
 package com.agc.bwitch
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -32,7 +34,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
@@ -65,6 +66,7 @@ import com.agc.bwitch.ui.tarot.TarotHomeScreen
 import com.agc.bwitch.ui.tarot.TarotScreen
 import com.agc.bwitch.ui.userprofile.ProfileScreen
 import com.agc.bwitch.ui.userprofile.SettingsScreen
+import com.agc.bwitch.ui.theme.BWitchThemeTokens
 import org.koin.compose.koinInject
 
 @Composable
@@ -266,80 +268,75 @@ private fun MainBottomBar(
     selectedTab: MainTab,
     onTabSelected: (MainTab) -> Unit,
 ) {
+    val themeExtras = BWitchThemeTokens.extras
     val background = Color(0xFFFFFFFF)
     val activeColor = Color(0xFF6FAFC7)
     val inactiveColor = Color(0xFFAFA4B5)
 
     Surface(
         color = background,
-        shadowElevation = 2.dp,
+        shadowElevation = 0.dp,
+        tonalElevation = 0.dp,
         modifier = Modifier.fillMaxWidth(),
     ) {
-        Row(
-            modifier = Modifier
-                .windowInsetsPadding(WindowInsets(bottom = 0.dp))
-                .fillMaxWidth()
-                .padding(horizontal = 6.dp, vertical = 6.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            MainTab.items.forEach { tab ->
-                val isSelected = tab == selectedTab
-                val tint = if (isSelected) activeColor else inactiveColor
+        Column(modifier = Modifier.fillMaxWidth()) {
+            HorizontalDivider(
+                modifier = Modifier.fillMaxWidth(),
+                thickness = 1.dp,
+                color = themeExtras.navBarBorder,
+            )
+            Row(
+                modifier = Modifier
+                    .windowInsetsPadding(WindowInsets(bottom = 0.dp))
+                    .fillMaxWidth()
+                    .padding(horizontal = 6.dp, vertical = 6.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                MainTab.items.forEach { tab ->
+                    val isSelected = tab == selectedTab
+                    val tint = if (isSelected) activeColor else inactiveColor
 
-                Column(
-                    modifier = Modifier
-                        .height(54.dp)
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                            onClick = { onTabSelected(tab) },
-                        )
-                        .padding(horizontal = 8.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                ) {
-                    Box(
+                    Column(
                         modifier = Modifier
-                            .size(34.dp)
-                            .clip(CircleShape),
-                        contentAlignment = Alignment.Center
+                            .height(54.dp)
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                                onClick = { onTabSelected(tab) },
+                            )
+                            .padding(horizontal = 8.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
                     ) {
-                        if (isSelected) {
-                            Canvas(modifier = Modifier.size(34.dp)) {
-                                drawCircle(
-                                    brush = Brush.radialGradient(
-                                        colors = listOf(
-                                            activeColor.copy(alpha = 0.12f),
-                                            activeColor.copy(alpha = 0.04f),
-                                            Color.Transparent,
-                                        ),
-                                        center = center,
-                                        radius = size.minDimension * 0.45f,
-                                    ),
-                                    radius = size.minDimension * 0.5f,
-                                    center = center,
-                                )
-                            }
+                        Box(
+                            modifier = Modifier
+                                .size(34.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    color = if (isSelected) activeColor.copy(alpha = 0.14f) else Color.Transparent,
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            BottomTabIcon(
+                                tab = tab,
+                                tint = tint,
+                            )
                         }
-                        BottomTabIcon(
-                            tab = tab,
-                            tint = tint,
+
+                        Spacer(modifier = Modifier.height(1.dp))
+
+                        Text(
+                            text = tab.label,
+                            textAlign = TextAlign.Center,
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                fontSize = 16.sp,
+                                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                lineHeight = 19.sp,
+                            ),
+                            color = tint,
                         )
                     }
-
-                    Spacer(modifier = Modifier.height(1.dp))
-
-                    Text(
-                        text = tab.label,
-                        textAlign = TextAlign.Center,
-                        style = MaterialTheme.typography.labelMedium.copy(
-                            fontSize = 16.sp,
-                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                            lineHeight = 19.sp,
-                        ),
-                        color = tint,
-                    )
                 }
             }
         }
@@ -445,40 +442,50 @@ private fun GuideIcon(
     modifier: Modifier = Modifier,
 ) {
     Canvas(modifier = modifier.size(25.dp)) {
-        val stroke = Stroke(width = size.minDimension * 0.09f, cap = StrokeCap.Round)
+        val stroke = Stroke(width = size.minDimension * 0.085f, cap = StrokeCap.Round)
         val eyePath = Path().apply {
-            moveTo(size.width * 0.1f, size.height * 0.76f)
-            quadraticBezierTo(size.width * 0.4f, size.height * 0.46f, size.width * 0.9f, size.height * 0.76f)
-            quadraticBezierTo(size.width * 0.4f, size.height * 1.1f, size.width * 0.1f, size.height * 0.77f)
+            moveTo(size.width * 0.16f, size.height * 0.72f)
+            quadraticBezierTo(
+                size.width * 0.5f,
+                size.height * 0.45f,
+                size.width * 0.84f,
+                size.height * 0.72f,
+            )
+            quadraticBezierTo(
+                size.width * 0.5f,
+                size.height * 0.99f,
+                size.width * 0.16f,
+                size.height * 0.72f,
+            )
             close()
         }
         drawPath(path = eyePath, color = tint, style = stroke)
         drawCircle(
             color = tint,
-            radius = size.minDimension * 0.12f,
-            center = Offset(size.width * 0.48f, size.height * 0.77f),
+            radius = size.minDimension * 0.11f,
+            center = Offset(size.width * 0.5f, size.height * 0.72f),
             style = stroke,
         )
 
         val rayStroke = size.minDimension * 0.075f
         drawLine(
             color = tint,
-            start = Offset(size.width * 0.5f, size.height * 0.14f),
-            end = Offset(size.width * 0.5f, size.height * 0.35f),
+            start = Offset(size.width * 0.5f, size.height * 0.11f),
+            end = Offset(size.width * 0.5f, size.height * 0.33f),
             strokeWidth = rayStroke,
             cap = StrokeCap.Round,
         )
         drawLine(
             color = tint,
-            start = Offset(size.width * 0.30f, size.height * 0.18f),
-            end = Offset(size.width * 0.38f, size.height * 0.37f),
+            start = Offset(size.width * 0.31f, size.height * 0.15f),
+            end = Offset(size.width * 0.39f, size.height * 0.33f),
             strokeWidth = rayStroke,
             cap = StrokeCap.Round,
         )
         drawLine(
             color = tint,
-            start = Offset(size.width * 0.70f, size.height * 0.18f),
-            end = Offset(size.width * 0.62f, size.height * 0.37f),
+            start = Offset(size.width * 0.69f, size.height * 0.15f),
+            end = Offset(size.width * 0.61f, size.height * 0.33f),
             strokeWidth = rayStroke,
             cap = StrokeCap.Round,
         )
