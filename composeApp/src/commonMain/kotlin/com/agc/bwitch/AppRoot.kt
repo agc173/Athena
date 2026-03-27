@@ -462,7 +462,7 @@ private fun GuideIcon(
         drawPath(path = eyePath, color = tint, style = stroke)
         drawCircle(
             color = tint,
-            radius = size.minDimension * 0.11f,
+            radius = size.minDimension * 0.12f,
             center = Offset(size.width * 0.5f, size.height * 0.72f),
             style = stroke,
         )
