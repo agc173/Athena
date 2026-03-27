@@ -153,7 +153,7 @@ fun ProfileScreen(
                 ) {
                     Text("Lunas", style = MaterialTheme.typography.labelMedium, color = extras.textSecondary)
                     Text(
-                        text = moonCredits?.toString() ?: "0",
+                        text = "🌙 x ${moonCredits ?: 0}",
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.primary,
                     )
@@ -258,18 +258,28 @@ private fun IconMiniAction(
         ) {
             Canvas(modifier = Modifier.fillMaxSize()) {
                 val stroke = size.minDimension * 0.11f
+                val start = Offset(size.width * 0.25f, size.height * 0.74f)
+                val end = Offset(size.width * 0.74f, size.height * 0.25f)
+
                 drawLine(
                     color = iconColor,
-                    start = Offset(size.width * 0.22f, size.height * 0.78f),
-                    end = Offset(size.width * 0.76f, size.height * 0.24f),
+                    start = start,
+                    end = end,
                     strokeWidth = stroke,
                     cap = StrokeCap.Round,
                 )
                 drawLine(
                     color = iconColor,
-                    start = Offset(size.width * 0.7f, size.height * 0.18f),
-                    end = Offset(size.width * 0.84f, size.height * 0.32f),
-                    strokeWidth = stroke,
+                    start = end,
+                    end = Offset(size.width * 0.85f, size.height * 0.14f),
+                    strokeWidth = stroke * 0.75f,
+                    cap = StrokeCap.Round,
+                )
+                drawLine(
+                    color = iconColor,
+                    start = end,
+                    end = Offset(size.width * 0.86f, size.height * 0.36f),
+                    strokeWidth = stroke * 0.75f,
                     cap = StrokeCap.Round,
                 )
             }
