@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,7 +31,10 @@ fun AstrologyScreen(
     contentPadding: PaddingValues,
     onNavigate: (Destination) -> Unit
 ) {
-    BWitchScreen(contentPadding = contentPadding) {
+    BWitchScreen(
+        contentPadding = contentPadding,
+        modifier = Modifier.verticalScroll(rememberScrollState())
+    ) {
         BWitchSectionHeader(
             title = "Tu cielo interior",
             subtitle = "Explora tu esencia y los ritmos que te acompañan",
@@ -106,33 +111,49 @@ private fun CardOrnament(
     modifier: Modifier = Modifier,
 ) {
     val primary = MaterialTheme.colorScheme.primary
+    val surface = MaterialTheme.colorScheme.surface
 
     Canvas(modifier = modifier) {
         when (ornament) {
             AstrologyCardOrnament.Horoscope -> {
                 drawCircle(
                     color = primary.copy(alpha = 0.11f),
-                    radius = size.minDimension * 0.45f,
-                    center = Offset(size.width * 0.93f, size.height * 0.2f)
+                    radius = size.minDimension * 0.4f,
+                    center = Offset(size.width * 0.98f, size.height * 0.12f)
                 )
                 drawArc(
                     color = primary.copy(alpha = 0.15f),
-                    startAngle = 190f,
-                    sweepAngle = 160f,
+                    startAngle = 18f,
+                    sweepAngle = 300f,
                     useCenter = false,
-                    topLeft = Offset(size.width * 0.55f, size.height * -0.45f),
-                    size = Size(size.width * 0.8f, size.height * 1.2f),
-                    style = Stroke(width = size.minDimension * 0.05f, cap = StrokeCap.Round)
+                    topLeft = Offset(size.width * 0.68f, size.height * -0.24f),
+                    size = Size(size.width * 0.52f, size.width * 0.52f),
+                    style = Stroke(width = size.minDimension * 0.045f, cap = StrokeCap.Round)
                 )
                 drawCircle(
-                    color = primary.copy(alpha = 0.12f),
-                    radius = size.minDimension * 0.04f,
-                    center = Offset(size.width * 0.77f, size.height * 0.62f)
+                    color = primary.copy(alpha = 0.14f),
+                    radius = size.minDimension * 0.2f,
+                    center = Offset(size.width * 0.86f, size.height * 0.68f)
                 )
                 drawCircle(
-                    color = primary.copy(alpha = 0.1f),
-                    radius = size.minDimension * 0.02f,
-                    center = Offset(size.width * 0.87f, size.height * 0.73f)
+                    color = surface,
+                    radius = size.minDimension * 0.2f,
+                    center = Offset(size.width * 0.93f, size.height * 0.66f)
+                )
+                drawCircle(
+                    color = primary.copy(alpha = 0.17f),
+                    radius = size.minDimension * 0.018f,
+                    center = Offset(size.width * 0.71f, size.height * 0.56f)
+                )
+                drawCircle(
+                    color = primary.copy(alpha = 0.13f),
+                    radius = size.minDimension * 0.014f,
+                    center = Offset(size.width * 0.78f, size.height * 0.48f)
+                )
+                drawCircle(
+                    color = primary.copy(alpha = 0.11f),
+                    radius = size.minDimension * 0.012f,
+                    center = Offset(size.width * 0.84f, size.height * 0.57f)
                 )
             }
 
