@@ -2,8 +2,8 @@ package com.agc.bwitch.ui.userprofile
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -18,6 +18,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.Canvas
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -31,7 +32,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -133,12 +136,9 @@ fun ProfileScreen(
             horizontalArrangement = Arrangement.spacedBy(dimens.spacingSm),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            MiniAction(
-                label = "Editar perfil",
-                subLabel = "Ajustar",
+            IconMiniAction(
                 onClick = onEditProfile,
                 enabled = true,
-                modifier = Modifier.weight(1.2f),
             )
 
             Surface(
@@ -189,23 +189,14 @@ fun ProfileScreen(
                 verticalArrangement = Arrangement.spacedBy(dimens.spacingXs),
             ) {
                 Text(
-                    text = "Tu esencia natal",
+                    text = "Esencia natal",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
-                )
-                Text(
-                    text = if (savedEssence != null) {
-                        "Tócala para abrir tu interpretación"
-                    } else {
-                        "Descubre tu esencia en Astrología"
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = extras.textSecondary,
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = if (savedEssence != null) {
-                        "Sol ${savedEssence.sunSign.label} · Luna ${savedEssence.moonSign.label} · Asc ${savedEssence.risingSign.label}"
+                        "SOL ${savedEssence.sunSign.label} · LUNA ${savedEssence.moonSign.label} · ASC ${savedEssence.risingSign.label}"
                     } else {
                         "Aún no has vinculado tu esencia. Te acompañamos a descubrirla."
                     },
@@ -240,6 +231,49 @@ private fun ZodiacBadge(label: String) {
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.padding(horizontal = dimens.spacingSm + 2.dp, vertical = 6.dp),
         )
+    }
+}
+
+@Composable
+private fun IconMiniAction(
+    onClick: () -> Unit,
+    enabled: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    val extras = BWitchThemeTokens.extras
+    val iconColor = MaterialTheme.colorScheme.onSurfaceVariant
+
+    Surface(
+        modifier = modifier
+            .clip(MaterialTheme.shapes.small)
+            .clickable(enabled = enabled, onClick = onClick),
+        color = if (enabled) extras.surfaceElevated else extras.surfaceMuted,
+        shape = MaterialTheme.shapes.small,
+    ) {
+        Box(
+            modifier = Modifier
+                .padding(10.dp)
+                .size(22.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                val stroke = size.minDimension * 0.11f
+                drawLine(
+                    color = iconColor,
+                    start = Offset(size.width * 0.22f, size.height * 0.78f),
+                    end = Offset(size.width * 0.76f, size.height * 0.24f),
+                    strokeWidth = stroke,
+                    cap = StrokeCap.Round,
+                )
+                drawLine(
+                    color = iconColor,
+                    start = Offset(size.width * 0.7f, size.height * 0.18f),
+                    end = Offset(size.width * 0.84f, size.height * 0.32f),
+                    strokeWidth = stroke,
+                    cap = StrokeCap.Round,
+                )
+            }
+        }
     }
 }
 
