@@ -1,6 +1,5 @@
 package com.agc.bwitch.ui.userprofile
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -12,13 +11,14 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -31,35 +31,24 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.agc.bwitch.domain.astrology.birthchart.BirthEssenceProfile
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
 import com.agc.bwitch.presentation.userprofile.UserProfileViewModel
-import com.agc.bwitch.ui.common.designsystem.BWitchCard
-import com.agc.bwitch.ui.common.designsystem.BWitchSectionHeader
 import com.agc.bwitch.ui.common.toVisualResource
 import com.agc.bwitch.ui.theme.BWitchThemeTokens
 import io.kamel.image.KamelImage
 import io.kamel.image.asyncPainterResource
-import kotlin.math.PI
-import kotlin.math.cos
-import kotlin.math.sin
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 
 @Composable
 fun ProfileScreen(
     contentPadding: PaddingValues,
-    onOpenSettings: () -> Unit,
     onEditProfile: () -> Unit,
     onDiscoverEssence: () -> Unit,
     onOpenStore: (() -> Unit)? = null,
@@ -70,11 +59,12 @@ fun ProfileScreen(
     var showBirthEssenceDialog by remember { mutableStateOf(false) }
 
     val profile = state.profile
-    val displayName = profile?.displayName?.takeIf { it.isNotBlank() } ?: "Tu perfil"
     val username = profile?.username?.takeIf { it.isNotBlank() }
+    val usernameLine = username?.let { "@$it" } ?: "@perfil"
     val zodiacSign = profile?.zodiacSign
-    val zodiacLine = zodiacSign?.let { "${it.symbol()} ${it.label}" } ?: "✧ Signo pendiente"
+    val zodiacLabel = zodiacSign?.let { "${it.symbol()} ${it.label}" } ?: "✧ Signo pendiente"
     val avatarUrl = profile?.photoUrl?.takeIf { it.startsWith("http://") || it.startsWith("https://") }
+    val profileDescription: String? = null
     val moonCredits: Int? = null
 
     val dimens = BWitchThemeTokens.dimens
@@ -88,72 +78,49 @@ fun ProfileScreen(
             .padding(horizontal = dimens.screenHorizontalPadding, vertical = dimens.spacingLg),
         verticalArrangement = Arrangement.spacedBy(dimens.sectionSpacing)
     ) {
-        BWitchCard(
+        Row(
             modifier = Modifier.fillMaxWidth(),
-            contentPadding = PaddingValues(dimens.spacingMd),
-            contentVerticalArrangement = Arrangement.spacedBy(dimens.spacingMd),
+            horizontalArrangement = Arrangement.spacedBy(dimens.spacingMd),
+            verticalAlignment = Alignment.Top,
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End,
-            ) {
-                HeaderAction(
-                    icon = HeaderActionIcon.Edit,
-                    onClick = onEditProfile,
+            if (avatarUrl != null) {
+                KamelImage(
+                    resource = asyncPainterResource(avatarUrl),
+                    contentDescription = "Avatar de perfil",
+                    modifier = Modifier
+                        .size(96.dp)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop,
                 )
-                Spacer(modifier = Modifier.size(dimens.spacingSm))
-                HeaderAction(
-                    icon = HeaderActionIcon.Settings,
-                    onClick = onOpenSettings,
-                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .size(96.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = "✨",
+                        style = MaterialTheme.typography.headlineMedium,
+                    )
+                }
             }
 
             Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(dimens.spacingSm),
             ) {
-                if (avatarUrl != null) {
-                    KamelImage(
-                        resource = asyncPainterResource(avatarUrl),
-                        contentDescription = "Avatar de perfil",
-                        modifier = Modifier
-                            .size(104.dp)
-                            .clip(CircleShape),
-                        contentScale = ContentScale.Crop,
-                    )
-                } else {
-                    Box(
-                        modifier = Modifier
-                            .size(104.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.surfaceVariant),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            text = "✨",
-                            style = MaterialTheme.typography.headlineLarge,
-                        )
-                    }
-                }
-
                 Text(
-                    text = displayName,
+                    text = usernameLine,
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.SemiBold,
-                    textAlign = TextAlign.Center,
                 )
 
-                Text(
-                    text = zodiacLine,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                    textAlign = TextAlign.Center,
-                )
-
-                username?.let {
+                ZodiacBadge(label = zodiacLabel)
+                profileDescription?.takeIf { it.isNotBlank() }?.let { description ->
                     Text(
-                        text = "@$it",
+                        text = description,
                         style = MaterialTheme.typography.bodyMedium,
                         color = extras.textSecondary,
                     )
@@ -161,8 +128,52 @@ fun ProfileScreen(
             }
         }
 
-        BWitchCard(
+        Row(
             modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(dimens.spacingSm),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            MiniAction(
+                label = "Editar perfil",
+                subLabel = "Ajustar",
+                onClick = onEditProfile,
+                enabled = true,
+                modifier = Modifier.weight(1.2f),
+            )
+
+            Surface(
+                shape = RoundedCornerShape(14.dp),
+                color = extras.surfaceElevated,
+                modifier = Modifier.weight(0.8f),
+            ) {
+                Column(
+                    modifier = Modifier.padding(horizontal = dimens.spacingSm, vertical = dimens.spacingSm),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                ) {
+                    Text("Lunas", style = MaterialTheme.typography.labelMedium, color = extras.textSecondary)
+                    Text(
+                        text = moonCredits?.toString() ?: "0",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
+            }
+
+            MiniAction(
+                label = "Tienda",
+                subLabel = if (onOpenStore == null) "Pronto" else "Abrir",
+                onClick = { onOpenStore?.invoke() },
+                enabled = onOpenStore != null,
+                modifier = Modifier.weight(0.8f),
+            )
+        }
+
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+            color = extras.surfaceElevated,
+            tonalElevation = 0.dp,
             onClick = {
                 if (savedEssence != null) {
                     showBirthEssenceDialog = true
@@ -171,68 +182,37 @@ fun ProfileScreen(
                 }
             },
         ) {
-            BWitchSectionHeader(
-                title = "Tu esencia natal",
-                subtitle = if (savedEssence != null) {
-                    "Tócala para abrir tu interpretación"
-                } else {
-                    "Descubre tu esencia en Astrología"
-                },
-            )
-            HorizontalDivider(color = extras.borderSubtle.copy(alpha = 0.45f))
-            Text(
-                text = if (savedEssence != null) {
-                    "Sol ${savedEssence.sunSign.label} · Luna ${savedEssence.moonSign.label} · Asc ${savedEssence.risingSign.label}"
-                } else {
-                    "Aún no has vinculado tu esencia. Te acompañamos a descubrirla."
-                },
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-
-        BWitchCard(modifier = Modifier.fillMaxWidth()) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = dimens.spacingMd, vertical = dimens.spacingMd),
+                verticalArrangement = Arrangement.spacedBy(dimens.spacingXs),
             ) {
-                Column(verticalArrangement = Arrangement.spacedBy(dimens.spacingXs)) {
-                    Text("Lunas", style = MaterialTheme.typography.labelLarge)
-                    Text(
-                        text = moonCredits?.toString() ?: "0",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.primary,
-                    )
-                }
-
-                MiniAction(
-                    label = "Tienda",
-                    subLabel = if (onOpenStore == null) "Próximamente" else "Abrir",
-                    onClick = { onOpenStore?.invoke() },
-                    enabled = onOpenStore != null,
+                Text(
+                    text = "Tu esencia natal",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Text(
+                    text = if (savedEssence != null) {
+                        "Tócala para abrir tu interpretación"
+                    } else {
+                        "Descubre tu esencia en Astrología"
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = extras.textSecondary,
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = if (savedEssence != null) {
+                        "Sol ${savedEssence.sunSign.label} · Luna ${savedEssence.moonSign.label} · Asc ${savedEssence.risingSign.label}"
+                    } else {
+                        "Aún no has vinculado tu esencia. Te acompañamos a descubrirla."
+                    },
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-        }
-
-        Column(verticalArrangement = Arrangement.spacedBy(dimens.spacingSm)) {
-            BWitchSectionHeader(
-                title = "Tu progreso",
-                subtitle = "Una vista suave de tu camino en BWitch",
-            )
-
-            ProgressPlaceholderCard(
-                title = "Astrología",
-                subtitle = "Tu evolución natal y próximos hitos",
-            )
-            ProgressPlaceholderCard(
-                title = "Guía y Tarot",
-                subtitle = "Rituales, consultas y seguimiento",
-            )
-            ProgressPlaceholderCard(
-                title = "Colección",
-                subtitle = "Espacio reservado para tu colección futura",
-            )
         }
     }
 
@@ -247,103 +227,19 @@ fun ProfileScreen(
 }
 
 @Composable
-private fun HeaderAction(
-    icon: HeaderActionIcon,
-    onClick: () -> Unit,
-) {
+private fun ZodiacBadge(label: String) {
     val dimens = BWitchThemeTokens.dimens
-    val extras = BWitchThemeTokens.extras
 
     Surface(
-        modifier = Modifier
-            .clip(CircleShape)
-            .clickable(onClick = onClick),
-        color = extras.surfaceElevated,
-        shape = CircleShape,
+        shape = RoundedCornerShape(999.dp),
+        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
     ) {
-        Box(
-            modifier = Modifier.padding(dimens.spacingSm),
-            contentAlignment = Alignment.Center,
-        ) {
-            HeaderActionIconView(
-                icon = icon,
-                tint = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.size(18.dp),
-            )
-        }
-    }
-}
-
-private enum class HeaderActionIcon {
-    Edit,
-    Settings,
-}
-
-@Composable
-private fun HeaderActionIconView(
-    icon: HeaderActionIcon,
-    tint: Color,
-    modifier: Modifier = Modifier,
-) {
-    Canvas(modifier = modifier) {
-        when (icon) {
-            HeaderActionIcon.Edit -> {
-                val stroke = size.minDimension * 0.11f
-                drawLine(
-                    color = tint,
-                    start = Offset(size.width * 0.22f, size.height * 0.78f),
-                    end = Offset(size.width * 0.74f, size.height * 0.26f),
-                    strokeWidth = stroke,
-                    cap = StrokeCap.Round,
-                )
-                drawLine(
-                    color = tint,
-                    start = Offset(size.width * 0.68f, size.height * 0.2f),
-                    end = Offset(size.width * 0.82f, size.height * 0.34f),
-                    strokeWidth = stroke,
-                    cap = StrokeCap.Round,
-                )
-                drawLine(
-                    color = tint,
-                    start = Offset(size.width * 0.2f, size.height * 0.8f),
-                    end = Offset(size.width * 0.42f, size.height * 0.8f),
-                    strokeWidth = stroke,
-                    cap = StrokeCap.Round,
-                )
-            }
-
-            HeaderActionIcon.Settings -> {
-                val center = Offset(size.width / 2f, size.height / 2f)
-                val outerRadius = size.minDimension * 0.42f
-                val innerRadius = size.minDimension * 0.23f
-                val stroke = size.minDimension * 0.09f
-
-                for (i in 0 until 8) {
-                    val angle = (i * 45f) * (PI.toFloat() / 180f)
-                    val cosAngle = cos(angle)
-                    val sinAngle = sin(angle)
-                    drawLine(
-                        color = tint,
-                        start = Offset(
-                            center.x + cosAngle * (innerRadius + stroke),
-                            center.y + sinAngle * (innerRadius + stroke),
-                        ),
-                        end = Offset(
-                            center.x + cosAngle * outerRadius,
-                            center.y + sinAngle * outerRadius,
-                        ),
-                        strokeWidth = stroke,
-                        cap = StrokeCap.Round,
-                    )
-                }
-
-                drawCircle(
-                    color = tint,
-                    radius = innerRadius,
-                    style = Stroke(width = stroke),
-                )
-            }
-        }
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(horizontal = dimens.spacingSm + 2.dp, vertical = 6.dp),
+        )
     }
 }
 
@@ -353,12 +249,13 @@ private fun MiniAction(
     subLabel: String,
     onClick: () -> Unit,
     enabled: Boolean,
+    modifier: Modifier = Modifier,
 ) {
     val dimens = BWitchThemeTokens.dimens
     val extras = BWitchThemeTokens.extras
 
     Surface(
-        modifier = Modifier
+        modifier = modifier
             .clip(MaterialTheme.shapes.small)
             .clickable(enabled = enabled, onClick = onClick),
         color = if (enabled) extras.surfaceElevated else extras.surfaceMuted,
@@ -366,10 +263,11 @@ private fun MiniAction(
     ) {
         Column(
             modifier = Modifier.padding(
-                horizontal = dimens.spacingSm + dimens.spacingXs,
+                horizontal = dimens.spacingSm,
                 vertical = dimens.spacingSm,
             ),
             horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
             Text(
                 text = label,
@@ -382,29 +280,6 @@ private fun MiniAction(
                 color = extras.textSecondary,
             )
         }
-    }
-}
-
-@Composable
-private fun ProgressPlaceholderCard(
-    title: String,
-    subtitle: String,
-) {
-    val extras = BWitchThemeTokens.extras
-
-    BWitchCard(
-        modifier = Modifier.fillMaxWidth(),
-        contentVerticalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleSmall,
-        )
-        Text(
-            text = subtitle,
-            style = MaterialTheme.typography.bodySmall,
-            color = extras.textSecondary,
-        )
     }
 }
 

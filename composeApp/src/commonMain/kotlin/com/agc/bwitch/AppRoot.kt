@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -147,6 +148,13 @@ fun AppRoot() {
         title = dest.title,
         canGoBack = navigator.canGoBack(),
         onBack = { navigator.goBack() },
+        actions = {
+            if (dest == Destination.UserProfile) {
+                TopBarSettingsAction(
+                    onClick = { navigator.navigate(Destination.Settings) },
+                )
+            }
+        },
         bottomBar = {
             if (currentMainTab != null) {
                 MainBottomBar(
@@ -185,7 +193,6 @@ fun AppRoot() {
 
             Destination.UserProfile -> ProfileScreen(
                 contentPadding = padding,
-                onOpenSettings = { navigator.navigate(Destination.Settings) },
                 onEditProfile = { navigator.navigate(Destination.Settings) },
                 onDiscoverEssence = { navigator.navigate(Destination.Astrology) },
             )
@@ -217,6 +224,56 @@ fun AppRoot() {
 
             Destination.Rituals -> RitualsPlaceholderScreen(contentPadding = padding)
         }
+    }
+}
+
+@Composable
+private fun TopBarSettingsAction(onClick: () -> Unit) {
+    val extras = BWitchThemeTokens.extras
+
+    IconButton(onClick = onClick) {
+        GearIcon(
+            tint = extras.topBarIconColor,
+            modifier = Modifier.size(20.dp),
+        )
+    }
+}
+
+@Composable
+private fun GearIcon(
+    tint: Color,
+    modifier: Modifier = Modifier,
+) {
+    Canvas(modifier = modifier) {
+        val center = Offset(size.width / 2f, size.height / 2f)
+        val outerRadius = size.minDimension * 0.42f
+        val innerRadius = size.minDimension * 0.23f
+        val stroke = size.minDimension * 0.09f
+
+        for (i in 0 until 8) {
+            val angle = (i * 45f) * (kotlin.math.PI.toFloat() / 180f)
+            val cosAngle = kotlin.math.cos(angle)
+            val sinAngle = kotlin.math.sin(angle)
+            drawLine(
+                color = tint,
+                start = Offset(
+                    center.x + cosAngle * (innerRadius + stroke),
+                    center.y + sinAngle * (innerRadius + stroke),
+                ),
+                end = Offset(
+                    center.x + cosAngle * outerRadius,
+                    center.y + sinAngle * outerRadius,
+                ),
+                strokeWidth = stroke,
+                cap = StrokeCap.Round,
+            )
+        }
+
+        drawCircle(
+            color = tint,
+            radius = innerRadius,
+            style = Stroke(width = stroke),
+        )
     }
 }
 
