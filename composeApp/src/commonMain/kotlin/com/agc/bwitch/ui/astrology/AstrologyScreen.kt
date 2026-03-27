@@ -15,10 +15,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.unit.dp
@@ -126,139 +126,242 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawAstrologyOrname
     primary: Color,
     surface: Color,
 ) {
+    val strokeColor = primary.copy(alpha = 0.32f)
+    val accentColor = primary.copy(alpha = 0.44f)
+    val strokeWidth = size.minDimension * 0.022f
+    val thinStrokeWidth = strokeWidth * 0.7f
+    val tinyStrokeWidth = strokeWidth * 0.5f
+
     when (ornament) {
         AstrologyCardOrnament.Horoscope -> {
-            drawCircle(
-                color = primary.copy(alpha = 0.38f),
-                radius = size.minDimension * 0.62f,
-                center = Offset(size.width * 1.02f, size.height * 0.24f)
+            val moonCenter = Offset(size.width * 0.88f, size.height * 0.36f)
+            val moonRadius = size.minDimension * 0.23f
+            drawCrescent(
+                center = moonCenter,
+                radius = moonRadius,
+                color = strokeColor,
+                width = strokeWidth,
+                cutoutColor = surface,
             )
-            drawCircle(
-                color = primary.copy(alpha = 0.68f),
-                radius = size.minDimension * 0.27f,
-                center = Offset(size.width * 0.82f, size.height * 0.41f)
+
+            val sunArcSize = size.minDimension * 0.62f
+            drawArc(
+                color = accentColor,
+                startAngle = 204f,
+                sweepAngle = 138f,
+                useCenter = false,
+                topLeft = Offset(size.width * 0.67f, size.height * 0.34f),
+                size = androidx.compose.ui.geometry.Size(sunArcSize, sunArcSize),
+                style = Stroke(width = thinStrokeWidth, cap = StrokeCap.Round),
             )
-            drawCircle(
-                color = primary.copy(alpha = 0.56f),
-                radius = size.minDimension * 0.26f,
-                center = Offset(size.width * 0.86f, size.height * 0.7f)
+
+            val rayCenter = Offset(size.width * 0.98f, size.height * 0.65f)
+            val rayLength = size.minDimension * 0.07f
+            for (angle in listOf(218f, 248f, 278f, 308f)) {
+                val radians = Math.toRadians(angle.toDouble())
+                val start = Offset(
+                    x = rayCenter.x + (kotlin.math.cos(radians) * rayLength * 0.45f).toFloat(),
+                    y = rayCenter.y + (kotlin.math.sin(radians) * rayLength * 0.45f).toFloat(),
+                )
+                val end = Offset(
+                    x = rayCenter.x + (kotlin.math.cos(radians) * rayLength).toFloat(),
+                    y = rayCenter.y + (kotlin.math.sin(radians) * rayLength).toFloat(),
+                )
+                drawLine(
+                    color = accentColor,
+                    start = start,
+                    end = end,
+                    strokeWidth = tinyStrokeWidth,
+                    cap = StrokeCap.Round,
+                )
+            }
+
+            drawLinearStar(
+                center = Offset(size.width * 0.74f, size.height * 0.42f),
+                radius = size.minDimension * 0.034f,
+                color = accentColor,
+                width = tinyStrokeWidth,
             )
-            drawCircle(
-                color = surface,
-                radius = size.minDimension * 0.21f,
-                center = Offset(size.width * 0.95f, size.height * 0.68f)
-            )
-            drawCircle(
-                color = primary.copy(alpha = 0.72f),
-                radius = size.minDimension * 0.04f,
-                center = Offset(size.width * 0.69f, size.height * 0.56f)
-            )
-            drawCircle(
-                color = primary.copy(alpha = 0.68f),
-                radius = size.minDimension * 0.032f,
-                center = Offset(size.width * 0.77f, size.height * 0.39f)
-            )
-            drawCircle(
-                color = primary.copy(alpha = 0.64f),
-                radius = size.minDimension * 0.03f,
-                center = Offset(size.width * 0.86f, size.height * 0.52f)
+            drawLinearStar(
+                center = Offset(size.width * 0.82f, size.height * 0.67f),
+                radius = size.minDimension * 0.026f,
+                color = strokeColor,
+                width = tinyStrokeWidth,
             )
         }
 
         AstrologyCardOrnament.BirthEssence -> {
-            val haloBrush = Brush.radialGradient(
-                colors = listOf(
-                    primary.copy(alpha = 0.68f),
-                    primary.copy(alpha = 0.38f),
-                    Color.Transparent,
-                ),
-                center = Offset(size.width * 0.8f, size.height * 0.5f),
-                radius = size.minDimension * 0.82f,
-            )
+            val center = Offset(size.width * 0.82f, size.height * 0.52f)
             drawCircle(
-                brush = haloBrush,
-                radius = size.minDimension * 0.82f,
-                center = Offset(size.width * 0.8f, size.height * 0.5f)
-            )
-            drawCircle(
-                color = primary.copy(alpha = 0.58f),
+                color = strokeColor,
                 radius = size.minDimension * 0.3f,
-                center = Offset(size.width * 0.8f, size.height * 0.5f)
+                center = center,
+                style = Stroke(width = thinStrokeWidth),
             )
             drawCircle(
-                color = primary.copy(alpha = 0.78f),
-                radius = size.minDimension * 0.16f,
-                center = Offset(size.width * 0.8f, size.height * 0.5f)
+                color = accentColor,
+                radius = size.minDimension * 0.17f,
+                center = center,
+                style = Stroke(width = tinyStrokeWidth),
+            )
+            drawLinearStar(
+                center = center,
+                radius = size.minDimension * 0.038f,
+                color = accentColor,
+                width = tinyStrokeWidth,
             )
 
             val spiral = Path().apply {
-                moveTo(size.width * 0.52f, size.height * 0.96f)
+                moveTo(size.width * 0.6f, size.height * 0.95f)
                 cubicTo(
+                    size.width * 0.98f,
+                    size.height * 0.92f,
                     size.width * 0.99f,
-                    size.height * 0.88f,
-                    size.width * 0.97f,
-                    size.height * 0.12f,
-                    size.width * 0.75f,
-                    size.height * 0.24f,
+                    size.height * 0.23f,
+                    size.width * 0.79f,
+                    size.height * 0.22f,
                 )
                 cubicTo(
-                    size.width * 0.62f,
-                    size.height * 0.37f,
-                    size.width * 0.72f,
-                    size.height * 0.64f,
-                    size.width * 0.88f,
-                    size.height * 0.54f,
+                    size.width * 0.67f,
+                    size.height * 0.34f,
+                    size.width * 0.73f,
+                    size.height * 0.67f,
+                    size.width * 0.86f,
+                    size.height * 0.56f,
                 )
             }
             drawPath(
                 path = spiral,
-                color = primary.copy(alpha = 0.48f),
-                style = Stroke(width = size.minDimension * 0.06f, cap = StrokeCap.Round)
+                color = strokeColor,
+                style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+            )
+
+            val rootCurve = Path().apply {
+                moveTo(size.width * 0.69f, size.height * 0.9f)
+                cubicTo(
+                    size.width * 0.74f,
+                    size.height * 0.79f,
+                    size.width * 0.82f,
+                    size.height * 0.74f,
+                    size.width * 0.89f,
+                    size.height * 0.82f,
+                )
+            }
+            drawPath(
+                path = rootCurve,
+                color = accentColor,
+                style = Stroke(width = tinyStrokeWidth, cap = StrokeCap.Round)
             )
         }
 
         AstrologyCardOrnament.Synastry -> {
+            val symbolCenter = Offset(size.width * 0.84f, size.height * 0.54f)
+            val symbolRadius = size.minDimension * 0.29f
             drawCircle(
-                color = primary.copy(alpha = 0.56f),
-                radius = size.minDimension * 0.34f,
-                center = Offset(size.width * 0.72f, size.height * 0.54f)
-            )
-            drawCircle(
-                color = primary.copy(alpha = 0.56f),
-                radius = size.minDimension * 0.34f,
-                center = Offset(size.width * 0.9f, size.height * 0.54f)
-            )
-            drawCircle(
-                color = primary.copy(alpha = 0.76f),
-                radius = size.minDimension * 0.18f,
-                center = Offset(size.width * 0.81f, size.height * 0.54f)
+                color = strokeColor,
+                radius = symbolRadius,
+                center = symbolCenter,
+                style = Stroke(width = strokeWidth),
             )
 
-            val bridge = Path().apply {
-                moveTo(size.width * 0.65f, size.height * 0.82f)
+            drawArc(
+                color = accentColor,
+                startAngle = 132f,
+                sweepAngle = 222f,
+                useCenter = false,
+                topLeft = Offset(
+                    x = symbolCenter.x - symbolRadius * 0.96f,
+                    y = symbolCenter.y - symbolRadius * 0.95f,
+                ),
+                size = androidx.compose.ui.geometry.Size(
+                    width = symbolRadius * 1.52f,
+                    height = symbolRadius * 1.9f,
+                ),
+                style = Stroke(width = thinStrokeWidth, cap = StrokeCap.Round),
+            )
+
+            val fusionCurve = Path().apply {
+                moveTo(size.width * 0.67f, size.height * 0.75f)
                 cubicTo(
-                    size.width * 0.74f,
-                    size.height * 0.93f,
-                    size.width * 0.89f,
-                    size.height * 0.22f,
-                    size.width * 0.97f,
-                    size.height * 0.34f,
+                    size.width * 0.76f,
+                    size.height * 0.89f,
+                    size.width * 0.93f,
+                    size.height * 0.23f,
+                    size.width * 1.02f,
+                    size.height * 0.38f,
                 )
-                lineTo(size.width * 0.96f, size.height * 0.46f)
-                cubicTo(
-                    size.width * 0.9f,
-                    size.height * 0.37f,
-                    size.width * 0.77f,
-                    size.height * 0.82f,
-                    size.width * 0.68f,
-                    size.height * 0.74f,
-                )
-                close()
             }
             drawPath(
-                path = bridge,
-                color = primary.copy(alpha = 0.52f)
+                path = fusionCurve,
+                color = accentColor,
+                style = Stroke(width = tinyStrokeWidth, cap = StrokeCap.Round),
             )
+
+            val rayLength = size.minDimension * 0.06f
+            for (angle in listOf(202f, 230f, 258f, 286f, 314f)) {
+                val radians = Math.toRadians(angle.toDouble())
+                val start = Offset(
+                    x = symbolCenter.x + (kotlin.math.cos(radians) * symbolRadius * 1.04f).toFloat(),
+                    y = symbolCenter.y + (kotlin.math.sin(radians) * symbolRadius * 1.04f).toFloat(),
+                )
+                val end = Offset(
+                    x = start.x + (kotlin.math.cos(radians) * rayLength).toFloat(),
+                    y = start.y + (kotlin.math.sin(radians) * rayLength).toFloat(),
+                )
+                drawLine(
+                    color = strokeColor,
+                    start = start,
+                    end = end,
+                    strokeWidth = tinyStrokeWidth,
+                    cap = StrokeCap.Round,
+                )
+            }
         }
     }
+}
+
+private fun DrawScope.drawCrescent(
+    center: Offset,
+    radius: Float,
+    color: Color,
+    width: Float,
+    cutoutColor: Color,
+) {
+    drawCircle(
+        color = color,
+        radius = radius,
+        center = center,
+        style = Stroke(width = width),
+    )
+    drawArc(
+        color = cutoutColor,
+        startAngle = 90f,
+        sweepAngle = 180f,
+        useCenter = false,
+        topLeft = Offset(center.x - radius * 0.95f, center.y - radius),
+        size = androidx.compose.ui.geometry.Size(width = radius * 1.9f, height = radius * 2f),
+        style = Stroke(width = width * 1.45f, cap = StrokeCap.Round),
+    )
+}
+
+private fun DrawScope.drawLinearStar(
+    center: Offset,
+    radius: Float,
+    color: Color,
+    width: Float,
+) {
+    drawLine(
+        color = color,
+        start = Offset(center.x - radius, center.y),
+        end = Offset(center.x + radius, center.y),
+        strokeWidth = width,
+        cap = StrokeCap.Round,
+    )
+    drawLine(
+        color = color,
+        start = Offset(center.x, center.y - radius),
+        end = Offset(center.x, center.y + radius),
+        strokeWidth = width,
+        cap = StrokeCap.Round,
+    )
 }
