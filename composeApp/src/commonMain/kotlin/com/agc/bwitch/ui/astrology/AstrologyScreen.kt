@@ -3,14 +3,12 @@ package com.agc.bwitch.ui.astrology
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.Image
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,19 +18,14 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.draw.drawWithCache
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
-import bwitch.composeapp.generated.resources.Res
-import bwitch.composeapp.generated.resources.synastry_ornament
 import com.agc.bwitch.presentation.navigation.Destination
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
 import com.agc.bwitch.ui.common.designsystem.BWitchScreen
 import com.agc.bwitch.ui.common.designsystem.BWitchSectionHeader
-import org.jetbrains.compose.resources.painterResource
 
 @Composable
 fun AstrologyScreen(
@@ -116,20 +109,6 @@ private fun AstrologyFeatureCard(
                 .then(ornamentModifier),
             contentAlignment = Alignment.CenterStart,
         ) {
-            if (ornament == AstrologyCardOrnament.Synastry) {
-                Image(
-                    painter = painterResource(Res.drawable.synastry_ornament),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .align(Alignment.CenterEnd)
-                        .fillMaxHeight()
-                        .fillMaxWidth(0.58f),
-                    contentScale = ContentScale.Crop,
-                    alpha = 0.20f,
-                    colorFilter = ColorFilter.tint(primary),
-                )
-            }
-
             Column(
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp),
             ) {
