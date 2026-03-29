@@ -3,12 +3,14 @@ package com.agc.bwitch.ui.astrology
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.Image
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -18,14 +20,19 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import bwitch.composeapp.generated.resources.Res
+import bwitch.composeapp.generated.resources.synastry_ornament
 import com.agc.bwitch.presentation.navigation.Destination
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
 import com.agc.bwitch.ui.common.designsystem.BWitchScreen
 import com.agc.bwitch.ui.common.designsystem.BWitchSectionHeader
+import org.jetbrains.compose.resources.painterResource
 
 @Composable
 fun AstrologyScreen(
@@ -83,6 +90,19 @@ private fun AstrologyFeatureCard(
 ) {
     val primary = MaterialTheme.colorScheme.primary
     val surface = MaterialTheme.colorScheme.surface
+    val ornamentModifier = if (ornament == AstrologyCardOrnament.Synastry) {
+        Modifier
+    } else {
+        Modifier.drawWithCache {
+            onDrawBehind {
+                drawAstrologyOrnament(
+                    ornament = ornament,
+                    primary = primary,
+                    surface = surface,
+                )
+            }
+        }
+    }
 
     BWitchCard(
         modifier = modifier.fillMaxWidth(),
@@ -93,17 +113,23 @@ private fun AstrologyFeatureCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = 148.dp)
-                .drawWithCache {
-                    onDrawBehind {
-                        drawAstrologyOrnament(
-                            ornament = ornament,
-                            primary = primary,
-                            surface = surface,
-                        )
-                    }
-                },
+                .then(ornamentModifier),
             contentAlignment = Alignment.CenterStart,
         ) {
+            if (ornament == AstrologyCardOrnament.Synastry) {
+                Image(
+                    painter = painterResource(Res.drawable.synastry_ornament),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .fillMaxHeight()
+                        .fillMaxWidth(0.58f),
+                    contentScale = ContentScale.Crop,
+                    alpha = 0.20f,
+                    colorFilter = ColorFilter.tint(primary),
+                )
+            }
+
             Column(
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp),
             ) {
@@ -254,69 +280,7 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawAstrologyOrname
             )
         }
 
-        AstrologyCardOrnament.Synastry -> {
-            val symbolCenter = Offset(size.width * 0.84f, size.height * 0.54f)
-            val symbolRadius = size.minDimension * 0.29f
-            drawCircle(
-                color = strokeColor,
-                radius = symbolRadius,
-                center = symbolCenter,
-                style = Stroke(width = strokeWidth),
-            )
-
-            drawArc(
-                color = accentColor,
-                startAngle = 132f,
-                sweepAngle = 222f,
-                useCenter = false,
-                topLeft = Offset(
-                    x = symbolCenter.x - symbolRadius * 0.96f,
-                    y = symbolCenter.y - symbolRadius * 0.95f,
-                ),
-                size = androidx.compose.ui.geometry.Size(
-                    width = symbolRadius * 1.52f,
-                    height = symbolRadius * 1.9f,
-                ),
-                style = Stroke(width = thinStrokeWidth, cap = StrokeCap.Round),
-            )
-
-            val fusionCurve = Path().apply {
-                moveTo(size.width * 0.67f, size.height * 0.75f)
-                cubicTo(
-                    size.width * 0.76f,
-                    size.height * 0.89f,
-                    size.width * 0.93f,
-                    size.height * 0.23f,
-                    size.width * 1.02f,
-                    size.height * 0.38f,
-                )
-            }
-            drawPath(
-                path = fusionCurve,
-                color = accentColor,
-                style = Stroke(width = tinyStrokeWidth, cap = StrokeCap.Round),
-            )
-
-            val rayLength = size.minDimension * 0.06f
-            for (angle in listOf(202f, 230f, 258f, 286f, 314f)) {
-                val radians = Math.toRadians(angle.toDouble())
-                val start = Offset(
-                    x = symbolCenter.x + (kotlin.math.cos(radians) * symbolRadius * 1.04f).toFloat(),
-                    y = symbolCenter.y + (kotlin.math.sin(radians) * symbolRadius * 1.04f).toFloat(),
-                )
-                val end = Offset(
-                    x = start.x + (kotlin.math.cos(radians) * rayLength).toFloat(),
-                    y = start.y + (kotlin.math.sin(radians) * rayLength).toFloat(),
-                )
-                drawLine(
-                    color = strokeColor,
-                    start = start,
-                    end = end,
-                    strokeWidth = tinyStrokeWidth,
-                    cap = StrokeCap.Round,
-                )
-            }
-        }
+        AstrologyCardOrnament.Synastry -> Unit
     }
 }
 
