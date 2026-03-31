@@ -3,13 +3,13 @@ package com.agc.bwitch.ui.astrology
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.matchParentSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredHeight
+import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
@@ -17,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import bwitch.composeapp.generated.resources.Res
@@ -85,16 +86,28 @@ private fun AstrologyFeatureCard(
             contentAlignment = Alignment.CenterStart,
         ) {
             if (showSynastryOrnament) {
-                Image(
-                    painter = painterResource(Res.drawable.synastry_ornament),
-                    contentDescription = null,
+                // Parámetros visuales del ornamento (ajustables para pruebas sin afectar la altura de la card).
+                val synastryOrnamentWidth = 220.dp
+                val synastryOrnamentOffsetX = 80.dp
+                val synastryOrnamentAlignment = Alignment.CenterEnd
+                val synastryOrnamentAlpha = 0.12f
+
+                Box(
                     modifier = Modifier
-                        .align(Alignment.CenterEnd)
-                        .requiredHeight(120.dp)
-                        .offset(x = 80.dp),
-                    contentScale = ContentScale.Crop,
-                    alpha = 0.12f,
-                )
+                        .matchParentSize()
+                        .clipToBounds(),
+                ) {
+                    Image(
+                        painter = painterResource(Res.drawable.synastry_ornament),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .align(synastryOrnamentAlignment)
+                            .requiredWidth(synastryOrnamentWidth)
+                            .offset(x = synastryOrnamentOffsetX),
+                        contentScale = ContentScale.FillWidth,
+                        alpha = synastryOrnamentAlpha,
+                    )
+                }
             }
 
             Column(
