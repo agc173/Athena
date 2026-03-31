@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
@@ -89,8 +90,8 @@ private fun AstrologyFeatureCard(
                     contentDescription = null,
                     modifier = Modifier
                         .align(Alignment.CenterEnd)
-                        .fillMaxHeight()
-                        .offset(x = 28.dp),
+                        .requiredHeight(120.dp)
+                        .offset(x = 80.dp),
                     contentScale = ContentScale.Crop,
                     alpha = 0.12f,
                 )
