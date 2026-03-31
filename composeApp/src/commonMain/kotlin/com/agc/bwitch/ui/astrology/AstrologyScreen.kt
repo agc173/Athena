@@ -1,5 +1,6 @@
 package com.agc.bwitch.ui.astrology
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -13,12 +14,18 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import bwitch.composeapp.generated.resources.Res
+import bwitch.composeapp.generated.resources.synastry_ornament
 import com.agc.bwitch.presentation.navigation.Destination
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
 import com.agc.bwitch.ui.common.designsystem.BWitchScreen
 import com.agc.bwitch.ui.common.designsystem.BWitchSectionHeader
+import org.jetbrains.compose.resources.painterResource
 
 @Composable
 fun AstrologyScreen(
@@ -52,7 +59,8 @@ fun AstrologyScreen(
         AstrologyFeatureCard(
             title = "Sinastría",
             subtitle = "La energía entre dos",
-            onClick = { onNavigate(Destination.Synastry) }
+            onClick = { onNavigate(Destination.Synastry) },
+            showSynastryOrnament = true,
         )
     }
 }
@@ -62,6 +70,7 @@ private fun AstrologyFeatureCard(
     title: String,
     subtitle: String,
     onClick: () -> Unit,
+    showSynastryOrnament: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     BWitchCard(
@@ -75,6 +84,18 @@ private fun AstrologyFeatureCard(
                 .heightIn(min = 148.dp),
             contentAlignment = Alignment.CenterStart,
         ) {
+            if (showSynastryOrnament) {
+                Image(
+                    painter = painterResource(Res.drawable.synastry_ornament),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .fillMaxSize(0.7f)
+                        .alpha(0.12f),
+                    contentScale = ContentScale.Crop,
+                    colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary),
+                )
+            }
             Column(
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp),
             ) {
