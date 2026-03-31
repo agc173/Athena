@@ -4,9 +4,10 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.matchParentSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredWidth
@@ -48,19 +49,21 @@ fun AstrologyScreen(
             title = "Horóscopo",
             subtitle = "Tu energía de hoy… y lo que viene",
             onClick = { onNavigate(Destination.HoroscopeDaily()) },
-            modifier = Modifier.heightIn(min = 168.dp)
+            modifier = Modifier.height(168.dp)
         )
 
         AstrologyFeatureCard(
             title = "Esencia natal",
             subtitle = "La huella de tu nacimiento",
-            onClick = { onNavigate(Destination.BirthChart) }
+            onClick = { onNavigate(Destination.BirthChart) },
+            modifier = Modifier.height(168.dp)
         )
 
         AstrologyFeatureCard(
             title = "Sinastría",
             subtitle = "La energía entre dos",
             onClick = { onNavigate(Destination.Synastry) },
+            modifier = Modifier.height(168.dp),
             showSynastryOrnament = true,
         )
     }
@@ -87,14 +90,14 @@ private fun AstrologyFeatureCard(
         ) {
             if (showSynastryOrnament) {
                 // Parámetros visuales del ornamento (ajustables para pruebas sin afectar la altura de la card).
-                val synastryOrnamentWidth = 220.dp
+                val synastryOrnamentWidth = 260.dp
                 val synastryOrnamentOffsetX = 80.dp
                 val synastryOrnamentAlignment = Alignment.CenterEnd
-                val synastryOrnamentAlpha = 0.12f
+                val synastryOrnamentAlpha = 0.25f
 
                 Box(
                     modifier = Modifier
-                        .matchParentSize()
+                        .fillMaxSize()
                         .clipToBounds(),
                 ) {
                     Image(
