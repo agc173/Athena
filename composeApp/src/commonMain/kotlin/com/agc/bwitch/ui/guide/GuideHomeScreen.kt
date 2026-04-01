@@ -89,8 +89,8 @@ private fun GuideCardOrnament.config(): GuideCardOrnamentConfig =
     when (this) {
         GuideCardOrnament.Tarot -> GuideCardOrnamentConfig(
             resource = Res.drawable.tarot_ornament,
-            width = 220.dp,
-            offsetX = 42.dp,
+            width = 230.dp,
+            offsetX = 62.dp,
             alignment = Alignment.CenterEnd,
             alpha = 0.45f,
         )
@@ -103,7 +103,7 @@ private fun GuideCardOrnament.config(): GuideCardOrnamentConfig =
         )
         GuideCardOrnament.Pendulum -> GuideCardOrnamentConfig(
             resource = Res.drawable.pendulum_ornament,
-            width = 240.dp,
+            width = 260.dp,
             offsetX = 52.dp,
             alignment = Alignment.CenterEnd,
             alpha = 0.25f,
