@@ -22,6 +22,8 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import bwitch.composeapp.generated.resources.Res
+import bwitch.composeapp.generated.resources.essence_ornament
+import bwitch.composeapp.generated.resources.horoscope_ornament
 import bwitch.composeapp.generated.resources.synastry_ornament
 import com.agc.bwitch.presentation.navigation.Destination
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
@@ -49,14 +51,16 @@ fun AstrologyScreen(
             title = "Horóscopo",
             subtitle = "Tu energía de hoy… y lo que viene",
             onClick = { onNavigate(Destination.HoroscopeDaily()) },
-            modifier = Modifier.height(168.dp)
+            modifier = Modifier.height(168.dp),
+            ornamentType = AstrologyCardOrnament.Horoscope,
         )
 
         AstrologyFeatureCard(
             title = "Esencia natal",
             subtitle = "La huella de tu nacimiento",
             onClick = { onNavigate(Destination.BirthChart) },
-            modifier = Modifier.height(168.dp)
+            modifier = Modifier.height(168.dp),
+            ornamentType = AstrologyCardOrnament.Essence,
         )
 
         AstrologyFeatureCard(
@@ -64,17 +68,56 @@ fun AstrologyScreen(
             subtitle = "La energía entre dos",
             onClick = { onNavigate(Destination.Synastry) },
             modifier = Modifier.height(168.dp),
-            showSynastryOrnament = true,
+            ornamentType = AstrologyCardOrnament.Synastry,
         )
     }
 }
+
+private enum class AstrologyCardOrnament {
+    Horoscope,
+    Essence,
+    Synastry,
+}
+
+private data class AstrologyCardOrnamentConfig(
+    val resource: org.jetbrains.compose.resources.DrawableResource,
+    val width: androidx.compose.ui.unit.Dp,
+    val offsetX: androidx.compose.ui.unit.Dp,
+    val alignment: Alignment,
+    val alpha: Float,
+)
+
+private fun AstrologyCardOrnament.config(): AstrologyCardOrnamentConfig =
+    when (this) {
+        AstrologyCardOrnament.Horoscope -> AstrologyCardOrnamentConfig(
+            resource = Res.drawable.horoscope_ornament,
+            width = 258.dp,
+            offsetX = 72.dp,
+            alignment = Alignment.CenterEnd,
+            alpha = 0.24f,
+        )
+        AstrologyCardOrnament.Essence -> AstrologyCardOrnamentConfig(
+            resource = Res.drawable.essence_ornament,
+            width = 250.dp,
+            offsetX = 78.dp,
+            alignment = Alignment.CenterEnd,
+            alpha = 0.24f,
+        )
+        AstrologyCardOrnament.Synastry -> AstrologyCardOrnamentConfig(
+            resource = Res.drawable.synastry_ornament,
+            width = 260.dp,
+            offsetX = 80.dp,
+            alignment = Alignment.CenterEnd,
+            alpha = 0.25f,
+        )
+    }
 
 @Composable
 private fun AstrologyFeatureCard(
     title: String,
     subtitle: String,
     onClick: () -> Unit,
-    showSynastryOrnament: Boolean = false,
+    ornamentType: AstrologyCardOrnament? = null,
     modifier: Modifier = Modifier,
 ) {
     BWitchCard(
@@ -88,12 +131,8 @@ private fun AstrologyFeatureCard(
                 .heightIn(min = 148.dp),
             contentAlignment = Alignment.CenterStart,
         ) {
-            if (showSynastryOrnament) {
-                // Parámetros visuales del ornamento (ajustables para pruebas sin afectar la altura de la card).
-                val synastryOrnamentWidth = 260.dp
-                val synastryOrnamentOffsetX = 80.dp
-                val synastryOrnamentAlignment = Alignment.CenterEnd
-                val synastryOrnamentAlpha = 0.25f
+            ornamentType?.config()?.let { ornament ->
+                // Parámetros visuales de ornamento por card (ajustables sin afectar la altura de la card).
 
                 Box(
                     modifier = Modifier
@@ -101,14 +140,14 @@ private fun AstrologyFeatureCard(
                         .clipToBounds(),
                 ) {
                     Image(
-                        painter = painterResource(Res.drawable.synastry_ornament),
+                        painter = painterResource(ornament.resource),
                         contentDescription = null,
                         modifier = Modifier
-                            .align(synastryOrnamentAlignment)
-                            .requiredWidth(synastryOrnamentWidth)
-                            .offset(x = synastryOrnamentOffsetX),
+                            .align(ornament.alignment)
+                            .requiredWidth(ornament.width)
+                            .offset(x = ornament.offsetX),
                         contentScale = ContentScale.FillWidth,
-                        alpha = synastryOrnamentAlpha,
+                        alpha = ornament.alpha,
                     )
                 }
             }
