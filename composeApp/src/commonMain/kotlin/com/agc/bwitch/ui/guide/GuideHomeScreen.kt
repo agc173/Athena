@@ -90,23 +90,23 @@ private fun GuideCardOrnament.config(): GuideCardOrnamentConfig =
         GuideCardOrnament.Tarot -> GuideCardOrnamentConfig(
             resource = Res.drawable.tarot_ornament,
             width = 220.dp,
-            offsetX = 72.dp,
+            offsetX = 42.dp,
             alignment = Alignment.CenterEnd,
-            alpha = 0.16f,
+            alpha = 0.45f,
         )
         GuideCardOrnament.Oracle -> GuideCardOrnamentConfig(
             resource = Res.drawable.oracle_ornament,
             width = 200.dp,
-            offsetX = 78.dp,
+            offsetX = 38.dp,
             alignment = Alignment.CenterEnd,
-            alpha = 0.14f,
+            alpha = 0.25f,
         )
         GuideCardOrnament.Pendulum -> GuideCardOrnamentConfig(
             resource = Res.drawable.pendulum_ornament,
             width = 240.dp,
-            offsetX = 82.dp,
+            offsetX = 52.dp,
             alignment = Alignment.CenterEnd,
-            alpha = 0.15f,
+            alpha = 0.25f,
         )
     }
 
