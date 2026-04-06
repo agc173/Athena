@@ -63,7 +63,9 @@ import com.agc.bwitch.ui.onboarding.OnboardingProfileScreen
 import com.agc.bwitch.ui.oracle.OracleDebugScreen
 import com.agc.bwitch.ui.oracle.OracleScreen
 import com.agc.bwitch.ui.rituals.DailyRitualScreen
-import com.agc.bwitch.ui.rituals.RitualsPlaceholderScreen
+import com.agc.bwitch.ui.rituals.RitualDetailScreen
+import com.agc.bwitch.ui.rituals.RitualsCategoryScreen
+import com.agc.bwitch.ui.rituals.RitualsListScreen
 import com.agc.bwitch.ui.tarot.TarotHomeScreen
 import com.agc.bwitch.ui.tarot.TarotScreen
 import com.agc.bwitch.ui.userprofile.ProfileScreen
@@ -223,9 +225,20 @@ fun AppRoot() {
 
             Destination.Pendulum -> PendulumScreen(contentPadding = padding)
 
-            Destination.Rituals -> RitualsPlaceholderScreen(
+            Destination.Rituals -> RitualsCategoryScreen(
                 contentPadding = padding,
-                onOpenDailyRitual = { navigator.navigate(Destination.DailyRitual) },
+                onOpenCategory = { category -> navigator.navigate(Destination.RitualsList(category)) },
+            )
+
+            is Destination.RitualsList -> RitualsListScreen(
+                category = (dest as Destination.RitualsList).category,
+                contentPadding = padding,
+                onOpenRitual = { ritualId -> navigator.navigate(Destination.RitualDetail(ritualId)) },
+            )
+
+            is Destination.RitualDetail -> RitualDetailScreen(
+                ritualId = (dest as Destination.RitualDetail).ritualId,
+                contentPadding = padding,
             )
 
             Destination.DailyRitual -> DailyRitualScreen(
@@ -325,7 +338,10 @@ private data class MainTab(
             label = "Rituales",
             rootDestination = Destination.Rituals,
             matches = { destination ->
-                destination == Destination.Rituals || destination == Destination.DailyRitual
+                destination == Destination.Rituals ||
+                    destination == Destination.DailyRitual ||
+                    destination is Destination.RitualsList ||
+                    destination is Destination.RitualDetail
             },
         )
 
