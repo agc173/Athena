@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -28,9 +29,15 @@ class DailyRitualViewModel(
 
     init {
         loadTodayRitual()
+        startDailyRolloverWatcher()
+    }
+
+    fun onScreenVisible() {
+        refreshIfDateChanged()
     }
 
     fun onStartRitual() {
+        if (refreshIfDateChanged()) return
         val ritual = _uiState.value.ritual ?: return
         _uiState.update {
             it.copy(
@@ -53,6 +60,7 @@ class DailyRitualViewModel(
     }
 
     fun onContinue() {
+        if (refreshIfDateChanged()) return
         val state = _uiState.value
         if (state.isCompleted || !state.hasStarted) return
 
@@ -98,6 +106,7 @@ class DailyRitualViewModel(
             _uiState.update {
                 it.copy(
                     isLoading = false,
+                    ritualDate = today,
                     ritual = ritual,
                     streakCount = streak,
                     isCompleted = completedToday,
@@ -110,6 +119,22 @@ class DailyRitualViewModel(
                 )
             }
         }
+    }
+
+    private fun startDailyRolloverWatcher() {
+        scope.launch {
+            while (true) {
+                delay(60_000)
+                refreshIfDateChanged()
+            }
+        }
+    }
+
+    private fun refreshIfDateChanged(): Boolean {
+        val today = todayDate()
+        if (_uiState.value.ritualDate == today) return false
+        loadTodayRitual()
+        return true
     }
 
     private fun completeRitual() {

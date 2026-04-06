@@ -18,6 +18,8 @@ class SettingsDailyRitualRepository(
     private val KEY_SELECTED_DATE_ISO = "selected_date_iso"
     private val KEY_SELECTED_TEMPLATE_ID = "selected_template_id"
     private val KEY_SELECTED_THEME = "selected_theme"
+    private val KEY_DAILY_COMPLETION_DATE_ISO = "daily_completion_date_iso"
+    private val KEY_DAILY_COMPLETED = "daily_completed"
     private val KEY_LAST_COMPLETED_DATE_ISO = "last_completed_date_iso"
     private val KEY_STREAK_COUNT = "streak_count"
 
@@ -29,6 +31,7 @@ class SettingsDailyRitualRepository(
             .takeIf { it.isNotEmpty() }
 
         if (selectedDate == dateIso && !selectedTemplateId.isNullOrBlank()) {
+            ensureDailyCompletionState(dateIso)
             findTemplateById(selectedTemplateId)?.let { return it }
         }
 
@@ -44,12 +47,17 @@ class SettingsDailyRitualRepository(
         settings.putString(KEY_SELECTED_DATE_ISO, dateIso)
         settings.putString(KEY_SELECTED_TEMPLATE_ID, chosen.id)
         settings.putString(KEY_SELECTED_THEME, chosen.theme.name)
+        settings.putString(KEY_DAILY_COMPLETION_DATE_ISO, dateIso)
+        settings.putBoolean(KEY_DAILY_COMPLETED, false)
 
         return chosen
     }
 
-    override fun isCompletedOn(date: LocalDate): Boolean =
-        settings.getString(KEY_LAST_COMPLETED_DATE_ISO, defaultValue = "") == date.toString()
+    override fun isCompletedOn(date: LocalDate): Boolean {
+        val dateIso = date.toString()
+        ensureDailyCompletionState(dateIso)
+        return settings.getBoolean(KEY_DAILY_COMPLETED, defaultValue = false)
+    }
 
     override fun getStreakForDate(date: LocalDate): Int {
         val storedStreak = settings.getInt(KEY_STREAK_COUNT, defaultValue = 0)
@@ -61,8 +69,8 @@ class SettingsDailyRitualRepository(
 
     override fun completeOn(date: LocalDate): Int {
         val dateIso = date.toString()
-        if (settings.getString(KEY_LAST_COMPLETED_DATE_ISO, defaultValue = "") == dateIso) {
-            return settings.getInt(KEY_STREAK_COUNT, defaultValue = 0)
+        if (isCompletedOn(date)) {
+            return getStreakForDate(date)
         }
 
         val storedStreak = settings.getInt(KEY_STREAK_COUNT, defaultValue = 0)
@@ -74,8 +82,18 @@ class SettingsDailyRitualRepository(
 
         settings.putInt(KEY_STREAK_COUNT, newStreak)
         settings.putString(KEY_LAST_COMPLETED_DATE_ISO, dateIso)
+        settings.putString(KEY_DAILY_COMPLETION_DATE_ISO, dateIso)
+        settings.putBoolean(KEY_DAILY_COMPLETED, true)
 
         return newStreak
+    }
+
+    private fun ensureDailyCompletionState(dateIso: String) {
+        val completionDateIso = settings.getString(KEY_DAILY_COMPLETION_DATE_ISO, defaultValue = "")
+        if (completionDateIso != dateIso) {
+            settings.putString(KEY_DAILY_COMPLETION_DATE_ISO, dateIso)
+            settings.putBoolean(KEY_DAILY_COMPLETED, false)
+        }
     }
 
     private fun pickTemplate(
@@ -110,10 +128,7 @@ class SettingsDailyRitualRepository(
         if (streak <= 0 || lastCompleted == null) return 0
 
         val diffDays = lastCompleted.daysUntil(today)
-        if (diffDays <= 1) return streak
-
-        val missedDays = diffDays - 1
-        return (streak - missedDays).coerceAtLeast(0)
+        return if (diffDays <= 1) streak else 0
     }
 
     private fun findTemplateById(id: String): DailyRitualTemplate? =

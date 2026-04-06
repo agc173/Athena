@@ -2,9 +2,11 @@ package com.agc.bwitch.presentation.rituals
 
 import com.agc.bwitch.domain.rituals.DailyRitualStep
 import com.agc.bwitch.domain.rituals.DailyRitualTemplate
+import kotlinx.datetime.LocalDate
 
 data class DailyRitualUiState(
     val isLoading: Boolean = false,
+    val ritualDate: LocalDate? = null,
     val ritual: DailyRitualTemplate? = null,
     val hasStarted: Boolean = false,
     val currentStepIndex: Int = 0,
