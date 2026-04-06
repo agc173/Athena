@@ -45,7 +45,7 @@ val presentationModule: Module = module {
 
     factory { SynastryViewModel(get()) }
 
-    factory { UserProfileViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get()) }
+    factory { UserProfileViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     factory { OnboardingProfileViewModel(get(), get(), get(), get(), get(), get()) }
 
     factory { OracleStatusViewModel(get()) }
@@ -53,6 +53,6 @@ val presentationModule: Module = module {
     factory { TarotViewModel(get()) }
     factory { PendulumViewModel() }
     factory { DailyRitualViewModel(get()) }
-    factory { HabitsViewModel(get()) }
+    factory { HabitsViewModel(get(), get()) }
 
 }

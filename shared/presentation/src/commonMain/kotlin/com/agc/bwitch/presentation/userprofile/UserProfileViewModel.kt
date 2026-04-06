@@ -3,6 +3,7 @@ package com.agc.bwitch.presentation.userprofile
 import com.agc.bwitch.domain.astrology.birthchart.BirthEssenceProfile
 import com.agc.bwitch.domain.astrology.birthchart.ObserveBirthEssenceUseCase
 import com.agc.bwitch.domain.astrology.horoscope.DeriveZodiacSignUseCase
+import com.agc.bwitch.domain.rituals.DailyRitualRepository
 import com.agc.bwitch.domain.rituals.HabitsRepository
 import com.agc.bwitch.domain.userprofile.GetUserProfileUseCase
 import com.agc.bwitch.domain.userprofile.ObserveUserProfileUseCase
@@ -12,6 +13,8 @@ import com.agc.bwitch.domain.userprofile.UploadAvatarUseCase
 import com.agc.bwitch.domain.userprofile.UserProfile
 import com.agc.bwitch.domain.userprofile.UsernameRules
 import com.agc.bwitch.presentation.auth.SessionViewModel
+import com.agc.bwitch.presentation.rituals.HabitsGlowLevel
+import com.agc.bwitch.presentation.rituals.toHabitsGlowLevel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -27,7 +30,10 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
 data class UserProfileUiState(
     val isInitialLoading: Boolean = true,
@@ -47,6 +53,7 @@ data class ProfileHabitsProgressUi(
     val cycleTarget: Int = 60,
     val completedCycles: Int = 0,
     val hasStarted: Boolean = false,
+    val glowLevel: HabitsGlowLevel = HabitsGlowLevel.Base,
 )
 
 class UserProfileViewModel(
@@ -59,6 +66,7 @@ class UserProfileViewModel(
     private val deriveZodiacSign: DeriveZodiacSignUseCase,
     private val observeBirthEssence: ObserveBirthEssenceUseCase,
     private val habitsRepository: HabitsRepository,
+    private val dailyRitualRepository: DailyRitualRepository,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
@@ -253,8 +261,12 @@ class UserProfileViewModel(
     }
 
     private fun loadHabitsProgress() {
-        runCatching { habitsRepository.getProgress() }
-            .onSuccess { progress ->
+        runCatching {
+            val progress = habitsRepository.getProgress()
+            val streak = dailyRitualRepository.getStreakForDate(todayDate())
+            progress to streak
+        }
+            .onSuccess { (progress, streak) ->
                 _uiState.update {
                     it.copy(
                         habitsProgress = ProfileHabitsProgressUi(
@@ -262,11 +274,16 @@ class UserProfileViewModel(
                             cycleTarget = progress.cycleTarget,
                             completedCycles = progress.completedCycles,
                             hasStarted = progress.currentCyclePoints > 0 || progress.completedCycles > 0,
+                            glowLevel = streak.toHabitsGlowLevel(),
                         )
                     )
                 }
             }
     }
+
+    private fun todayDate(): LocalDate = Clock.System.now()
+        .toLocalDateTime(TimeZone.currentSystemDefault())
+        .date
 
     private fun UserProfile?.isNullOrBlankProfile(): Boolean {
         if (this == null) return true

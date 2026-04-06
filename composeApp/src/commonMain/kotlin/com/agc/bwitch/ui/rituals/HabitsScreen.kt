@@ -83,6 +83,7 @@ private fun HabitsProgressCard(state: HabitsUiState) {
             HabitsProgressRing(
                 current = state.progressPoints,
                 target = state.cycleTarget,
+                glowLevel = state.glowLevel,
             )
 
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {

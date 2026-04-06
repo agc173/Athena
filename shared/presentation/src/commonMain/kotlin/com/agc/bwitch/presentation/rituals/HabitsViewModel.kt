@@ -1,6 +1,7 @@
 package com.agc.bwitch.presentation.rituals
 
 import com.agc.bwitch.domain.rituals.HabitsRepository
+import com.agc.bwitch.domain.rituals.DailyRitualRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -10,9 +11,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
 class HabitsViewModel(
     private val repository: HabitsRepository,
+    private val dailyRitualRepository: DailyRitualRepository,
     private val dispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + dispatcher)
@@ -40,6 +45,7 @@ class HabitsViewModel(
             val todayState = repository.getTodayState()
             val progress = repository.getProgress()
             val intentions = repository.getTodayIntentions()
+            val streak = dailyRitualRepository.getStreakForDate(todayDate())
 
             _uiState.update {
                 it.copy(
@@ -47,6 +53,7 @@ class HabitsViewModel(
                     progressPoints = progress.currentCyclePoints,
                     cycleTarget = progress.cycleTarget,
                     completedCycles = progress.completedCycles,
+                    glowLevel = streak.toHabitsGlowLevel(),
                     intentions = intentions.map { intention ->
                         HabitIntentionUiModel(
                             id = intention.id,
@@ -59,4 +66,6 @@ class HabitsViewModel(
             }
         }
     }
+
+    private fun todayDate() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 }
