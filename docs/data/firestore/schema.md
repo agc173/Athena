@@ -124,8 +124,42 @@ Campos:
 
 ---
 
-## Colecciones futuras (placeholder)
+## Catálogo de rituales
+
+### /ritualCategories/{categoryId}
+Catálogo de categorías de rituales para UI de exploración.
+
+Campos:
+- id: string (opcional; fallback al `categoryId`)
+- type: string (`love` | `prosperity` | `protection` | `cleansing`)
+- title: string
+- subtitle: string
+- sortOrder: number (opcional)
+- isActive: boolean (default true)
+
 ### /rituals/{ritualId}
+Catálogo de rituales versionado en backend (lectura pública).
+
+Campos:
+- id: string (opcional; fallback al `ritualId`)
+- categoryId: string (opcional)
+- categoryType: string (`love` | `prosperity` | `protection` | `cleansing`, opcional si viene `categoryId`)
+- title: string
+- subtitle: string
+- intention: string
+- materials: array<string>
+- preparation: string (opcional)
+- action: string
+- closing: string
+- optionalNote: string (opcional)
+- materialsHint: string (opcional)
+- sortOrder: number (opcional)
+- isActive: boolean (default true)
+- isPremium: boolean (default false)
+
+---
+
+## Colecciones futuras (placeholder)
 ### /readings/{readingId}
 ### /userContent/{userId}/saved/{itemId}
 

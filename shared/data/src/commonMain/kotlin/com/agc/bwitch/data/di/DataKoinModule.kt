@@ -8,6 +8,7 @@ import com.agc.bwitch.data.functions.GitLiveFunctionsClient
 import com.agc.bwitch.data.oracle.OracleRepositoryImpl
 import com.agc.bwitch.data.rituals.LocalRitualCatalogRepository
 import com.agc.bwitch.data.rituals.SettingsDailyRitualRepository
+import com.agc.bwitch.data.rituals.FirestoreBackedRitualCatalogRepository
 import com.agc.bwitch.data.session.LocalUserDataRepositoryImpl
 import com.agc.bwitch.data.tarot.TarotRepositoryImpl
 import com.agc.bwitch.data.userprofile.FirebaseAvatarRepository
@@ -100,7 +101,9 @@ val dataKoinModule: Module = module {
      * Daily Ritual
      */
     single<DailyRitualRepository> { SettingsDailyRitualRepository(get()) }
-    single<RitualCatalogRepository> { LocalRitualCatalogRepository() }
+    single { LocalRitualCatalogRepository() }
+    single { FirestoreBackedRitualCatalogRepository(local = get(), settingsFactory = get()).also { it.warmUp() } }
+    single<RitualCatalogRepository> { get<FirestoreBackedRitualCatalogRepository>() }
 
     /**
      * Local user data cleanup (logout)
