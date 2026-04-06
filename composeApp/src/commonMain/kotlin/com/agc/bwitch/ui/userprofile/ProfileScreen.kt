@@ -43,6 +43,7 @@ import com.agc.bwitch.domain.astrology.birthchart.BirthEssenceProfile
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
 import com.agc.bwitch.presentation.userprofile.UserProfileViewModel
 import com.agc.bwitch.ui.common.toVisualResource
+import com.agc.bwitch.ui.rituals.components.HabitsProgressRing
 import com.agc.bwitch.ui.theme.BWitchThemeTokens
 import io.kamel.image.KamelImage
 import io.kamel.image.asyncPainterResource
@@ -54,6 +55,7 @@ fun ProfileScreen(
     contentPadding: PaddingValues,
     onEditProfile: () -> Unit,
     onDiscoverEssence: () -> Unit,
+    onOpenHabits: () -> Unit,
     onOpenStore: (() -> Unit)? = null,
 ) {
     val vm: UserProfileViewModel = koinInject()
@@ -69,6 +71,7 @@ fun ProfileScreen(
     val avatarUrl = profile?.photoUrl?.takeIf { it.startsWith("http://") || it.startsWith("https://") }
     val profileDescription: String? = null
     val moonCredits: Int? = null
+    val habitsProgress = state.habitsProgress
 
     val dimens = BWitchThemeTokens.dimens
     val extras = BWitchThemeTokens.extras
@@ -203,6 +206,70 @@ fun ProfileScreen(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+            }
+        }
+
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+            color = extras.surfaceElevated,
+            tonalElevation = 0.dp,
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = dimens.spacingMd, vertical = dimens.spacingMd),
+                verticalArrangement = Arrangement.spacedBy(dimens.spacingSm),
+            ) {
+                Text(
+                    text = "Tu progreso",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Text(
+                    text = "Cada pequeña práctica deja una huella en tu camino.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+
+                if (habitsProgress.hasStarted) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(dimens.spacingMd),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        HabitsProgressRing(
+                            current = habitsProgress.currentCyclePoints,
+                            target = habitsProgress.cycleTarget,
+                            size = 72.dp,
+                            strokeWidth = 6.dp,
+                        )
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(
+                                text = "${habitsProgress.currentCyclePoints} / ${habitsProgress.cycleTarget} acciones en este ciclo",
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                            Text(
+                                text = "${habitsProgress.completedCycles} ciclos completados",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.primary,
+                            )
+                        }
+                    }
+                } else {
+                    Text(
+                        text = "Aún no has comenzado este ciclo. Completa una práctica en Hábitos para dar el primer paso.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+
+                Button(
+                    onClick = onOpenHabits,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text("Abrir Hábitos")
+                }
             }
         }
     }
