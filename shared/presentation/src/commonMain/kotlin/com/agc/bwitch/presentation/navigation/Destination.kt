@@ -35,6 +35,7 @@ sealed class Destination(val title: String) {
     data object Guide : Destination("Guía")
 
     data object Rituals : Destination("Rituales")
+    data object DailyRitual : Destination("Ritual del día")
 
     data object TarotHome : Destination("Tarot")
 

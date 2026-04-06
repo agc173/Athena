@@ -62,6 +62,7 @@ import com.agc.bwitch.ui.guide.PendulumScreen
 import com.agc.bwitch.ui.onboarding.OnboardingProfileScreen
 import com.agc.bwitch.ui.oracle.OracleDebugScreen
 import com.agc.bwitch.ui.oracle.OracleScreen
+import com.agc.bwitch.ui.rituals.DailyRitualScreen
 import com.agc.bwitch.ui.rituals.RitualsPlaceholderScreen
 import com.agc.bwitch.ui.tarot.TarotHomeScreen
 import com.agc.bwitch.ui.tarot.TarotScreen
@@ -222,7 +223,15 @@ fun AppRoot() {
 
             Destination.Pendulum -> PendulumScreen(contentPadding = padding)
 
-            Destination.Rituals -> RitualsPlaceholderScreen(contentPadding = padding)
+            Destination.Rituals -> RitualsPlaceholderScreen(
+                contentPadding = padding,
+                onOpenDailyRitual = { navigator.navigate(Destination.DailyRitual) },
+            )
+
+            Destination.DailyRitual -> DailyRitualScreen(
+                contentPadding = padding,
+                onBack = { navigator.goBack() },
+            )
         }
     }
 }
@@ -315,7 +324,9 @@ private data class MainTab(
         val rituals = MainTab(
             label = "Rituales",
             rootDestination = Destination.Rituals,
-            matches = { destination -> destination == Destination.Rituals },
+            matches = { destination ->
+                destination == Destination.Rituals || destination == Destination.DailyRitual
+            },
         )
 
         val items = listOf(profile, astrology, guide, rituals)

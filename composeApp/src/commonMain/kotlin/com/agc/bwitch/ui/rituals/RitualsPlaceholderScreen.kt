@@ -34,6 +34,7 @@ private val RitualsCardHeight = 168.dp
 @Composable
 fun RitualsPlaceholderScreen(
     contentPadding: PaddingValues,
+    onOpenDailyRitual: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     BWitchScreen(
@@ -48,7 +49,7 @@ fun RitualsPlaceholderScreen(
         RitualsFeatureCard(
             title = "Ritual del día",
             subtitle = "Hoy: claridad interior",
-            onClick = { },
+            onClick = onOpenDailyRitual,
             ornamentType = RitualsCardOrnament.DailyRitual,
             modifier = Modifier.height(RitualsCardHeight),
         )
