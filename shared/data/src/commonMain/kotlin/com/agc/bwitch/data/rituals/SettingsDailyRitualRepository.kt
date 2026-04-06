@@ -6,8 +6,6 @@ import com.agc.bwitch.domain.rituals.DailyRitualRepository
 import com.agc.bwitch.domain.rituals.DailyRitualTemplate
 import com.agc.bwitch.domain.rituals.DailyRitualTheme
 import com.russhwolf.settings.Settings
-import com.russhwolf.settings.get
-import com.russhwolf.settings.set
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.daysUntil
 
@@ -25,49 +23,57 @@ class SettingsDailyRitualRepository(
 
     override fun getTemplateForDate(date: LocalDate): DailyRitualTemplate {
         val dateIso = date.toString()
-        val selectedDate = settings[KEY_SELECTED_DATE_ISO]
-        val selectedTemplateId = settings[KEY_SELECTED_TEMPLATE_ID]
+        val selectedDate = settings.getString(KEY_SELECTED_DATE_ISO, defaultValue = "")
+            .takeIf { it.isNotEmpty() }
+        val selectedTemplateId = settings.getString(KEY_SELECTED_TEMPLATE_ID, defaultValue = "")
+            .takeIf { it.isNotEmpty() }
 
         if (selectedDate == dateIso && !selectedTemplateId.isNullOrBlank()) {
             findTemplateById(selectedTemplateId)?.let { return it }
         }
 
         val previousTemplateId = selectedTemplateId
-        val previousTheme = settings[KEY_SELECTED_THEME]?.let { raw ->
+        val previousTheme = settings.getString(KEY_SELECTED_THEME, defaultValue = "")
+            .takeIf { it.isNotEmpty() }
+            ?.let { raw ->
             runCatching { DailyRitualTheme.valueOf(raw) }.getOrNull()
         }
 
         val chosen = pickTemplate(date, previousTemplateId, previousTheme)
 
-        settings[KEY_SELECTED_DATE_ISO] = dateIso
-        settings[KEY_SELECTED_TEMPLATE_ID] = chosen.id
-        settings[KEY_SELECTED_THEME] = chosen.theme.name
+        settings.putString(KEY_SELECTED_DATE_ISO, dateIso)
+        settings.putString(KEY_SELECTED_TEMPLATE_ID, chosen.id)
+        settings.putString(KEY_SELECTED_THEME, chosen.theme.name)
 
         return chosen
     }
 
     override fun isCompletedOn(date: LocalDate): Boolean =
-        settings[KEY_LAST_COMPLETED_DATE_ISO] == date.toString()
+        settings.getString(KEY_LAST_COMPLETED_DATE_ISO, defaultValue = "") == date.toString()
 
     override fun getStreakForDate(date: LocalDate): Int {
         val storedStreak = settings.getInt(KEY_STREAK_COUNT, defaultValue = 0)
-        val lastCompleted = settings[KEY_LAST_COMPLETED_DATE_ISO]?.let(::safeDate)
+        val lastCompleted = settings.getString(KEY_LAST_COMPLETED_DATE_ISO, defaultValue = "")
+            .takeIf { it.isNotEmpty() }
+            ?.let(::safeDate)
         return adjustStreakForMissedDays(storedStreak, lastCompleted, date)
     }
 
     override fun completeOn(date: LocalDate): Int {
         val dateIso = date.toString()
-        if (settings[KEY_LAST_COMPLETED_DATE_ISO] == dateIso) {
+        if (settings.getString(KEY_LAST_COMPLETED_DATE_ISO, defaultValue = "") == dateIso) {
             return settings.getInt(KEY_STREAK_COUNT, defaultValue = 0)
         }
 
         val storedStreak = settings.getInt(KEY_STREAK_COUNT, defaultValue = 0)
-        val lastCompleted = settings[KEY_LAST_COMPLETED_DATE_ISO]?.let(::safeDate)
+        val lastCompleted = settings.getString(KEY_LAST_COMPLETED_DATE_ISO, defaultValue = "")
+            .takeIf { it.isNotEmpty() }
+            ?.let(::safeDate)
         val adjusted = adjustStreakForMissedDays(storedStreak, lastCompleted, date)
         val newStreak = adjusted + 1
 
-        settings[KEY_STREAK_COUNT] = newStreak
-        settings[KEY_LAST_COMPLETED_DATE_ISO] = dateIso
+        settings.putInt(KEY_STREAK_COUNT, newStreak)
+        settings.putString(KEY_LAST_COMPLETED_DATE_ISO, dateIso)
 
         return newStreak
     }
