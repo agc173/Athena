@@ -1,6 +1,7 @@
 package com.agc.bwitch.presentation.navigation
 
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
+import com.agc.bwitch.domain.rituals.RitualCategoryType
 import com.agc.bwitch.domain.tarot.TarotRequestType
 
 sealed class Destination(val title: String) {
@@ -35,6 +36,8 @@ sealed class Destination(val title: String) {
     data object Guide : Destination("Guía")
 
     data object Rituals : Destination("Rituales")
+    data class RitualsList(val category: RitualCategoryType) : Destination("Rituales")
+    data class RitualDetail(val ritualId: String) : Destination("Ritual")
     data object DailyRitual : Destination("Ritual del día")
 
     data object TarotHome : Destination("Tarot")
