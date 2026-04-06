@@ -5,6 +5,7 @@ data class HabitsUiState(
     val progressPoints: Int = 0,
     val cycleTarget: Int = 60,
     val completedCycles: Int = 0,
+    val glowLevel: HabitsGlowLevel = HabitsGlowLevel.Base,
     val intentions: List<HabitIntentionUiModel> = emptyList(),
 )
 

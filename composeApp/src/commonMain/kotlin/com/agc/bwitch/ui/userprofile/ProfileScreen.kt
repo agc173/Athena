@@ -243,6 +243,7 @@ fun ProfileScreen(
                             target = habitsProgress.cycleTarget,
                             size = 72.dp,
                             strokeWidth = 6.dp,
+                            glowLevel = habitsProgress.glowLevel,
                         )
                         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Text(

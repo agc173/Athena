@@ -9,10 +9,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.agc.bwitch.presentation.rituals.HabitsGlowLevel
 
 @Composable
 fun HabitsProgressRing(
@@ -21,12 +23,13 @@ fun HabitsProgressRing(
     modifier: Modifier = Modifier,
     size: Dp = 92.dp,
     strokeWidth: Dp = 8.dp,
+    glowLevel: HabitsGlowLevel = HabitsGlowLevel.Base,
 ) {
     val normalizedCurrent = current.coerceAtLeast(0)
     val normalizedTarget = target.coerceAtLeast(1)
     val progress = (normalizedCurrent.toFloat() / normalizedTarget.toFloat()).coerceIn(0f, 1f)
-    val trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
-    val progressColor = MaterialTheme.colorScheme.primary
+    val glowStyle = glowStyleFor(glowLevel, MaterialTheme.colorScheme.primary)
+    val ringStrokeWidth = strokeWidth + glowStyle.extraStroke
 
     Box(
         modifier = modifier.size(size),
@@ -37,27 +40,73 @@ fun HabitsProgressRing(
                 .size(size)
                 .height(size),
         ) {
-            val stroke = Stroke(width = strokeWidth.toPx(), cap = StrokeCap.Round)
+            val stroke = Stroke(width = ringStrokeWidth.toPx(), cap = StrokeCap.Round)
             drawArc(
-                color = trackColor,
+                color = glowStyle.trackColor,
                 startAngle = -90f,
                 sweepAngle = 360f,
                 useCenter = false,
                 style = stroke,
             )
             drawArc(
-                color = progressColor,
+                color = glowStyle.progressColor,
                 startAngle = -90f,
                 sweepAngle = 360f * progress,
                 useCenter = false,
                 style = stroke,
             )
+            if (glowStyle.accentAlpha > 0f && progress > 0f) {
+                drawArc(
+                    color = Color.White.copy(alpha = glowStyle.accentAlpha),
+                    startAngle = -90f,
+                    sweepAngle = 360f * progress,
+                    useCenter = false,
+                    style = Stroke(width = (ringStrokeWidth * 0.34f).toPx(), cap = StrokeCap.Round),
+                )
+            }
         }
 
         Text(
             text = "$normalizedCurrent/$normalizedTarget",
             style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.primary,
+            color = glowStyle.progressColor,
         )
     }
+}
+
+private data class HabitsRingGlowStyle(
+    val trackColor: Color,
+    val progressColor: Color,
+    val accentAlpha: Float,
+    val extraStroke: Dp,
+)
+
+private fun glowStyleFor(level: HabitsGlowLevel, primary: Color): HabitsRingGlowStyle = when (level) {
+    HabitsGlowLevel.Base -> HabitsRingGlowStyle(
+        trackColor = primary.copy(alpha = 0.20f),
+        progressColor = primary.copy(alpha = 0.92f),
+        accentAlpha = 0f,
+        extraStroke = 0.dp,
+    )
+
+    HabitsGlowLevel.Soft -> HabitsRingGlowStyle(
+        trackColor = primary.copy(alpha = 0.25f),
+        progressColor = primary,
+        accentAlpha = 0.10f,
+        extraStroke = 0.dp,
+    )
+
+    HabitsGlowLevel.Bright -> HabitsRingGlowStyle(
+        trackColor = primary.copy(alpha = 0.30f),
+        progressColor = primary.copy(alpha = 1f),
+        accentAlpha = 0.18f,
+        extraStroke = 0.5.dp,
+    )
+
+    HabitsGlowLevel.Luminous -> HabitsRingGlowStyle(
+        trackColor = primary.copy(alpha = 0.35f),
+        progressColor = primary.copy(alpha = 1f),
+        accentAlpha = 0.28f,
+        extraStroke = 1.dp,
+    )
 }
