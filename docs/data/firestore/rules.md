@@ -34,3 +34,11 @@ NOTA: Estas reglas son un borrador; deben revisarse antes de producción.
     - write: authenticated && request.auth.uid == uid
     - validar tamaño de interpretation y signos permitidos
 
+
+- /ritualCategories/{categoryId}
+    - read: true
+    - write: false (solo backend/admin)
+
+- /rituals/{ritualId}
+    - read: true
+    - write: false (solo backend/admin)
