@@ -36,6 +36,7 @@ fun RitualsPlaceholderScreen(
     contentPadding: PaddingValues,
     onOpenDailyRitual: () -> Unit,
     onOpenRitualsCategories: () -> Unit,
+    onOpenHabits: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     BWitchScreen(
@@ -66,7 +67,7 @@ fun RitualsPlaceholderScreen(
         RitualsFeatureCard(
             title = "Hábitos",
             subtitle = "Pequeñas acciones que transforman tu energía",
-            onClick = { },
+            onClick = onOpenHabits,
             ornamentType = RitualsCardOrnament.Habits,
             modifier = Modifier.height(RitualsCardHeight),
         )
