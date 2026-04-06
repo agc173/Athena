@@ -23,3 +23,4 @@ Domain → Data → Presentation → UI
 ## Estado actual
 - Vertical slice MVP implementado: **Horóscopo diario mock** (domain/data/presentation/UI) con tests básicos de use case y ViewModel.
 - Base funcional de **Ritual del día** implementada en KMP (modelos de dominio, repositorio local, ViewModel compartido, pantalla Compose y navegación desde home de Rituales).
+- MVP local/offline de **Hábitos** implementado como parte del módulo Rituales (3 intenciones diarias estables por fecha, progreso de ciclo de 60 acciones, contador de ciclos completados, pantalla Compose y navegación desde card de Rituales).

@@ -63,6 +63,7 @@ import com.agc.bwitch.ui.onboarding.OnboardingProfileScreen
 import com.agc.bwitch.ui.oracle.OracleDebugScreen
 import com.agc.bwitch.ui.oracle.OracleScreen
 import com.agc.bwitch.ui.rituals.DailyRitualScreen
+import com.agc.bwitch.ui.rituals.HabitsScreen
 import com.agc.bwitch.ui.rituals.RitualDetailScreen
 import com.agc.bwitch.ui.rituals.RitualsCategoryScreen
 import com.agc.bwitch.ui.rituals.RitualsListScreen
@@ -230,6 +231,7 @@ fun AppRoot() {
                 contentPadding = padding,
                 onOpenDailyRitual = { navigator.navigate(Destination.DailyRitual) },
                 onOpenRitualsCategories = { navigator.navigate(Destination.RitualsCategories) },
+                onOpenHabits = { navigator.navigate(Destination.Habits) },
             )
 
             Destination.RitualsCategories -> RitualsCategoryScreen(
@@ -252,6 +254,8 @@ fun AppRoot() {
                 contentPadding = padding,
                 onBack = { navigator.goBack() },
             )
+
+            Destination.Habits -> HabitsScreen(contentPadding = padding)
         }
     }
 }
@@ -346,6 +350,7 @@ private data class MainTab(
             rootDestination = Destination.Rituals,
             matches = { destination ->
                 destination == Destination.Rituals ||
+                    destination == Destination.Habits ||
                     destination == Destination.DailyRitual ||
                     destination == Destination.RitualsCategories ||
                     destination is Destination.RitualsList ||

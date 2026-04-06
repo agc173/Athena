@@ -9,6 +9,7 @@ import com.agc.bwitch.data.oracle.OracleRepositoryImpl
 import com.agc.bwitch.data.rituals.LocalRitualCatalogRepository
 import com.agc.bwitch.data.rituals.SettingsDailyRitualRepository
 import com.agc.bwitch.data.rituals.FirestoreBackedRitualCatalogRepository
+import com.agc.bwitch.data.rituals.SettingsHabitsRepository
 import com.agc.bwitch.data.session.LocalUserDataRepositoryImpl
 import com.agc.bwitch.data.tarot.TarotRepositoryImpl
 import com.agc.bwitch.data.userprofile.FirebaseAvatarRepository
@@ -19,6 +20,7 @@ import com.agc.bwitch.domain.astrology.horoscope.HoroscopeRepository
 import com.agc.bwitch.domain.auth.AuthRepository
 import com.agc.bwitch.domain.oracle.OracleRepository
 import com.agc.bwitch.domain.rituals.DailyRitualRepository
+import com.agc.bwitch.domain.rituals.HabitsRepository
 import com.agc.bwitch.domain.rituals.RitualCatalogRepository
 import com.agc.bwitch.domain.session.LocalUserDataRepository
 import com.agc.bwitch.domain.tarot.TarotRepository
@@ -101,6 +103,7 @@ val dataKoinModule: Module = module {
      * Daily Ritual
      */
     single<DailyRitualRepository> { SettingsDailyRitualRepository(get()) }
+    single<HabitsRepository> { SettingsHabitsRepository(get()) }
     single { LocalRitualCatalogRepository() }
     single { FirestoreBackedRitualCatalogRepository(local = get(), settingsFactory = get()).also { it.warmUp() } }
     single<RitualCatalogRepository> { get<FirestoreBackedRitualCatalogRepository>() }

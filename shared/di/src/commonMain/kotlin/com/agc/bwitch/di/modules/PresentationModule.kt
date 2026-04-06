@@ -10,6 +10,7 @@ import com.agc.bwitch.presentation.oracle.OracleStatusViewModel
 import com.agc.bwitch.presentation.pendulum.PendulumViewModel
 import com.agc.bwitch.presentation.navigation.Navigator
 import com.agc.bwitch.presentation.rituals.DailyRitualViewModel
+import com.agc.bwitch.presentation.rituals.HabitsViewModel
 import com.agc.bwitch.presentation.tarot.TarotViewModel
 import org.koin.core.module.Module
 import org.koin.dsl.module
@@ -52,5 +53,6 @@ val presentationModule: Module = module {
     factory { TarotViewModel(get()) }
     factory { PendulumViewModel() }
     factory { DailyRitualViewModel(get()) }
+    factory { HabitsViewModel(get()) }
 
 }
