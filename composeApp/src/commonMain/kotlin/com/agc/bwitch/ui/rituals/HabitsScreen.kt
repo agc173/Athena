@@ -1,18 +1,30 @@
 package com.agc.bwitch.ui.rituals
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.agc.bwitch.presentation.rituals.HabitIntentionUiModel
 import com.agc.bwitch.presentation.rituals.HabitsUiState
@@ -113,25 +125,79 @@ private fun HabitIntentionCard(
     intention: HabitIntentionUiModel,
     onToggle: () -> Unit,
 ) {
+    val isCompleted = intention.isCompleted
+    val accentShape = MaterialTheme.shapes.small
+    val accentBorderColor by animateColorAsState(
+        targetValue = if (isCompleted) {
+            MaterialTheme.colorScheme.primary.copy(alpha = 0.44f)
+        } else {
+            MaterialTheme.colorScheme.outline.copy(alpha = 0.18f)
+        },
+        label = "habitIntentionBorder",
+    )
+    val accentContainerColor by animateColorAsState(
+        targetValue = if (isCompleted) {
+            MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
+        } else {
+            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
+        },
+        label = "habitIntentionContainer",
+    )
+    val actionCopyAlpha by animateFloatAsState(
+        targetValue = if (isCompleted) 0.85f else 1f,
+        label = "habitIntentionActionAlpha",
+    )
+
     BWitchCard {
-        Text(text = intention.title, style = MaterialTheme.typography.titleMedium)
-        Text(
-            text = intention.actionText,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        if (intention.isCompleted) {
-            Text(
-                text = "Completada con intención",
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.primary,
-            )
-        }
-        Button(
-            onClick = onToggle,
-            modifier = Modifier.fillMaxWidth(),
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(accentShape)
+                .background(accentContainerColor)
+                .border(width = 1.dp, color = accentBorderColor, shape = accentShape)
+                .padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text(if (intention.isCompleted) "Marcar como pendiente" else "Marcar como completada")
+            Text(text = intention.title, style = MaterialTheme.typography.titleMedium)
+            Text(
+                text = intention.actionText,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.alpha(actionCopyAlpha),
+            )
+
+            AnimatedVisibility(
+                visible = isCompleted,
+                enter = fadeIn(),
+                exit = fadeOut(),
+            ) {
+                Text(
+                    text = "Integrada en tu práctica ✦",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
+
+            Crossfade(
+                targetState = isCompleted,
+                label = "habitIntentionActionButton",
+            ) { completed ->
+                if (completed) {
+                    OutlinedButton(
+                        onClick = onToggle,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text("Deshacer por ahora")
+                    }
+                } else {
+                    Button(
+                        onClick = onToggle,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text("Sumar a mi práctica")
+                    }
+                }
+            }
         }
     }
 }
