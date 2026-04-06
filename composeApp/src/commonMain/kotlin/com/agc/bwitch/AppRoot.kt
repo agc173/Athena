@@ -200,6 +200,7 @@ fun AppRoot() {
                 contentPadding = padding,
                 onEditProfile = { navigator.navigate(Destination.Settings) },
                 onDiscoverEssence = { navigator.navigate(Destination.Astrology) },
+                onOpenHabits = { navigator.navigate(Destination.Habits) },
             )
 
             Destination.Settings -> SettingsScreen(contentPadding = padding)

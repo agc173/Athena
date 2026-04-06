@@ -3,6 +3,7 @@ package com.agc.bwitch.presentation.userprofile
 import com.agc.bwitch.domain.astrology.birthchart.BirthEssenceProfile
 import com.agc.bwitch.domain.astrology.birthchart.ObserveBirthEssenceUseCase
 import com.agc.bwitch.domain.astrology.horoscope.DeriveZodiacSignUseCase
+import com.agc.bwitch.domain.rituals.HabitsRepository
 import com.agc.bwitch.domain.userprofile.GetUserProfileUseCase
 import com.agc.bwitch.domain.userprofile.ObserveUserProfileUseCase
 import com.agc.bwitch.domain.userprofile.PullUserProfileUseCase
@@ -35,10 +36,18 @@ data class UserProfileUiState(
     val isRefreshing: Boolean = false,
     val profile: UserProfile? = null,
     val savedBirthEssence: BirthEssenceProfile? = null,
+    val habitsProgress: ProfileHabitsProgressUi = ProfileHabitsProgressUi(),
     val error: String? = null
 ) {
     val isBusy: Boolean get() = isSaving || isUploadingAvatar || isRefreshing
 }
+
+data class ProfileHabitsProgressUi(
+    val currentCyclePoints: Int = 0,
+    val cycleTarget: Int = 60,
+    val completedCycles: Int = 0,
+    val hasStarted: Boolean = false,
+)
 
 class UserProfileViewModel(
     private val observe: ObserveUserProfileUseCase,
@@ -49,6 +58,7 @@ class UserProfileViewModel(
     private val pull: PullUserProfileUseCase,
     private val deriveZodiacSign: DeriveZodiacSignUseCase,
     private val observeBirthEssence: ObserveBirthEssenceUseCase,
+    private val habitsRepository: HabitsRepository,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
@@ -100,6 +110,8 @@ class UserProfileViewModel(
                     _snackbarEvents.tryEmit(e.message ?: "Error cargando el perfil")
                 }
         }
+
+        loadHabitsProgress()
 
         scope.launch {
             sessionVm.uiState
@@ -236,7 +248,24 @@ class UserProfileViewModel(
                 _snackbarEvents.tryEmit(e.message ?: "Error refrescando perfil")
             }
 
+        loadHabitsProgress()
         _uiState.update { it.copy(isRefreshing = false) }
+    }
+
+    private fun loadHabitsProgress() {
+        runCatching { habitsRepository.getProgress() }
+            .onSuccess { progress ->
+                _uiState.update {
+                    it.copy(
+                        habitsProgress = ProfileHabitsProgressUi(
+                            currentCyclePoints = progress.currentCyclePoints,
+                            cycleTarget = progress.cycleTarget,
+                            completedCycles = progress.completedCycles,
+                            hasStarted = progress.currentCyclePoints > 0 || progress.completedCycles > 0,
+                        )
+                    )
+                }
+            }
     }
 
     private fun UserProfile?.isNullOrBlankProfile(): Boolean {
