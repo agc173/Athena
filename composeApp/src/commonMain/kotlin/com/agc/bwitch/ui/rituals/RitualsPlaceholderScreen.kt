@@ -35,6 +35,7 @@ private val RitualsCardHeight = 168.dp
 fun RitualsPlaceholderScreen(
     contentPadding: PaddingValues,
     onOpenDailyRitual: () -> Unit,
+    onOpenRitualsCategories: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     BWitchScreen(
@@ -57,7 +58,7 @@ fun RitualsPlaceholderScreen(
         RitualsFeatureCard(
             title = "Rituales",
             subtitle = "Prácticas para atraer lo que deseas",
-            onClick = { },
+            onClick = onOpenRitualsCategories,
             ornamentType = RitualsCardOrnament.Rituals,
             modifier = Modifier.height(RitualsCardHeight),
         )

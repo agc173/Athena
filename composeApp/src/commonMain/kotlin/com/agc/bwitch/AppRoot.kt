@@ -66,6 +66,7 @@ import com.agc.bwitch.ui.rituals.DailyRitualScreen
 import com.agc.bwitch.ui.rituals.RitualDetailScreen
 import com.agc.bwitch.ui.rituals.RitualsCategoryScreen
 import com.agc.bwitch.ui.rituals.RitualsListScreen
+import com.agc.bwitch.ui.rituals.RitualsPlaceholderScreen
 import com.agc.bwitch.ui.tarot.TarotHomeScreen
 import com.agc.bwitch.ui.tarot.TarotScreen
 import com.agc.bwitch.ui.userprofile.ProfileScreen
@@ -225,7 +226,13 @@ fun AppRoot() {
 
             Destination.Pendulum -> PendulumScreen(contentPadding = padding)
 
-            Destination.Rituals -> RitualsCategoryScreen(
+            Destination.Rituals -> RitualsPlaceholderScreen(
+                contentPadding = padding,
+                onOpenDailyRitual = { navigator.navigate(Destination.DailyRitual) },
+                onOpenRitualsCategories = { navigator.navigate(Destination.RitualsCategories) },
+            )
+
+            Destination.RitualsCategories -> RitualsCategoryScreen(
                 contentPadding = padding,
                 onOpenCategory = { category -> navigator.navigate(Destination.RitualsList(category)) },
             )
@@ -340,6 +347,7 @@ private data class MainTab(
             matches = { destination ->
                 destination == Destination.Rituals ||
                     destination == Destination.DailyRitual ||
+                    destination == Destination.RitualsCategories ||
                     destination is Destination.RitualsList ||
                     destination is Destination.RitualDetail
             },
