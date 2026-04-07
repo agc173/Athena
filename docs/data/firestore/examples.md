@@ -89,3 +89,16 @@
 "savedAtEpochMillis": 1773792000000,
 "updatedAtEpochMillis": 1773792000000
 }
+
+
+## users/{uid}/dailyRitual/current
+{
+"selectedDateIso": "2026-04-07",
+"selectedTemplateId": "daily_ritual_clarity_01",
+"selectedTheme": "Clarity",
+"dailyCompletionDateIso": "2026-04-07",
+"dailyCompleted": true,
+"lastCompletedDateIso": "2026-04-07",
+"streakCount": 5,
+"updatedAtEpochMillis": 1775529600000
+}

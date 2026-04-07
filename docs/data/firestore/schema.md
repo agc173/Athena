@@ -70,6 +70,25 @@ Notas:
 
 ---
 
+### /users/{userId}/dailyRitual/current
+Estado sincronizado del ritual diario (single doc activo por usuario).
+
+Campos:
+- selectedDateIso: string ISO `YYYY-MM-DD` (opcional)
+- selectedTemplateId: string (opcional)
+- selectedTheme: string (enum `DailyRitualTheme`, opcional)
+- dailyCompletionDateIso: string ISO `YYYY-MM-DD` (opcional)
+- dailyCompleted: boolean
+- lastCompletedDateIso: string ISO `YYYY-MM-DD` (opcional)
+- streakCount: number
+- updatedAtEpochMillis: number
+
+Notas:
+- Merge cliente por `updatedAtEpochMillis` (last-write-wins).
+- Documento: `users/{uid}/dailyRitual/current`.
+
+---
+
 ### /usernames/{normalizedUsername}
 Índice dedicado para unicidad real de username.
 
