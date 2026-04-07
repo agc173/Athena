@@ -102,3 +102,13 @@
 "streakCount": 5,
 "updatedAtEpochMillis": 1775529600000
 }
+
+## users/{uid}/habits/current
+{
+"todayDateIso": "2026-04-07",
+"selectedIntentionIds": ["conexion", "gratitud", "calma"],
+"completedIntentionIds": ["conexion", "calma"],
+"progressPoints": 12,
+"completedCycles": 1,
+"updatedAtEpochMillis": 1775529600000
+}

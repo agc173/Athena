@@ -89,6 +89,24 @@ Notas:
 
 ---
 
+### /users/{userId}/habits/current
+Snapshot sincronizado de Hábitos (single doc activo por usuario).
+
+Campos:
+- todayDateIso: string ISO `YYYY-MM-DD`
+- selectedIntentionIds: array<string>
+- completedIntentionIds: array<string>
+- progressPoints: number
+- completedCycles: number
+- updatedAtEpochMillis: number
+
+Notas:
+- Estrategia local-first: Settings sigue siendo la fuente inmediata para lectura.
+- Merge cliente por `updatedAtEpochMillis` (last-write-wins).
+- Documento: `users/{uid}/habits/current`.
+
+---
+
 ### /usernames/{normalizedUsername}
 Índice dedicado para unicidad real de username.
 
