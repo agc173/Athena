@@ -2,6 +2,7 @@ package com.agc.bwitch.presentation.rituals
 
 import com.agc.bwitch.domain.rituals.HabitsRepository
 import com.agc.bwitch.domain.rituals.DailyRitualRepository
+import com.agc.bwitch.domain.rituals.habitBadgeTypeForCycles
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -53,6 +54,7 @@ class HabitsViewModel(
                     progressPoints = progress.currentCyclePoints,
                     cycleTarget = progress.cycleTarget,
                     completedCycles = progress.completedCycles,
+                    activeBadgeType = habitBadgeTypeForCycles(progress.completedCycles),
                     glowLevel = streak.toHabitsGlowLevel(),
                     intentions = intentions.map { intention ->
                         HabitIntentionUiModel(

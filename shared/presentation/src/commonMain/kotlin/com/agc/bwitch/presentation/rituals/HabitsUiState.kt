@@ -1,10 +1,13 @@
 package com.agc.bwitch.presentation.rituals
 
+import com.agc.bwitch.domain.rituals.HabitBadgeType
+
 data class HabitsUiState(
     val isLoading: Boolean = true,
     val progressPoints: Int = 0,
     val cycleTarget: Int = 60,
     val completedCycles: Int = 0,
+    val activeBadgeType: HabitBadgeType = HabitBadgeType.Tree,
     val glowLevel: HabitsGlowLevel = HabitsGlowLevel.Base,
     val intentions: List<HabitIntentionUiModel> = emptyList(),
 )

@@ -4,7 +4,9 @@ import com.agc.bwitch.domain.astrology.birthchart.BirthEssenceProfile
 import com.agc.bwitch.domain.astrology.birthchart.ObserveBirthEssenceUseCase
 import com.agc.bwitch.domain.astrology.horoscope.DeriveZodiacSignUseCase
 import com.agc.bwitch.domain.rituals.DailyRitualRepository
+import com.agc.bwitch.domain.rituals.HabitBadgeType
 import com.agc.bwitch.domain.rituals.HabitsRepository
+import com.agc.bwitch.domain.rituals.habitBadgeTypeForCycles
 import com.agc.bwitch.domain.userprofile.GetUserProfileUseCase
 import com.agc.bwitch.domain.userprofile.ObserveUserProfileUseCase
 import com.agc.bwitch.domain.userprofile.PullUserProfileUseCase
@@ -53,6 +55,7 @@ data class ProfileHabitsProgressUi(
     val cycleTarget: Int = 60,
     val completedCycles: Int = 0,
     val hasStarted: Boolean = false,
+    val activeBadgeType: HabitBadgeType = HabitBadgeType.Tree,
     val glowLevel: HabitsGlowLevel = HabitsGlowLevel.Base,
 )
 
@@ -274,6 +277,7 @@ class UserProfileViewModel(
                             cycleTarget = progress.cycleTarget,
                             completedCycles = progress.completedCycles,
                             hasStarted = progress.currentCyclePoints > 0 || progress.completedCycles > 0,
+                            activeBadgeType = habitBadgeTypeForCycles(progress.completedCycles),
                             glowLevel = streak.toHabitsGlowLevel(),
                         )
                     )

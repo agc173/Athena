@@ -43,7 +43,7 @@ import com.agc.bwitch.domain.astrology.birthchart.BirthEssenceProfile
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
 import com.agc.bwitch.presentation.userprofile.UserProfileViewModel
 import com.agc.bwitch.ui.common.toVisualResource
-import com.agc.bwitch.ui.rituals.components.HabitsProgressRing
+import com.agc.bwitch.ui.rituals.components.HabitsProgressBadge
 import com.agc.bwitch.ui.theme.BWitchThemeTokens
 import io.kamel.image.KamelImage
 import io.kamel.image.asyncPainterResource
@@ -238,12 +238,12 @@ fun ProfileScreen(
                         horizontalArrangement = Arrangement.spacedBy(dimens.spacingMd),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        HabitsProgressRing(
-                            current = habitsProgress.currentCyclePoints,
-                            target = habitsProgress.cycleTarget,
-                            size = 72.dp,
-                            strokeWidth = 6.dp,
+                        HabitsProgressBadge(
+                            badgeType = habitsProgress.activeBadgeType,
+                            currentPoints = habitsProgress.currentCyclePoints,
+                            cycleTarget = habitsProgress.cycleTarget,
                             glowLevel = habitsProgress.glowLevel,
+                            modifier = Modifier.size(72.dp),
                         )
                         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Text(
