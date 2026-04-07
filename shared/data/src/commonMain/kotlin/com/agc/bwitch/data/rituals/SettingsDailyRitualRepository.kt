@@ -6,6 +6,7 @@ import com.agc.bwitch.domain.rituals.DailyRitualRepository
 import com.agc.bwitch.domain.rituals.DailyRitualTemplate
 import com.agc.bwitch.domain.rituals.DailyRitualTheme
 import com.russhwolf.settings.Settings
+import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.daysUntil
 
@@ -22,6 +23,7 @@ class SettingsDailyRitualRepository(
     private val KEY_DAILY_COMPLETED = "daily_completed"
     private val KEY_LAST_COMPLETED_DATE_ISO = "last_completed_date_iso"
     private val KEY_STREAK_COUNT = "streak_count"
+    private val KEY_UPDATED_AT_EPOCH_MILLIS = "updated_at_epoch_millis"
 
     override fun getTemplateForDate(date: LocalDate): DailyRitualTemplate {
         val dateIso = date.toString()
@@ -39,8 +41,8 @@ class SettingsDailyRitualRepository(
         val previousTheme = settings.getString(KEY_SELECTED_THEME, defaultValue = "")
             .takeIf { it.isNotEmpty() }
             ?.let { raw ->
-            runCatching { DailyRitualTheme.valueOf(raw) }.getOrNull()
-        }
+                runCatching { DailyRitualTheme.valueOf(raw) }.getOrNull()
+            }
 
         val chosen = pickTemplate(date, previousTemplateId, previousTheme)
 
@@ -49,6 +51,7 @@ class SettingsDailyRitualRepository(
         settings.putString(KEY_SELECTED_THEME, chosen.theme.name)
         settings.putString(KEY_DAILY_COMPLETION_DATE_ISO, dateIso)
         settings.putBoolean(KEY_DAILY_COMPLETED, false)
+        touchUpdatedAt()
 
         return chosen
     }
@@ -84,8 +87,40 @@ class SettingsDailyRitualRepository(
         settings.putString(KEY_LAST_COMPLETED_DATE_ISO, dateIso)
         settings.putString(KEY_DAILY_COMPLETION_DATE_ISO, dateIso)
         settings.putBoolean(KEY_DAILY_COMPLETED, true)
+        touchUpdatedAt()
 
         return newStreak
+    }
+
+    internal fun getStateSnapshot(): DailyRitualLocalState {
+        return DailyRitualLocalState(
+            selectedDateIso = settings.getString(KEY_SELECTED_DATE_ISO, defaultValue = "").ifBlank { null },
+            selectedTemplateId = settings.getString(KEY_SELECTED_TEMPLATE_ID, defaultValue = "").ifBlank { null },
+            selectedTheme = settings.getString(KEY_SELECTED_THEME, defaultValue = "")
+                .ifBlank { null }
+                ?.let { raw -> runCatching { DailyRitualTheme.valueOf(raw) }.getOrNull() },
+            dailyCompletionDateIso = settings.getString(KEY_DAILY_COMPLETION_DATE_ISO, defaultValue = "").ifBlank { null },
+            dailyCompleted = settings.getBoolean(KEY_DAILY_COMPLETED, defaultValue = false),
+            lastCompletedDateIso = settings.getString(KEY_LAST_COMPLETED_DATE_ISO, defaultValue = "").ifBlank { null },
+            streakCount = settings.getInt(KEY_STREAK_COUNT, defaultValue = 0),
+            updatedAtEpochMillis = settings.getLong(KEY_UPDATED_AT_EPOCH_MILLIS, 0L)
+        )
+    }
+
+    internal fun saveStateSnapshot(state: DailyRitualLocalState) {
+        putNullableString(KEY_SELECTED_DATE_ISO, state.selectedDateIso)
+        putNullableString(KEY_SELECTED_TEMPLATE_ID, state.selectedTemplateId)
+        putNullableString(KEY_SELECTED_THEME, state.selectedTheme?.name)
+        putNullableString(KEY_DAILY_COMPLETION_DATE_ISO, state.dailyCompletionDateIso)
+        settings.putBoolean(KEY_DAILY_COMPLETED, state.dailyCompleted)
+        putNullableString(KEY_LAST_COMPLETED_DATE_ISO, state.lastCompletedDateIso)
+        settings.putInt(KEY_STREAK_COUNT, state.streakCount)
+        settings.putLong(KEY_UPDATED_AT_EPOCH_MILLIS, state.updatedAtEpochMillis)
+    }
+
+    internal fun getLocalUpdatedAtEpochMillisOrNull(): Long? {
+        val value = settings.getLong(KEY_UPDATED_AT_EPOCH_MILLIS, 0L)
+        return value.takeIf { it > 0L }
     }
 
     private fun ensureDailyCompletionState(dateIso: String) {
@@ -93,7 +128,16 @@ class SettingsDailyRitualRepository(
         if (completionDateIso != dateIso) {
             settings.putString(KEY_DAILY_COMPLETION_DATE_ISO, dateIso)
             settings.putBoolean(KEY_DAILY_COMPLETED, false)
+            touchUpdatedAt()
         }
+    }
+
+    private fun touchUpdatedAt() {
+        settings.putLong(KEY_UPDATED_AT_EPOCH_MILLIS, Clock.System.now().toEpochMilliseconds())
+    }
+
+    private fun putNullableString(key: String, value: String?) {
+        if (value.isNullOrBlank()) settings.remove(key) else settings.putString(key, value)
     }
 
     private fun pickTemplate(
@@ -136,3 +180,14 @@ class SettingsDailyRitualRepository(
 
     private fun safeDate(value: String): LocalDate? = runCatching { LocalDate.parse(value) }.getOrNull()
 }
+
+internal data class DailyRitualLocalState(
+    val selectedDateIso: String? = null,
+    val selectedTemplateId: String? = null,
+    val selectedTheme: DailyRitualTheme? = null,
+    val dailyCompletionDateIso: String? = null,
+    val dailyCompleted: Boolean = false,
+    val lastCompletedDateIso: String? = null,
+    val streakCount: Int = 0,
+    val updatedAtEpochMillis: Long = 0L,
+)

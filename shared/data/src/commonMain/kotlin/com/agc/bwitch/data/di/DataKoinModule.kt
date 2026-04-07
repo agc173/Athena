@@ -8,6 +8,7 @@ import com.agc.bwitch.data.functions.GitLiveFunctionsClient
 import com.agc.bwitch.data.oracle.OracleRepositoryImpl
 import com.agc.bwitch.data.rituals.LocalRitualCatalogRepository
 import com.agc.bwitch.data.rituals.SettingsDailyRitualRepository
+import com.agc.bwitch.data.rituals.SyncDailyRitualRepository
 import com.agc.bwitch.data.rituals.FirestoreBackedRitualCatalogRepository
 import com.agc.bwitch.data.rituals.SettingsHabitsRepository
 import com.agc.bwitch.data.session.LocalUserDataRepositoryImpl
@@ -35,6 +36,9 @@ import com.agc.bwitch.data.astrology.horoscope.SyncHoroscopeDailyRepository
 import com.agc.bwitch.domain.astrology.horoscope.HoroscopeDailySyncController
 import com.agc.bwitch.data.astrology.horoscope.SettingsHoroscopePullMarkerRepository
 import com.agc.bwitch.domain.astrology.horoscope.HoroscopePullMarker
+import dev.gitlive.firebase.Firebase
+import dev.gitlive.firebase.firestore.FirebaseFirestore
+import dev.gitlive.firebase.firestore.firestore
 
 val dataKoinModule: Module = module {
 
@@ -102,7 +106,10 @@ val dataKoinModule: Module = module {
     /**
      * Daily Ritual
      */
-    single<DailyRitualRepository> { SettingsDailyRitualRepository(get()) }
+    single<FirebaseFirestore> { Firebase.firestore }
+    single { SettingsDailyRitualRepository(get()) }
+    single { SyncDailyRitualRepository(get(), get()) }
+    single<DailyRitualRepository> { get<SyncDailyRitualRepository>() }
     single<HabitsRepository> { SettingsHabitsRepository(get()) }
     single { LocalRitualCatalogRepository() }
     single { FirestoreBackedRitualCatalogRepository(local = get(), settingsFactory = get()).also { it.warmUp() } }
