@@ -14,7 +14,7 @@ data class DailyRitualRemoteDto(
     val streakCount: Int = 0,
     val updatedAtEpochMillis: Long = 0L,
 ) {
-    fun toLocalState(): DailyRitualLocalState =
+    internal fun toLocalState(): DailyRitualLocalState =
         DailyRitualLocalState(
             selectedDateIso = selectedDateIso,
             selectedTemplateId = selectedTemplateId,
@@ -28,7 +28,7 @@ data class DailyRitualRemoteDto(
         )
 
     companion object {
-        fun fromLocalState(state: DailyRitualLocalState): DailyRitualRemoteDto =
+        internal fun fromLocalState(state: DailyRitualLocalState): DailyRitualRemoteDto =
             DailyRitualRemoteDto(
                 selectedDateIso = state.selectedDateIso,
                 selectedTemplateId = state.selectedTemplateId,
