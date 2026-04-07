@@ -47,3 +47,8 @@ NOTA: Estas reglas son un borrador; deben revisarse antes de producción.
     - read: authenticated && request.auth.uid == uid
     - write: authenticated && request.auth.uid == uid
     - validar tipos de campos y `updatedAtEpochMillis` numérico
+
+- /users/{uid}/habits/current
+    - read: authenticated && request.auth.uid == uid
+    - write: authenticated && request.auth.uid == uid
+    - validar tipos de campos y `updatedAtEpochMillis` numérico

@@ -18,37 +18,77 @@ class SettingsHabitsRepository(
     private val settings: Settings = settingsFactory.create("bwitch_habits")
 
     override fun getTodayIntentions(): List<HabitIntention> {
-        val state = ensureTodayState()
+        val state = getStateSnapshot()
         return state.selectedIntentionIds.mapNotNull { id -> intentionsPool.find { it.id == id } }
     }
 
-    override fun getTodayState(): DailyHabitsState = ensureTodayState()
+    override fun getTodayState(): DailyHabitsState = getStateSnapshot().toDailyHabitsState()
 
-    override fun getProgress(): HabitsProgress = HabitsProgress(
-        currentCyclePoints = settings.getInt(PROGRESS_POINTS_KEY, 0).coerceAtLeast(0),
-        cycleTarget = CYCLE_TARGET,
-        completedCycles = settings.getInt(COMPLETED_CYCLES_KEY, 0).coerceAtLeast(0),
-    )
+    override fun getProgress(): HabitsProgress = getStateSnapshot().toHabitsProgress()
 
     override fun markCompleted(intentionId: String) {
-        val state = ensureTodayState()
+        val state = getStateSnapshot()
         if (intentionId !in state.selectedIntentionIds) return
         if (intentionId in state.completedIntentionIds) return
 
         val updatedCompleted = (state.completedIntentionIds + intentionId).take(MAX_DAILY_INTENTIONS).toSet()
-        saveTodayState(state.copy(completedIntentionIds = updatedCompleted))
-
-        updateProgress(delta = 1)
+        val updatedProgress = progressAfterDelta(
+            currentPoints = state.progressPoints,
+            currentCycles = state.completedCycles,
+            delta = 1,
+        )
+        val updated = state.copy(
+            completedIntentionIds = updatedCompleted,
+            progressPoints = updatedProgress.first,
+            completedCycles = updatedProgress.second,
+            updatedAtEpochMillis = nowEpochMillis(),
+        )
+        saveStateSnapshot(updated)
     }
 
     override fun unmarkCompleted(intentionId: String) {
-        val state = ensureTodayState()
+        val state = getStateSnapshot()
         if (intentionId !in state.completedIntentionIds) return
 
         val updatedCompleted = state.completedIntentionIds - intentionId
-        saveTodayState(state.copy(completedIntentionIds = updatedCompleted))
+        val updatedProgress = progressAfterDelta(
+            currentPoints = state.progressPoints,
+            currentCycles = state.completedCycles,
+            delta = -1,
+        )
+        val updated = state.copy(
+            completedIntentionIds = updatedCompleted,
+            progressPoints = updatedProgress.first,
+            completedCycles = updatedProgress.second,
+            updatedAtEpochMillis = nowEpochMillis(),
+        )
+        saveStateSnapshot(updated)
+    }
 
-        updateProgress(delta = -1)
+    internal fun getStateSnapshot(): HabitsLocalState {
+        val dailyState = ensureTodayState()
+        return HabitsLocalState(
+            todayDateIso = dailyState.date,
+            selectedIntentionIds = dailyState.selectedIntentionIds,
+            completedIntentionIds = dailyState.completedIntentionIds,
+            progressPoints = settings.getInt(PROGRESS_POINTS_KEY, 0).coerceAtLeast(0),
+            completedCycles = settings.getInt(COMPLETED_CYCLES_KEY, 0).coerceAtLeast(0),
+            updatedAtEpochMillis = settings.getLong(UPDATED_AT_EPOCH_MILLIS_KEY, 0L),
+        )
+    }
+
+    internal fun saveStateSnapshot(state: HabitsLocalState) {
+        settings.putString(TODAY_DATE_KEY, state.todayDateIso)
+        settings.putString(TODAY_SELECTED_IDS_KEY, state.selectedIntentionIds.joinToString(SEPARATOR))
+        settings.putString(TODAY_COMPLETED_IDS_KEY, state.completedIntentionIds.joinToString(SEPARATOR))
+        settings.putInt(PROGRESS_POINTS_KEY, state.progressPoints.coerceAtLeast(0))
+        settings.putInt(COMPLETED_CYCLES_KEY, state.completedCycles.coerceAtLeast(0))
+        settings.putLong(UPDATED_AT_EPOCH_MILLIS_KEY, state.updatedAtEpochMillis.coerceAtLeast(0L))
+    }
+
+    internal fun getLocalUpdatedAtEpochMillisOrNull(): Long? {
+        val value = settings.getLong(UPDATED_AT_EPOCH_MILLIS_KEY, 0L)
+        return if (value > 0L) value else null
     }
 
     private fun ensureTodayState(): DailyHabitsState {
@@ -71,7 +111,16 @@ class SettingsHabitsRepository(
             selectedIntentionIds = newIds,
             completedIntentionIds = emptySet(),
         )
-        saveTodayState(newState)
+        saveStateSnapshot(
+            state = HabitsLocalState(
+                todayDateIso = newState.date,
+                selectedIntentionIds = newState.selectedIntentionIds,
+                completedIntentionIds = newState.completedIntentionIds,
+                progressPoints = settings.getInt(PROGRESS_POINTS_KEY, 0).coerceAtLeast(0),
+                completedCycles = settings.getInt(COMPLETED_CYCLES_KEY, 0).coerceAtLeast(0),
+                updatedAtEpochMillis = nowEpochMillis(),
+            )
+        )
         return newState
     }
 
@@ -101,35 +150,23 @@ class SettingsHabitsRepository(
         return intentionsPool.shuffled(random).take(MAX_DAILY_INTENTIONS).map { it.id }
     }
 
-    private fun updateProgress(delta: Int) {
-        val currentPoints = settings.getInt(PROGRESS_POINTS_KEY, 0).coerceAtLeast(0)
-        val currentCycles = settings.getInt(COMPLETED_CYCLES_KEY, 0).coerceAtLeast(0)
-
+    private fun progressAfterDelta(currentPoints: Int, currentCycles: Int, delta: Int): Pair<Int, Int> {
         if (delta > 0) {
             val total = currentPoints + delta
             val earnedCycles = total / CYCLE_TARGET
             val nextPoints = total % CYCLE_TARGET
-            settings.putInt(PROGRESS_POINTS_KEY, nextPoints)
-            settings.putInt(COMPLETED_CYCLES_KEY, currentCycles + earnedCycles)
-            return
+            return nextPoints to (currentCycles + earnedCycles)
         }
 
         if (delta < 0) {
             if (currentPoints > 0) {
-                settings.putInt(PROGRESS_POINTS_KEY, currentPoints - 1)
-                return
+                return (currentPoints - 1) to currentCycles
             }
             if (currentCycles > 0) {
-                settings.putInt(COMPLETED_CYCLES_KEY, currentCycles - 1)
-                settings.putInt(PROGRESS_POINTS_KEY, CYCLE_TARGET - 1)
+                return (CYCLE_TARGET - 1) to (currentCycles - 1)
             }
         }
-    }
-
-    private fun saveTodayState(state: DailyHabitsState) {
-        settings.putString(TODAY_DATE_KEY, state.date)
-        settings.putString(TODAY_SELECTED_IDS_KEY, state.selectedIntentionIds.joinToString(SEPARATOR))
-        settings.putString(TODAY_COMPLETED_IDS_KEY, state.completedIntentionIds.joinToString(SEPARATOR))
+        return currentPoints to currentCycles
     }
 
     private fun readIds(key: String): List<String> =
@@ -142,6 +179,8 @@ class SettingsHabitsRepository(
     private fun todayIsoDate(): String =
         Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date.toString()
 
+    private fun nowEpochMillis(): Long = Clock.System.now().toEpochMilliseconds()
+
     private companion object {
         private const val CYCLE_TARGET = 60
         private const val MAX_DAILY_INTENTIONS = 3
@@ -152,6 +191,7 @@ class SettingsHabitsRepository(
         private const val TODAY_COMPLETED_IDS_KEY = "habits_today_completed_ids"
         private const val PROGRESS_POINTS_KEY = "habits_progress_points"
         private const val COMPLETED_CYCLES_KEY = "habits_completed_cycles"
+        private const val UPDATED_AT_EPOCH_MILLIS_KEY = "habits_updated_at_epoch_millis"
 
         private val intentionsPool = listOf(
             HabitIntention(
@@ -216,4 +256,25 @@ class SettingsHabitsRepository(
             ),
         )
     }
+}
+
+internal data class HabitsLocalState(
+    val todayDateIso: String,
+    val selectedIntentionIds: List<String>,
+    val completedIntentionIds: Set<String>,
+    val progressPoints: Int,
+    val completedCycles: Int,
+    val updatedAtEpochMillis: Long = 0L,
+) {
+    fun toDailyHabitsState(): DailyHabitsState = DailyHabitsState(
+        date = todayDateIso,
+        selectedIntentionIds = selectedIntentionIds,
+        completedIntentionIds = completedIntentionIds,
+    )
+
+    fun toHabitsProgress(): HabitsProgress = HabitsProgress(
+        currentCyclePoints = progressPoints,
+        cycleTarget = 60,
+        completedCycles = completedCycles,
+    )
 }
