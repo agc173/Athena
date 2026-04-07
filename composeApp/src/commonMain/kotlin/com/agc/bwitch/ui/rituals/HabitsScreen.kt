@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
@@ -32,7 +33,7 @@ import com.agc.bwitch.presentation.rituals.HabitsViewModel
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
 import com.agc.bwitch.ui.common.designsystem.BWitchScreen
 import com.agc.bwitch.ui.common.designsystem.BWitchSectionHeader
-import com.agc.bwitch.ui.rituals.components.HabitsProgressRing
+import com.agc.bwitch.ui.rituals.components.HabitsProgressBadge
 import org.koin.compose.koinInject
 
 @Composable
@@ -92,10 +93,12 @@ private fun HabitsProgressCard(state: HabitsUiState) {
             horizontalArrangement = Arrangement.spacedBy(14.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            HabitsProgressRing(
-                current = state.progressPoints,
-                target = state.cycleTarget,
+            HabitsProgressBadge(
+                badgeType = state.activeBadgeType,
+                currentPoints = state.progressPoints,
+                cycleTarget = state.cycleTarget,
                 glowLevel = state.glowLevel,
+                modifier = Modifier.size(92.dp),
             )
 
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
