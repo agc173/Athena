@@ -13,6 +13,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
 import kotlinx.datetime.Clock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
@@ -32,19 +33,13 @@ class FirestoreBackedRitualCatalogRepository(
     private val ritualsKey = "rituals_v1"
     private val syncStaleMillis = 5 * 60 * 1_000L
 
-    private val syncLock = Any()
+    private val syncMutex = Mutex()
 
-    @Volatile
-    private var isSyncInFlight: Boolean = false
-
-    @Volatile
     private var lastSyncAtEpochMillis: Long? = null
 
-    @Volatile
     private var categoriesCache: List<RitualCategory> =
         readCategoriesFromSettings().ifEmpty { local.getCategories() }
 
-    @Volatile
     private var ritualDetailsCache: List<RitualDetail> =
         readRitualsFromSettings().ifEmpty { allLocalRituals() }
 
@@ -57,27 +52,26 @@ class FirestoreBackedRitualCatalogRepository(
         val now = Clock.System.now().toEpochMilliseconds()
         if (!force && !shouldRefresh(now)) return
 
-        synchronized(syncLock) {
-            if (isSyncInFlight) return
-            if (!force && !shouldRefresh(now)) return
-            isSyncInFlight = true
-        }
+        if (!syncMutex.tryLock()) return
 
         scope.launch {
             var syncSucceeded = false
+            val syncNow = Clock.System.now().toEpochMilliseconds()
 
-            runCatching {
-                syncFromRemote()
-                syncSucceeded = true
-            }.onFailure { error ->
-                println("BWITCH_RITUAL_CATALOG sync failed: ${error.message}")
-            }
-
-            synchronized(syncLock) {
+            try {
+                if (force || shouldRefresh(syncNow)) {
+                    runCatching {
+                        syncFromRemote()
+                        syncSucceeded = true
+                    }.onFailure { error ->
+                        println("BWITCH_RITUAL_CATALOG sync failed: ${error.message}")
+                    }
+                }
                 if (syncSucceeded) {
                     lastSyncAtEpochMillis = Clock.System.now().toEpochMilliseconds()
                 }
-                isSyncInFlight = false
+            } finally {
+                syncMutex.unlock()
             }
         }
     }
