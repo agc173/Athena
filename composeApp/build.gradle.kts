@@ -113,8 +113,10 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
     lint {
+        // Keep non-blocking lint while we progressively stabilize the KMP/AGP setup.
+        // We still run release lint checks to increase signal in CI without forcing hard failures yet.
         abortOnError = false
-        checkReleaseBuilds = false
+        checkReleaseBuilds = true
     }
 }
 
