@@ -86,7 +86,7 @@ android {
 //   when traversing expect/actual KMP declarations.
 //
 // Scope:
-// - Explicitly limited to DEBUG lint tasks of this module only.
+// - Explicitly limited to DEBUG lint tasks of this module only (main + unit/androidTest variants).
 // - We keep `checkReleaseBuilds = true` above, so release lint policy is preserved.
 //
 // Next safe step to remove:
@@ -95,8 +95,14 @@ android {
 // ---------------------------------------------------------------------------------------------
 
 tasks.matching {
-    it.name == "lintAnalyzeDebug" ||
-            it.name == "lintDebug"
+    it.name in setOf(
+        "lintAnalyzeDebug",
+        "lintAnalyzeDebugUnitTest",
+        "lintAnalyzeDebugAndroidTest",
+        "lintDebug",
+        "lintDebugUnitTest",
+        "lintDebugAndroidTest",
+    )
 }.configureEach {
     enabled = false
 }

@@ -135,13 +135,17 @@ android {
 //   detector crashes / metadata incompatibilities in current tooling versions.
 //
 // Scope:
-// - Explicitly restricted to composeApp lint task entry-points used by debug/release checks.
+// - Explicitly restricted to composeApp lint task entry-points used by debug/release checks, including debug test variants.
 // - Temporary measure only; remove after planned AGP/Kotlin/Compose alignment batch.
 // ---------------------------------------------------------------------------------------------
 tasks.matching {
     it.name in setOf(
         "lintDebug",
         "lintAnalyzeDebug",
+        "lintAnalyzeDebugUnitTest",
+        "lintAnalyzeDebugAndroidTest",
+        "lintDebugUnitTest",
+        "lintDebugAndroidTest",
         "lintRelease",
         "lintAnalyzeRelease",
         "lintVitalAnalyzeRelease",

@@ -56,12 +56,18 @@ android {
 // LINT WORKAROUND (KMP metadata incompatibility in Android debug lint)
 //
 // Scope:
-// - Temporarily disable debug lint entry-points in this module only.
+// - Temporarily disable debug lint entry-points in this module only, including unit/androidTest variants.
 // - Keep release lint policy enabled (`checkReleaseBuilds = true`).
 // ---------------------------------------------------------------------------------------------
 tasks.matching {
-    it.name == "lintAnalyzeDebug" ||
-            it.name == "lintDebug"
+    it.name in setOf(
+        "lintAnalyzeDebug",
+        "lintAnalyzeDebugUnitTest",
+        "lintAnalyzeDebugAndroidTest",
+        "lintDebug",
+        "lintDebugUnitTest",
+        "lintDebugAndroidTest",
+    )
 }.configureEach {
     enabled = false
 }
