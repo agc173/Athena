@@ -1,0 +1,9 @@
+# Keep Firebase Functions sources/config in LF to avoid lint/predeploy issues on Windows.
+functions/**/*.ts text eol=lf
+functions/**/*.js text eol=lf
+functions/**/*.json text eol=lf
+functions/.eslintrc.js text eol=lf
+firebase.json text eol=lf
+
+# Shell scripts should always use LF.
+*.sh text eol=lf
