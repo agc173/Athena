@@ -8,6 +8,9 @@ import com.agc.bwitch.domain.astrology.horoscope.HoroscopeRepository
 import com.agc.bwitch.domain.astrology.horoscope.ObserveDailyHoroscopeUseCase
 import com.agc.bwitch.domain.astrology.horoscope.PullDailyHoroscopeUseCase
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
+import com.agc.bwitch.domain.userprofile.ObserveUserProfileUseCase
+import com.agc.bwitch.domain.userprofile.UserProfile
+import com.agc.bwitch.domain.userprofile.UserProfileRepository
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -32,6 +35,7 @@ class HoroscopeViewModelTest {
         val observeUseCase = ObserveDailyHoroscopeUseCase(repo)
         val getUseCase = GetDailyHoroscopeUseCase(repo)
         val pullUseCase = PullDailyHoroscopeUseCase(FakeSync())
+        val observeUserProfileUseCase = ObserveUserProfileUseCase(FakeUserProfileRepo())
 
         val pullMarker = FakePullMarker(lastPulledDateIso = null) // fuerza pull (pero FakeSync no falla)
 
@@ -52,6 +56,7 @@ class HoroscopeViewModelTest {
             getDailyHoroscopeUseCase = getUseCase,
             pullDailyHoroscopeUseCase = pullUseCase,
             pullMarker = pullMarker,
+            observeUserProfileUseCase = observeUserProfileUseCase,
             dispatcher = dispatcher,
         )
 
@@ -71,6 +76,7 @@ class HoroscopeViewModelTest {
         val observeUseCase = ObserveDailyHoroscopeUseCase(repo)
         val getUseCase = GetDailyHoroscopeUseCase(repo)
         val pullUseCase = PullDailyHoroscopeUseCase(FakeSync())
+        val observeUserProfileUseCase = ObserveUserProfileUseCase(FakeUserProfileRepo())
 
         val pullMarker = FakePullMarker(lastPulledDateIso = null)
 
@@ -91,6 +97,7 @@ class HoroscopeViewModelTest {
             getDailyHoroscopeUseCase = getUseCase,
             pullDailyHoroscopeUseCase = pullUseCase,
             pullMarker = pullMarker,
+            observeUserProfileUseCase = observeUserProfileUseCase,
             dispatcher = dispatcher,
         )
 
@@ -124,6 +131,7 @@ class HoroscopeViewModelTest {
         val repo = FakeRepo()
         val observeUseCase = ObserveDailyHoroscopeUseCase(repo)
         val getUseCase = GetDailyHoroscopeUseCase(repo)
+        val observeUserProfileUseCase = ObserveUserProfileUseCase(FakeUserProfileRepo())
 
         // Este sync fallaría si se llamase pull()
         val pullUseCase = PullDailyHoroscopeUseCase(FailingSync())
@@ -144,6 +152,7 @@ class HoroscopeViewModelTest {
             getDailyHoroscopeUseCase = getUseCase,
             pullDailyHoroscopeUseCase = pullUseCase,
             pullMarker = pullMarker,
+            observeUserProfileUseCase = observeUserProfileUseCase,
             dispatcher = dispatcher,
         )
 
@@ -192,6 +201,14 @@ class HoroscopeViewModelTest {
         override fun setLastPulledDateIso(dateIso: String) {
             lastPulledDateIso = dateIso
         }
+    }
+
+    private class FakeUserProfileRepo : UserProfileRepository {
+        override fun observeUserProfile(): Flow<UserProfile?> = MutableStateFlow(null)
+
+        override suspend fun getUserProfile(): UserProfile? = null
+
+        override suspend fun saveUserProfile(profile: UserProfile) = Unit
     }
 }
 
