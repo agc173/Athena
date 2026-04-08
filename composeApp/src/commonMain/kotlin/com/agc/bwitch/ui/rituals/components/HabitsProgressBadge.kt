@@ -14,9 +14,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import bwitch.composeapp.generated.resources.Res
+import bwitch.composeapp.generated.resources.habit_badge_bird
+import bwitch.composeapp.generated.resources.habit_badge_cat
+import bwitch.composeapp.generated.resources.habit_badge_cloud
+import bwitch.composeapp.generated.resources.habit_badge_flame
 import bwitch.composeapp.generated.resources.habit_badge_firmament
+import bwitch.composeapp.generated.resources.habit_badge_katrina
+import bwitch.composeapp.generated.resources.habit_badge_laurel
 import bwitch.composeapp.generated.resources.habit_badge_mandala
+import bwitch.composeapp.generated.resources.habit_badge_mountain
 import bwitch.composeapp.generated.resources.habit_badge_tree
+import bwitch.composeapp.generated.resources.habit_badge_wave
 import com.agc.bwitch.domain.rituals.HabitBadgeType
 import com.agc.bwitch.presentation.rituals.HabitsGlowLevel
 import org.jetbrains.compose.resources.DrawableResource
@@ -69,6 +77,14 @@ private fun resourceFor(type: HabitBadgeType): DrawableResource = when (type) {
     HabitBadgeType.Tree -> Res.drawable.habit_badge_tree
     HabitBadgeType.Mandala -> Res.drawable.habit_badge_mandala
     HabitBadgeType.Firmament -> Res.drawable.habit_badge_firmament
+    HabitBadgeType.Laurel -> Res.drawable.habit_badge_laurel
+    HabitBadgeType.Bird -> Res.drawable.habit_badge_bird
+    HabitBadgeType.Mountain -> Res.drawable.habit_badge_mountain
+    HabitBadgeType.Cloud -> Res.drawable.habit_badge_cloud
+    HabitBadgeType.Wave -> Res.drawable.habit_badge_wave
+    HabitBadgeType.Flame -> Res.drawable.habit_badge_flame
+    HabitBadgeType.Cat -> Res.drawable.habit_badge_cat
+    HabitBadgeType.Katrina -> Res.drawable.habit_badge_katrina
 }
 
 private data class HabitsBadgeGlowStyle(
