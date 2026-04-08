@@ -7,7 +7,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
-import kotlinx.datetime.DatePeriod
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 
 class SynastryReadingGeneratorTest {
@@ -106,7 +106,7 @@ class SynastryReadingGeneratorTest {
     fun `overlay has autonomy and is not always top and bottom score`() {
         val input = sampleInput()
         val startDate = LocalDate.parse("2026-03-24")
-        val dateWindow = (0..29).map { offset -> startDate.plus(DatePeriod(days = offset)) }
+        val dateWindow = (0..29).map { offset -> startDate.plus(offset, DateTimeUnit.DAY) }
 
         val mismatches = dateWindow.count { date ->
             val structured = resolver.resolve(input, date)
