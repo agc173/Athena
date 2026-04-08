@@ -110,10 +110,19 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
     lint {
+        // TEMP WORKAROUND (Fase 1):
+        // There is an AGP/Lint vs Kotlin metadata incompatibility in release lint analysis
+        // (lint expects older metadata while project/deps are already on newer Kotlin metadata),
+        // and it can crash in androidx.lifecycle.lint.NonNullableMutableLiveDataDetector.
+        // Keep this scoped and explicit until the planned AGP/Kotlin/Compose upgrade phase.
+        disable += "NullSafeMutableLiveData"
+
+        // Main blocker for `./gradlew build` is release lint (`lintVitalAnalyzeRelease`).
+        // Temporarily avoid gating release builds on that lint phase until tooling versions are aligned.
+        checkReleaseBuilds = false
+
         // Keep non-blocking lint while we progressively stabilize the KMP/AGP setup.
-        // We still run release lint checks to increase signal in CI without forcing hard failures yet.
         abortOnError = false
-        checkReleaseBuilds = true
     }
 }
 
