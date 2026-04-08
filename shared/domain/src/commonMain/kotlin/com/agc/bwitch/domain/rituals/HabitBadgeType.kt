@@ -14,7 +14,7 @@ enum class HabitBadgeType {
     Katrina,
 }
 
-private val badgeOrder = listOf(
+val badgeOrder = listOf(
     HabitBadgeType.Tree,
     HabitBadgeType.Mandala,
     HabitBadgeType.Firmament,
@@ -31,4 +31,10 @@ private val badgeOrder = listOf(
 fun habitBadgeTypeForCycles(completedCycles: Int): HabitBadgeType {
     val normalizedCycles = completedCycles.coerceAtLeast(0)
     return badgeOrder[normalizedCycles % badgeOrder.size]
+}
+
+
+fun completedHabitBadgesForCycles(completedCycles: Int): List<HabitBadgeType> {
+    val normalizedCycles = completedCycles.coerceAtLeast(0)
+    return badgeOrder.take(normalizedCycles.coerceAtMost(badgeOrder.size))
 }

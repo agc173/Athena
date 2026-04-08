@@ -2,6 +2,9 @@ package com.agc.bwitch.ui.userprofile
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -41,9 +44,10 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.agc.bwitch.domain.astrology.birthchart.BirthEssenceProfile
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
+import com.agc.bwitch.domain.rituals.completedHabitBadgesForCycles
 import com.agc.bwitch.presentation.userprofile.UserProfileViewModel
 import com.agc.bwitch.ui.common.toVisualResource
-import com.agc.bwitch.ui.rituals.components.HabitsProgressBadge
+import com.agc.bwitch.ui.rituals.components.habitBadgeResourceFor
 import com.agc.bwitch.ui.theme.BWitchThemeTokens
 import io.kamel.image.KamelImage
 import io.kamel.image.asyncPainterResource
@@ -72,6 +76,7 @@ fun ProfileScreen(
     val profileDescription: String? = null
     val moonCredits: Int? = null
     val habitsProgress = state.habitsProgress
+    val completedBadges = completedHabitBadgesForCycles(habitsProgress.completedCycles)
 
     val dimens = BWitchThemeTokens.dimens
     val extras = BWitchThemeTokens.extras
@@ -233,28 +238,25 @@ fun ProfileScreen(
                 )
 
                 if (habitsProgress.hasStarted) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(dimens.spacingMd),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        HabitsProgressBadge(
-                            badgeType = habitsProgress.activeBadgeType,
-                            currentPoints = habitsProgress.currentCyclePoints,
-                            cycleTarget = habitsProgress.cycleTarget,
-                            glowLevel = habitsProgress.glowLevel,
-                            modifier = Modifier.size(72.dp),
-                        )
-                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text(
-                                text = "${habitsProgress.currentCyclePoints} / ${habitsProgress.cycleTarget} acciones en este ciclo",
-                                style = MaterialTheme.typography.bodyMedium,
-                            )
-                            Text(
-                                text = "${habitsProgress.completedCycles} ciclos completados",
-                                style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.primary,
-                            )
+                    Text(
+                        text = "${habitsProgress.completedCycles} ciclos completados",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+
+                    if (completedBadges.isNotEmpty()) {
+                        LazyRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            items(completedBadges) { badgeType ->
+                                Image(
+                                    painter = painterResource(habitBadgeResourceFor(badgeType)),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(44.dp),
+                                    alpha = 1f,
+                                )
+                            }
                         }
                     }
                 } else {

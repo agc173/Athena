@@ -66,14 +66,14 @@ fun HabitsProgressBadge(
         contentAlignment = Alignment.Center,
     ) {
         Image(
-            painter = painterResource(resourceFor(badgeType)),
+            painter = painterResource(habitBadgeResourceFor(badgeType)),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
         )
     }
 }
 
-private fun resourceFor(type: HabitBadgeType): DrawableResource = when (type) {
+fun habitBadgeResourceFor(type: HabitBadgeType): DrawableResource = when (type) {
     HabitBadgeType.Tree -> Res.drawable.habit_badge_tree
     HabitBadgeType.Mandala -> Res.drawable.habit_badge_mandala
     HabitBadgeType.Firmament -> Res.drawable.habit_badge_firmament
