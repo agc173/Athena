@@ -28,7 +28,7 @@ kotlin {
     
     sourceSets {
         androidMain.dependencies {
-            // (sin BoM)
+            // Android deps are declared explicitly (no Firebase BoM in this module)
 
             implementation(libs.androidx.core)
             implementation(libs.androidx.core.ktx)
@@ -73,9 +73,6 @@ kotlin {
             implementation(project(":shared:presentation"))
             implementation(project(":shared:data"))
             implementation(libs.kamel.image.default)
-
-
-
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -127,6 +124,9 @@ dependencies {
 configurations.matching {
     it.name.contains("RuntimeClasspath") || it.name.contains("CompileClasspath")
 }.all {
+    // Temporary pinning to keep Android variants aligned while we mix
+    // Compose/KMP + GitLive Firebase + selected native Firebase SDK artifacts.
+    // Do not remove blindly: validate with a reproducible online build + dependency insight.
     resolutionStrategy.force(
         "androidx.core:core:1.13.1",
         "androidx.core:core-ktx:1.13.1",
