@@ -7,7 +7,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
-import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 
 class SynastryReadingGeneratorTest {
@@ -105,8 +104,38 @@ class SynastryReadingGeneratorTest {
     @Test
     fun `overlay has autonomy and is not always top and bottom score`() {
         val input = sampleInput()
-        val startDate = LocalDate.parse("2026-03-24")
-        val dateWindow = (0..29).map { offset -> startDate.plus(offset, DateTimeUnit.DAY) }
+        val dateWindow = listOf(
+            LocalDate.parse("2026-03-24"),
+            LocalDate.parse("2026-03-25"),
+            LocalDate.parse("2026-03-26"),
+            LocalDate.parse("2026-03-27"),
+            LocalDate.parse("2026-03-28"),
+            LocalDate.parse("2026-03-29"),
+            LocalDate.parse("2026-03-30"),
+            LocalDate.parse("2026-03-31"),
+            LocalDate.parse("2026-04-01"),
+            LocalDate.parse("2026-04-02"),
+            LocalDate.parse("2026-04-03"),
+            LocalDate.parse("2026-04-04"),
+            LocalDate.parse("2026-04-05"),
+            LocalDate.parse("2026-04-06"),
+            LocalDate.parse("2026-04-07"),
+            LocalDate.parse("2026-04-08"),
+            LocalDate.parse("2026-04-09"),
+            LocalDate.parse("2026-04-10"),
+            LocalDate.parse("2026-04-11"),
+            LocalDate.parse("2026-04-12"),
+            LocalDate.parse("2026-04-13"),
+            LocalDate.parse("2026-04-14"),
+            LocalDate.parse("2026-04-15"),
+            LocalDate.parse("2026-04-16"),
+            LocalDate.parse("2026-04-17"),
+            LocalDate.parse("2026-04-18"),
+            LocalDate.parse("2026-04-19"),
+            LocalDate.parse("2026-04-20"),
+            LocalDate.parse("2026-04-21"),
+            LocalDate.parse("2026-04-22"),
+        )
 
         val mismatches = dateWindow.count { date ->
             val structured = resolver.resolve(input, date)
