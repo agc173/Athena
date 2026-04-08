@@ -1,21 +1,26 @@
 package com.agc.bwitch.ui.rituals.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
+import bwitch.composeapp.generated.resources.Res
+import bwitch.composeapp.generated.resources.habit_badge_firmament
+import bwitch.composeapp.generated.resources.habit_badge_mandala
+import bwitch.composeapp.generated.resources.habit_badge_tree
 import com.agc.bwitch.domain.rituals.HabitBadgeType
 import com.agc.bwitch.presentation.rituals.HabitsGlowLevel
-import com.agc.bwitch.ui.rituals.toHabitBadgeVisual
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
 
 @Composable
 fun HabitsProgressBadge(
@@ -31,8 +36,6 @@ fun HabitsProgressBadge(
     val badgeAlpha = 0.18f + (progress * 0.82f)
     val badgeScale = 0.96f + (progress * 0.08f)
     val glow = glowStyleFor(glowLevel, MaterialTheme.colorScheme.primary)
-    val visual = badgeType.toHabitBadgeVisual()
-
     Box(
         modifier = modifier
             .graphicsLayer {
@@ -54,13 +57,18 @@ fun HabitsProgressBadge(
             ),
         contentAlignment = Alignment.Center,
     ) {
-        // TODO: Replace this fallback with painterResource(Res.drawable.habit_badge_*) once assets are available.
-        Text(
-            text = visual.fallbackGlyph,
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.scale(1f + glow.glyphBoost),
+        Image(
+            painter = painterResource(resourceFor(badgeType)),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
         )
     }
+}
+
+private fun resourceFor(type: HabitBadgeType): DrawableResource = when (type) {
+    HabitBadgeType.Tree -> Res.drawable.habit_badge_tree
+    HabitBadgeType.Mandala -> Res.drawable.habit_badge_mandala
+    HabitBadgeType.Firmament -> Res.drawable.habit_badge_firmament
 }
 
 private data class HabitsBadgeGlowStyle(
