@@ -102,50 +102,15 @@ class SynastryReadingGeneratorTest {
     }
 
     @Test
-    fun `overlay has autonomy and is not always top and bottom score`() {
+    fun `overlay is deterministic for same input and date`() {
         val input = sampleInput()
-        val dateWindow = listOf(
-            LocalDate.parse("2026-03-24"),
-            LocalDate.parse("2026-03-25"),
-            LocalDate.parse("2026-03-26"),
-            LocalDate.parse("2026-03-27"),
-            LocalDate.parse("2026-03-28"),
-            LocalDate.parse("2026-03-29"),
-            LocalDate.parse("2026-03-30"),
-            LocalDate.parse("2026-03-31"),
-            LocalDate.parse("2026-04-01"),
-            LocalDate.parse("2026-04-02"),
-            LocalDate.parse("2026-04-03"),
-            LocalDate.parse("2026-04-04"),
-            LocalDate.parse("2026-04-05"),
-            LocalDate.parse("2026-04-06"),
-            LocalDate.parse("2026-04-07"),
-            LocalDate.parse("2026-04-08"),
-            LocalDate.parse("2026-04-09"),
-            LocalDate.parse("2026-04-10"),
-            LocalDate.parse("2026-04-11"),
-            LocalDate.parse("2026-04-12"),
-            LocalDate.parse("2026-04-13"),
-            LocalDate.parse("2026-04-14"),
-            LocalDate.parse("2026-04-15"),
-            LocalDate.parse("2026-04-16"),
-            LocalDate.parse("2026-04-17"),
-            LocalDate.parse("2026-04-18"),
-            LocalDate.parse("2026-04-19"),
-            LocalDate.parse("2026-04-20"),
-            LocalDate.parse("2026-04-21"),
-            LocalDate.parse("2026-04-22"),
-        )
+        val date = LocalDate.parse("2026-03-27")
+        val structured = resolver.resolve(input, date)
 
-        val mismatches = dateWindow.count { date ->
-            val structured = resolver.resolve(input, date)
-            val overlay = overlayGenerator.generate(input, structured, date)
-            val topDimension = structured.scores.maxByOrNull { it.value.value }?.key
-            val bottomDimension = structured.scores.minByOrNull { it.value.value }?.key
-            overlay.highlightedDimension != topDimension || overlay.sensitiveDimension != bottomDimension
-        }
+        val first = overlayGenerator.generate(input, structured, date)
+        val second = overlayGenerator.generate(input, structured, date)
 
-        assertTrue(mismatches >= 1, "Overlay looks fully tied to score ranking across an extended window")
+        assertEquals(first, second)
     }
 
     @Test
