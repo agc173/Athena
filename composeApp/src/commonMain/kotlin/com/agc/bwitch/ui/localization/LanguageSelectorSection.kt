@@ -29,17 +29,20 @@ fun LanguageSelectorSection(
     onLanguageSelected: (AppLanguage) -> Unit,
     enabled: Boolean,
     modifier: Modifier = Modifier,
+    titleText: String = stringResource(Res.string.app_language_section_title),
+    subtitleText: String = stringResource(Res.string.app_language_section_subtitle),
+    selectedPrefixText: String = stringResource(Res.string.app_language_selected_prefix),
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Text(
-            text = stringResource(Res.string.app_language_section_title),
+            text = titleText,
             style = MaterialTheme.typography.titleMedium,
         )
         Text(
-            text = stringResource(Res.string.app_language_section_subtitle),
+            text = subtitleText,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -51,7 +54,7 @@ fun LanguageSelectorSection(
                 enabled = enabled,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                val prefix = if (selected) stringResource(Res.string.app_language_selected_prefix) else ""
+                val prefix = if (selected) selectedPrefixText else ""
                 Text(text = prefix + language.nativeLabel)
             }
         }
