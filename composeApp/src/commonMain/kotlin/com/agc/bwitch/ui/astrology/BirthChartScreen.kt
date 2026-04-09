@@ -29,6 +29,8 @@ import androidx.compose.ui.window.DialogProperties
 import com.agc.bwitch.domain.astrology.birthchart.BirthEssenceArchetype
 import com.agc.bwitch.domain.astrology.birthchart.BirthEssenceProfile
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
+import com.agc.bwitch.localization.AppStrings
+import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.presentation.astrology.birthchart.BirthChartUiState
 import com.agc.bwitch.presentation.astrology.birthchart.BirthChartViewModel
 import com.agc.bwitch.ui.common.toVisualResource
@@ -46,6 +48,8 @@ fun BirthChartScreen(
 ) {
     val dimens = BWitchThemeTokens.dimens
     val extras = BWitchThemeTokens.extras
+    val strings = appStrings
+    val birthChartStrings = strings.birthChart
     val state by viewModel.uiState.collectAsState()
     val shareLauncher = rememberBirthEssenceShareLauncher()
     var shareError by remember { mutableStateOf<String?>(null) }
@@ -59,34 +63,37 @@ fun BirthChartScreen(
         verticalArrangement = Arrangement.spacedBy(dimens.spacingSm + dimens.spacingXs)
     ) {
         Text(
-            "Esencia natal",
+            birthChartStrings.title,
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onSurface,
         )
 
         Text(
-            "Selecciona Sol, Luna y Ascendente para recibir una lectura breve estilo BWitch.",
+            birthChartStrings.subtitle,
             style = MaterialTheme.typography.bodyMedium,
             color = extras.textSecondary,
         )
 
         SignDropdown(
-            label = "Signo solar",
+            label = birthChartStrings.sunSignLabel,
             selected = state.selectedSunSign,
+            strings = strings,
             enabled = !state.isBusy,
             onSelect = viewModel::onSunSignChange,
         )
 
         SignDropdown(
-            label = "Signo lunar",
+            label = birthChartStrings.moonSignLabel,
             selected = state.selectedMoonSign,
+            strings = strings,
             enabled = !state.isBusy,
             onSelect = viewModel::onMoonSignChange,
         )
 
         SignDropdown(
-            label = "Ascendente",
+            label = birthChartStrings.risingSignLabel,
             selected = state.selectedRisingSign,
+            strings = strings,
             enabled = !state.isBusy,
             onSelect = viewModel::onRisingSignChange,
         )
@@ -96,19 +103,21 @@ fun BirthChartScreen(
             enabled = !state.isBusy,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(if (state.isGenerating) "Descubriendo..." else "Descubrir mi esencia")
+            Text(if (state.isGenerating) birthChartStrings.discoverLoading else birthChartStrings.discoverCta)
         }
 
         if (state.hasGeneratedResult) {
             BWitchCard {
-                Text("Tu triada", style = MaterialTheme.typography.titleMedium)
+                Text(birthChartStrings.triadTitle, style = MaterialTheme.typography.titleMedium)
                 Text(
-                    "Sol: ${state.selectedSunSign.toDisplayName()} · Luna: ${state.selectedMoonSign.toDisplayName()} · Asc: ${state.selectedRisingSign.toDisplayName()}",
+                    "${birthChartStrings.triadSunLabel}: ${state.selectedSunSign.toDisplayName(strings)} · " +
+                        "${birthChartStrings.triadMoonLabel}: ${state.selectedMoonSign.toDisplayName(strings)} · " +
+                        "${birthChartStrings.triadAscLabel}: ${state.selectedRisingSign.toDisplayName(strings)}",
                     style = MaterialTheme.typography.bodyMedium,
                     color = extras.textSecondary,
                 )
                 state.generatedArchetype?.let {
-                    Text("Arquetipo", style = MaterialTheme.typography.labelLarge, color = extras.textSecondary)
+                    Text(birthChartStrings.archetypeLabel, style = MaterialTheme.typography.labelLarge, color = extras.textSecondary)
                     Text(it.displayNameEs, style = MaterialTheme.typography.titleLarge)
                     ArchetypeVisual(
                         archetype = it,
@@ -126,14 +135,14 @@ fun BirthChartScreen(
                     enabled = !state.isBusy,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(if (state.isSaving) "Guardando..." else "Guardar en mi perfil")
+                    Text(if (state.isSaving) birthChartStrings.saveLoading else birthChartStrings.saveCta)
                 }
                 BWitchPrimaryButton(
                     onClick = {
                         shareError = null
                         val shareProfile = state.toShareProfileOrNull()
                         if (shareProfile == null) {
-                            shareError = "Primero genera una esencia válida"
+                            shareError = birthChartStrings.shareValidationError
                             return@BWitchPrimaryButton
                         }
                         sharePreviewEssence = shareProfile
@@ -141,7 +150,7 @@ fun BirthChartScreen(
                     enabled = !state.isBusy && state.hasGeneratedResult,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Compartir esencia")
+                    Text(birthChartStrings.shareCta)
                 }
             }
         }
@@ -151,7 +160,7 @@ fun BirthChartScreen(
             enabled = !state.isBusy,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(if (state.isRefreshing) "Sincronizando..." else "Sincronizar")
+            Text(if (state.isRefreshing) birthChartStrings.syncLoading else birthChartStrings.syncCta)
         }
 
         state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
@@ -167,7 +176,7 @@ fun BirthChartScreen(
                 shareLauncher
                     .share(essence = essence, captureBounds = captureBounds)
                     .onSuccess { sharePreviewEssence = null }
-                    .onFailure { shareError = it.message ?: "No se pudo compartir la esencia" }
+                    .onFailure { shareError = it.message ?: birthChartStrings.shareFailedFallback }
             }
         )
     }
@@ -192,6 +201,7 @@ private fun BirthChartUiState.toShareProfileOrNull(): BirthEssenceProfile? {
 private fun SignDropdown(
     label: String,
     selected: ZodiacSign,
+    strings: AppStrings,
     enabled: Boolean,
     onSelect: (ZodiacSign) -> Unit,
 ) {
@@ -211,7 +221,7 @@ private fun SignDropdown(
             modifier = Modifier.fillMaxWidth(),
         ) {
             Text(
-                text = selected.toDisplayName(),
+                text = selected.toDisplayName(strings),
                 modifier = Modifier.fillMaxWidth(),
                 color = MaterialTheme.colorScheme.onSurface
             )
@@ -221,6 +231,7 @@ private fun SignDropdown(
             SignPickerDialog(
                 title = label,
                 selected = selected,
+                strings = strings,
                 onSelect = {
                     onSelect(it)
                     expanded = false
@@ -235,6 +246,7 @@ private fun SignDropdown(
 private fun SignPickerDialog(
     title: String,
     selected: ZodiacSign,
+    strings: AppStrings,
     onSelect: (ZodiacSign) -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -267,7 +279,8 @@ private fun SignPickerDialog(
                             onClick = { onSelect(sign) },
                             modifier = Modifier.fillMaxWidth(),
                         ) {
-                            val text = if (sign == selected) "${sign.toDisplayName()} ✓" else sign.toDisplayName()
+                            val signText = sign.toDisplayName(strings)
+                            val text = if (sign == selected) "$signText ✓" else signText
                             Text(text)
                         }
                     }
@@ -277,19 +290,19 @@ private fun SignPickerDialog(
     }
 }
 
-private fun ZodiacSign.toDisplayName(): String = when (this) {
-    ZodiacSign.aries -> "Aries"
-    ZodiacSign.taurus -> "Tauro"
-    ZodiacSign.gemini -> "Géminis"
-    ZodiacSign.cancer -> "Cáncer"
-    ZodiacSign.leo -> "Leo"
-    ZodiacSign.virgo -> "Virgo"
-    ZodiacSign.libra -> "Libra"
-    ZodiacSign.scorpio -> "Escorpio"
-    ZodiacSign.sagittarius -> "Sagitario"
-    ZodiacSign.capricorn -> "Capricornio"
-    ZodiacSign.aquarius -> "Acuario"
-    ZodiacSign.pisces -> "Piscis"
+private fun ZodiacSign.toDisplayName(strings: AppStrings): String = when (this) {
+    ZodiacSign.aries -> strings.zodiac.aries
+    ZodiacSign.taurus -> strings.zodiac.taurus
+    ZodiacSign.gemini -> strings.zodiac.gemini
+    ZodiacSign.cancer -> strings.zodiac.cancer
+    ZodiacSign.leo -> strings.zodiac.leo
+    ZodiacSign.virgo -> strings.zodiac.virgo
+    ZodiacSign.libra -> strings.zodiac.libra
+    ZodiacSign.scorpio -> strings.zodiac.scorpio
+    ZodiacSign.sagittarius -> strings.zodiac.sagittarius
+    ZodiacSign.capricorn -> strings.zodiac.capricorn
+    ZodiacSign.aquarius -> strings.zodiac.aquarius
+    ZodiacSign.pisces -> strings.zodiac.pisces
 }
 
 @Composable
@@ -299,6 +312,7 @@ private fun ShareEssencePreviewDialog(
     onShareNow: (ShareCaptureBounds) -> Unit,
 ) {
     val spacing = BWitchThemeTokens.dimens
+    val birthChartStrings = appStrings.birthChart
     var captureBounds by remember { mutableStateOf<ShareCaptureBounds?>(null) }
 
     Dialog(
@@ -317,7 +331,7 @@ private fun ShareEssencePreviewDialog(
                 verticalArrangement = Arrangement.spacedBy(spacing.spacingSm)
             ) {
                 Text(
-                    text = "Preview para compartir",
+                    text = birthChartStrings.sharePreviewTitle,
                     style = MaterialTheme.typography.titleMedium
                 )
                 BirthEssenceShareCard(
@@ -341,13 +355,13 @@ private fun ShareEssencePreviewDialog(
                     enabled = captureBounds != null,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Text("Compartir ahora")
+                    Text(birthChartStrings.shareNowCta)
                 }
                 OutlinedButton(
                     onClick = onDismiss,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Text("Cancelar")
+                    Text(birthChartStrings.shareCancelCta)
                 }
             }
         }
@@ -362,7 +376,7 @@ private fun ArchetypeVisual(
     Box(modifier = modifier) {
         Image(
             painter = painterResource(archetype.toVisualResource()),
-            contentDescription = "Visual ${archetype.displayNameEs}",
+            contentDescription = "${appStrings.birthChart.archetypeVisualContentDescriptionPrefix} ${archetype.displayNameEs}",
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(1.6f),
