@@ -9,19 +9,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import bwitch.composeapp.generated.resources.Res
-import bwitch.composeapp.generated.resources.app_language_section_subtitle
-import bwitch.composeapp.generated.resources.app_language_section_title
-import bwitch.composeapp.generated.resources.app_language_selected_prefix
 import com.agc.bwitch.domain.localization.AppLanguage
-import org.jetbrains.compose.resources.stringResource
+import com.agc.bwitch.localization.appStrings
 
-/**
- * Selector mínimo reutilizable para onboarding y ajustes.
- *
- * Nota: en próximas iteraciones se migrarán más textos a recursos Compose
- * (`composeResources/values[-xx]/strings.xml`) de forma pantalla-a-pantalla.
- */
 @Composable
 fun LanguageSelectorSection(
     currentLanguage: AppLanguage,
@@ -29,20 +19,25 @@ fun LanguageSelectorSection(
     onLanguageSelected: (AppLanguage) -> Unit,
     enabled: Boolean,
     modifier: Modifier = Modifier,
-    titleText: String = stringResource(Res.string.app_language_section_title),
-    subtitleText: String = stringResource(Res.string.app_language_section_subtitle),
-    selectedPrefixText: String = stringResource(Res.string.app_language_selected_prefix),
+    titleText: String? = null,
+    subtitleText: String? = null,
+    selectedPrefixText: String? = null,
 ) {
+    val strings = appStrings.common
+    val resolvedTitleText = titleText ?: strings.languageSectionTitle
+    val resolvedSubtitleText = subtitleText ?: strings.languageSectionSubtitle
+    val resolvedSelectedPrefixText = selectedPrefixText ?: strings.languageSelectedPrefix
+
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Text(
-            text = titleText,
+            text = resolvedTitleText,
             style = MaterialTheme.typography.titleMedium,
         )
         Text(
-            text = subtitleText,
+            text = resolvedSubtitleText,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -54,7 +49,7 @@ fun LanguageSelectorSection(
                 enabled = enabled,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                val prefix = if (selected) selectedPrefixText else ""
+                val prefix = if (selected) resolvedSelectedPrefixText else ""
                 Text(text = prefix + language.nativeLabel)
             }
         }
