@@ -1,6 +1,6 @@
 package com.agc.bwitch.domain.astrology.horoscope
 
 interface HoroscopePullMarker {
-    fun getLastPulledDateIso(): String?
-    fun setLastPulledDateIso(dateIso: String)
+    fun getLastPulledDateIso(languageCode: String): String?
+    fun setLastPulledDateIso(dateIso: String, languageCode: String)
 }
