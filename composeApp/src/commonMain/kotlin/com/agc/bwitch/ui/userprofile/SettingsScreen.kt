@@ -27,10 +27,10 @@ import bwitch.composeapp.generated.resources.Res
 import bwitch.composeapp.generated.resources.settings_refresh_profile
 import bwitch.composeapp.generated.resources.settings_sign_out
 import bwitch.composeapp.generated.resources.settings_subtitle
-import bwitch.composeapp.generated.resources.settings_title
 import com.agc.bwitch.domain.session.ClearLocalUserDataUseCase
 import com.agc.bwitch.presentation.auth.SessionViewModel
 import com.agc.bwitch.presentation.localization.AppLanguageViewModel
+import com.agc.bwitch.presentation.navigation.Destination
 import com.agc.bwitch.presentation.userprofile.UserProfileViewModel
 import com.agc.bwitch.ui.localization.LanguageSelectorSection
 import kotlinx.coroutines.launch
@@ -62,7 +62,7 @@ fun SettingsScreen(contentPadding: PaddingValues) {
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Text(
-            text = stringResource(Res.string.settings_title),
+            text = Destination.Settings.title,
             style = MaterialTheme.typography.headlineSmall,
         )
         Text(
