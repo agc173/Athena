@@ -29,7 +29,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.agc.bwitch.presentation.userprofile.OnboardingProfileViewModel
+import com.agc.bwitch.presentation.localization.AppLanguageViewModel
 import com.agc.bwitch.domain.userprofile.UsernameRules
+import com.agc.bwitch.ui.localization.LanguageSelectorSection
 import com.agc.bwitch.ui.userprofile.AvatarPickerButton
 import io.kamel.image.KamelImage
 import io.kamel.image.asyncPainterResource
@@ -40,6 +42,8 @@ import org.koin.compose.koinInject
 fun OnboardingProfileScreen(contentPadding: PaddingValues) {
     val vm: OnboardingProfileViewModel = koinInject()
     val state by vm.uiState.collectAsState()
+    val appLanguageVm: AppLanguageViewModel = koinInject()
+    val appLanguageState by appLanguageVm.uiState.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
     var username by remember { mutableStateOf("") }
@@ -87,6 +91,13 @@ fun OnboardingProfileScreen(contentPadding: PaddingValues) {
                 style = MaterialTheme.typography.bodySmall
             )
         }
+
+        LanguageSelectorSection(
+            currentLanguage = appLanguageState.currentLanguage,
+            supportedLanguages = appLanguageState.supportedLanguages,
+            onLanguageSelected = appLanguageVm::onLanguageSelected,
+            enabled = !state.isBusy,
+        )
 
         if (!photoUrl.isNullOrBlank()) {
             KamelImage(

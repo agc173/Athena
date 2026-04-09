@@ -10,6 +10,9 @@ import com.agc.bwitch.domain.astrology.horoscope.GetDailyHoroscopeUseCase
 import com.agc.bwitch.domain.astrology.horoscope.ObserveDailyHoroscopeUseCase
 import com.agc.bwitch.domain.astrology.horoscope.PullDailyHoroscopeUseCase
 import com.agc.bwitch.domain.astrology.synastry.SynastryReadingGenerator
+import com.agc.bwitch.domain.localization.ObserveCurrentLanguageUseCase
+import com.agc.bwitch.domain.localization.ResolveCurrentLanguageUseCase
+import com.agc.bwitch.domain.localization.SetCurrentLanguageUseCase
 import com.agc.bwitch.domain.session.ClearLocalUserDataUseCase
 import com.agc.bwitch.domain.userprofile.GetUserProfileUseCase
 import com.agc.bwitch.domain.userprofile.ObserveUserProfileUseCase
@@ -44,4 +47,9 @@ val domainModule: Module = module {
     factory { UploadAvatarUseCase(get()) }
     factory { ClearLocalUserDataUseCase(get()) }
     factory { PullUserProfileUseCase(get()) }
+
+    // Localization
+    factory { ObserveCurrentLanguageUseCase(get()) }
+    factory { ResolveCurrentLanguageUseCase(get()) }
+    factory { SetCurrentLanguageUseCase(get()) }
 }

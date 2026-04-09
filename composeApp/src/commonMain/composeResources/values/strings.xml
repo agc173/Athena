@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_language_section_title">Idioma de la app</string>
+    <string name="app_language_section_subtitle">Base i18n: selección guardada localmente para onboarding y ajustes.</string>
+</resources>

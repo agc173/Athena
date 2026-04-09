@@ -8,6 +8,7 @@ import com.agc.bwitch.presentation.navigation.Destination
 import com.agc.bwitch.presentation.oracle.OracleAskViewModel
 import com.agc.bwitch.presentation.oracle.OracleStatusViewModel
 import com.agc.bwitch.presentation.pendulum.PendulumViewModel
+import com.agc.bwitch.presentation.localization.AppLanguageViewModel
 import com.agc.bwitch.presentation.navigation.Navigator
 import com.agc.bwitch.presentation.rituals.DailyRitualViewModel
 import com.agc.bwitch.presentation.rituals.HabitsViewModel
@@ -32,6 +33,7 @@ val presentationModule: Module = module {
     single {
         SessionViewModel(get())
     }
+    single { AppLanguageViewModel(get(), get(), get()) }
 
     /**
      * Horoscope

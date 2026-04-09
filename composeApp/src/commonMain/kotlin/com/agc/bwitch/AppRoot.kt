@@ -49,6 +49,7 @@ import com.agc.bwitch.domain.userprofile.ObserveUserProfileUseCase
 import com.agc.bwitch.domain.userprofile.UserProfile
 import com.agc.bwitch.domain.userprofile.hasMinimumProfileCompleted
 import com.agc.bwitch.presentation.auth.SessionViewModel
+import com.agc.bwitch.presentation.localization.AppLanguageViewModel
 import com.agc.bwitch.presentation.navigation.Destination
 import com.agc.bwitch.presentation.navigation.Navigator
 import com.agc.bwitch.ui.astrology.AstrologyScreen
@@ -79,6 +80,8 @@ import org.koin.compose.koinInject
 fun AppRoot() {
     val navigator: Navigator = koinInject()
     val dest by navigator.current.collectAsState()
+    val appLanguageVm: AppLanguageViewModel = koinInject()
+    val appLanguageState by appLanguageVm.uiState.collectAsState()
 
     val sessionVm: SessionViewModel = koinInject()
     val session by sessionVm.uiState.collectAsState()
@@ -148,6 +151,13 @@ fun AppRoot() {
     }
 
     val currentMainTab = remember(dest) { MainTab.items.firstOrNull { it.matches(dest) } }
+    val currentLanguage = appLanguageState.currentLanguage
+
+    // Hook de infraestructura i18n: cuando migremos strings a resources,
+    // esta dependencia de estado hará recomponer el árbol principal.
+    LaunchedEffect(currentLanguage) {
+        // No-op intencional para esta subfase.
+    }
 
     AppScaffold(
         title = dest.title,

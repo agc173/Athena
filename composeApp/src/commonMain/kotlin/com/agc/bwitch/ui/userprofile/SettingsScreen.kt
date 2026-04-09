@@ -25,7 +25,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.agc.bwitch.domain.session.ClearLocalUserDataUseCase
 import com.agc.bwitch.presentation.auth.SessionViewModel
+import com.agc.bwitch.presentation.localization.AppLanguageViewModel
 import com.agc.bwitch.presentation.userprofile.UserProfileViewModel
+import com.agc.bwitch.ui.localization.LanguageSelectorSection
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
@@ -33,6 +35,8 @@ import org.koin.compose.koinInject
 fun SettingsScreen(contentPadding: PaddingValues) {
     val vm: UserProfileViewModel = koinInject()
     val state by vm.uiState.collectAsState()
+    val appLanguageVm: AppLanguageViewModel = koinInject()
+    val appLanguageState by appLanguageVm.uiState.collectAsState()
     val sessionVm: SessionViewModel = koinInject()
     val clearLocalUserData: ClearLocalUserDataUseCase = koinInject()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -56,6 +60,13 @@ fun SettingsScreen(contentPadding: PaddingValues) {
             text = "Aquí puedes gestionar solo cambios disponibles después del onboarding.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        LanguageSelectorSection(
+            currentLanguage = appLanguageState.currentLanguage,
+            supportedLanguages = appLanguageState.supportedLanguages,
+            onLanguageSelected = appLanguageVm::onLanguageSelected,
+            enabled = !state.isBusy,
         )
 
         AvatarPickerButton(enabled = !state.isBusy) { uriString, mimeType ->
