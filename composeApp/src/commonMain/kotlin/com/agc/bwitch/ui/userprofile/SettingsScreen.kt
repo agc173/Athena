@@ -74,6 +74,11 @@ fun SettingsScreen(contentPadding: PaddingValues) {
             supportedLanguages = appLanguageState.supportedLanguages,
             onLanguageSelected = appLanguageVm::onLanguageSelected,
             enabled = !state.isBusy,
+            // Temporal: copy fija en español para mantener consistencia visual en Ajustes
+            // hasta contar con runtime locale robusto en Compose MPP.
+            titleText = "Idioma de la app",
+            subtitleText = "Este cambio se aplicará en próximas pantallas migradas.",
+            selectedPrefixText = "✓ ",
         )
 
         AvatarPickerButton(enabled = !state.isBusy) { uriString, mimeType ->
