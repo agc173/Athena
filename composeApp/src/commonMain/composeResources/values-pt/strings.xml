@@ -22,4 +22,20 @@
     <string name="bottom_tab_astro">Astro</string>
     <string name="bottom_tab_guide">Guia</string>
     <string name="bottom_tab_rituals">Rituais</string>
+
+
+    <string name="app_brand_name">BWitch</string>
+    <string name="auth_sign_in_subtitle">Faça login para sincronizar seus dados.</string>
+    <string name="auth_continue_with_google">Continuar com Google</string>
+    <string name="auth_email_label">E-mail</string>
+    <string name="auth_password_label">Senha</string>
+    <string name="auth_sign_in">Entrar</string>
+    <string name="auth_sign_up">Criar conta</string>
+    <string name="auth_connecting">Conectando…</string>
+    <string name="auth_google_sign_in_failed_fallback">Falha no login com Google</string>
+    <string name="profile_select_avatar">Selecionar avatar</string>
+    <string name="nav_back_content_description">Voltar</string>
+    <string name="nav_title_onboarding_profile">Complete seu perfil</string>
+    <string name="nav_title_user_profile">Perfil</string>
+    <string name="nav_title_settings">Configurações</string>
 </resources>

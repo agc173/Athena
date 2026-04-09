@@ -23,9 +23,12 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
+import bwitch.composeapp.generated.resources.Res
+import bwitch.composeapp.generated.resources.nav_back_content_description
 import com.agc.bwitch.ui.theme.BWitchThemeTokens
 import com.agc.bwitch.ui.theme.BWitchTopBarBackTitleTextStyle
 import com.agc.bwitch.ui.theme.BWitchTopBarRootTitleTextStyle
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -77,7 +80,7 @@ fun AppScaffold(
                         ) {
                             Icon(
                                 imageVector = BackChevronIcon,
-                                contentDescription = "Back",
+                                contentDescription = stringResource(Res.string.nav_back_content_description),
                                 tint = extras.topBarIconColor,
                                 modifier = Modifier.size(dimens.topBarBackIconSize),
                             )

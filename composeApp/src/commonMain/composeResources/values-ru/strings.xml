@@ -22,4 +22,20 @@
     <string name="bottom_tab_astro">Астро</string>
     <string name="bottom_tab_guide">Гид</string>
     <string name="bottom_tab_rituals">Ритуалы</string>
+
+
+    <string name="app_brand_name">BWitch</string>
+    <string name="auth_sign_in_subtitle">Войдите, чтобы синхронизировать свои данные.</string>
+    <string name="auth_continue_with_google">Продолжить с Google</string>
+    <string name="auth_email_label">Email</string>
+    <string name="auth_password_label">Пароль</string>
+    <string name="auth_sign_in">Войти</string>
+    <string name="auth_sign_up">Создать аккаунт</string>
+    <string name="auth_connecting">Подключение…</string>
+    <string name="auth_google_sign_in_failed_fallback">Ошибка входа через Google</string>
+    <string name="profile_select_avatar">Выбрать аватар</string>
+    <string name="nav_back_content_description">Назад</string>
+    <string name="nav_title_onboarding_profile">Заполните профиль</string>
+    <string name="nav_title_user_profile">Профиль</string>
+    <string name="nav_title_settings">Настройки</string>
 </resources>
