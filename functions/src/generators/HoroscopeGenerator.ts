@@ -7,6 +7,7 @@ import {horoscopeLangDocPath, horoscopeSignDocPath} from '../firestore/paths';
 import {getFirestore} from 'firebase-admin/firestore';
 
 export type HoroscopeDoc = {
+  languageCode: Lang;
   text: string;
   mood: string;
   luckyNumber: number;
@@ -28,7 +29,7 @@ function safeParseJson(text: string): unknown {
 
 function normalize(
     doc: unknown,
-): Omit<HoroscopeDoc, 'createdAtEpochMillis' | 'updatedAtEpochMillis' | 'generatorVersion' | 'llmProvider'> {
+): Omit<HoroscopeDoc, 'languageCode' | 'createdAtEpochMillis' | 'updatedAtEpochMillis' | 'generatorVersion' | 'llmProvider'> {
   const source = (doc ?? {}) as Record<string, unknown>;
   const out = {
     text: String(source.text ?? '').trim(),
@@ -82,6 +83,7 @@ export class HoroscopeGenerator {
     const parsed = normalize(safeParseJson(res.text));
 
     const doc: HoroscopeDoc = {
+      languageCode: lang,
       ...parsed,
       createdAtEpochMillis: now,
       updatedAtEpochMillis: now,

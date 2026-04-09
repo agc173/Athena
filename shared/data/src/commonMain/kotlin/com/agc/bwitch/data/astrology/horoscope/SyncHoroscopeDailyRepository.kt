@@ -20,13 +20,13 @@ class SyncHoroscopeDailyRepository(
 
     private val firestore = Firebase.firestore
 
-    override fun observeDaily(dateIso: String, sign: ZodiacSign): Flow<DailyHoroscope?> =
-        local.observeDaily(dateIso, sign)
+    override fun observeDaily(dateIso: String, sign: ZodiacSign, languageCode: String): Flow<DailyHoroscope?> =
+        local.observeDaily(dateIso, sign, languageCode)
 
-    override suspend fun getDaily(dateIso: String, sign: ZodiacSign): DailyHoroscope? =
-        local.getDaily(dateIso, sign)
+    override suspend fun getDaily(dateIso: String, sign: ZodiacSign, languageCode: String): DailyHoroscope? =
+        local.getDaily(dateIso, sign, languageCode)
 
-    override suspend fun pull(dateIso: String) {
+    override suspend fun pull(dateIso: String, languageCode: String) {
         // ✅ Firestore rules requieren auth: request.auth != null
         val uid = currentUidOrNull()
         if (uid == null) {
@@ -37,10 +37,10 @@ class SyncHoroscopeDailyRepository(
         var saved = 0
 
         ZodiacSign.entries.forEach { sign ->
-            val remote = fetchRemote(dateIso = dateIso, sign = sign) ?: return@forEach
+            val remote = fetchRemote(dateIso = dateIso, sign = sign, languageCode = languageCode) ?: return@forEach
             found++
 
-            val localValue = local.getDaily(dateIso = dateIso, sign = sign)
+            val localValue = local.getDaily(dateIso = dateIso, sign = sign, languageCode = languageCode)
             val localUpdated = localValue?.updatedAtEpochMillis ?: 0L
 
             if (remote.updatedAtEpochMillis > localUpdated) {
@@ -62,19 +62,48 @@ class SyncHoroscopeDailyRepository(
 
     private fun signDocId(sign: ZodiacSign): String = sign.toString().lowercase()
 
-    private fun doc(dateIso: String, sign: ZodiacSign) =
+    private fun signDoc(dateIso: String, sign: ZodiacSign) =
         firestore.collection("horoscopeDaily")
             .document(dateIso)
             .collection("signs")
             .document(signDocId(sign))
 
-    private suspend fun fetchRemote(dateIso: String, sign: ZodiacSign): DailyHoroscope? {
-        val snap = doc(dateIso, sign).get()
-        if (!snap.exists) return null
+    private fun languageDoc(dateIso: String, sign: ZodiacSign, languageCode: String) =
+        signDoc(dateIso, sign)
+            .collection("langs")
+            .document(languageCode.lowercase())
 
-        val dto = snap.data(HoroscopeDailyRemoteDto.serializer())
-        return dto.toDomain(sign = sign, dateIso = dateIso)
+    private suspend fun fetchRemote(dateIso: String, sign: ZodiacSign, languageCode: String): DailyHoroscope? {
+        val langSnap = languageDoc(dateIso, sign, languageCode).get()
+        if (langSnap.exists) {
+            val dto = langSnap.data(HoroscopeDailyRemoteDto.serializer())
+            return dto.toDomain(
+                sign = sign,
+                dateIso = dateIso,
+                requestedLanguageCode = languageCode,
+                source = HoroscopeRemoteSource.LanguageVariant,
+            )
+        }
+
+        val legacySnap = signDoc(dateIso, sign).get()
+        if (!legacySnap.exists) return null
+
+        // Política explícita: permitimos fallback cross-language al doc legacy para no dejar vacío.
+        // Se guarda bajo la clave del idioma solicitado (requestedLanguageCode), aunque el contenido
+        // pueda seguir en español hasta que exista backfill multiidioma.
+        val dto = legacySnap.data(HoroscopeDailyRemoteDto.serializer())
+        return dto.toDomain(
+            sign = sign,
+            dateIso = dateIso,
+            requestedLanguageCode = languageCode,
+            source = HoroscopeRemoteSource.LegacyFallback,
+        )
     }
+}
+
+internal enum class HoroscopeRemoteSource {
+    LanguageVariant,
+    LegacyFallback,
 }
 
 @Serializable
@@ -84,12 +113,26 @@ data class HoroscopeDailyRemoteDto(
     val luckyNumber: Int,
     val luckyColor: String,
     val shareText: String? = null,
+    val languageCode: String? = null,
     val updatedAtEpochMillis: Long,
 ) {
-    fun toDomain(sign: ZodiacSign, dateIso: String): DailyHoroscope =
-        DailyHoroscope(
+    fun toDomain(
+        sign: ZodiacSign,
+        dateIso: String,
+        requestedLanguageCode: String,
+        source: HoroscopeRemoteSource,
+    ): DailyHoroscope {
+        val normalizedRequestedLanguage = requestedLanguageCode.lowercase()
+        val resolvedLanguageCode = when (source) {
+            HoroscopeRemoteSource.LanguageVariant ->
+                languageCode?.trim()?.lowercase()?.ifBlank { null } ?: normalizedRequestedLanguage
+            HoroscopeRemoteSource.LegacyFallback -> normalizedRequestedLanguage
+        }
+
+        return DailyHoroscope(
             sign = sign,
             dateIso = dateIso,
+            languageCode = resolvedLanguageCode,
             text = text,
             mood = mood,
             luckyNumber = luckyNumber,
@@ -97,4 +140,5 @@ data class HoroscopeDailyRemoteDto(
             shareText = shareText,
             updatedAtEpochMillis = updatedAtEpochMillis,
         )
+    }
 }

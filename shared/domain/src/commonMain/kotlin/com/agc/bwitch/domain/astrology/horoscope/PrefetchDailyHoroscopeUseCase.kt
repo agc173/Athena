@@ -10,7 +10,7 @@ class PrefetchDailyHoroscopeUseCase(
     private val clock: Clock,
 ) {
 
-    suspend operator fun invoke(daysAhead: Int) = coroutineScope {
+    suspend operator fun invoke(daysAhead: Int, languageCode: String) = coroutineScope {
 
         val today = clock.todayIso()
 
@@ -18,7 +18,7 @@ class PrefetchDailyHoroscopeUseCase(
             async {
                 val dateIso = today.plusDays(offset)
 
-                syncController.pull(dateIso)
+                syncController.pull(dateIso, languageCode)
             }
         }.awaitAll()
     }

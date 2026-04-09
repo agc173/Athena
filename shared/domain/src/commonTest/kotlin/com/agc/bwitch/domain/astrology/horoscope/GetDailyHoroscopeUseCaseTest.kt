@@ -19,6 +19,7 @@ class GetDailyHoroscopeUseCaseTest {
         val result = useCase(
             dateIso = "2026-02-25",
             sign = ZodiacSign.aries,
+            languageCode = "es",
         )
 
         assertNull(result)
@@ -29,6 +30,7 @@ class GetDailyHoroscopeUseCaseTest {
         val expected = DailyHoroscope(
             sign = ZodiacSign.aries,
             dateIso = "2026-02-25",
+            languageCode = "es",
             text = "Hola",
             mood = "Bien",
             luckyNumber = 7,
@@ -40,6 +42,7 @@ class GetDailyHoroscopeUseCaseTest {
         val result = useCase(
             dateIso = "2026-02-25",
             sign = ZodiacSign.aries,
+            languageCode = "es",
         )
 
         assertEquals(expected, result)
@@ -48,11 +51,11 @@ class GetDailyHoroscopeUseCaseTest {
     private class FakeHoroscopeRepository : HoroscopeRepository {
         var value: DailyHoroscope? = null
 
-        override fun observeDaily(dateIso: String, sign: ZodiacSign): Flow<DailyHoroscope?> {
+        override fun observeDaily(dateIso: String, sign: ZodiacSign, languageCode: String): Flow<DailyHoroscope?> {
             return flowOf(value)
         }
 
-        override suspend fun getDaily(dateIso: String, sign: ZodiacSign): DailyHoroscope? {
+        override suspend fun getDaily(dateIso: String, sign: ZodiacSign, languageCode: String): DailyHoroscope? {
             return value
         }
     }
