@@ -12,6 +12,7 @@ import androidx.compose.ui.unit.dp
 import bwitch.composeapp.generated.resources.Res
 import bwitch.composeapp.generated.resources.app_language_section_subtitle
 import bwitch.composeapp.generated.resources.app_language_section_title
+import bwitch.composeapp.generated.resources.app_language_selected_prefix
 import com.agc.bwitch.domain.localization.AppLanguage
 import org.jetbrains.compose.resources.stringResource
 
@@ -50,7 +51,7 @@ fun LanguageSelectorSection(
                 enabled = enabled,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                val prefix = if (selected) "✓ " else ""
+                val prefix = if (selected) stringResource(Res.string.app_language_selected_prefix) else ""
                 Text(text = prefix + language.nativeLabel)
             }
         }

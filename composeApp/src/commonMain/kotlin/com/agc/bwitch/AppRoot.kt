@@ -43,13 +43,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import bwitch.composeapp.generated.resources.Res
+import bwitch.composeapp.generated.resources.bottom_tab_astro
+import bwitch.composeapp.generated.resources.bottom_tab_guide
+import bwitch.composeapp.generated.resources.bottom_tab_profile
+import bwitch.composeapp.generated.resources.bottom_tab_rituals
 import com.agc.bwitch.domain.astrology.birthchart.BirthChartRepository
 import com.agc.bwitch.domain.userprofile.GetUserProfileUseCase
 import com.agc.bwitch.domain.userprofile.ObserveUserProfileUseCase
 import com.agc.bwitch.domain.userprofile.UserProfile
 import com.agc.bwitch.domain.userprofile.hasMinimumProfileCompleted
 import com.agc.bwitch.presentation.auth.SessionViewModel
-import com.agc.bwitch.presentation.localization.AppLanguageViewModel
 import com.agc.bwitch.presentation.navigation.Destination
 import com.agc.bwitch.presentation.navigation.Navigator
 import com.agc.bwitch.ui.astrology.AstrologyScreen
@@ -74,14 +78,14 @@ import com.agc.bwitch.ui.tarot.TarotScreen
 import com.agc.bwitch.ui.userprofile.ProfileScreen
 import com.agc.bwitch.ui.userprofile.SettingsScreen
 import com.agc.bwitch.ui.theme.BWitchThemeTokens
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 
 @Composable
 fun AppRoot() {
     val navigator: Navigator = koinInject()
     val dest by navigator.current.collectAsState()
-    val appLanguageVm: AppLanguageViewModel = koinInject()
-    val appLanguageState by appLanguageVm.uiState.collectAsState()
 
     val sessionVm: SessionViewModel = koinInject()
     val session by sessionVm.uiState.collectAsState()
@@ -151,13 +155,6 @@ fun AppRoot() {
     }
 
     val currentMainTab = remember(dest) { MainTab.items.firstOrNull { it.matches(dest) } }
-    val currentLanguage = appLanguageState.currentLanguage
-
-    // Hook de infraestructura i18n: cuando migremos strings a resources,
-    // esta dependencia de estado hará recomponer el árbol principal.
-    LaunchedEffect(currentLanguage) {
-        // No-op intencional para esta subfase.
-    }
 
     AppScaffold(
         title = dest.title,
@@ -322,20 +319,20 @@ private fun GearIcon(
 }
 
 private data class MainTab(
-    val label: String,
+    val labelRes: StringResource,
     val rootDestination: Destination,
     val matches: (Destination) -> Boolean,
 ) {
     companion object {
         val profile = MainTab(
-            label = "Perfil",
+            labelRes = Res.string.bottom_tab_profile,
             rootDestination = Destination.UserProfile,
             matches = { destination ->
                 destination == Destination.UserProfile || destination == Destination.Settings
             },
         )
         val astrology = MainTab(
-            label = "Astro",
+            labelRes = Res.string.bottom_tab_astro,
             rootDestination = Destination.Astrology,
             matches = { destination ->
                 destination == Destination.Astrology ||
@@ -345,7 +342,7 @@ private data class MainTab(
             },
         )
         val guide = MainTab(
-            label = "Guía",
+            labelRes = Res.string.bottom_tab_guide,
             rootDestination = Destination.Guide,
             matches = { destination ->
                 destination == Destination.Guide ||
@@ -357,7 +354,7 @@ private data class MainTab(
             },
         )
         val rituals = MainTab(
-            label = "Rituales",
+            labelRes = Res.string.bottom_tab_rituals,
             rootDestination = Destination.Rituals,
             matches = { destination ->
                 destination == Destination.Rituals ||
@@ -437,7 +434,7 @@ private fun MainBottomBar(
                         Spacer(modifier = Modifier.height(1.dp))
 
                         Text(
-                            text = tab.label,
+                            text = stringResource(tab.labelRes),
                             textAlign = TextAlign.Center,
                             style = MaterialTheme.typography.labelMedium.copy(
                                 fontSize = 16.sp,

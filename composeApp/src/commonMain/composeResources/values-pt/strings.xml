@@ -1,0 +1,25 @@
+<resources>
+    <string name="app_language_section_title">Idioma do app</string>
+    <string name="app_language_section_subtitle">Escolha o idioma que o BWitch usará na interface.</string>
+    <string name="app_language_selected_prefix">✓ </string>
+
+    <string name="onboarding_profile_title">Complete seu perfil</string>
+    <string name="onboarding_profile_subtitle">Precisamos do seu nome de usuário e data de nascimento para personalizar sua experiência.</string>
+    <string name="onboarding_profile_avatar_cd">Avatar do perfil</string>
+    <string name="onboarding_username_label">Nome de usuário *</string>
+    <string name="onboarding_username_error">Use de 3 a 30 caracteres: letras, números, ponto ou sublinhado.</string>
+    <string name="onboarding_birth_date_label">Data de nascimento *</string>
+    <string name="onboarding_birth_date_placeholder">AAAA-MM-DD</string>
+    <string name="onboarding_birth_date_format_error">Formato esperado: AAAA-MM-DD.</string>
+    <string name="onboarding_continue_button">Salvar e continuar</string>
+
+    <string name="settings_title">Configurações</string>
+    <string name="settings_subtitle">Aqui você pode gerenciar as mudanças disponíveis após o onboarding.</string>
+    <string name="settings_refresh_profile">Atualizar perfil</string>
+    <string name="settings_sign_out">Sair</string>
+
+    <string name="bottom_tab_profile">Perfil</string>
+    <string name="bottom_tab_astro">Astro</string>
+    <string name="bottom_tab_guide">Guia</string>
+    <string name="bottom_tab_rituals">Rituais</string>
+</resources>

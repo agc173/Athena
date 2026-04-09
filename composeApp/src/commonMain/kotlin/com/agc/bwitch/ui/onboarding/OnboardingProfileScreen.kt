@@ -28,6 +28,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import bwitch.composeapp.generated.resources.Res
+import bwitch.composeapp.generated.resources.onboarding_birth_date_format_error
+import bwitch.composeapp.generated.resources.onboarding_birth_date_label
+import bwitch.composeapp.generated.resources.onboarding_birth_date_placeholder
+import bwitch.composeapp.generated.resources.onboarding_continue_button
+import bwitch.composeapp.generated.resources.onboarding_profile_avatar_cd
+import bwitch.composeapp.generated.resources.onboarding_profile_subtitle
+import bwitch.composeapp.generated.resources.onboarding_profile_title
+import bwitch.composeapp.generated.resources.onboarding_username_error
+import bwitch.composeapp.generated.resources.onboarding_username_label
 import com.agc.bwitch.presentation.userprofile.OnboardingProfileViewModel
 import com.agc.bwitch.presentation.localization.AppLanguageViewModel
 import com.agc.bwitch.domain.userprofile.UsernameRules
@@ -36,6 +46,7 @@ import com.agc.bwitch.ui.userprofile.AvatarPickerButton
 import io.kamel.image.KamelImage
 import io.kamel.image.asyncPainterResource
 import kotlinx.datetime.LocalDate
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 
 @Composable
@@ -79,9 +90,12 @@ fun OnboardingProfileScreen(contentPadding: PaddingValues) {
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text("Completa tu perfil", style = MaterialTheme.typography.headlineSmall)
         Text(
-            "Necesitamos tu username y fecha de nacimiento para personalizar tu experiencia.",
+            text = stringResource(Res.string.onboarding_profile_title),
+            style = MaterialTheme.typography.headlineSmall,
+        )
+        Text(
+            text = stringResource(Res.string.onboarding_profile_subtitle),
             style = MaterialTheme.typography.bodyMedium
         )
 
@@ -102,7 +116,7 @@ fun OnboardingProfileScreen(contentPadding: PaddingValues) {
         if (!photoUrl.isNullOrBlank()) {
             KamelImage(
                 resource = asyncPainterResource(photoUrl),
-                contentDescription = "Avatar",
+                contentDescription = stringResource(Res.string.onboarding_profile_avatar_cd),
                 modifier = Modifier.size(96.dp),
                 contentScale = ContentScale.Crop
             )
@@ -116,11 +130,11 @@ fun OnboardingProfileScreen(contentPadding: PaddingValues) {
             },
             enabled = !state.isBusy,
             modifier = Modifier.fillMaxWidth(),
-            label = { Text("Username *") },
+            label = { Text(stringResource(Res.string.onboarding_username_label)) },
             isError = touched && !usernameValid,
             supportingText = {
                 if (touched && !usernameValid) {
-                    Text("Usa 3-30 caracteres: letras, números, punto o guion bajo")
+                    Text(stringResource(Res.string.onboarding_username_error))
                 }
             }
         )
@@ -133,12 +147,12 @@ fun OnboardingProfileScreen(contentPadding: PaddingValues) {
             },
             enabled = !state.isBusy,
             modifier = Modifier.fillMaxWidth(),
-            label = { Text("Fecha de nacimiento *") },
-            placeholder = { Text("YYYY-MM-DD") },
+            label = { Text(stringResource(Res.string.onboarding_birth_date_label)) },
+            placeholder = { Text(stringResource(Res.string.onboarding_birth_date_placeholder)) },
             isError = touched && !birthDateValid,
             supportingText = {
                 if (touched && !birthDateValid) {
-                    Text("Formato esperado: YYYY-MM-DD")
+                    Text(stringResource(Res.string.onboarding_birth_date_format_error))
                 }
             }
         )
@@ -158,7 +172,7 @@ fun OnboardingProfileScreen(contentPadding: PaddingValues) {
             if (state.isSaving) {
                 CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
             } else {
-                Text("Guardar y continuar")
+                Text(stringResource(Res.string.onboarding_continue_button))
             }
         }
 

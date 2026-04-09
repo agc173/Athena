@@ -23,12 +23,18 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import bwitch.composeapp.generated.resources.Res
+import bwitch.composeapp.generated.resources.settings_refresh_profile
+import bwitch.composeapp.generated.resources.settings_sign_out
+import bwitch.composeapp.generated.resources.settings_subtitle
+import bwitch.composeapp.generated.resources.settings_title
 import com.agc.bwitch.domain.session.ClearLocalUserDataUseCase
 import com.agc.bwitch.presentation.auth.SessionViewModel
 import com.agc.bwitch.presentation.localization.AppLanguageViewModel
 import com.agc.bwitch.presentation.userprofile.UserProfileViewModel
 import com.agc.bwitch.ui.localization.LanguageSelectorSection
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 
 @Composable
@@ -55,9 +61,12 @@ fun SettingsScreen(contentPadding: PaddingValues) {
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text("Ajustes", style = MaterialTheme.typography.headlineSmall)
         Text(
-            text = "Aquí puedes gestionar solo cambios disponibles después del onboarding.",
+            text = stringResource(Res.string.settings_title),
+            style = MaterialTheme.typography.headlineSmall,
+        )
+        Text(
+            text = stringResource(Res.string.settings_subtitle),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -81,7 +90,7 @@ fun SettingsScreen(contentPadding: PaddingValues) {
             if (state.isRefreshing) {
                 CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
             } else {
-                Text("Refrescar perfil")
+                Text(stringResource(Res.string.settings_refresh_profile))
             }
         }
 
@@ -95,7 +104,7 @@ fun SettingsScreen(contentPadding: PaddingValues) {
             enabled = !state.isBusy,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Cerrar sesión")
+            Text(stringResource(Res.string.settings_sign_out))
         }
 
         state.error?.let {
