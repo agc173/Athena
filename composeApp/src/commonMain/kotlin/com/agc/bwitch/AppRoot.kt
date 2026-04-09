@@ -48,6 +48,9 @@ import bwitch.composeapp.generated.resources.bottom_tab_astro
 import bwitch.composeapp.generated.resources.bottom_tab_guide
 import bwitch.composeapp.generated.resources.bottom_tab_profile
 import bwitch.composeapp.generated.resources.bottom_tab_rituals
+import bwitch.composeapp.generated.resources.nav_title_onboarding_profile
+import bwitch.composeapp.generated.resources.nav_title_settings
+import bwitch.composeapp.generated.resources.nav_title_user_profile
 import com.agc.bwitch.domain.astrology.birthchart.BirthChartRepository
 import com.agc.bwitch.domain.userprofile.GetUserProfileUseCase
 import com.agc.bwitch.domain.userprofile.ObserveUserProfileUseCase
@@ -157,7 +160,7 @@ fun AppRoot() {
     val currentMainTab = remember(dest) { MainTab.items.firstOrNull { it.matches(dest) } }
 
     AppScaffold(
-        title = dest.title,
+        title = destinationTitle(dest),
         canGoBack = navigator.canGoBack(),
         onBack = { navigator.goBack() },
         actions = {
@@ -266,6 +269,14 @@ fun AppRoot() {
             Destination.Habits -> HabitsScreen(contentPadding = padding)
         }
     }
+}
+
+@Composable
+private fun destinationTitle(destination: Destination): String = when (destination) {
+    Destination.OnboardingProfile -> stringResource(Res.string.nav_title_onboarding_profile)
+    Destination.UserProfile -> stringResource(Res.string.nav_title_user_profile)
+    Destination.Settings -> stringResource(Res.string.nav_title_settings)
+    else -> destination.title
 }
 
 @Composable

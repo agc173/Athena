@@ -8,6 +8,16 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import bwitch.composeapp.generated.resources.Res
+import bwitch.composeapp.generated.resources.app_brand_name
+import bwitch.composeapp.generated.resources.auth_connecting
+import bwitch.composeapp.generated.resources.auth_continue_with_google
+import bwitch.composeapp.generated.resources.auth_email_label
+import bwitch.composeapp.generated.resources.auth_google_sign_in_failed_fallback
+import bwitch.composeapp.generated.resources.auth_password_label
+import bwitch.composeapp.generated.resources.auth_sign_in
+import bwitch.composeapp.generated.resources.auth_sign_in_subtitle
+import bwitch.composeapp.generated.resources.auth_sign_up
 import com.agc.bwitch.platform.rememberPlatformContext
 import com.agc.bwitch.presentation.auth.GoogleIdTokenProvider
 import com.agc.bwitch.presentation.auth.SessionViewModel
@@ -16,6 +26,7 @@ import com.agc.bwitch.ui.common.designsystem.BWitchSecondaryButton
 import com.agc.bwitch.ui.common.designsystem.BWitchTextField
 import com.agc.bwitch.ui.theme.BWitchThemeTokens
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.core.parameter.parametersOf
 
@@ -36,6 +47,7 @@ fun AuthScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var isSubmitting by remember { mutableStateOf(false) }
+    val googleSignInErrorFallback = stringResource(Res.string.auth_google_sign_in_failed_fallback)
 
     LaunchedEffect(state.isLoggedIn) {
         if (state.isLoggedIn) isSubmitting = false
@@ -47,9 +59,9 @@ fun AuthScreen(
             .padding(dimens.spacingMd),
         verticalArrangement = Arrangement.spacedBy(dimens.spacingSm + dimens.spacingXs)
     ) {
-        Text("BWitch", style = MaterialTheme.typography.headlineMedium)
+        Text(stringResource(Res.string.app_brand_name), style = MaterialTheme.typography.headlineMedium)
         Text(
-            "Inicia sesión para sincronizar tus datos.",
+            stringResource(Res.string.auth_sign_in_subtitle),
             color = extras.textSecondary,
             style = MaterialTheme.typography.bodyMedium
         )
@@ -63,14 +75,14 @@ fun AuthScreen(
                         .onSuccess { token -> viewModel.signInWithGoogle(token) }
                         .onFailure { e ->
                             isSubmitting = false
-                            localError = e.message ?: "Google Sign-In falló"
+                            localError = e.message ?: googleSignInErrorFallback
                         }
                 }
             },
             modifier = Modifier.fillMaxWidth(),
             enabled = !state.isLoading && !isSubmitting
         ) {
-            Text("Continuar con Google")
+            Text(stringResource(Res.string.auth_continue_with_google))
         }
 
         localError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
@@ -82,7 +94,7 @@ fun AuthScreen(
                 isSubmitting = false
                 localError = null
             },
-            label = { Text("Email") },
+            label = { Text(stringResource(Res.string.auth_email_label)) },
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
@@ -94,7 +106,7 @@ fun AuthScreen(
                 isSubmitting = false
                 localError = null
             },
-            label = { Text("Contraseña") },
+            label = { Text(stringResource(Res.string.auth_password_label)) },
             singleLine = true,
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth()
@@ -113,7 +125,7 @@ fun AuthScreen(
                 enabled = !state.isLoading && !isSubmitting && email.isNotBlank() && password.isNotBlank(),
                 modifier = Modifier.weight(1f)
             ) {
-                Text("Entrar")
+                Text(stringResource(Res.string.auth_sign_in))
             }
 
             BWitchSecondaryButton(
@@ -125,14 +137,14 @@ fun AuthScreen(
                 enabled = !state.isLoading && !isSubmitting && email.isNotBlank() && password.isNotBlank(),
                 modifier = Modifier.weight(1f)
             ) {
-                Text("Crear cuenta")
+                Text(stringResource(Res.string.auth_sign_up))
             }
         }
 
         if (state.isLoading || isSubmitting) {
             Row(horizontalArrangement = Arrangement.spacedBy(dimens.spacingSm)) {
                 CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-                Text("Conectando…", color = extras.textSecondary)
+                Text(stringResource(Res.string.auth_connecting), color = extras.textSecondary)
             }
         }
 
