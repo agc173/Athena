@@ -23,10 +23,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import bwitch.composeapp.generated.resources.Res
-import bwitch.composeapp.generated.resources.settings_refresh_profile
-import bwitch.composeapp.generated.resources.settings_sign_out
-import bwitch.composeapp.generated.resources.settings_subtitle
 import com.agc.bwitch.domain.session.ClearLocalUserDataUseCase
 import com.agc.bwitch.presentation.auth.SessionViewModel
 import com.agc.bwitch.presentation.localization.AppLanguageViewModel
@@ -34,7 +30,6 @@ import com.agc.bwitch.presentation.navigation.Destination
 import com.agc.bwitch.presentation.userprofile.UserProfileViewModel
 import com.agc.bwitch.ui.localization.LanguageSelectorSection
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 
 @Composable
@@ -65,8 +60,11 @@ fun SettingsScreen(contentPadding: PaddingValues) {
             text = Destination.Settings.title,
             style = MaterialTheme.typography.headlineSmall,
         )
+        // Temporal: en esta fase conservadora evitamos mezclar idiomas en SettingsScreen
+        // porque stringResource(...) sigue atado al locale del sistema en Compose MPP.
+        // Cuando exista un runtime locale fiable, estos textos deben volver a stringResource(...).
         Text(
-            text = stringResource(Res.string.settings_subtitle),
+            text = "Gestiona tu perfil y preferencias",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -90,7 +88,7 @@ fun SettingsScreen(contentPadding: PaddingValues) {
             if (state.isRefreshing) {
                 CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
             } else {
-                Text(stringResource(Res.string.settings_refresh_profile))
+                Text("Actualizar perfil")
             }
         }
 
@@ -104,7 +102,7 @@ fun SettingsScreen(contentPadding: PaddingValues) {
             enabled = !state.isBusy,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(stringResource(Res.string.settings_sign_out))
+            Text("Cerrar sesión")
         }
 
         state.error?.let {
