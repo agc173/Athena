@@ -4,5 +4,5 @@ import platform.Foundation.NSLocale
 
 actual class SystemLanguageCodeProvider actual constructor() {
     actual fun currentLanguageCode(): String? =
-        NSLocale.preferredLanguages.firstOrNull() as? String
+        NSLocale.preferredLanguages().firstOrNull() as? String
 }
