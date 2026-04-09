@@ -28,31 +28,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
-import bwitch.composeapp.generated.resources.Res
-import bwitch.composeapp.generated.resources.onboarding_birth_date_format_error
-import bwitch.composeapp.generated.resources.onboarding_birth_date_label
-import bwitch.composeapp.generated.resources.onboarding_birth_date_placeholder
-import bwitch.composeapp.generated.resources.onboarding_continue_button
-import bwitch.composeapp.generated.resources.onboarding_profile_avatar_cd
-import bwitch.composeapp.generated.resources.onboarding_profile_subtitle
-import bwitch.composeapp.generated.resources.onboarding_profile_title
-import bwitch.composeapp.generated.resources.onboarding_username_error
-import bwitch.composeapp.generated.resources.onboarding_username_label
-import com.agc.bwitch.presentation.userprofile.OnboardingProfileViewModel
-import com.agc.bwitch.presentation.localization.AppLanguageViewModel
 import com.agc.bwitch.domain.userprofile.UsernameRules
+import com.agc.bwitch.localization.appStrings
+import com.agc.bwitch.presentation.localization.AppLanguageViewModel
+import com.agc.bwitch.presentation.userprofile.OnboardingProfileViewModel
 import com.agc.bwitch.ui.localization.LanguageSelectorSection
 import com.agc.bwitch.ui.userprofile.AvatarPickerButton
 import io.kamel.image.KamelImage
 import io.kamel.image.asyncPainterResource
 import kotlinx.datetime.LocalDate
-import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 
 @Composable
 fun OnboardingProfileScreen(contentPadding: PaddingValues) {
     val vm: OnboardingProfileViewModel = koinInject()
     val state by vm.uiState.collectAsState()
+    val strings = appStrings.onboarding
     val appLanguageVm: AppLanguageViewModel = koinInject()
     val appLanguageState by appLanguageVm.uiState.collectAsState()
 
@@ -91,11 +82,11 @@ fun OnboardingProfileScreen(contentPadding: PaddingValues) {
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Text(
-            text = stringResource(Res.string.onboarding_profile_title),
+            text = strings.profileTitle,
             style = MaterialTheme.typography.headlineSmall,
         )
         Text(
-            text = stringResource(Res.string.onboarding_profile_subtitle),
+            text = strings.profileSubtitle,
             style = MaterialTheme.typography.bodyMedium
         )
 
@@ -116,7 +107,7 @@ fun OnboardingProfileScreen(contentPadding: PaddingValues) {
         if (!photoUrl.isNullOrBlank()) {
             KamelImage(
                 resource = asyncPainterResource(photoUrl),
-                contentDescription = stringResource(Res.string.onboarding_profile_avatar_cd),
+                contentDescription = strings.profileAvatarContentDescription,
                 modifier = Modifier.size(96.dp),
                 contentScale = ContentScale.Crop
             )
@@ -130,11 +121,11 @@ fun OnboardingProfileScreen(contentPadding: PaddingValues) {
             },
             enabled = !state.isBusy,
             modifier = Modifier.fillMaxWidth(),
-            label = { Text(stringResource(Res.string.onboarding_username_label)) },
+            label = { Text(strings.usernameLabel) },
             isError = touched && !usernameValid,
             supportingText = {
                 if (touched && !usernameValid) {
-                    Text(stringResource(Res.string.onboarding_username_error))
+                    Text(strings.usernameError)
                 }
             }
         )
@@ -147,12 +138,12 @@ fun OnboardingProfileScreen(contentPadding: PaddingValues) {
             },
             enabled = !state.isBusy,
             modifier = Modifier.fillMaxWidth(),
-            label = { Text(stringResource(Res.string.onboarding_birth_date_label)) },
-            placeholder = { Text(stringResource(Res.string.onboarding_birth_date_placeholder)) },
+            label = { Text(strings.birthDateLabel) },
+            placeholder = { Text(strings.birthDatePlaceholder) },
             isError = touched && !birthDateValid,
             supportingText = {
                 if (touched && !birthDateValid) {
-                    Text(stringResource(Res.string.onboarding_birth_date_format_error))
+                    Text(strings.birthDateFormatError)
                 }
             }
         )
@@ -172,7 +163,7 @@ fun OnboardingProfileScreen(contentPadding: PaddingValues) {
             if (state.isSaving) {
                 CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
             } else {
-                Text(stringResource(Res.string.onboarding_continue_button))
+                Text(strings.continueButton)
             }
         }
 

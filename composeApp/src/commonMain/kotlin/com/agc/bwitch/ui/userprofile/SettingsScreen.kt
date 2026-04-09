@@ -24,9 +24,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.agc.bwitch.domain.session.ClearLocalUserDataUseCase
+import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.presentation.auth.SessionViewModel
 import com.agc.bwitch.presentation.localization.AppLanguageViewModel
-import com.agc.bwitch.presentation.navigation.Destination
 import com.agc.bwitch.presentation.userprofile.UserProfileViewModel
 import com.agc.bwitch.ui.localization.LanguageSelectorSection
 import kotlinx.coroutines.launch
@@ -36,6 +36,7 @@ import org.koin.compose.koinInject
 fun SettingsScreen(contentPadding: PaddingValues) {
     val vm: UserProfileViewModel = koinInject()
     val state by vm.uiState.collectAsState()
+    val strings = appStrings
     val appLanguageVm: AppLanguageViewModel = koinInject()
     val appLanguageState by appLanguageVm.uiState.collectAsState()
     val sessionVm: SessionViewModel = koinInject()
@@ -57,14 +58,11 @@ fun SettingsScreen(contentPadding: PaddingValues) {
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Text(
-            text = Destination.Settings.title,
+            text = strings.navigation.settings,
             style = MaterialTheme.typography.headlineSmall,
         )
-        // Temporal: en esta fase conservadora evitamos mezclar idiomas en SettingsScreen
-        // porque stringResource(...) sigue atado al locale del sistema en Compose MPP.
-        // Cuando exista un runtime locale fiable, estos textos deben volver a stringResource(...).
         Text(
-            text = "Gestiona tu perfil y preferencias",
+            text = strings.settings.subtitle,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -74,11 +72,6 @@ fun SettingsScreen(contentPadding: PaddingValues) {
             supportedLanguages = appLanguageState.supportedLanguages,
             onLanguageSelected = appLanguageVm::onLanguageSelected,
             enabled = !state.isBusy,
-            // Temporal: copy fija en español para mantener consistencia visual en Ajustes
-            // hasta contar con runtime locale robusto en Compose MPP.
-            titleText = "Idioma de la app",
-            subtitleText = "Este cambio se aplicará en próximas pantallas migradas.",
-            selectedPrefixText = "✓ ",
         )
 
         AvatarPickerButton(enabled = !state.isBusy) { uriString, mimeType ->
@@ -93,7 +86,7 @@ fun SettingsScreen(contentPadding: PaddingValues) {
             if (state.isRefreshing) {
                 CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
             } else {
-                Text("Actualizar perfil")
+                Text(strings.settings.refreshProfile)
             }
         }
 
@@ -107,7 +100,7 @@ fun SettingsScreen(contentPadding: PaddingValues) {
             enabled = !state.isBusy,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Cerrar sesión")
+            Text(strings.settings.signOut)
         }
 
         state.error?.let {
