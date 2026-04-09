@@ -43,14 +43,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import bwitch.composeapp.generated.resources.Res
-import bwitch.composeapp.generated.resources.bottom_tab_astro
-import bwitch.composeapp.generated.resources.bottom_tab_guide
-import bwitch.composeapp.generated.resources.bottom_tab_profile
-import bwitch.composeapp.generated.resources.bottom_tab_rituals
-import bwitch.composeapp.generated.resources.nav_title_onboarding_profile
-import bwitch.composeapp.generated.resources.nav_title_settings
-import bwitch.composeapp.generated.resources.nav_title_user_profile
 import com.agc.bwitch.domain.astrology.birthchart.BirthChartRepository
 import com.agc.bwitch.domain.userprofile.GetUserProfileUseCase
 import com.agc.bwitch.domain.userprofile.ObserveUserProfileUseCase
@@ -81,8 +73,6 @@ import com.agc.bwitch.ui.tarot.TarotScreen
 import com.agc.bwitch.ui.userprofile.ProfileScreen
 import com.agc.bwitch.ui.userprofile.SettingsScreen
 import com.agc.bwitch.ui.theme.BWitchThemeTokens
-import org.jetbrains.compose.resources.StringResource
-import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 
 @Composable
@@ -271,12 +261,12 @@ fun AppRoot() {
     }
 }
 
-@Composable
-private fun destinationTitle(destination: Destination): String = when (destination) {
-    Destination.OnboardingProfile -> stringResource(Res.string.nav_title_onboarding_profile)
-    Destination.UserProfile -> stringResource(Res.string.nav_title_user_profile)
-    Destination.Settings -> stringResource(Res.string.nav_title_settings)
-    else -> destination.title
+private fun destinationTitle(destination: Destination): String {
+    // Fase temporal de consistencia i18n:
+    // evitamos mezclar títulos que dependen de `stringResource(...)` con otros hardcodeados.
+    // Mientras no exista una estrategia robusta de runtime locale en Compose MPP, la navegación
+    // principal usa una única fuente estable (Destination.title).
+    return destination.title
 }
 
 @Composable
@@ -330,20 +320,20 @@ private fun GearIcon(
 }
 
 private data class MainTab(
-    val labelRes: StringResource,
+    val label: String,
     val rootDestination: Destination,
     val matches: (Destination) -> Boolean,
 ) {
     companion object {
         val profile = MainTab(
-            labelRes = Res.string.bottom_tab_profile,
+            label = Destination.UserProfile.title,
             rootDestination = Destination.UserProfile,
             matches = { destination ->
                 destination == Destination.UserProfile || destination == Destination.Settings
             },
         )
         val astrology = MainTab(
-            labelRes = Res.string.bottom_tab_astro,
+            label = Destination.Astrology.title,
             rootDestination = Destination.Astrology,
             matches = { destination ->
                 destination == Destination.Astrology ||
@@ -353,7 +343,7 @@ private data class MainTab(
             },
         )
         val guide = MainTab(
-            labelRes = Res.string.bottom_tab_guide,
+            label = Destination.Guide.title,
             rootDestination = Destination.Guide,
             matches = { destination ->
                 destination == Destination.Guide ||
@@ -365,7 +355,7 @@ private data class MainTab(
             },
         )
         val rituals = MainTab(
-            labelRes = Res.string.bottom_tab_rituals,
+            label = Destination.Rituals.title,
             rootDestination = Destination.Rituals,
             matches = { destination ->
                 destination == Destination.Rituals ||
@@ -445,7 +435,7 @@ private fun MainBottomBar(
                         Spacer(modifier = Modifier.height(1.dp))
 
                         Text(
-                            text = stringResource(tab.labelRes),
+                            text = tab.label,
                             textAlign = TextAlign.Center,
                             style = MaterialTheme.typography.labelMedium.copy(
                                 fontSize = 16.sp,
