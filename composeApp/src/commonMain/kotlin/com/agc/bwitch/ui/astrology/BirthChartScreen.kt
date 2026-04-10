@@ -118,9 +118,10 @@ fun BirthChartScreen(
                 )
                 state.generatedArchetype?.let {
                     Text(birthChartStrings.archetypeLabel, style = MaterialTheme.typography.labelLarge, color = extras.textSecondary)
-                    Text(it.displayNameEs, style = MaterialTheme.typography.titleLarge)
+                    Text(it.displayName(state.currentLanguageCode), style = MaterialTheme.typography.titleLarge)
                     ArchetypeVisual(
                         archetype = it,
+                        languageCode = state.currentLanguageCode,
                         modifier = Modifier
                             .fillMaxWidth()
                             .aspectRatio(1.6f)
@@ -191,6 +192,7 @@ private fun BirthChartUiState.toShareProfileOrNull(): BirthEssenceProfile? {
         moonSign = selectedMoonSign,
         risingSign = selectedRisingSign,
         interpretation = interpretation,
+        languageCode = generatedLanguageCode,
         archetype = generatedArchetype,
         savedAtEpochMillis = 0L,
         updatedAtEpochMillis = 0L,
@@ -371,12 +373,13 @@ private fun ShareEssencePreviewDialog(
 @Composable
 private fun ArchetypeVisual(
     archetype: BirthEssenceArchetype,
+    languageCode: String,
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier) {
         Image(
             painter = painterResource(archetype.toVisualResource()),
-            contentDescription = "${appStrings.birthChart.archetypeVisualContentDescriptionPrefix} ${archetype.displayNameEs}",
+            contentDescription = "${appStrings.birthChart.archetypeVisualContentDescriptionPrefix} ${archetype.displayName(languageCode)}",
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(1.6f),

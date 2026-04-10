@@ -437,11 +437,12 @@ private fun BirthEssenceDialog(
                 )
 
                 essence.archetype?.let { archetype ->
+                    val archetypeName = archetype.displayName(essence.languageCode)
                     Text(profileStrings.archetypeLabel, style = MaterialTheme.typography.labelLarge)
-                    Text(archetype.displayNameEs, style = MaterialTheme.typography.titleMedium)
+                    Text(archetypeName, style = MaterialTheme.typography.titleMedium)
                     androidx.compose.foundation.Image(
                         painter = painterResource(archetype.toVisualResource()),
-                        contentDescription = "${profileStrings.birthEssenceVisualContentDescriptionPrefix} ${archetype.displayNameEs}",
+                        contentDescription = "${profileStrings.birthEssenceVisualContentDescriptionPrefix} $archetypeName",
                         modifier = Modifier
                             .fillMaxWidth()
                             .aspectRatio(1.6f),

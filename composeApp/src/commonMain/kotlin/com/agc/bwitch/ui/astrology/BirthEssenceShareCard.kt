@@ -28,6 +28,7 @@ fun BirthEssenceShareCard(
     val dimens = BWitchThemeTokens.dimens
     val extras = BWitchThemeTokens.extras
     val archetype = essence.archetype
+    val archetypeName = archetype?.displayName(essence.languageCode).orEmpty()
     val firstSentence = essence.firstSentence()
 
     Surface(
@@ -43,7 +44,7 @@ fun BirthEssenceShareCard(
             verticalArrangement = Arrangement.spacedBy(dimens.spacingSm),
         ) {
             Text(
-                text = archetype?.displayNameEs.orEmpty(),
+                text = archetypeName,
                 style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -51,7 +52,7 @@ fun BirthEssenceShareCard(
             archetype?.let {
                 Image(
                     painter = painterResource(it.toVisualResource()),
-                    contentDescription = it.displayNameEs,
+                    contentDescription = archetypeName,
                     modifier = Modifier
                         .fillMaxWidth()
                         .aspectRatio(1.6f),

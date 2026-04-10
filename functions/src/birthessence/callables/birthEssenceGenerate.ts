@@ -3,11 +3,14 @@ import {buildRouter} from '../../llm/buildRouter';
 import {ENV} from '../../config/env';
 import {addLlmTokens, reserveLlmCallOrThrow, type DailyCaps} from '../../firestore/usageDaily';
 import {createLlmClientFromRouter} from '../../oracle/shared/routerLlmClient';
+import type {Lang} from '../../config/env';
 
 type BirthEssenceGenerateData = {
   sunSign?: unknown;
   moonSign?: unknown;
   risingSign?: unknown;
+  languageCode?: unknown;
+  lang?: unknown;
   archetype?: unknown;
 };
 
@@ -50,6 +53,36 @@ function caps(): DailyCaps {
 
 function signLabel(sign: string): string {
   return sign.toLowerCase();
+}
+
+function parseLanguageCode(data: BirthEssenceGenerateData): Lang {
+  const raw = typeof data.languageCode === 'string' ? data.languageCode : data.lang;
+  if (typeof raw !== 'string') return 'es';
+  const normalized = raw.trim().toLowerCase().split('-')[0].split('_')[0];
+  if (ENV.SUPPORTED_LANGS.includes(normalized as Lang)) {
+    return normalized as Lang;
+  }
+  return 'es';
+}
+
+function languageSystemPrompt(lang: Lang): string {
+  switch (lang) {
+    case 'en':
+      return 'Write the final interpretation in English.';
+    case 'pt':
+      return 'Escreve a interpretação final em português.';
+    case 'ru':
+      return 'Напиши итоговую интерпретацию на русском языке.';
+    case 'fr':
+      return 'Écris l’interprétation finale en français.';
+    case 'it':
+      return 'Scrivi l’interpretazione finale in italiano.';
+    case 'de':
+      return 'Schreibe die finale Interpretation auf Deutsch.';
+    case 'es':
+    default:
+      return 'Escribe la interpretación final en español.';
+  }
 }
 
 function cleanInterpretation(raw: string): string {
@@ -108,6 +141,7 @@ export const birthEssenceGenerate = onCall(
       const sunSign = asSign(data.sunSign, 'sunSign');
       const moonSign = asSign(data.moonSign, 'moonSign');
       const risingSign = asSign(data.risingSign, 'risingSign');
+      const languageCode = parseLanguageCode(data);
       const archetypeHint = asArchetypeHint(data.archetype);
 
       const {dateIso} = await reserveLlmCallOrThrow('unknown', caps());
@@ -129,6 +163,7 @@ export const birthEssenceGenerate = onCall(
           '- no expliques astrología',
           '- no uses etiquetas, encabezados ni formato',
           '- no menciones arquetipos',
+          languageSystemPrompt(languageCode),
         ].join('\n'),
         userPrompt: [
           `Sol=${signLabel(sunSign)}, Luna=${signLabel(moonSign)}, Ascendente=${signLabel(risingSign)}.`,
@@ -140,6 +175,9 @@ export const birthEssenceGenerate = onCall(
 
       await addLlmTokens('unknown', dateIso, response.inputTokens ?? 0, response.outputTokens ?? 0);
 
-      return parseModelOutput(response.text);
+      return {
+        ...parseModelOutput(response.text),
+        languageCode,
+      };
     }
 );

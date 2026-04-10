@@ -98,6 +98,7 @@ Campos:
 - moonSign: string (enum ZodiacSign, obligatorio)
 - risingSign: string (enum ZodiacSign, obligatorio)
 - interpretation: string (lectura breve generada por LLM)
+- languageCode: string (ISO corto `es|en|pt|ru|fr|it|de`, opcional en docs legacy)
 - archetype: string (opcional)
 - savedAtEpochMillis: number
 - updatedAtEpochMillis: number
@@ -105,6 +106,7 @@ Campos:
 Notas:
 - Solo existe un documento activo (`current`) por usuario.
 - Cada nuevo guardado reemplaza la esencia activa anterior.
+- Si `languageCode` no existe (documentos legacy), el cliente usa fallback explícito a `es`.
 
 ---
 
