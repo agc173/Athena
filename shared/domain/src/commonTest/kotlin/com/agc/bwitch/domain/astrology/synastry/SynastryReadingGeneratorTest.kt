@@ -1,6 +1,7 @@
 package com.agc.bwitch.domain.astrology.synastry
 
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
+import com.agc.bwitch.domain.astrology.synastry.localizedLabel
 import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -177,6 +178,55 @@ class SynastryReadingGeneratorTest {
         assertEquals(SynastryReadingDepth.BASIC, reading.structured.depthInfo.depth)
         assertFalse(reading.narrative.isBlank())
         assertTrue(reading.dailyOverlay != null)
+    }
+
+    @Test
+    fun `generator uses english narrative when language is en`() {
+        val input = sampleInput().copy(languageCode = "en")
+        val reading = generator(input, LocalDate.parse("2026-03-24"))
+
+        assertTrue(reading.narrative.contains(" and "))
+        assertFalse(reading.narrative.contains(" y "))
+    }
+
+    @Test
+    fun `localized zodiac label supports english`() {
+        assertEquals("Taurus", ZodiacSign.taurus.localizedLabel("en"))
+    }
+
+    @Test
+    fun `dimension and depth labels are localized for fr de pt`() {
+        assertEquals("Résonance émotionnelle", SynastryDimension.EMOTIONAL.localizedLabel("fr"))
+        assertEquals("Wachstumspotenzial", SynastryDimension.GROWTH.localizedLabel("de"))
+        assertEquals("Leitura essencial", SynastryReadingDepth.BASIC.localizedLabel("pt"))
+    }
+
+    @Test
+    fun `signal copy variants for fr de pt do not fallback to spanish`() {
+        val signal = SynastrySignal.STRONG_EMOTIONAL_RESONANCE
+        val fr = signal.copyVariants("fr", null).first()
+        val de = signal.copyVariants("de", null).first()
+        val pt = signal.copyVariants("pt", null).first()
+
+        assertFalse(fr.contains("Hay una sintonía emocional"))
+        assertFalse(de.contains("Hay una sintonía emocional"))
+        assertFalse(pt.contains("Hay una sintonía emocional"))
+    }
+
+    @Test
+    fun `narrative and daily overlay for fr de pt are not spanish`() {
+        val date = LocalDate.parse("2026-03-24")
+        val frReading = generator(sampleInput().copy(languageCode = "fr"), date)
+        val deReading = generator(sampleInput().copy(languageCode = "de"), date)
+        val ptReading = generator(sampleInput().copy(languageCode = "pt"), date)
+
+        assertTrue(frReading.narrative.contains(" forment une combinaison "))
+        assertTrue(deReading.narrative.contains(" bilden eine Kombination "))
+        assertTrue(ptReading.narrative.contains(" formam uma combinação "))
+
+        assertTrue(frReading.dailyOverlay?.dailyGuidance?.contains("Privilégiez") == true)
+        assertTrue(deReading.dailyOverlay?.dailyGuidance?.contains("Priorisiert") == true)
+        assertTrue(ptReading.dailyOverlay?.dailyGuidance?.contains("Priorizem") == true)
     }
 
     private fun sampleInput(): SynastryInput = SynastryInput(
