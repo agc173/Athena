@@ -107,7 +107,7 @@ internal enum class HoroscopeRemoteSource {
 }
 
 @Serializable
-data class HoroscopeDailyRemoteDto(
+internal data class HoroscopeDailyRemoteDto(
     val text: String,
     val mood: String,
     val luckyNumber: Int,
