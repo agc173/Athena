@@ -8,6 +8,8 @@ import com.agc.bwitch.domain.astrology.birthchart.ObserveBirthEssenceUseCase
 import com.agc.bwitch.domain.astrology.birthchart.PullBirthEssenceUseCase
 import com.agc.bwitch.domain.astrology.birthchart.SaveBirthEssenceUseCase
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
+import com.agc.bwitch.domain.localization.ObserveCurrentLanguageUseCase
+import com.agc.bwitch.domain.localization.ResolveCurrentLanguageUseCase
 import com.agc.bwitch.domain.shared.ApiError
 import com.agc.bwitch.domain.shared.ApiResult
 import kotlinx.coroutines.CoroutineScope
@@ -15,6 +17,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -24,6 +28,8 @@ class BirthChartViewModel(
     private val saveBirthEssence: SaveBirthEssenceUseCase,
     private val pullBirthEssence: PullBirthEssenceUseCase,
     private val generateBirthEssence: GenerateBirthEssenceUseCase,
+    private val resolveCurrentLanguageUseCase: ResolveCurrentLanguageUseCase,
+    private val observeCurrentLanguageUseCase: ObserveCurrentLanguageUseCase,
 ) {
     private val scope = CoroutineScope(Dispatchers.Main)
 
@@ -32,17 +38,53 @@ class BirthChartViewModel(
 
     init {
         scope.launch {
+            runCatching { resolveCurrentLanguageUseCase() }
+        }
+
+        scope.launch {
+            observeCurrentLanguageUseCase()
+                .map { it.code }
+                .distinctUntilChanged()
+                .collectLatest { languageCode ->
+                    _uiState.update {
+                        it.copy(
+                            currentLanguageCode = languageCode,
+                            generatedInterpretation = null,
+                            generatedArchetype = null,
+                            generatedLanguageCode = languageCode,
+                            error = null,
+                        )
+                    }
+                    getBirthEssence()
+                }
+        }
+
+        scope.launch {
             observeBirthEssence().collectLatest { essence ->
                 _uiState.update { s ->
+                    val matchesCurrentLanguage = essence?.languageCode == null ||
+                        essence.languageCode == s.currentLanguageCode
                     s.copy(
                         isLoading = false,
                         selectedSunSign = essence?.sunSign ?: s.selectedSunSign,
                         selectedMoonSign = essence?.moonSign ?: s.selectedMoonSign,
                         selectedRisingSign = essence?.risingSign ?: s.selectedRisingSign,
-                        generatedInterpretation = essence?.interpretation?.sanitizeInterpretation()
-                            ?: s.generatedInterpretation,
-                        generatedArchetype = essence?.archetype ?: s.generatedArchetype,
-                        hasSavedEssence = essence != null,
+                        generatedInterpretation = if (matchesCurrentLanguage) {
+                            essence?.interpretation?.sanitizeInterpretation() ?: s.generatedInterpretation
+                        } else {
+                            s.generatedInterpretation
+                        },
+                        generatedArchetype = if (matchesCurrentLanguage) {
+                            essence?.archetype ?: s.generatedArchetype
+                        } else {
+                            s.generatedArchetype
+                        },
+                        generatedLanguageCode = if (matchesCurrentLanguage) {
+                            essence?.languageCode ?: s.generatedLanguageCode
+                        } else {
+                            s.generatedLanguageCode
+                        },
+                        hasSavedEssence = matchesCurrentLanguage && essence != null,
                     )
                 }
             }
@@ -99,6 +141,7 @@ class BirthChartViewModel(
                         sunSign = s.selectedSunSign,
                         moonSign = s.selectedMoonSign,
                         risingSign = s.selectedRisingSign,
+                        languageCode = s.currentLanguageCode,
                     )
                 )
             ) {
@@ -106,6 +149,7 @@ class BirthChartViewModel(
                     _uiState.update {
                         it.copy(
                             generatedInterpretation = result.value.interpretation.sanitizeInterpretation(),
+                            generatedLanguageCode = result.value.languageCode,
                             generatedArchetype = result.value.archetype,
                         )
                     }
@@ -140,6 +184,7 @@ class BirthChartViewModel(
                         moonSign = s.selectedMoonSign,
                         risingSign = s.selectedRisingSign,
                         interpretation = interpretation,
+                        languageCode = s.generatedLanguageCode,
                         archetype = s.generatedArchetype,
                     )
                 )

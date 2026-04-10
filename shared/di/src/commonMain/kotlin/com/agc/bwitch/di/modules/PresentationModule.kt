@@ -43,7 +43,7 @@ val presentationModule: Module = module {
     /**
      * BirthChart
      */
-    factory { BirthChartViewModel(get(), get(), get(), get(), get()) }
+    factory { BirthChartViewModel(get(), get(), get(), get(), get(), get(), get()) }
 
     factory { SynastryViewModel(get()) }
 
