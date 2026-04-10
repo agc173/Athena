@@ -13,6 +13,7 @@ data class SynastryUiState(
     val personA: SynastryPersonForm = SynastryPersonForm(),
     val personB: SynastryPersonForm = SynastryPersonForm(),
     val reading: SynastryReading? = null,
+    val currentLanguageCode: String = "es",
     val isGenerating: Boolean = false,
     val error: String? = null,
 ) {

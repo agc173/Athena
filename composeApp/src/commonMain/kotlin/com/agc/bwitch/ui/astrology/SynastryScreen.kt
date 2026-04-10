@@ -50,8 +50,12 @@ import com.agc.bwitch.domain.astrology.synastry.SynastryDimension
 import com.agc.bwitch.domain.astrology.synastry.SynastryEnergyAxis
 import com.agc.bwitch.domain.astrology.synastry.SynastryReading
 import com.agc.bwitch.domain.astrology.synastry.SynastryReadingDepth
-import com.agc.bwitch.domain.astrology.synastry.SynastrySignal
+import com.agc.bwitch.domain.astrology.synastry.primaryGuidanceCopy
+import com.agc.bwitch.domain.astrology.synastry.primaryStrengthCopy
+import com.agc.bwitch.domain.astrology.synastry.primaryTensionCopy
 import com.agc.bwitch.domain.astrology.synastry.toFiveStarRating
+import com.agc.bwitch.localization.AppStrings
+import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.presentation.astrology.synastry.SynastryPersonForm
 import com.agc.bwitch.presentation.astrology.synastry.SynastryViewModel
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
@@ -67,6 +71,8 @@ fun SynastryScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
     val spacing = BWitchThemeTokens.dimens
+    val strings = appStrings
+    val synastryStrings = strings.synastry
 
     Column(
         modifier = modifier
@@ -76,18 +82,18 @@ fun SynastryScreen(
         verticalArrangement = Arrangement.spacedBy(spacing.spacingSm + spacing.spacingXs)
     ) {
         Text(
-            text = "Sinastría",
+            text = synastryStrings.screenTitle,
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onSurface,
         )
 
         Text(
-            text = "Explora la dinámica entre dos signos y descubre qué áreas del vínculo se activan con más fuerza.",
+            text = synastryStrings.screenSubtitle,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Text(
-            text = "La lectura combina afinidad simbólica entre signos con un matiz energético diario del momento.",
+            text = synastryStrings.screenSupportingText,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -101,6 +107,7 @@ fun SynastryScreen(
             onPersonBSunChange = viewModel::onPersonBSunSignChange,
             onPersonBMoonChange = viewModel::onPersonBMoonSignChange,
             onPersonBRisingChange = viewModel::onPersonBRisingSignChange,
+            strings = strings,
         )
 
         BWitchPrimaryButton(
@@ -108,19 +115,23 @@ fun SynastryScreen(
             enabled = state.canGenerate,
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Text(if (state.isGenerating) "Calculando..." else "Calcular lectura")
+            Text(if (state.isGenerating) synastryStrings.calculatingCta else synastryStrings.calculateCta)
         }
 
         state.error?.let { error ->
             Text(
-                text = error,
+                text = when (error) {
+                    "required_sun_signs_error" -> synastryStrings.requiredSunSignsError
+                    "generic_generate_error" -> synastryStrings.genericGenerateError
+                    else -> error
+                },
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodyMedium,
             )
         }
 
         state.reading?.let { reading ->
-            SynastryResultCard(reading = reading)
+            SynastryResultCard(reading = reading, strings = strings, languageCode = state.currentLanguageCode)
         }
     }
 }
@@ -135,14 +146,16 @@ private fun PersonFormCard(
     onPersonBSunChange: (ZodiacSign?) -> Unit,
     onPersonBMoonChange: (ZodiacSign?) -> Unit,
     onPersonBRisingChange: (ZodiacSign?) -> Unit,
+    strings: AppStrings,
 ) {
+    val synastryStrings = strings.synastry
     BWitchCard {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = "Carta A",
+                text = synastryStrings.cardALabel,
                 style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
                 modifier = Modifier.weight(1f),
             )
@@ -165,7 +178,7 @@ private fun PersonFormCard(
                 )
             }
             Text(
-                text = "Carta B",
+                text = synastryStrings.cardBLabel,
                 style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
                 textAlign = TextAlign.End,
                 modifier = Modifier.weight(1f),
@@ -173,30 +186,33 @@ private fun PersonFormCard(
         }
 
         ComparativeSignRow(
-            label = "☀ Signo solar",
+            label = synastryStrings.sunSignLabel,
             aSelected = personA.sunSign,
             bSelected = personB.sunSign,
             allowEmpty = false,
             onSelectA = onPersonASunChange,
             onSelectB = onPersonBSunChange,
+            strings = strings,
         )
 
         ComparativeSignRow(
-            label = "🌙 Luna",
+            label = synastryStrings.moonLabel,
             aSelected = personA.moonSign,
             bSelected = personB.moonSign,
             allowEmpty = true,
             onSelectA = onPersonAMoonChange,
             onSelectB = onPersonBMoonChange,
+            strings = strings,
         )
 
         ComparativeSignRow(
-            label = "⤴ Ascendente",
+            label = synastryStrings.risingLabel,
             aSelected = personA.risingSign,
             bSelected = personB.risingSign,
             allowEmpty = true,
             onSelectA = onPersonARisingChange,
             onSelectB = onPersonBRisingChange,
+            strings = strings,
         )
     }
 }
@@ -209,7 +225,9 @@ private fun ComparativeSignRow(
     allowEmpty: Boolean,
     onSelectA: (ZodiacSign?) -> Unit,
     onSelectB: (ZodiacSign?) -> Unit,
+    strings: AppStrings,
 ) {
+    val synastryStrings = strings.synastry
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(
             text = label,
@@ -224,38 +242,41 @@ private fun ComparativeSignRow(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             SignDropdown(
-                label = "Carta A",
+                label = synastryStrings.cardALabel,
                 selected = aSelected,
                 allowEmpty = allowEmpty,
                 onSelect = onSelectA,
                 showLabel = false,
                 modifier = Modifier.weight(1f),
+                strings = strings,
             )
             SignDropdown(
-                label = "Carta B",
+                label = synastryStrings.cardBLabel,
                 selected = bSelected,
                 allowEmpty = allowEmpty,
                 onSelect = onSelectB,
                 showLabel = false,
                 modifier = Modifier.weight(1f),
+                strings = strings,
             )
         }
     }
 }
 
 @Composable
-private fun SynastryResultCard(reading: SynastryReading) {
+private fun SynastryResultCard(reading: SynastryReading, strings: AppStrings, languageCode: String) {
     val structured = reading.structured
+    val synastryStrings = strings.synastry
 
     BWitchCard {
         Text(
-            text = "Resultado",
+            text = synastryStrings.resultTitle,
             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
             modifier = Modifier.fillMaxWidth(),
             textAlign = TextAlign.Center,
         )
         Text(
-            text = structured.depthInfo.depth.toUiDepthLabel(),
+            text = structured.depthInfo.depth.toUiDepthLabel(strings),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.fillMaxWidth(),
@@ -263,41 +284,41 @@ private fun SynastryResultCard(reading: SynastryReading) {
         )
 
         SectionSeparator()
-        ResultBlockTitle("MÉTRICAS DEL VÍNCULO")
+        ResultBlockTitle(synastryStrings.bondMetricsTitle)
         metricOrder.forEach { dimension ->
             val score = structured.scores[dimension] ?: return@forEach
-            MetricStarsRow(dimension = dimension, stars = score.toFiveStarRating())
+            MetricStarsRow(dimension = dimension, stars = score.toFiveStarRating(), strings = strings)
         }
 
         reading.dailyOverlay?.let { daily ->
             SectionSeparator()
-            ResultBlockTitle("ENERGÍA DEL DÍA")
+            ResultBlockTitle(synastryStrings.dailyEnergyTitle)
             daily.axes.forEach { axis ->
-                DailyEnergyAxisRow(axis)
+                DailyEnergyAxisRow(axis, strings)
             }
         }
 
         SectionSeparator()
-        ResultBlockTitle("FORTALEZA")
+        ResultBlockTitle(synastryStrings.strengthTitle)
         Text(
-            text = reading.primaryStrengthCopy(),
+            text = reading.primaryStrengthCopy(languageCode),
             style = MaterialTheme.typography.bodyLarge,
         )
 
-        ResultBlockTitle("TENSIÓN")
+        ResultBlockTitle(synastryStrings.tensionTitle)
         Text(
-            text = reading.primaryTensionCopy(),
+            text = reading.primaryTensionCopy(languageCode),
             style = MaterialTheme.typography.bodyLarge,
         )
 
-        ResultBlockTitle("GUÍA")
+        ResultBlockTitle(synastryStrings.guidanceTitle)
         Text(
-            text = reading.primaryGuidanceCopy(),
+            text = reading.primaryGuidanceCopy(languageCode),
             style = MaterialTheme.typography.bodyLarge,
         )
 
         reading.dailyOverlay?.let { daily ->
-            ResultBlockTitle("CONSEJO DEL DÍA")
+            ResultBlockTitle(synastryStrings.dailyGuidanceTitle)
             Text(
                 text = daily.dailyGuidance,
                 style = MaterialTheme.typography.bodyLarge,
@@ -306,7 +327,7 @@ private fun SynastryResultCard(reading: SynastryReading) {
         }
 
         SectionSeparator()
-        ResultBlockTitle("NARRATIVA")
+        ResultBlockTitle(synastryStrings.narrativeTitle)
         Text(
             text = reading.narrative,
             style = MaterialTheme.typography.bodyLarge,
@@ -315,13 +336,13 @@ private fun SynastryResultCard(reading: SynastryReading) {
 }
 
 @Composable
-private fun MetricStarsRow(dimension: SynastryDimension, stars: Double) {
+private fun MetricStarsRow(dimension: SynastryDimension, stars: Double, strings: AppStrings) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(text = dimension.toUiLabel(), style = MaterialTheme.typography.bodyMedium)
+        Text(text = dimension.toUiLabel(strings), style = MaterialTheme.typography.bodyMedium)
         StarRating(stars = stars)
     }
 }
@@ -359,7 +380,7 @@ private fun StarCell(fillFraction: Float) {
 }
 
 @Composable
-private fun DailyEnergyAxisRow(axis: SynastryDailyAxisState) {
+private fun DailyEnergyAxisRow(axis: SynastryDailyAxisState, strings: AppStrings) {
     val position = ((axis.value + 100f) / 200f).coerceIn(0f, 1f)
     val markerSize = 20.dp
     var showAxisInfo by remember(axis.axis) { mutableStateOf(false) }
@@ -385,7 +406,7 @@ private fun DailyEnergyAxisRow(axis: SynastryDailyAxisState) {
                 contentAlignment = Alignment.CenterStart,
             ) {
                 Text(
-                    text = axis.leftLabel(),
+                    text = axis.leftLabel(strings),
                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
                     color = MaterialTheme.colorScheme.onSurface,
                 )
@@ -415,7 +436,7 @@ private fun DailyEnergyAxisRow(axis: SynastryDailyAxisState) {
                 contentAlignment = Alignment.CenterEnd,
             ) {
                 Text(
-                    text = axis.rightLabel(),
+                    text = axis.rightLabel(strings),
                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
                     color = MaterialTheme.colorScheme.onSurface,
                     textAlign = TextAlign.End,
@@ -479,7 +500,7 @@ private fun DailyEnergyAxisRow(axis: SynastryDailyAxisState) {
         }
 
         if (showAxisInfo) {
-            AxisInfoDialog(axis = axis.axis, onDismiss = { showAxisInfo = false })
+            AxisInfoDialog(axis = axis.axis, strings = strings, onDismiss = { showAxisInfo = false })
         }
     }
 }
@@ -532,8 +553,10 @@ private fun ResultBlockTitle(text: String) {
 @Composable
 private fun AxisInfoDialog(
     axis: SynastryEnergyAxis,
+    strings: AppStrings,
     onDismiss: () -> Unit,
 ) {
+    val synastryStrings = strings.synastry
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false),
@@ -551,12 +574,12 @@ private fun AxisInfoDialog(
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 Text(
-                    text = axis.axisTitle(),
+                    text = axis.axisTitle(strings),
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
                 Text(
-                    text = axis.axisInfoDescription(),
+                    text = axis.axisInfoDescription(strings),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -564,7 +587,7 @@ private fun AxisInfoDialog(
                     onClick = onDismiss,
                     modifier = Modifier.align(Alignment.End),
                 ) {
-                    Text("Cerrar")
+                    Text(synastryStrings.closeCta)
                 }
             }
         }
@@ -593,142 +616,17 @@ private fun buildStarPath(width: Float, height: Float): Path {
     return path
 }
 
-private fun SynastryEnergyAxis.axisTitle(): String = when (this) {
-    SynastryEnergyAxis.HARMONY_INTENSITY -> "Armonía ↔ Intensidad"
-    SynastryEnergyAxis.STABILITY_TRANSFORMATION -> "Estabilidad ↔ Transformación"
-    SynastryEnergyAxis.CALM_MOVEMENT -> "Calma ↔ Movimiento"
+private fun SynastryEnergyAxis.axisTitle(strings: AppStrings): String = when (this) {
+    SynastryEnergyAxis.HARMONY_INTENSITY -> strings.synastry.axisHarmonyIntensityTitle
+    SynastryEnergyAxis.STABILITY_TRANSFORMATION -> strings.synastry.axisStabilityTransformationTitle
+    SynastryEnergyAxis.CALM_MOVEMENT -> strings.synastry.axisCalmMovementTitle
 }
 
-private fun SynastryEnergyAxis.axisInfoDescription(): String = when (this) {
-    SynastryEnergyAxis.HARMONY_INTENSITY -> "Mide si hoy el vínculo fluye desde equilibrio y facilidad, o desde una chispa emocional más intensa."
-    SynastryEnergyAxis.STABILITY_TRANSFORMATION -> "Indica si la energía del día favorece sostener lo construido o abrir cambios y redefinir acuerdos."
-    SynastryEnergyAxis.CALM_MOVEMENT -> "Refleja si conviene priorizar pausa y contención, o activar más movimiento, iniciativa y acción compartida."
+private fun SynastryEnergyAxis.axisInfoDescription(strings: AppStrings): String = when (this) {
+    SynastryEnergyAxis.HARMONY_INTENSITY -> strings.synastry.axisHarmonyIntensityDescription
+    SynastryEnergyAxis.STABILITY_TRANSFORMATION -> strings.synastry.axisStabilityTransformationDescription
+    SynastryEnergyAxis.CALM_MOVEMENT -> strings.synastry.axisCalmMovementDescription
 }
-
-private fun synastryReadingPrimaryCopy(
-    signals: List<SynastrySignal>,
-    axis: SynastryDailyAxisState?,
-    seedBase: Int,
-    fallback: String,
-): String {
-    val primarySignal = signals.firstOrNull() ?: return fallback
-    val variants = primarySignal.copyVariants(axis)
-    val index = ((seedBase * 31) + primarySignal.ordinal + (axis?.value ?: 0)).absolutePositive() % variants.size
-    return variants[index]
-}
-
-private fun SynastrySignal.copyVariants(axis: SynastryDailyAxisState?): List<String> = when (this) {
-    SynastrySignal.STRONG_EMOTIONAL_RESONANCE -> listOf(
-        "Hay una sintonía emocional que facilita comprenderse sin demasiadas explicaciones.",
-        "La conexión sensible aparece como un punto fuerte: captan rápido lo que el otro siente.",
-        "La base emocional se percibe cercana y eso ayuda a sostener momentos exigentes.",
-    )
-
-    SynastrySignal.DIFFERENT_EMOTIONAL_RHYTHMS -> listOf(
-        "Los tiempos emocionales no siempre coinciden, y eso puede generar cruces si no se nombran.",
-        "La tensión principal está en cómo cada persona procesa lo que siente y cuándo lo expresa.",
-        "Se nota diferencia de ritmo emocional: conviene validar tiempos distintos sin forzar respuestas.",
-    )
-
-    SynastrySignal.NATURAL_SPARK -> listOf(
-        "La atracción aparece de forma natural y mantiene vivo el interés entre ambos.",
-        "Hay química espontánea, con capacidad de renovar el vínculo cuando se cuida el ritmo.",
-        "La chispa está presente y aporta impulso para acercarse con más facilidad.",
-    )
-
-    SynastrySignal.COMMUNICATION_FLOW -> listOf(
-        "El diálogo tiende a fluir y eso vuelve más simples los ajustes cotidianos.",
-        "Existe una base de comunicación clara que ayuda a ordenar decisiones en conjunto.",
-        "Hablarse suele resultar natural, lo que fortalece la coordinación entre ambos.",
-    )
-
-    SynastrySignal.STABILITY_POTENTIAL -> listOf(
-        "Se percibe potencial para construir una base estable sin perder cercanía.",
-        "Hay condiciones para sostener acuerdos en el tiempo con constancia y cuidado.",
-        "El vínculo muestra capacidad de anclaje y continuidad cuando priorizan lo esencial.",
-    )
-
-    SynastrySignal.GROWTH_THROUGH_DIFFERENCE -> listOf(
-        "Las diferencias pueden convertirse en evolución si se usan como aprendizaje mutuo.",
-        "Existe potencial de crecimiento compartido cuando no intentan pensar igual en todo.",
-        "El vínculo se fortalece al integrar perspectivas distintas en lugar de competir por ellas.",
-    )
-
-    SynastrySignal.HIGH_INTENSITY -> listOf(
-        "La intensidad es alta y puede desbordar si no acompañan con pausas conscientes.",
-        "La carga emocional del vínculo sube rápido; conviene evitar decisiones impulsivas.",
-        "Hay mucha chispa, pero también riesgo de reactividad si falta regulación conjunta.",
-    )
-
-    SynastrySignal.NEED_FOR_PATIENCE -> listOf(
-        "La comunicación pide más paciencia para evitar interpretaciones rápidas.",
-        "El principal reto está en sostener conversaciones sin apurar conclusiones.",
-        "Conviene bajar el apuro al dialogar para que los matices no se pierdan.",
-    )
-
-    SynastrySignal.GROUNDING_BOND -> listOf(
-        "Predomina una energía de anclaje que ayuda a bajar ruido y enfocarse en lo importante.",
-        "El vínculo ofrece una cualidad de calma práctica que ordena el día a día.",
-        "Hay una base aterrizada que favorece decisiones más serenas y consistentes.",
-    )
-
-    SynastrySignal.MENTAL_STIMULATION -> listOf(
-        "Hay estímulo mental mutuo y eso mantiene viva la curiosidad entre ambos.",
-        "La conexión intelectual suma dinamismo y abre conversaciones nutritivas.",
-        "Se desafían de forma constructiva, lo que renueva ideas y perspectivas.",
-    )
-
-    SynastrySignal.CREATE_SHARED_RHYTHM -> listOf(
-        "La clave es crear un ritmo compartido para no entrar en sincronías forzadas.",
-        "Conviene acordar tiempos comunes para que la relación gane estabilidad diaria.",
-        "Un pulso común, aunque sea simple, puede reducir fricción y mejorar coordinación.",
-    )
-
-    SynastrySignal.USE_DIFFERENCE_AS_GROWTH -> listOf(
-        "La guía principal es usar la diferencia como recurso de crecimiento.",
-        "Lo más útil hoy es convertir los contrastes en acuerdos más inteligentes.",
-        "Tomar lo distinto como aprendizaje puede elevar el tono general del vínculo.",
-    )
-
-    SynastrySignal.PROTECT_THE_SOFTNESS -> listOf(
-        "Conviene cuidar la parte sensible del vínculo antes de discutir formas.",
-        "La guía es proteger la sensibilidad mutua y priorizar tono sobre velocidad.",
-        "Sostener un clima seguro ayuda a que lo importante pueda decirse mejor.",
-    )
-
-    SynastrySignal.SLOW_DOWN_REACTIVITY -> listOf(
-        if ((axis?.value ?: 0) >= 0) {
-            "La guía es bajar un punto la aceleración para responder con más conciencia."
-        } else {
-            "Conviene pausar antes de reaccionar para que el diálogo no se tense de más."
-        },
-        "Tomarse un segundo antes de responder puede cambiar por completo el resultado.",
-        "Reducir reactividad mejora el clima y evita escalar roces innecesarios.",
-    )
-}
-
-private fun Int.absolutePositive(): Int = kotlin.math.abs(this)
-
-private fun SynastryReading.primaryStrengthCopy(): String = synastryReadingPrimaryCopy(
-    signals = structured.strengths,
-    axis = dailyOverlay?.axes?.maxByOrNull { kotlin.math.abs(it.value) },
-    seedBase = structured.overallScore.value + personA.sunSign.ordinal + personB.sunSign.ordinal,
-    fallback = "No se detectó una fortaleza dominante en esta lectura.",
-)
-
-private fun SynastryReading.primaryTensionCopy(): String = synastryReadingPrimaryCopy(
-    signals = structured.tensions,
-    axis = dailyOverlay?.axes?.maxByOrNull { kotlin.math.abs(it.value) },
-    seedBase = structured.overallScore.value + (personA.sunSign.ordinal * 7) + personB.sunSign.ordinal,
-    fallback = "No se detectó una tensión dominante en esta lectura.",
-)
-
-private fun SynastryReading.primaryGuidanceCopy(): String = synastryReadingPrimaryCopy(
-    signals = structured.guidance,
-    axis = dailyOverlay?.axes?.firstOrNull(),
-    seedBase = structured.overallScore.value + (personA.sunSign.ordinal * 17) + personB.sunSign.ordinal,
-    fallback = "Mantengan una comunicación presente y honesta.",
-)
 
 private val metricOrder = listOf(
     SynastryDimension.ATTRACTION,
@@ -743,6 +641,7 @@ private fun SignDropdown(
     selected: ZodiacSign?,
     allowEmpty: Boolean,
     onSelect: (ZodiacSign?) -> Unit,
+    strings: AppStrings,
     showLabel: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
@@ -765,7 +664,7 @@ private fun SignDropdown(
             modifier = Modifier.fillMaxWidth(),
         ) {
             Text(
-                text = selected?.toDisplayName() ?: "Seleccionar",
+                text = selected?.localizedLabel(strings) ?: strings.synastry.selectPlaceholder,
                 modifier = Modifier.fillMaxWidth(),
                 color = MaterialTheme.colorScheme.onSurface,
             )
@@ -776,6 +675,7 @@ private fun SignDropdown(
                 title = label,
                 selected = selected,
                 allowEmpty = allowEmpty,
+                strings = strings,
                 onSelect = {
                     onSelect(it)
                     expanded = false
@@ -791,6 +691,7 @@ private fun SignPickerDialog(
     title: String,
     selected: ZodiacSign?,
     allowEmpty: Boolean,
+    strings: AppStrings,
     onSelect: (ZodiacSign?) -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -819,7 +720,7 @@ private fun SignPickerDialog(
                         onClick = { onSelect(null) },
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Text(text = if (selected == null) "No especificar ✓" else "No especificar")
+                        Text(text = if (selected == null) "${strings.synastry.unspecifiedOption} ✓" else strings.synastry.unspecifiedOption)
                     }
                 }
 
@@ -829,7 +730,7 @@ private fun SignPickerDialog(
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         Text(
-                            text = if (sign == selected) "${sign.toDisplayName()} ✓" else sign.toDisplayName()
+                            text = if (sign == selected) "${sign.localizedLabel(strings)} ✓" else sign.localizedLabel(strings)
                         )
                     }
                 }
@@ -838,42 +739,42 @@ private fun SignPickerDialog(
     }
 }
 
-private fun ZodiacSign.toDisplayName(): String = when (this) {
-    ZodiacSign.aries -> "Aries"
-    ZodiacSign.taurus -> "Tauro"
-    ZodiacSign.gemini -> "Géminis"
-    ZodiacSign.cancer -> "Cáncer"
-    ZodiacSign.leo -> "Leo"
-    ZodiacSign.virgo -> "Virgo"
-    ZodiacSign.libra -> "Libra"
-    ZodiacSign.scorpio -> "Escorpio"
-    ZodiacSign.sagittarius -> "Sagitario"
-    ZodiacSign.capricorn -> "Capricornio"
-    ZodiacSign.aquarius -> "Acuario"
-    ZodiacSign.pisces -> "Piscis"
+private fun ZodiacSign.localizedLabel(strings: AppStrings): String = when (this) {
+    ZodiacSign.aries -> strings.zodiac.aries
+    ZodiacSign.taurus -> strings.zodiac.taurus
+    ZodiacSign.gemini -> strings.zodiac.gemini
+    ZodiacSign.cancer -> strings.zodiac.cancer
+    ZodiacSign.leo -> strings.zodiac.leo
+    ZodiacSign.virgo -> strings.zodiac.virgo
+    ZodiacSign.libra -> strings.zodiac.libra
+    ZodiacSign.scorpio -> strings.zodiac.scorpio
+    ZodiacSign.sagittarius -> strings.zodiac.sagittarius
+    ZodiacSign.capricorn -> strings.zodiac.capricorn
+    ZodiacSign.aquarius -> strings.zodiac.aquarius
+    ZodiacSign.pisces -> strings.zodiac.pisces
 }
 
-private fun SynastryReadingDepth.toUiDepthLabel(): String = when (this) {
-    SynastryReadingDepth.BASIC -> "Lectura esencial"
-    SynastryReadingDepth.PARTIAL -> "Lectura ampliada"
-    SynastryReadingDepth.COMPLETE -> "Lectura completa"
+private fun SynastryReadingDepth.toUiDepthLabel(strings: AppStrings): String = when (this) {
+    SynastryReadingDepth.BASIC -> strings.synastry.depthBasic
+    SynastryReadingDepth.PARTIAL -> strings.synastry.depthPartial
+    SynastryReadingDepth.COMPLETE -> strings.synastry.depthComplete
 }
 
-private fun SynastryDimension.toUiLabel(): String = when (this) {
-    SynastryDimension.ATTRACTION -> "Atracción"
-    SynastryDimension.EMOTIONAL -> "Sintonía emocional"
-    SynastryDimension.COMMUNICATION -> "Comunicación"
-    SynastryDimension.GROWTH -> "Potencial de crecimiento"
+private fun SynastryDimension.toUiLabel(strings: AppStrings): String = when (this) {
+    SynastryDimension.ATTRACTION -> strings.synastry.dimensionAttraction
+    SynastryDimension.EMOTIONAL -> strings.synastry.dimensionEmotional
+    SynastryDimension.COMMUNICATION -> strings.synastry.dimensionCommunication
+    SynastryDimension.GROWTH -> strings.synastry.dimensionGrowth
 }
 
-private fun SynastryDailyAxisState.leftLabel(): String = when (axis) {
-    SynastryEnergyAxis.HARMONY_INTENSITY -> "Armonía"
-    SynastryEnergyAxis.STABILITY_TRANSFORMATION -> "Estabilidad"
-    SynastryEnergyAxis.CALM_MOVEMENT -> "Calma"
+private fun SynastryDailyAxisState.leftLabel(strings: AppStrings): String = when (axis) {
+    SynastryEnergyAxis.HARMONY_INTENSITY -> strings.synastry.axisHarmony
+    SynastryEnergyAxis.STABILITY_TRANSFORMATION -> strings.synastry.axisStability
+    SynastryEnergyAxis.CALM_MOVEMENT -> strings.synastry.axisCalm
 }
 
-private fun SynastryDailyAxisState.rightLabel(): String = when (axis) {
-    SynastryEnergyAxis.HARMONY_INTENSITY -> "Intensidad"
-    SynastryEnergyAxis.STABILITY_TRANSFORMATION -> "Transformación"
-    SynastryEnergyAxis.CALM_MOVEMENT -> "Movimiento"
+private fun SynastryDailyAxisState.rightLabel(strings: AppStrings): String = when (axis) {
+    SynastryEnergyAxis.HARMONY_INTENSITY -> strings.synastry.axisIntensity
+    SynastryEnergyAxis.STABILITY_TRANSFORMATION -> strings.synastry.axisTransformation
+    SynastryEnergyAxis.CALM_MOVEMENT -> strings.synastry.axisMovement
 }
