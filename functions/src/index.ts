@@ -57,7 +57,7 @@ export const generateHoroscopesWindow = onSchedule(
       schedule: 'every day 02:10',
       timeZone: 'Europe/Madrid',
       region: 'europe-west1',
-      retryCount: 3,
+      retryCount: 0,
       secrets: ['DEEPSEEK_API_KEY'],
     },
     async () => {
@@ -93,7 +93,7 @@ export const generateHoroscopesWindow = onSchedule(
 
       const tasks: Array<() => Promise<void>> = [];
 
-      for (let dayOffset = 0; dayOffset <= 7; dayOffset++) {
+      for (let dayOffset = 0; dayOffset <= 0; dayOffset++) {
         const dateIso = dateIsoMadrid(dayOffset);
 
         for (const sign of ZODIAC_SIGNS) {
