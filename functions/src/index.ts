@@ -94,7 +94,7 @@ export const generateHoroscopesWindow = onSchedule(
       const canonicalTasks: Array<() => Promise<void>> = [];
       const translationTasks: Array<() => Promise<void>> = [];
 
-      for (let dayOffset = 0; dayOffset <= 0; dayOffset++) {
+      for (let dayOffset = 0; dayOffset <= 13; dayOffset++) {
         const dateIso = dateIsoMadrid(dayOffset);
 
         // Fase A: generar canonical en español por signo.
