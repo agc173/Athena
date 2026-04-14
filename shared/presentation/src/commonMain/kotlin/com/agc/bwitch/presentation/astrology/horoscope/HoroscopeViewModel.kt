@@ -97,7 +97,7 @@ class HoroscopeViewModel(
             val hasCached = _uiState.value.horoscope != null
 
             if (lastPulled == today && hasCached) {
-                _uiState.update { it.copy(infoMessage = "Ya está actualizado") }
+                _uiState.update { it.copy(infoMessage = HoroscopeFeedbackMessage.AlreadyUpdated) }
                 return@launch
             }
 
@@ -105,7 +105,7 @@ class HoroscopeViewModel(
 
             if (_uiState.value.errorMessage == null) {
                 pullMarker.setLastPulledDateIso(today, languageCode = languageCode)
-                _uiState.update { it.copy(infoMessage = "Actualizado") }
+                _uiState.update { it.copy(infoMessage = HoroscopeFeedbackMessage.Updated) }
             }
         }
     }
@@ -165,7 +165,7 @@ class HoroscopeViewModel(
         } catch (t: Throwable) {
             println("🔥 Horoscope pull failed: ${t.message}")
             t.printStackTrace()
-            _uiState.update { it.copy(errorMessage = "No se pudo actualizar el horóscopo") }
+            _uiState.update { it.copy(errorMessage = HoroscopeFeedbackMessage.RefreshFailed) }
         } finally {
             _uiState.update { it.copy(isRefreshing = false) }
         }
