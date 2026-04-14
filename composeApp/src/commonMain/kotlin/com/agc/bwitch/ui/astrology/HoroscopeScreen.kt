@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
 import com.agc.bwitch.localization.AppStrings
 import com.agc.bwitch.localization.appStrings
+import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeFeedbackMessage
 import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeUiState
 import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeViewModel
 import com.agc.bwitch.ui.common.designsystem.BWitchPrimaryButton
@@ -46,14 +47,14 @@ fun HoroscopeScreen(
 
     // Info snackbar
     LaunchedEffect(state.infoMessage) {
-        val msg = state.infoMessage ?: return@LaunchedEffect
+        val msg = state.infoMessage?.toLocalizedMessage(strings) ?: return@LaunchedEffect
         snackbarHostState.showSnackbar(message = msg)
         viewModel.onInfoShown()
     }
 
     // Error snackbar
     LaunchedEffect(state.errorMessage) {
-        val msg = state.errorMessage ?: return@LaunchedEffect
+        val msg = state.errorMessage?.toLocalizedMessage(strings) ?: return@LaunchedEffect
         snackbarHostState.showSnackbar(message = msg)
         viewModel.onErrorShown()
     }
@@ -184,4 +185,10 @@ private fun ZodiacSign.localizedLabel(strings: AppStrings): String = when (this)
     ZodiacSign.capricorn -> strings.zodiac.capricorn
     ZodiacSign.aquarius -> strings.zodiac.aquarius
     ZodiacSign.pisces -> strings.zodiac.pisces
+}
+
+private fun HoroscopeFeedbackMessage.toLocalizedMessage(strings: AppStrings): String = when (this) {
+    HoroscopeFeedbackMessage.AlreadyUpdated -> strings.horoscope.alreadyUpdatedMessage
+    HoroscopeFeedbackMessage.Updated -> strings.horoscope.updatedMessage
+    HoroscopeFeedbackMessage.RefreshFailed -> strings.horoscope.refreshErrorMessage
 }
