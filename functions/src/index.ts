@@ -91,20 +91,63 @@ export const generateHoroscopesWindow = onSchedule(
       let stoppedByCap = false;
       let capError: string | undefined;
 
-      const tasks: Array<() => Promise<void>> = [];
+      const canonicalTasks: Array<() => Promise<void>> = [];
+      const translationTasks: Array<() => Promise<void>> = [];
 
       for (let dayOffset = 0; dayOffset <= 0; dayOffset++) {
         const dateIso = dateIsoMadrid(dayOffset);
 
+        // Fase A: generar canonical en español por signo.
         for (const sign of ZODIAC_SIGNS) {
-          for (const lang of ENV.ACTIVE_LANGS) {
-            tasks.push(async () => {
-            // ✅ If cap already exceeded, skip remaining tasks quietly
+          canonicalTasks.push(async () => {
+          // ✅ If cap already exceeded, skip remaining tasks quietly
+            if (stoppedByCap) return;
+
+            try {
+              const {result} = await withRetry(
+                  () => generator.generateCanonical(dateIso, sign),
+                  ENV.LLM_MAX_RETRIES
+              );
+
+              if (result === 'created') created++;
+              else skipped++;
+            } catch (e) {
+              const msg = (e as any)?.message ?? String(e);
+
+              // ✅ If daily cap exceeded, stop scheduling further work
+              if (msg.includes('DAILY_LLM_CAP_EXCEEDED')) {
+                stoppedByCap = true;
+                capError = msg;
+                logger.warn('generateHoroscopesWindow stopped by daily cap', {
+                  phase: 'canonical',
+                  dateIso,
+                  sign,
+                  error: msg,
+                });
+                return;
+              }
+
+              failed++;
+              logger.error('generateHoroscopesWindow item failed', {
+                phase: 'canonical',
+                dateIso,
+                sign,
+                error: msg,
+              });
+            }
+          });
+        }
+
+        // Fase B: generar traducciones para lang != es.
+        for (const sign of ZODIAC_SIGNS) {
+          for (const lang of ENV.ACTIVE_LANGS.filter((item) => item !== 'es')) {
+            translationTasks.push(async () => {
+              // ✅ If cap already exceeded, skip remaining tasks quietly
               if (stoppedByCap) return;
 
               try {
                 const {result} = await withRetry(
-                    () => generator.generateOne(dateIso, sign, lang),
+                    () => generator.generateTranslation(dateIso, sign, lang),
                     ENV.LLM_MAX_RETRIES
                 );
 
@@ -118,6 +161,7 @@ export const generateHoroscopesWindow = onSchedule(
                   stoppedByCap = true;
                   capError = msg;
                   logger.warn('generateHoroscopesWindow stopped by daily cap', {
+                    phase: 'translation',
                     dateIso,
                     sign,
                     lang,
@@ -128,6 +172,7 @@ export const generateHoroscopesWindow = onSchedule(
 
                 failed++;
                 logger.error('generateHoroscopesWindow item failed', {
+                  phase: 'translation',
                   dateIso,
                   sign,
                   lang,
@@ -139,8 +184,9 @@ export const generateHoroscopesWindow = onSchedule(
         }
       }
 
-      // Ejecutamos con concurrencia limitada
-      await runWithConcurrency(tasks, ENV.LLM_CONCURRENCY);
+      // Ejecutamos con concurrencia limitada y por fases.
+      await runWithConcurrency(canonicalTasks, ENV.LLM_CONCURRENCY);
+      await runWithConcurrency(translationTasks, ENV.LLM_CONCURRENCY);
 
       logger.info('generateHoroscopesWindow done', {
         provider: router.name,
