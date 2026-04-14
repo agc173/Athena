@@ -58,6 +58,7 @@ export const generateHoroscopesWindow = onSchedule(
       timeZone: 'Europe/Madrid',
       region: 'europe-west1',
       retryCount: 0,
+      timeoutSeconds: 600,
       secrets: ['DEEPSEEK_API_KEY'],
     },
     async () => {
