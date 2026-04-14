@@ -59,15 +59,19 @@ function normalize(
 
 function normalizeTranslation(
     doc: unknown,
-): Pick<HoroscopeDoc, 'text' | 'shareText'> {
+): Pick<HoroscopeDoc, 'text' | 'shareText' | 'mood' | 'luckyColor'> {
   const source = (doc ?? {}) as Record<string, unknown>;
   const out = {
     text: String(source.text ?? '').trim(),
     shareText: String(source.shareText ?? '').trim(),
+    mood: String(source.mood ?? '').trim(),
+    luckyColor: String(source.luckyColor ?? '').trim(),
   };
 
   if (!out.text) throw new Error('Invalid: translation text empty');
   if (!out.shareText) throw new Error('Invalid: translation shareText empty');
+  if (!out.mood) throw new Error('Invalid: translation mood empty');
+  if (!out.luckyColor) throw new Error('Invalid: translation luckyColor empty');
 
   return out;
 }
@@ -193,7 +197,9 @@ export class HoroscopeGenerator {
               sign,
               lang,
               canonicalText,
-              canonicalShareText
+              canonicalShareText,
+              canonicalMood,
+              canonicalLuckyColor
           ),
         },
       ],
@@ -206,9 +212,9 @@ export class HoroscopeGenerator {
       languageCode: lang,
       text: parsed.text,
       shareText: parsed.shareText,
-      mood: canonicalMood,
+      mood: parsed.mood,
       luckyNumber: canonicalLuckyNumber,
-      luckyColor: canonicalLuckyColor,
+      luckyColor: parsed.luckyColor,
       createdAtEpochMillis: now,
       updatedAtEpochMillis: now,
       generatorVersion: ENV.GENERATOR_VERSION,

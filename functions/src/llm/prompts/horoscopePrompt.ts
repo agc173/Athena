@@ -57,7 +57,7 @@ export function horoscopeTranslationSystemPrompt(lang: Lang) {
     'You are a precise translator for horoscope texts.',
     'Return ONLY valid JSON, no markdown, no commentary.',
     `Target language: ${lang}.`,
-    'Translate ONLY these fields: text, shareText.',
+    'Translate ONLY these fields: text, shareText, mood, luckyColor.',
     'Preserve tone and meaning.',
     'No emojis unless natural (max 1).',
   ].join('\n');
@@ -68,7 +68,9 @@ export function horoscopeTranslationUserPrompt(
     sign: ZodiacSign,
     lang: Lang,
     canonicalText: string,
-    canonicalShareText: string
+    canonicalShareText: string,
+    canonicalMood: string,
+    canonicalLuckyColor: string
 ) {
   return [
     'Translate the canonical Spanish horoscope content.',
@@ -77,6 +79,8 @@ export function horoscopeTranslationUserPrompt(
     `targetLang: ${lang}`,
     `text_es: ${JSON.stringify(canonicalText)}`,
     `shareText_es: ${JSON.stringify(canonicalShareText)}`,
-    'Output JSON with ONLY: text, shareText.',
+    `mood_es: ${JSON.stringify(canonicalMood)}`,
+    `luckyColor_es: ${JSON.stringify(canonicalLuckyColor)}`,
+    'Output JSON with ONLY: text, shareText, mood, luckyColor.',
   ].join('\n');
 }
