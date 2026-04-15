@@ -10,6 +10,8 @@ import androidx.compose.ui.Modifier
 import com.agc.bwitch.domain.rituals.RitualCatalogRepository
 import com.agc.bwitch.domain.rituals.RitualCategoryType
 import com.agc.bwitch.domain.rituals.RitualListItem
+import com.agc.bwitch.localization.RitualCatalogStrings
+import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
 import com.agc.bwitch.ui.common.designsystem.BWitchScreen
 import com.agc.bwitch.ui.common.designsystem.BWitchSectionHeader
@@ -24,19 +26,21 @@ fun RitualsListScreen(
     repository: RitualCatalogRepository = koinInject(),
 ) {
     val rituals = remember(category, repository) { repository.getRitualsByCategory(category) }
+    val strings = appStrings.ritualCatalog
 
     BWitchScreen(
         contentPadding = contentPadding,
         modifier = modifier,
     ) {
         BWitchSectionHeader(
-            title = category.displayName(),
-            subtitle = "Selecciona un ritual para ver su guía completa.",
+            title = strings.listHeaderTitle.withText(category.localizedName(strings)),
+            subtitle = strings.listHeaderSubtitle,
         )
 
         rituals.forEach { ritual ->
             RitualListCard(
                 ritual = ritual,
+                materialsFormat = strings.materialsFormat,
                 onClick = { onOpenRitual(ritual.id) },
             )
         }
@@ -46,6 +50,7 @@ fun RitualsListScreen(
 @Composable
 private fun RitualListCard(
     ritual: RitualListItem,
+    materialsFormat: String,
     onClick: () -> Unit,
 ) {
     BWitchCard(
@@ -62,17 +67,19 @@ private fun RitualListCard(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Text(
-            text = "Materiales: ${ritual.materialsHint}",
+            text = materialsFormat.withText(ritual.materialsHint),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.primary,
         )
     }
 }
 
-private fun RitualCategoryType.displayName(): String =
+private fun RitualCategoryType.localizedName(strings: RitualCatalogStrings): String =
     when (this) {
-        RitualCategoryType.Love -> "Amor"
-        RitualCategoryType.Prosperity -> "Prosperidad"
-        RitualCategoryType.Protection -> "Protección"
-        RitualCategoryType.Cleansing -> "Limpieza"
+        RitualCategoryType.Love -> strings.categoryLove
+        RitualCategoryType.Prosperity -> strings.categoryAbundance
+        RitualCategoryType.Protection -> strings.categoryProtection
+        RitualCategoryType.Cleansing -> strings.categoryEnergy
     }
+
+private fun String.withText(value: String): String = replaceFirst("%s", value)
