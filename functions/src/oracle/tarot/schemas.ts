@@ -143,11 +143,23 @@ function looksClearlySpanish(text: string): boolean {
     ' tus ',
     ' para que ',
   ];
+  const labelMarkers = [
+    ' tema ',
+    ' significado ',
+    ' consejo ',
+    ' atención ',
+    ' resumen ',
+  ];
 
   let score = 0;
   markers.forEach((marker) => {
     if (normalized.includes(marker)) {
       score += 1;
+    }
+  });
+  labelMarkers.forEach((marker) => {
+    if (normalized.includes(marker)) {
+      score += 2;
     }
   });
 
