@@ -2,7 +2,7 @@ import {RequestType} from '../types';
 import {drawTarotCards} from './draw';
 import {buildSystemPrompt} from './prompts';
 import {resolveTarotCardName} from './deck';
-import {validateTarot3Reading, parseStrictJsonObject} from './schemas';
+import {validateTarotReading, validateTarot3Reading, parseStrictJsonObject} from './schemas';
 
 export function selfTestDeterministicDraw(): void {
   const first = drawTarotCards({
@@ -96,10 +96,45 @@ export function selfTestMultilingualCardNames(): void {
   });
 }
 
+export function selfTestRejectSpanishForNonSpanishLang(): void {
+  const draw = drawTarotCards({
+    requestId: 'req-lang-guard-1',
+    requestType: RequestType.TAROT_1,
+    lang: 'fr',
+  });
+
+  if (draw.type !== RequestType.TAROT_1) {
+    throw new Error('SelfTest failed: expected TAROT_1 draw');
+  }
+
+  const spanishReading = parseStrictJsonObject(JSON.stringify({
+    type: 'TAROT_1',
+    card: draw.card,
+    interpretation: {
+      theme: 'Consejo de energía',
+      meaning: 'Esta carta marca tu camino y recuerda que debes avanzar.',
+      advice: 'Evita decisiones impulsivas.',
+      watchOut: 'Cuidado con tus dudas.',
+    },
+  }));
+
+  let rejected = false;
+  try {
+    validateTarotReading(spanishReading, draw, 'fr');
+  } catch {
+    rejected = true;
+  }
+
+  if (!rejected) {
+    throw new Error('SelfTest failed: Spanish content accepted for non-es language');
+  }
+}
+
 export function main(): void {
   selfTestDeterministicDraw();
   selfTestTarot3Positions();
   selfTestRejectMismatchedName();
   selfTestSystemPromptLanguageRule();
   selfTestMultilingualCardNames();
+  selfTestRejectSpanishForNonSpanishLang();
 }
