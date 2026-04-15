@@ -261,7 +261,7 @@ class TarotViewModel(
                             overlayCardIndex = null,
                             overlayCardRevealed = false,
                             openedMiniCardIndex = null,
-                            error = result.error.message ?: "Unknown error",
+                            error = result.error.message.orEmpty(),
                         )
                     }
                 }

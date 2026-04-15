@@ -38,7 +38,8 @@ fun GuideHomeScreen(
     contentPadding: PaddingValues,
     onNavigate: (Destination) -> Unit,
 ) {
-    val strings = appStrings.oracle
+    val oracleStrings = appStrings.oracle
+    val tarotStrings = appStrings.tarot
 
     BWitchScreen(contentPadding = contentPadding) {
         BWitchSectionHeader(
@@ -47,17 +48,17 @@ fun GuideHomeScreen(
         )
 
         GuideOptionCard(
-            title = "Tarot",
-            subtitle = "Lecturas e interpretación simbólica",
-            details = "Carta única · Tirada de 3",
+            title = tarotStrings.guideEntryTitle,
+            subtitle = tarotStrings.guideEntrySubtitle,
+            details = tarotStrings.guideEntryDetails,
             onClick = { onNavigate(Destination.TarotHome) },
             ornamentType = GuideCardOrnament.Tarot,
             modifier = Modifier.height(GuideCardHeight),
         )
 
         GuideOptionCard(
-            title = strings.guideEntryTitle,
-            subtitle = strings.guideEntrySubtitle,
+            title = oracleStrings.guideEntryTitle,
+            subtitle = oracleStrings.guideEntrySubtitle,
             onClick = { onNavigate(Destination.Oracle) },
             ornamentType = GuideCardOrnament.Oracle,
             modifier = Modifier.height(GuideCardHeight),

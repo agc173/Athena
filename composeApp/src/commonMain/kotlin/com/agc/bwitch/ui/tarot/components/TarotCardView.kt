@@ -30,6 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.agc.bwitch.domain.tarot.TarotCard
+import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.ui.tarot.TarotCardArt
 import bwitch.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.painterResource
@@ -147,8 +148,8 @@ private fun TarotKnownFace(card: TarotCard?, drawable: org.jetbrains.compose.res
 @Composable
 private fun TarotPremiumFallbackFace(
     card: TarotCard?,
-    status: String = "Ilustración próximamente",
 ) {
+    val strings = appStrings.tarot
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -165,7 +166,7 @@ private fun TarotPremiumFallbackFace(
         verticalArrangement = Arrangement.SpaceBetween,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(status, style = MaterialTheme.typography.labelMedium)
+        Text(strings.fallbackArtSoon, style = MaterialTheme.typography.labelMedium)
 
         Column(
             modifier = Modifier
@@ -175,9 +176,16 @@ private fun TarotPremiumFallbackFace(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            Text(card?.name ?: "Arcano", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Text(
+                card?.name ?: strings.cardLabel,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+            )
             card?.upright?.let { isUpright ->
-                Text(if (isUpright) "Al derecho" else "Invertida", style = MaterialTheme.typography.bodySmall)
+                Text(
+                    if (isUpright) strings.overlayOrientationUpright else strings.overlayOrientationReversed,
+                    style = MaterialTheme.typography.bodySmall,
+                )
             }
         }
 

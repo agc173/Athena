@@ -1,13 +1,10 @@
 package com.agc.bwitch.ui.tarot
 
-import androidx.compose.ui.text.intl.Locale
 import com.agc.bwitch.domain.tarot.TarotCard
 import com.agc.bwitch.domain.tarot.TarotCardPosition
+import com.agc.bwitch.localization.TarotStrings
 
-enum class TarotUiLanguage {
-    ES,
-    EN,
-}
+private enum class TarotUiLanguage { ES, EN, PT, RU, FR, IT, DE }
 
 data class TarotOverlayLabels(
     val cardName: String,
@@ -15,45 +12,45 @@ data class TarotOverlayLabels(
     val position: String? = null,
 )
 
-fun currentTarotUiLanguage(): TarotUiLanguage {
-    return when (Locale.current.language.lowercase()) {
-        "es" -> TarotUiLanguage.ES
-        else -> TarotUiLanguage.EN
-    }
-}
-
 fun tarotOverlayLabels(
     card: TarotCard,
-    language: TarotUiLanguage,
+    strings: TarotStrings,
 ): TarotOverlayLabels {
+    val language = strings.toTarotUiLanguage()
     return TarotOverlayLabels(
         cardName = tarotCardName(card.id, language).uppercase(),
-        orientation = tarotOrientationLabel(card.upright, language),
-        position = card.position?.let { tarotPositionLabel(it, language) },
+        orientation = tarotOrientationLabel(card.upright, strings),
+        position = card.position?.let { tarotPositionLabel(it, strings) },
     )
 }
 
-private fun tarotOrientationLabel(upright: Boolean?, language: TarotUiLanguage): String {
-    return when (language) {
-        TarotUiLanguage.ES -> if (upright == false) "INVERTIDA" else if (upright == true) "AL DERECHO" else "DESCONOCIDA"
-        TarotUiLanguage.EN -> if (upright == false) "REVERSED" else if (upright == true) "UPRIGHT" else "UNKNOWN"
-    }
+private fun TarotStrings.toTarotUiLanguage(): TarotUiLanguage = when (languageCode.lowercase()) {
+    "es" -> TarotUiLanguage.ES
+    "pt" -> TarotUiLanguage.PT
+    "ru" -> TarotUiLanguage.RU
+    "fr" -> TarotUiLanguage.FR
+    "it" -> TarotUiLanguage.IT
+    "de" -> TarotUiLanguage.DE
+    else -> TarotUiLanguage.EN
 }
 
-private fun tarotPositionLabel(position: TarotCardPosition, language: TarotUiLanguage): String {
-    return when (language) {
-        TarotUiLanguage.ES -> when (position) {
-            TarotCardPosition.PAST -> "PASADO"
-            TarotCardPosition.PRESENT -> "PRESENTE"
-            TarotCardPosition.FUTURE -> "FUTURO"
-        }
+private fun tarotOrientationLabel(upright: Boolean?, strings: TarotStrings): String {
+    return if (upright == false) {
+        strings.overlayOrientationReversed
+    } else if (upright == true) {
+        strings.overlayOrientationUpright
+    } else {
+        strings.overlayOrientationUnknown
+    }.uppercase()
+}
 
-        TarotUiLanguage.EN -> when (position) {
-            TarotCardPosition.PAST -> "PAST"
-            TarotCardPosition.PRESENT -> "PRESENT"
-            TarotCardPosition.FUTURE -> "FUTURE"
-        }
+private fun tarotPositionLabel(position: TarotCardPosition, strings: TarotStrings): String {
+    return when (position) {
+        TarotCardPosition.PAST -> strings.pastLabel
+        TarotCardPosition.PRESENT -> strings.presentLabel
+        TarotCardPosition.FUTURE -> strings.futureLabel
     }
+        .uppercase()
 }
 
 private fun tarotCardName(cardId: String, language: TarotUiLanguage): String {
@@ -121,6 +118,136 @@ private fun majorArcanaName(cardId: String, language: TarotUiLanguage): String {
             "world" -> "The World"
             else -> fallbackName(cardId)
         }
+
+        TarotUiLanguage.PT -> when (slug) {
+            "fool" -> "O Louco"
+            "magician" -> "O Mago"
+            "high_priestess" -> "A Sacerdotisa"
+            "empress" -> "A Imperatriz"
+            "emperor" -> "O Imperador"
+            "hierophant" -> "O Hierofante"
+            "lovers" -> "Os Enamorados"
+            "chariot" -> "O Carro"
+            "strength" -> "A Força"
+            "hermit" -> "O Eremita"
+            "wheel_of_fortune" -> "A Roda da Fortuna"
+            "justice" -> "A Justiça"
+            "hanged_man" -> "O Enforcado"
+            "death" -> "A Morte"
+            "temperance" -> "A Temperança"
+            "devil" -> "O Diabo"
+            "tower" -> "A Torre"
+            "star" -> "A Estrela"
+            "moon" -> "A Lua"
+            "sun" -> "O Sol"
+            "judgement" -> "O Julgamento"
+            "world" -> "O Mundo"
+            else -> fallbackName(cardId)
+        }
+
+        TarotUiLanguage.RU -> when (slug) {
+            "fool" -> "Шут"
+            "magician" -> "Маг"
+            "high_priestess" -> "Верховная Жрица"
+            "empress" -> "Императрица"
+            "emperor" -> "Император"
+            "hierophant" -> "Иерофант"
+            "lovers" -> "Влюблённые"
+            "chariot" -> "Колесница"
+            "strength" -> "Сила"
+            "hermit" -> "Отшельник"
+            "wheel_of_fortune" -> "Колесо Фортуны"
+            "justice" -> "Справедливость"
+            "hanged_man" -> "Повешенный"
+            "death" -> "Смерть"
+            "temperance" -> "Умеренность"
+            "devil" -> "Дьявол"
+            "tower" -> "Башня"
+            "star" -> "Звезда"
+            "moon" -> "Луна"
+            "sun" -> "Солнце"
+            "judgement" -> "Суд"
+            "world" -> "Мир"
+            else -> fallbackName(cardId)
+        }
+
+        TarotUiLanguage.FR -> when (slug) {
+            "fool" -> "Le Mat"
+            "magician" -> "Le Bateleur"
+            "high_priestess" -> "La Papesse"
+            "empress" -> "L'Impératrice"
+            "emperor" -> "L'Empereur"
+            "hierophant" -> "Le Pape"
+            "lovers" -> "L'Amoureux"
+            "chariot" -> "Le Chariot"
+            "strength" -> "La Force"
+            "hermit" -> "L'Hermite"
+            "wheel_of_fortune" -> "La Roue de Fortune"
+            "justice" -> "La Justice"
+            "hanged_man" -> "Le Pendu"
+            "death" -> "La Mort"
+            "temperance" -> "Tempérance"
+            "devil" -> "Le Diable"
+            "tower" -> "La Maison Dieu"
+            "star" -> "L'Étoile"
+            "moon" -> "La Lune"
+            "sun" -> "Le Soleil"
+            "judgement" -> "Le Jugement"
+            "world" -> "Le Monde"
+            else -> fallbackName(cardId)
+        }
+
+        TarotUiLanguage.IT -> when (slug) {
+            "fool" -> "Il Matto"
+            "magician" -> "Il Mago"
+            "high_priestess" -> "La Papessa"
+            "empress" -> "L'Imperatrice"
+            "emperor" -> "L'Imperatore"
+            "hierophant" -> "Il Papa"
+            "lovers" -> "Gli Amanti"
+            "chariot" -> "Il Carro"
+            "strength" -> "La Forza"
+            "hermit" -> "L'Eremita"
+            "wheel_of_fortune" -> "La Ruota della Fortuna"
+            "justice" -> "La Giustizia"
+            "hanged_man" -> "L'Appeso"
+            "death" -> "La Morte"
+            "temperance" -> "La Temperanza"
+            "devil" -> "Il Diavolo"
+            "tower" -> "La Torre"
+            "star" -> "La Stella"
+            "moon" -> "La Luna"
+            "sun" -> "Il Sole"
+            "judgement" -> "Il Giudizio"
+            "world" -> "Il Mondo"
+            else -> fallbackName(cardId)
+        }
+
+        TarotUiLanguage.DE -> when (slug) {
+            "fool" -> "Der Narr"
+            "magician" -> "Der Magier"
+            "high_priestess" -> "Die Hohepriesterin"
+            "empress" -> "Die Herrscherin"
+            "emperor" -> "Der Herrscher"
+            "hierophant" -> "Der Hierophant"
+            "lovers" -> "Die Liebenden"
+            "chariot" -> "Der Wagen"
+            "strength" -> "Die Kraft"
+            "hermit" -> "Der Eremit"
+            "wheel_of_fortune" -> "Das Rad des Schicksals"
+            "justice" -> "Die Gerechtigkeit"
+            "hanged_man" -> "Der Gehängte"
+            "death" -> "Der Tod"
+            "temperance" -> "Die Mäßigkeit"
+            "devil" -> "Der Teufel"
+            "tower" -> "Der Turm"
+            "star" -> "Der Stern"
+            "moon" -> "Der Mond"
+            "sun" -> "Die Sonne"
+            "judgement" -> "Das Gericht"
+            "world" -> "Die Welt"
+            else -> fallbackName(cardId)
+        }
     }
 }
 
@@ -167,6 +294,91 @@ private fun minorArcanaName(cardId: String, language: TarotUiLanguage): String {
             "king" -> "King"
             else -> return fallbackName(cardId)
         }
+        TarotUiLanguage.PT -> when (rank) {
+            "ace" -> "Ás"
+            "two" -> "Dois"
+            "three" -> "Três"
+            "four" -> "Quatro"
+            "five" -> "Cinco"
+            "six" -> "Seis"
+            "seven" -> "Sete"
+            "eight" -> "Oito"
+            "nine" -> "Nove"
+            "ten" -> "Dez"
+            "page" -> "Pajem"
+            "knight" -> "Cavaleiro"
+            "queen" -> "Rainha"
+            "king" -> "Rei"
+            else -> return fallbackName(cardId)
+        }
+        TarotUiLanguage.RU -> when (rank) {
+            "ace" -> "Туз"
+            "two" -> "Двойка"
+            "three" -> "Тройка"
+            "four" -> "Четвёрка"
+            "five" -> "Пятёрка"
+            "six" -> "Шестёрка"
+            "seven" -> "Семёрка"
+            "eight" -> "Восьмёрка"
+            "nine" -> "Девятка"
+            "ten" -> "Десятка"
+            "page" -> "Паж"
+            "knight" -> "Рыцарь"
+            "queen" -> "Королева"
+            "king" -> "Король"
+            else -> return fallbackName(cardId)
+        }
+        TarotUiLanguage.FR -> when (rank) {
+            "ace" -> "As"
+            "two" -> "Deux"
+            "three" -> "Trois"
+            "four" -> "Quatre"
+            "five" -> "Cinq"
+            "six" -> "Six"
+            "seven" -> "Sept"
+            "eight" -> "Huit"
+            "nine" -> "Neuf"
+            "ten" -> "Dix"
+            "page" -> "Valet"
+            "knight" -> "Chevalier"
+            "queen" -> "Reine"
+            "king" -> "Roi"
+            else -> return fallbackName(cardId)
+        }
+        TarotUiLanguage.IT -> when (rank) {
+            "ace" -> "Asso"
+            "two" -> "Due"
+            "three" -> "Tre"
+            "four" -> "Quattro"
+            "five" -> "Cinque"
+            "six" -> "Sei"
+            "seven" -> "Sette"
+            "eight" -> "Otto"
+            "nine" -> "Nove"
+            "ten" -> "Dieci"
+            "page" -> "Fante"
+            "knight" -> "Cavaliere"
+            "queen" -> "Regina"
+            "king" -> "Re"
+            else -> return fallbackName(cardId)
+        }
+        TarotUiLanguage.DE -> when (rank) {
+            "ace" -> "Ass"
+            "two" -> "Zwei"
+            "three" -> "Drei"
+            "four" -> "Vier"
+            "five" -> "Fünf"
+            "six" -> "Sechs"
+            "seven" -> "Sieben"
+            "eight" -> "Acht"
+            "nine" -> "Neun"
+            "ten" -> "Zehn"
+            "page" -> "Page"
+            "knight" -> "Ritter"
+            "queen" -> "Königin"
+            "king" -> "König"
+            else -> return fallbackName(cardId)
+        }
     }
 
     val suitLabel = when (language) {
@@ -185,11 +397,51 @@ private fun minorArcanaName(cardId: String, language: TarotUiLanguage): String {
             "pentacles" -> "Pentacles"
             else -> return fallbackName(cardId)
         }
+        TarotUiLanguage.PT -> when (suit) {
+            "wands" -> "Paus"
+            "cups" -> "Copas"
+            "swords" -> "Espadas"
+            "pentacles" -> "Ouros"
+            else -> return fallbackName(cardId)
+        }
+        TarotUiLanguage.RU -> when (suit) {
+            "wands" -> "Жезлов"
+            "cups" -> "Кубков"
+            "swords" -> "Мечей"
+            "pentacles" -> "Пентаклей"
+            else -> return fallbackName(cardId)
+        }
+        TarotUiLanguage.FR -> when (suit) {
+            "wands" -> "Bâtons"
+            "cups" -> "Coupes"
+            "swords" -> "Épées"
+            "pentacles" -> "Deniers"
+            else -> return fallbackName(cardId)
+        }
+        TarotUiLanguage.IT -> when (suit) {
+            "wands" -> "Bastoni"
+            "cups" -> "Coppe"
+            "swords" -> "Spade"
+            "pentacles" -> "Denari"
+            else -> return fallbackName(cardId)
+        }
+        TarotUiLanguage.DE -> when (suit) {
+            "wands" -> "Stäbe"
+            "cups" -> "Kelche"
+            "swords" -> "Schwerter"
+            "pentacles" -> "Münzen"
+            else -> return fallbackName(cardId)
+        }
     }
 
     return when (language) {
         TarotUiLanguage.ES -> "$rankLabel DE $suitLabel"
         TarotUiLanguage.EN -> "$rankLabel OF $suitLabel"
+        TarotUiLanguage.PT -> "$rankLabel DE $suitLabel"
+        TarotUiLanguage.RU -> "$rankLabel $suitLabel"
+        TarotUiLanguage.FR -> "$rankLabel DE $suitLabel"
+        TarotUiLanguage.IT -> "$rankLabel DI $suitLabel"
+        TarotUiLanguage.DE -> "$rankLabel DER $suitLabel"
     }
 }
 
