@@ -1,5 +1,7 @@
 import {RequestType} from '../types';
 import {drawTarotCards} from './draw';
+import {buildSystemPrompt} from './prompts';
+import {resolveTarotCardName} from './deck';
 import {validateTarot3Reading, parseStrictJsonObject} from './schemas';
 
 export function selfTestDeterministicDraw(): void {
@@ -70,8 +72,34 @@ export function selfTestRejectMismatchedName(): void {
   }
 }
 
+export function selfTestSystemPromptLanguageRule(): void {
+  const prompt = buildSystemPrompt(RequestType.TAROT_1, 'de');
+  if (!prompt.includes('Output language required: German.')) {
+    throw new Error('SelfTest failed: tarot prompt language rule mismatch');
+  }
+}
+
+export function selfTestMultilingualCardNames(): void {
+  const samples = [
+    {id: 'major-01-magician', lang: 'pt', expected: 'O Mago'},
+    {id: 'major-01-magician', lang: 'ru', expected: 'Маг'},
+    {id: 'minor-ace-wands', lang: 'fr', expected: 'As de Bâtons'},
+    {id: 'minor-ace-wands', lang: 'it', expected: 'Asso di Bastoni'},
+    {id: 'minor-ace-wands', lang: 'de', expected: 'Ass der Stäbe'},
+  ] as const;
+
+  samples.forEach((sample) => {
+    const actual = resolveTarotCardName(sample.id, sample.lang);
+    if (actual !== sample.expected) {
+      throw new Error(`SelfTest failed: name mismatch for ${sample.lang}/${sample.id}`);
+    }
+  });
+}
+
 export function main(): void {
   selfTestDeterministicDraw();
   selfTestTarot3Positions();
   selfTestRejectMismatchedName();
+  selfTestSystemPromptLanguageRule();
+  selfTestMultilingualCardNames();
 }

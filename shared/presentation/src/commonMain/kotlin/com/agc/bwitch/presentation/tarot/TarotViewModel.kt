@@ -1,6 +1,9 @@
 package com.agc.bwitch.presentation.tarot
 
 import com.agc.bwitch.domain.shared.ApiResult
+import com.agc.bwitch.domain.localization.AppLanguage
+import com.agc.bwitch.domain.localization.ObserveCurrentLanguageUseCase
+import com.agc.bwitch.domain.localization.ResolveCurrentLanguageUseCase
 import com.agc.bwitch.domain.tarot.TarotDrawResponse
 import com.agc.bwitch.domain.tarot.TarotRepository
 import com.agc.bwitch.domain.tarot.TarotRequestType
@@ -14,6 +17,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -44,14 +50,32 @@ data class TarotUiState(
 
 class TarotViewModel(
     private val tarotRepository: TarotRepository,
+    private val resolveCurrentLanguageUseCase: ResolveCurrentLanguageUseCase,
+    private val observeCurrentLanguageUseCase: ObserveCurrentLanguageUseCase,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var shuffleDelayJob: Job? = null
     private var shuffleMinDurationElapsed = false
     private var shuffleRequestId: String? = null
+    private val currentLanguageCode = MutableStateFlow(AppLanguage.fallback.code)
 
     private val _uiState = MutableStateFlow(TarotUiState())
     val uiState: StateFlow<TarotUiState> = _uiState.asStateFlow()
+
+    init {
+        scope.launch {
+            runCatching { resolveCurrentLanguageUseCase() }
+        }
+
+        scope.launch {
+            observeCurrentLanguageUseCase()
+                .map { it.code }
+                .distinctUntilChanged()
+                .collectLatest { languageCode ->
+                    currentLanguageCode.value = languageCode
+                }
+        }
+    }
 
     fun newRequest(type: TarotRequestType) {
         shuffleDelayJob?.cancel()
@@ -220,6 +244,7 @@ class TarotViewModel(
                 val result = tarotRepository.tarotDraw(
                     requestId = requestId,
                     type = type,
+                    lang = currentLanguageCode.value,
                 )
             ) {
                 is ApiResult.Ok -> {
