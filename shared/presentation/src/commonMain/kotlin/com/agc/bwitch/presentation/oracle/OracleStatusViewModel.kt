@@ -15,8 +15,18 @@ import kotlinx.coroutines.launch
 data class OracleStatusUiState(
     val isLoading: Boolean = false,
     val mode: SystemMode? = null,
-    val error: String? = null,
+    val error: OracleStatusErrorMessage? = null,
 )
+
+data class OracleStatusErrorMessage(
+    val id: OracleStatusErrorMessageId,
+    val rawMessage: String? = null,
+)
+
+enum class OracleStatusErrorMessageId {
+    UnknownFallback,
+    RawBackendMessage,
+}
 
 class OracleStatusViewModel(
     private val oracleRepository: OracleRepository,
@@ -43,9 +53,17 @@ class OracleStatusViewModel(
 
                 is ApiResult.Err -> {
                     _uiState.update {
+                        val rawMessage = result.error.message
                         it.copy(
                             isLoading = false,
-                            error = result.error.message ?: "Unknown error",
+                            error = if (rawMessage.isNullOrBlank()) {
+                                OracleStatusErrorMessage(id = OracleStatusErrorMessageId.UnknownFallback)
+                            } else {
+                                OracleStatusErrorMessage(
+                                    id = OracleStatusErrorMessageId.RawBackendMessage,
+                                    rawMessage = rawMessage,
+                                )
+                            },
                         )
                     }
                 }
