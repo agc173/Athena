@@ -4,11 +4,6 @@ import com.agc.bwitch.domain.localization.AppLanguage
 
 object DailyRitualContentRepository {
 
-    private val localizedCatalog: Map<AppLanguage, Map<String, String>> = mapOf(
-        AppLanguage.Spanish to spanishCatalog,
-        AppLanguage.English to englishCatalog,
-    )
-
     fun resolve(language: AppLanguage, key: String): String {
         return localizedCatalog[language]?.get(key)
             ?: spanishCatalog[key]
@@ -235,5 +230,10 @@ object DailyRitualContentRepository {
         "daily_ritual.step.e5.cta" to "Choose",
         "daily_ritual.step.e6.text" to "Keep your chosen rhythm for 30 seconds.",
         "daily_ritual.step.e6.cta" to "Done",
+    )
+
+    private val localizedCatalog: Map<AppLanguage, Map<String, String>> = mapOf(
+        AppLanguage.Spanish to spanishCatalog,
+        AppLanguage.English to englishCatalog,
     )
 }
