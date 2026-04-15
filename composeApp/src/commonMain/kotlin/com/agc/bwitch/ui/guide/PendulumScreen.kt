@@ -50,6 +50,8 @@ import bwitch.composeapp.generated.resources.Res
 import bwitch.composeapp.generated.resources.pendulum_board
 import bwitch.composeapp.generated.resources.pendulum_crystal
 import com.agc.bwitch.domain.pendulum.PendulumAnswer
+import com.agc.bwitch.localization.PendulumStrings
+import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.presentation.pendulum.PendulumPhase
 import com.agc.bwitch.presentation.pendulum.PendulumViewModel
 import kotlin.math.PI
@@ -91,6 +93,7 @@ fun PendulumScreen(
     }
 
     val isAnimating = state.phase == PendulumPhase.ANIMATING
+    val strings = appStrings.pendulum
 
     Column(
         modifier = Modifier
@@ -110,7 +113,7 @@ fun PendulumScreen(
     ) {
 
         Text(
-            "Haz una pregunta o piénsala en silencio. Toca el tablero para consultar.",
+            strings.instruction,
             style = MaterialTheme.typography.bodyMedium,
             color = colors.onSurfaceVariant,
         )
@@ -119,7 +122,7 @@ fun PendulumScreen(
             value = state.question,
             onValueChange = viewModel::onQuestionChange,
             modifier = Modifier.fillMaxWidth(),
-            label = { Text("Tu pregunta (opcional)") },
+            label = { Text(strings.questionLabel) },
             enabled = !isAnimating,
         )
 
@@ -136,17 +139,18 @@ fun PendulumScreen(
             phase = state.phase,
             selectedAnswer = state.selectedAnswer,
             animationProgress = orbitProgress.value,
+            strings = strings,
         )
 
         if (state.phase == PendulumPhase.RESULT) {
             state.selectedAnswer?.let { answer ->
                 Text(
-                    text = answer.mysticalMessage(),
+                    text = answer.mysticalMessage(strings),
                     style = MaterialTheme.typography.titleMedium,
                     fontStyle = FontStyle.Italic,
                 )
                 Text(
-                    text = "El péndulo ha marcado: ${answer.label()}",
+                    text = "${strings.resultPrefix} ${answer.label(strings)}",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -159,7 +163,7 @@ fun PendulumScreen(
                 enabled = !isAnimating,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Text("Nueva pregunta")
+                Text(strings.resetCta)
             }
         }
     }
@@ -171,6 +175,7 @@ private fun PendulumBoard(
     phase: PendulumPhase,
     selectedAnswer: PendulumAnswer?,
     animationProgress: Float,
+    strings: PendulumStrings,
 ) {
     var boardSize by remember { mutableStateOf(IntSize.Zero) }
     val boardImageScale = 0.98f
@@ -212,25 +217,25 @@ private fun PendulumBoard(
         )
 
         AnswerMarker(
-            text = "NO",
+            text = strings.answerNo,
             isSelected = phase == PendulumPhase.RESULT && selectedAnswer == PendulumAnswer.NO,
             offsetX = (-90).dp,
             offsetY = (-80).dp,
         )
         AnswerMarker(
-            text = "SÍ",
+            text = strings.answerYes,
             isSelected = phase == PendulumPhase.RESULT && selectedAnswer == PendulumAnswer.YES,
             offsetX = 90.dp,
             offsetY = (-80).dp,
         )
         AnswerMarker(
-            text = "AÚN NO",
+            text = strings.answerNotNow,
             isSelected = phase == PendulumPhase.RESULT && selectedAnswer == PendulumAnswer.NOT_NOW,
             offsetX = (-90).dp,
             offsetY = 80.dp,
         )
         AnswerMarker(
-            text = "TAL VEZ",
+            text = strings.answerMaybe,
             isSelected = phase == PendulumPhase.RESULT && selectedAnswer == PendulumAnswer.MAYBE,
             offsetX = 90.dp,
             offsetY = 80.dp,
@@ -371,16 +376,16 @@ private fun lerpOffset(start: Offset, end: Offset, t: Float): Offset = Offset(
     y = start.y + (end.y - start.y) * t,
 )
 
-private fun PendulumAnswer.label(): String = when (this) {
-    PendulumAnswer.YES -> "SÍ"
-    PendulumAnswer.NO -> "NO"
-    PendulumAnswer.MAYBE -> "TAL VEZ"
-    PendulumAnswer.NOT_NOW -> "AÚN NO"
+private fun PendulumAnswer.label(strings: PendulumStrings): String = when (this) {
+    PendulumAnswer.YES -> strings.answerYes
+    PendulumAnswer.NO -> strings.answerNo
+    PendulumAnswer.MAYBE -> strings.answerMaybe
+    PendulumAnswer.NOT_NOW -> strings.answerNotNow
 }
 
-private fun PendulumAnswer.mysticalMessage(): String = when (this) {
-    PendulumAnswer.YES -> "El destino parece favorable"
-    PendulumAnswer.NO -> "El destino parece desfavorable"
-    PendulumAnswer.MAYBE -> "Las señales aún son inciertas"
-    PendulumAnswer.NOT_NOW -> "Todavía no es el momento"
+private fun PendulumAnswer.mysticalMessage(strings: PendulumStrings): String = when (this) {
+    PendulumAnswer.YES -> strings.messageYes
+    PendulumAnswer.NO -> strings.messageNo
+    PendulumAnswer.MAYBE -> strings.messageMaybe
+    PendulumAnswer.NOT_NOW -> strings.messageNotNow
 }
