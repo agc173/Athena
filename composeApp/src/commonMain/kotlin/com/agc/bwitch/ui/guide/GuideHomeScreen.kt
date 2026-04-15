@@ -23,6 +23,7 @@ import bwitch.composeapp.generated.resources.Res
 import bwitch.composeapp.generated.resources.oracle_ornament
 import bwitch.composeapp.generated.resources.pendulum_ornament
 import bwitch.composeapp.generated.resources.tarot_ornament
+import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.presentation.navigation.Destination
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
 import com.agc.bwitch.ui.common.designsystem.BWitchScreen
@@ -37,6 +38,8 @@ fun GuideHomeScreen(
     contentPadding: PaddingValues,
     onNavigate: (Destination) -> Unit,
 ) {
+    val strings = appStrings.oracle
+
     BWitchScreen(contentPadding = contentPadding) {
         BWitchSectionHeader(
             title = "Explora tu intuición",
@@ -53,8 +56,8 @@ fun GuideHomeScreen(
         )
 
         GuideOptionCard(
-            title = "Oráculo",
-            subtitle = "Haz una pregunta y recibe guía",
+            title = strings.guideEntryTitle,
+            subtitle = strings.guideEntrySubtitle,
             onClick = { onNavigate(Destination.Oracle) },
             ornamentType = GuideCardOrnament.Oracle,
             modifier = Modifier.height(GuideCardHeight),
