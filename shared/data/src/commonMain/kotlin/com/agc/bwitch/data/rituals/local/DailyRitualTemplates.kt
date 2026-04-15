@@ -72,15 +72,22 @@ internal val localDailyRitualTemplates: List<DailyRitualTemplate> = listOf(
         estimatedMinutes = 4,
         steps = listOf(
             DailyRitualStep("r1", DailyRitualStepKind.TextInput, "¿Qué te está pesando hoy?", ctaLabel = "Nombrarlo"),
-            DailyRitualStep("r2", DailyRitualStepKind.BinaryChoice, "¿Puedes soltarlo por hoy?", options = listOf("Sí", "Aún no"), ctaLabel = "Continuar"),
+            DailyRitualStep(
+                "r2",
+                DailyRitualStepKind.BinaryChoice,
+                "¿Puedes soltarlo por hoy?",
+                options = listOf("Sí", "Aún no"),
+                optionKeys = listOf("yes", "not_yet"),
+                ctaLabel = "Continuar",
+            ),
         ),
         branches = mapOf(
-            dailyRitualBranchKey("r2", "Sí") to listOf(
+            dailyRitualBranchKey("r2", "yes") to listOf(
                 DailyRitualStep("r2_yes_1", DailyRitualStepKind.Confirmation, "Di: 'Elijo soltar esto por hoy'.", ctaLabel = "Hecho"),
                 DailyRitualStep("r2_yes_2", DailyRitualStepKind.TextInput, "Escribe una acción ligera para honrar ese cierre.", ctaLabel = "Continuar"),
                 DailyRitualStep("r2_yes_3", DailyRitualStepKind.Confirmation, "Respira profundo y continúa tu día con amabilidad.", ctaLabel = "Cerrar ritual"),
             ),
-            dailyRitualBranchKey("r2", "Aún no") to listOf(
+            dailyRitualBranchKey("r2", "not_yet") to listOf(
                 DailyRitualStep("r2_no_1", DailyRitualStepKind.Info, "Está bien. Primero nos damos contención."),
                 DailyRitualStep("r2_no_2", DailyRitualStepKind.TextInput, "¿Qué apoyo mínimo necesitas para sostenerte hoy?", ctaLabel = "Continuar"),
                 DailyRitualStep("r2_no_3", DailyRitualStepKind.Confirmation, "Respira profundo y continúa tu día con amabilidad.", ctaLabel = "Cerrar ritual"),

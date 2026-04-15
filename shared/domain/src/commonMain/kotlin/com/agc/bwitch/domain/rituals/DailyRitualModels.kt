@@ -20,6 +20,7 @@ data class DailyRitualStep(
     val kind: DailyRitualStepKind,
     val text: String,
     val options: List<String> = emptyList(),
+    val optionKeys: List<String> = emptyList(),
     val ctaLabel: String = "Continuar",
 )
 
@@ -35,4 +36,4 @@ data class DailyRitualTemplate(
     val completionMessage: String,
 )
 
-fun dailyRitualBranchKey(stepId: String, option: String): String = "${stepId}:${option.trim()}"
+fun dailyRitualBranchKey(stepId: String, optionKey: String): String = "${stepId}:${optionKey.trim()}"

@@ -44,19 +44,19 @@ class DailyRitualViewModel(
                 hasStarted = true,
                 currentStepIndex = 0,
                 currentSteps = ritual.steps,
-                selectedOption = null,
+                selectedOptionKey = null,
                 textAnswer = "",
-                errorMessage = null,
+                error = null,
             )
         }
     }
 
     fun onTextAnswerChange(value: String) {
-        _uiState.update { it.copy(textAnswer = value, errorMessage = null) }
+        _uiState.update { it.copy(textAnswer = value, error = null) }
     }
 
     fun onOptionSelected(value: String) {
-        _uiState.update { it.copy(selectedOption = value, errorMessage = null) }
+        _uiState.update { it.copy(selectedOptionKey = value, error = null) }
     }
 
     fun onContinue() {
@@ -69,9 +69,9 @@ class DailyRitualViewModel(
             return
         }
 
-        val validationError = validateStep(currentStep.kind, state.textAnswer, state.selectedOption)
+        val validationError = validateStep(currentStep.kind, state.textAnswer, state.selectedOptionKey)
         if (validationError != null) {
-            _uiState.update { it.copy(errorMessage = validationError) }
+            _uiState.update { it.copy(error = validationError) }
             return
         }
 
@@ -86,14 +86,14 @@ class DailyRitualViewModel(
             it.copy(
                 currentStepIndex = nextIndex,
                 textAnswer = "",
-                selectedOption = null,
-                errorMessage = null,
+                selectedOptionKey = null,
+                error = null,
             )
         }
     }
 
     fun onErrorShown() {
-        _uiState.update { it.copy(errorMessage = null) }
+        _uiState.update { it.copy(error = null) }
     }
 
     private fun loadTodayRitual() {
@@ -114,8 +114,8 @@ class DailyRitualViewModel(
                     currentStepIndex = 0,
                     currentSteps = emptyList(),
                     textAnswer = "",
-                    selectedOption = null,
-                    errorMessage = null,
+                    selectedOptionKey = null,
+                    error = null,
                 )
             }
         }
@@ -146,8 +146,8 @@ class DailyRitualViewModel(
                 hasStarted = false,
                 streakCount = newStreak,
                 textAnswer = "",
-                selectedOption = null,
-                errorMessage = null,
+                selectedOptionKey = null,
+                error = null,
             )
         }
     }
@@ -157,7 +157,7 @@ class DailyRitualViewModel(
         val currentStep = state.currentSteps.getOrNull(state.currentStepIndex) ?: return state
 
         if (currentStep.kind != DailyRitualStepKind.BinaryChoice) return state
-        val selected = state.selectedOption ?: return state
+        val selected = state.selectedOptionKey ?: return state
 
         val branch = ritual.branches[dailyRitualBranchKey(currentStep.id, selected)] ?: return state
 
@@ -166,7 +166,7 @@ class DailyRitualViewModel(
         _uiState.update { current ->
             current.copy(
                 currentSteps = updatedSteps,
-                errorMessage = null,
+                error = null,
             )
         }
 
@@ -177,11 +177,11 @@ class DailyRitualViewModel(
         kind: DailyRitualStepKind,
         textAnswer: String,
         selectedOption: String?,
-    ): String? = when (kind) {
-        DailyRitualStepKind.TextInput -> if (textAnswer.isBlank()) "Escribe una respuesta para continuar." else null
+    ): DailyRitualError? = when (kind) {
+        DailyRitualStepKind.TextInput -> if (textAnswer.isBlank()) DailyRitualError.TextRequired else null
         DailyRitualStepKind.SingleChoice,
         DailyRitualStepKind.BinaryChoice,
-        -> if (selectedOption == null) "Selecciona una opción para continuar." else null
+        -> if (selectedOption == null) DailyRitualError.OptionRequired else null
 
         DailyRitualStepKind.Info,
         DailyRitualStepKind.Confirmation,
