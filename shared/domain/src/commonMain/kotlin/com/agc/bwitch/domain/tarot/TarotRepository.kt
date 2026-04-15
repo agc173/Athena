@@ -6,6 +6,7 @@ interface TarotRepository {
     suspend fun tarotDraw(
         requestId: String,
         type: TarotRequestType,
+        // ISO-like app language code propagated to backend (es/en/pt/ru/fr/it/de).
         lang: String? = null,
         question: String? = null,
     ): ApiResult<TarotDrawResponse>

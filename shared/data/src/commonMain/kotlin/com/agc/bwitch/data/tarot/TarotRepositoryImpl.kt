@@ -27,10 +27,14 @@ class TarotRepositoryImpl(
         lang: String?,
         question: String?,
     ): ApiResult<TarotDrawResponse> {
+        val normalizedLang = lang
+            ?.trim()
+            ?.takeIf { it.isNotEmpty() }
+
         val payload = TarotDrawRequestDto(
             requestType = type.name,
             requestId = requestId,
-            lang = lang,
+            lang = normalizedLang,
             question = question,
             adUnlock = if (BuildInfo.isDebug) AdUnlockDto(rewardedProof = "dev-test-proof") else null,
         )
