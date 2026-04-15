@@ -23,6 +23,7 @@ import bwitch.composeapp.generated.resources.Res
 import bwitch.composeapp.generated.resources.horoscope_ornament
 import bwitch.composeapp.generated.resources.oracle_ornament
 import bwitch.composeapp.generated.resources.pendulum_ornament
+import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
 import com.agc.bwitch.ui.common.designsystem.BWitchScreen
 import com.agc.bwitch.ui.common.designsystem.BWitchSectionHeader
@@ -39,34 +40,36 @@ fun RitualsPlaceholderScreen(
     onOpenHabits: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val strings = appStrings.ritualCatalog
+
     BWitchScreen(
         contentPadding = contentPadding,
         modifier = modifier,
     ) {
         BWitchSectionHeader(
-            title = "Rituales",
-            subtitle = "Activa tu energía con pequeñas prácticas",
+            title = strings.homeHeaderTitle,
+            subtitle = strings.homeHeaderSubtitle,
         )
 
         RitualsFeatureCard(
-            title = "Ritual del día",
-            subtitle = "Hoy: claridad interior",
+            title = strings.dailyRitualCardTitle,
+            subtitle = strings.dailyRitualCardSubtitle,
             onClick = onOpenDailyRitual,
             ornamentType = RitualsCardOrnament.DailyRitual,
             modifier = Modifier.height(RitualsCardHeight),
         )
 
         RitualsFeatureCard(
-            title = "Rituales",
-            subtitle = "Prácticas para atraer lo que deseas",
+            title = strings.ritualsCardTitle,
+            subtitle = strings.ritualsCardSubtitle,
             onClick = onOpenRitualsCategories,
             ornamentType = RitualsCardOrnament.Rituals,
             modifier = Modifier.height(RitualsCardHeight),
         )
 
         RitualsFeatureCard(
-            title = "Hábitos",
-            subtitle = "Pequeñas acciones que transforman tu energía",
+            title = strings.habitsCardTitle,
+            subtitle = strings.habitsCardSubtitle,
             onClick = onOpenHabits,
             ornamentType = RitualsCardOrnament.Habits,
             modifier = Modifier.height(RitualsCardHeight),
