@@ -40,13 +40,17 @@ export function buildSystemPrompt(
     requestType: RequestType.TAROT_1 | RequestType.TAROT_3,
     lang: string
 ): string {
-  const outputLanguage = languageName(normalizeWhitespace(lang) || 'es');
+  const normalizedLang = normalizeWhitespace(lang) || 'es';
+  const outputLanguage = languageName(normalizedLang);
   const base = [
     'You are a tarot reader that returns JSON only.',
     'Return ONLY a single JSON object. No markdown. No extra keys.',
     'Use the exact card names provided by the user prompt with matching orientation and positions.',
     `Output language required: ${outputLanguage}.`,
     `Language hard rule: the whole response must be in ${outputLanguage}.`,
+    normalizedLang === 'es' ?
+      'Spanish is allowed.' :
+      'Spanish is forbidden for this response. If you output Spanish, the response is invalid.',
   ];
 
   if (requestType === RequestType.TAROT_1) {

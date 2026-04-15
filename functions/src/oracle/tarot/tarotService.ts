@@ -43,7 +43,7 @@ export async function generateTarotReading(params: {
   });
 
   const parsed = parseStrictJsonObject(llmResponse.text);
-  const reading = validateTarotReading(parsed, draw);
+  const reading = validateTarotReading(parsed, draw, params.lang);
 
   return {
     reading,

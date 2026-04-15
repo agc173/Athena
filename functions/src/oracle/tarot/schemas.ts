@@ -27,6 +27,12 @@ export interface Tarot3Reading {
   advice: string;
 }
 
+const NON_SPANISH_ALLOWED_LANGS = new Set(['pt', 'ru', 'fr', 'it', 'de']);
+
+function normalizeLang(lang: string): string {
+  return lang.trim().toLowerCase().split('-')[0].split('_')[0];
+}
+
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
@@ -86,12 +92,67 @@ export function parseStrictJsonObject(text: string): Record<string, unknown> {
 
 export function validateTarotReading(
     value: Record<string, unknown>,
-    expectedDraw: Tarot1Draw | Tarot3Draw
+    expectedDraw: Tarot1Draw | Tarot3Draw,
+    lang?: string
 ): Tarot1Reading | Tarot3Reading {
+  const requestedLang = normalizeLang(lang ?? 'es');
+
   if (expectedDraw.type === RequestType.TAROT_1) {
-    return validateTarot1Reading(value, expectedDraw);
+    const reading = validateTarot1Reading(value, expectedDraw);
+    assertLanguageGuard(reading, requestedLang);
+    return reading;
   }
-  return validateTarot3Reading(value, expectedDraw);
+  const reading = validateTarot3Reading(value, expectedDraw);
+  assertLanguageGuard(reading, requestedLang);
+  return reading;
+}
+
+function assertLanguageGuard(reading: Tarot1Reading | Tarot3Reading, lang: string): void {
+  if (!NON_SPANISH_ALLOWED_LANGS.has(lang)) {
+    return;
+  }
+
+  const textBlob = reading.type === 'TAROT_1' ?
+    [reading.interpretation.theme, reading.interpretation.meaning, reading.interpretation.advice, reading.interpretation.watchOut].join(' ') :
+    [...reading.cards.map((card) => card.meaning), reading.summary, reading.advice].join(' ');
+
+  if (looksClearlySpanish(textBlob)) {
+    throw new Error(`LANG_INVALID: response appears to be Spanish for lang=${lang}`);
+  }
+}
+
+function looksClearlySpanish(text: string): boolean {
+  const normalized = ` ${text.toLowerCase().replace(/\s+/g, ' ').trim()} `;
+  if (!normalized.trim()) {
+    return false;
+  }
+
+  const markers = [
+    ' consejo ',
+    ' cuidado ',
+    ' carta ',
+    ' cartas ',
+    ' pasado ',
+    ' presente ',
+    ' futuro ',
+    ' energía ',
+    ' deberías ',
+    ' evita ',
+    ' recuerda ',
+    ' tu camino ',
+    ' tus ',
+    ' para que ',
+  ];
+
+  let score = 0;
+  markers.forEach((marker) => {
+    if (normalized.includes(marker)) {
+      score += 1;
+    }
+  });
+
+  const hasSpanishPunctuationOrChar = /[¿¡ñáéíóú]/.test(normalized);
+  return score >= 2 || (score >= 1 && hasSpanishPunctuationOrChar);
 }
 
 export function validateTarot1Reading(value: Record<string, unknown>, expectedDraw: Tarot1Draw): Tarot1Reading {
