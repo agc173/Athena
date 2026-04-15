@@ -128,6 +128,46 @@ export function selfTestRejectSpanishForNonSpanishLang(): void {
   if (!rejected) {
     throw new Error('SelfTest failed: Spanish content accepted for non-es language');
   }
+
+  const mixedLabelCases = [
+    {
+      lang: 'ru',
+      interpretation: {
+        theme: 'TEMA',
+        meaning: 'Это общее направление расклада.',
+        advice: 'Consejo',
+        watchOut: 'Resumen',
+      },
+    },
+    {
+      lang: 'fr',
+      interpretation: {
+        theme: 'TEMA',
+        meaning: 'Lecture globale en français.',
+        advice: 'Consejo',
+        watchOut: 'Resumen',
+      },
+    },
+  ] as const;
+
+  mixedLabelCases.forEach((testCase) => {
+    const mixedReading = parseStrictJsonObject(JSON.stringify({
+      type: 'TAROT_1',
+      card: draw.card,
+      interpretation: testCase.interpretation,
+    }));
+
+    let mixedRejected = false;
+    try {
+      validateTarotReading(mixedReading, draw, testCase.lang);
+    } catch {
+      mixedRejected = true;
+    }
+
+    if (!mixedRejected) {
+      throw new Error(`SelfTest failed: mixed Spanish labels accepted for lang=${testCase.lang}`);
+    }
+  });
 }
 
 export function main(): void {
