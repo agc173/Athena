@@ -6,6 +6,9 @@ import com.agc.bwitch.domain.oracle.OracleAskResult
 import com.agc.bwitch.domain.oracle.OracleQuotaSnapshot
 import com.agc.bwitch.domain.oracle.OracleRepository
 import com.agc.bwitch.domain.oracle.OracleTopic
+import com.agc.bwitch.domain.localization.AppLanguage
+import com.agc.bwitch.domain.localization.ObserveCurrentLanguageUseCase
+import com.agc.bwitch.domain.localization.ResolveCurrentLanguageUseCase
 import com.agc.bwitch.domain.shared.ApiError
 import com.agc.bwitch.domain.shared.ApiResult
 import kotlin.uuid.ExperimentalUuidApi
@@ -13,6 +16,9 @@ import kotlin.uuid.Uuid
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -55,11 +61,29 @@ enum class OracleAskMessageId {
 
 class OracleAskViewModel(
     private val oracleRepository: OracleRepository,
+    private val resolveCurrentLanguageUseCase: ResolveCurrentLanguageUseCase,
+    private val observeCurrentLanguageUseCase: ObserveCurrentLanguageUseCase,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     private val _uiState = MutableStateFlow(OracleAskUiState())
     val uiState: StateFlow<OracleAskUiState> = _uiState.asStateFlow()
+    private val currentLanguageCode = MutableStateFlow(AppLanguage.fallback.code)
+
+    init {
+        scope.launch {
+            runCatching { resolveCurrentLanguageUseCase() }
+        }
+
+        scope.launch {
+            observeCurrentLanguageUseCase()
+                .map { it.code }
+                .distinctUntilChanged()
+                .collectLatest { languageCode ->
+                    currentLanguageCode.value = languageCode
+                }
+        }
+    }
 
     fun onQuestionChange(value: String) {
         _uiState.update {
@@ -102,13 +126,14 @@ class OracleAskViewModel(
         }
 
         scope.launch {
+            val effectiveLang = lang ?: currentLanguageCode.value
             when (
                 val result = oracleRepository.ask(
                     OracleAskRequest(
                         requestId = requestId,
                         question = trimmedQuestion,
                         topic = topic,
-                        lang = lang,
+                        lang = effectiveLang,
                     )
                 )
             ) {
