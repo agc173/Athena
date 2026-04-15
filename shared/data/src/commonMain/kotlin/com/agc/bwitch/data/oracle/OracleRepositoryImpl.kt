@@ -5,6 +5,7 @@ import com.agc.bwitch.data.oracle.dto.AdUnlockDto
 import com.agc.bwitch.data.oracle.dto.OracleAskRequestDto
 import com.agc.bwitch.data.oracle.dto.OracleAskResponseDto
 import com.agc.bwitch.data.platform.BuildInfo
+import com.agc.bwitch.domain.localization.AppLanguage
 import com.agc.bwitch.domain.oracle.OracleAnswer
 import com.agc.bwitch.domain.oracle.OracleAskRequest
 import com.agc.bwitch.domain.oracle.OracleAskResult
@@ -47,7 +48,7 @@ class OracleRepositoryImpl(
             requestId = request.requestId,
             question = request.question,
             topic = request.topic?.name,
-            lang = request.lang,
+            lang = normalizeLanguageCode(request.lang),
             adUnlock = if (BuildInfo.isDebug) AdUnlockDto(rewardedProof = "dev-test-proof") else null,
         )
 
@@ -119,5 +120,9 @@ class OracleRepositoryImpl(
 
     private companion object {
         const val REQUEST_TYPE_ORACLE_1Q = "ORACLE_1Q"
+    }
+
+    private fun normalizeLanguageCode(raw: String?): String {
+        return AppLanguage.fromCodeOrNull(raw)?.code ?: AppLanguage.fallback.code
     }
 }
