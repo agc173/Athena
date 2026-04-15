@@ -22,6 +22,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.agc.bwitch.domain.rituals.DailyRitualStep
 import com.agc.bwitch.domain.rituals.DailyRitualStepKind
+import com.agc.bwitch.localization.DailyRitualStrings
+import com.agc.bwitch.localization.appStrings
+import com.agc.bwitch.presentation.rituals.DailyRitualError
 import com.agc.bwitch.presentation.rituals.DailyRitualUiState
 import com.agc.bwitch.presentation.rituals.DailyRitualViewModel
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
@@ -35,6 +38,7 @@ fun DailyRitualScreen(
     onBack: () -> Unit,
     viewModel: DailyRitualViewModel = koinInject(),
 ) {
+    val strings = appStrings.dailyRitual
     val state by viewModel.uiState.collectAsState()
 
     LaunchedEffect(viewModel) {
@@ -50,12 +54,13 @@ fun DailyRitualScreen(
     ) {
         when {
             state.isLoading -> {
-                Text("Preparando tu ritual…", style = MaterialTheme.typography.bodyMedium)
+                Text(strings.loading, style = MaterialTheme.typography.bodyMedium)
             }
 
             state.isCompleted -> {
                 CompletionBlock(
                     state = state,
+                    strings = strings,
                     onBack = onBack,
                 )
             }
@@ -63,6 +68,7 @@ fun DailyRitualScreen(
             state.hasStarted -> {
                 StepFlowBlock(
                     state = state,
+                    strings = strings,
                     onTextChanged = viewModel::onTextAnswerChange,
                     onOptionSelected = viewModel::onOptionSelected,
                     onContinue = viewModel::onContinue,
@@ -72,6 +78,7 @@ fun DailyRitualScreen(
             else -> {
                 IntroBlock(
                     state = state,
+                    strings = strings,
                     onStart = viewModel::onStartRitual,
                 )
             }
@@ -82,6 +89,7 @@ fun DailyRitualScreen(
 @Composable
 private fun IntroBlock(
     state: DailyRitualUiState,
+    strings: DailyRitualStrings,
     onStart: () -> Unit,
 ) {
     val ritual = state.ritual ?: return
@@ -94,13 +102,13 @@ private fun IntroBlock(
     BWitchCard {
         Text(text = ritual.intro, style = MaterialTheme.typography.bodyLarge)
         Text(
-            text = "Duración estimada: ${ritual.estimatedMinutes} min",
+            text = strings.durationFormat.withInts(ritual.estimatedMinutes),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         if (state.streakCount > 0) {
             Text(
-                text = "Racha actual: ${state.streakCount}",
+                text = strings.streakFormat.withInts(state.streakCount),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.primary,
             )
@@ -109,7 +117,7 @@ private fun IntroBlock(
             onClick = onStart,
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Text("Comenzar")
+            Text(strings.startCta)
         }
     }
 }
@@ -117,6 +125,7 @@ private fun IntroBlock(
 @Composable
 private fun StepFlowBlock(
     state: DailyRitualUiState,
+    strings: DailyRitualStrings,
     onTextChanged: (String) -> Unit,
     onOptionSelected: (String) -> Unit,
     onContinue: () -> Unit,
@@ -124,7 +133,7 @@ private fun StepFlowBlock(
     val step = state.currentSteps.getOrNull(state.currentStepIndex) ?: return
 
     Text(
-        text = "Paso ${state.currentStepIndex + 1} de ${state.currentSteps.size}",
+        text = strings.stepProgressFormat.withInts(state.currentStepIndex + 1, state.currentSteps.size),
         style = MaterialTheme.typography.labelLarge,
         color = MaterialTheme.colorScheme.primary,
     )
@@ -132,15 +141,16 @@ private fun StepFlowBlock(
     BWitchCard {
         DailyRitualStepContent(
             step = step,
+            strings = strings,
             textAnswer = state.textAnswer,
-            selectedOption = state.selectedOption,
+            selectedOptionKey = state.selectedOptionKey,
             onTextChanged = onTextChanged,
             onOptionSelected = onOptionSelected,
         )
 
-        state.errorMessage?.let { error ->
+        state.error?.let { error ->
             Text(
-                text = error,
+                text = error.toLocalizedMessage(strings),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.error,
             )
@@ -158,19 +168,20 @@ private fun StepFlowBlock(
 @Composable
 private fun CompletionBlock(
     state: DailyRitualUiState,
+    strings: DailyRitualStrings,
     onBack: () -> Unit,
 ) {
     val ritual = state.ritual ?: return
 
     BWitchSectionHeader(
-        title = "Ritual completado",
+        title = strings.completedTitle,
         subtitle = ritual.subtitle,
     )
 
     BWitchCard {
         Text(text = ritual.completionMessage, style = MaterialTheme.typography.bodyLarge)
         Text(
-            text = "Tu racha actual es ${state.streakCount}.",
+            text = strings.currentStreakSentenceFormat.withInts(state.streakCount),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.primary,
         )
@@ -178,7 +189,7 @@ private fun CompletionBlock(
             onClick = onBack,
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Text("Volver")
+            Text(strings.backCta)
         }
     }
 }
@@ -186,8 +197,9 @@ private fun CompletionBlock(
 @Composable
 private fun DailyRitualStepContent(
     step: DailyRitualStep,
+    strings: DailyRitualStrings,
     textAnswer: String,
-    selectedOption: String?,
+    selectedOptionKey: String?,
     onTextChanged: (String) -> Unit,
     onOptionSelected: (String) -> Unit,
 ) {
@@ -204,7 +216,7 @@ private fun DailyRitualStepContent(
                     value = textAnswer,
                     onValueChange = onTextChanged,
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Escribe aquí") },
+                    placeholder = { Text(strings.inputPlaceholder) },
                     singleLine = false,
                     maxLines = 3,
                 )
@@ -214,8 +226,8 @@ private fun DailyRitualStepContent(
             DailyRitualStepKind.BinaryChoice,
             -> {
                 ChoiceGroup(
-                    options = step.options,
-                    selectedOption = selectedOption,
+                    step = step,
+                    selectedOptionKey = selectedOptionKey,
                     onOptionSelected = onOptionSelected,
                 )
             }
@@ -225,13 +237,14 @@ private fun DailyRitualStepContent(
 
 @Composable
 private fun ChoiceGroup(
-    options: List<String>,
-    selectedOption: String?,
+    step: DailyRitualStep,
+    selectedOptionKey: String?,
     onOptionSelected: (String) -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        options.forEach { option ->
-            val isSelected = option == selectedOption
+        step.options.forEachIndexed { index, option ->
+            val optionKey = step.optionKeys.getOrNull(index)?.takeIf { key -> key.isNotBlank() } ?: option
+            val isSelected = optionKey == selectedOptionKey
             if (isSelected) {
                 Surface(
                     shape = MaterialTheme.shapes.medium,
@@ -245,10 +258,24 @@ private fun ChoiceGroup(
                 }
             } else {
                 AssistChip(
-                    onClick = { onOptionSelected(option) },
+                    onClick = { onOptionSelected(optionKey) },
                     label = { Text(option) },
                 )
             }
         }
     }
+}
+
+private fun DailyRitualError.toLocalizedMessage(strings: DailyRitualStrings): String =
+    when (this) {
+        DailyRitualError.TextRequired -> strings.validationTextRequired
+        DailyRitualError.OptionRequired -> strings.validationOptionRequired
+    }
+
+private fun String.withInts(vararg values: Int): String {
+    var resolved = this
+    values.forEach { value ->
+        resolved = resolved.replaceFirst("%d", value.toString())
+    }
+    return resolved
 }
