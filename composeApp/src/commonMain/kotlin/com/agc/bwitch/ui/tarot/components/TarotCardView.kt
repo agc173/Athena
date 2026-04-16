@@ -127,9 +127,10 @@ internal fun TarotCardFaceContent(card: TarotCard?, revealed: Boolean) {
 
 @Composable
 private fun TarotBackFace() {
+    val strings = appStrings.tarot
     Image(
         painter = painterResource(Res.drawable.tarot_back_bw),
-        contentDescription = "Tarot card back",
+        contentDescription = strings.cardBackContentDescription,
         modifier = Modifier.fillMaxSize(),
         contentScale = ContentScale.Fit,
     )
@@ -137,9 +138,10 @@ private fun TarotBackFace() {
 
 @Composable
 private fun TarotKnownFace(card: TarotCard?, drawable: org.jetbrains.compose.resources.DrawableResource) {
+    val strings = appStrings.tarot
     Image(
         painter = painterResource(drawable),
-        contentDescription = card?.name ?: "Tarot card face",
+        contentDescription = card?.name ?: strings.cardFaceContentDescription,
         modifier = Modifier.fillMaxSize(),
         contentScale = ContentScale.Fit,
     )

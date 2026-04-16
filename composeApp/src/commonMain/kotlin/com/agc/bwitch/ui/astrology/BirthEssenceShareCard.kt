@@ -16,6 +16,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontStyle
 import com.agc.bwitch.domain.astrology.birthchart.BirthEssenceProfile
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
+import com.agc.bwitch.localization.ZodiacStrings
+import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.ui.common.toVisualResource
 import com.agc.bwitch.ui.theme.BWitchThemeTokens
 import org.jetbrains.compose.resources.painterResource
@@ -30,6 +32,7 @@ fun BirthEssenceShareCard(
     val archetype = essence.archetype
     val archetypeName = archetype?.displayName(essence.languageCode).orEmpty()
     val firstSentence = essence.firstSentence()
+    val zodiacStrings = appStrings.zodiac
 
     Surface(
         modifier = modifier,
@@ -61,7 +64,7 @@ fun BirthEssenceShareCard(
             }
 
             Text(
-                text = "${essence.sunSign.toDisplayName()} · ${essence.moonSign.toDisplayName()} · ${essence.risingSign.toDisplayName()}",
+                text = "${essence.sunSign.toDisplayName(zodiacStrings)} · ${essence.moonSign.toDisplayName(zodiacStrings)} · ${essence.risingSign.toDisplayName(zodiacStrings)}",
                 style = MaterialTheme.typography.bodySmall,
                 color = extras.textSecondary,
             )
@@ -97,17 +100,17 @@ private fun BirthEssenceProfile.firstSentence(): String {
     return if (hasMultipleSentences) "$firstChunk." else firstChunk
 }
 
-private fun ZodiacSign.toDisplayName(): String = when (this) {
-    ZodiacSign.aries -> "Aries"
-    ZodiacSign.taurus -> "Tauro"
-    ZodiacSign.gemini -> "Géminis"
-    ZodiacSign.cancer -> "Cáncer"
-    ZodiacSign.leo -> "Leo"
-    ZodiacSign.virgo -> "Virgo"
-    ZodiacSign.libra -> "Libra"
-    ZodiacSign.scorpio -> "Escorpio"
-    ZodiacSign.sagittarius -> "Sagitario"
-    ZodiacSign.capricorn -> "Capricornio"
-    ZodiacSign.aquarius -> "Acuario"
-    ZodiacSign.pisces -> "Piscis"
+private fun ZodiacSign.toDisplayName(strings: ZodiacStrings): String = when (this) {
+    ZodiacSign.aries -> strings.aries
+    ZodiacSign.taurus -> strings.taurus
+    ZodiacSign.gemini -> strings.gemini
+    ZodiacSign.cancer -> strings.cancer
+    ZodiacSign.leo -> strings.leo
+    ZodiacSign.virgo -> strings.virgo
+    ZodiacSign.libra -> strings.libra
+    ZodiacSign.scorpio -> strings.scorpio
+    ZodiacSign.sagittarius -> strings.sagittarius
+    ZodiacSign.capricorn -> strings.capricorn
+    ZodiacSign.aquarius -> strings.aquarius
+    ZodiacSign.pisces -> strings.pisces
 }

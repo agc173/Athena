@@ -33,6 +33,16 @@ import com.agc.bwitch.localization.AppStrings
 import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.presentation.astrology.birthchart.BirthChartUiState
 import com.agc.bwitch.presentation.astrology.birthchart.BirthChartViewModel
+import com.agc.bwitch.presentation.astrology.birthchart.BIRTH_CHART_GENERATE_ERROR_FALLBACK_KEY
+import com.agc.bwitch.presentation.astrology.birthchart.BIRTH_CHART_GENERATE_FIRST_ERROR_KEY
+import com.agc.bwitch.presentation.astrology.birthchart.BIRTH_CHART_GENERATE_UNAVAILABLE_KEY
+import com.agc.bwitch.presentation.astrology.birthchart.BIRTH_CHART_REFRESH_ERROR_KEY
+import com.agc.bwitch.presentation.astrology.birthchart.BIRTH_CHART_SAVE_ERROR_KEY
+import com.agc.bwitch.presentation.astrology.birthchart.BIRTH_CHART_SAVE_SUCCESS_SUMMARY_KEY
+import com.agc.bwitch.presentation.astrology.birthchart.BIRTH_CHART_SYNC_NO_ESSENCE_KEY
+import com.agc.bwitch.presentation.astrology.birthchart.BIRTH_CHART_SYNC_REMOTE_LOADED_KEY
+import com.agc.bwitch.presentation.astrology.birthchart.BIRTH_CHART_SYNC_UPDATED_KEY
+import com.agc.bwitch.presentation.astrology.birthchart.BIRTH_CHART_SYNC_UP_TO_DATE_KEY
 import com.agc.bwitch.ui.common.toVisualResource
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
 import com.agc.bwitch.ui.common.designsystem.BWitchPrimaryButton
@@ -164,9 +174,9 @@ fun BirthChartScreen(
             Text(if (state.isRefreshing) birthChartStrings.syncLoading else birthChartStrings.syncCta)
         }
 
-        state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+        state.error?.let { Text(it.toBirthChartUiText(birthChartStrings), color = MaterialTheme.colorScheme.error) }
         shareError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-        state.savedSummary?.let { Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+        state.savedSummary?.let { Text(it.toBirthChartUiText(birthChartStrings), color = MaterialTheme.colorScheme.onSurfaceVariant) }
     }
 
     sharePreviewEssence?.let { essence ->
@@ -180,6 +190,22 @@ fun BirthChartScreen(
                     .onFailure { shareError = it.message ?: birthChartStrings.shareFailedFallback }
             }
         )
+    }
+}
+
+private fun String.toBirthChartUiText(strings: com.agc.bwitch.localization.BirthChartStrings): String {
+    return when (this) {
+        BIRTH_CHART_SYNC_NO_ESSENCE_KEY -> strings.syncNoEssenceSummary
+        BIRTH_CHART_SYNC_REMOTE_LOADED_KEY -> strings.syncRemoteLoadedSummary
+        BIRTH_CHART_SYNC_UPDATED_KEY -> strings.syncUpdatedSummary
+        BIRTH_CHART_SYNC_UP_TO_DATE_KEY -> strings.syncAlreadyUpToDateSummary
+        BIRTH_CHART_REFRESH_ERROR_KEY -> strings.refreshErrorMessage
+        BIRTH_CHART_GENERATE_FIRST_ERROR_KEY -> strings.generateFirstError
+        BIRTH_CHART_SAVE_SUCCESS_SUMMARY_KEY -> strings.saveSuccessSummary
+        BIRTH_CHART_SAVE_ERROR_KEY -> strings.saveErrorMessage
+        BIRTH_CHART_GENERATE_UNAVAILABLE_KEY -> strings.generateUnavailableError
+        BIRTH_CHART_GENERATE_ERROR_FALLBACK_KEY -> strings.generateErrorFallback
+        else -> this
     }
 }
 
