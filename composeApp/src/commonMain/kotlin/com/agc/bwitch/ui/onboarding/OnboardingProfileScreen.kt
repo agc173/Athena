@@ -31,6 +31,13 @@ import androidx.compose.ui.unit.dp
 import com.agc.bwitch.domain.userprofile.UsernameRules
 import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.presentation.localization.AppLanguageViewModel
+import com.agc.bwitch.presentation.userprofile.ONBOARDING_AVATAR_UPDATED_MESSAGE_KEY
+import com.agc.bwitch.presentation.userprofile.ONBOARDING_AVATAR_UPLOAD_ERROR_KEY
+import com.agc.bwitch.presentation.userprofile.ONBOARDING_BIRTH_DATE_INVALID_ERROR_KEY
+import com.agc.bwitch.presentation.userprofile.ONBOARDING_PROFILE_LOAD_ERROR_KEY
+import com.agc.bwitch.presentation.userprofile.ONBOARDING_PROFILE_SAVE_ERROR_KEY
+import com.agc.bwitch.presentation.userprofile.ONBOARDING_USERNAME_INVALID_ERROR_KEY
+import com.agc.bwitch.presentation.userprofile.ONBOARDING_USERNAME_REQUIRED_ERROR_KEY
 import com.agc.bwitch.presentation.userprofile.OnboardingProfileViewModel
 import com.agc.bwitch.ui.localization.LanguageSelectorSection
 import com.agc.bwitch.ui.userprofile.AvatarPickerButton
@@ -54,7 +61,7 @@ fun OnboardingProfileScreen(contentPadding: PaddingValues) {
 
     LaunchedEffect(Unit) {
         vm.snackbarEvents.collect { message ->
-            snackbarHostState.showSnackbar(message)
+            snackbarHostState.showSnackbar(message.toOnboardingUiText(strings))
         }
     }
 
@@ -168,7 +175,7 @@ fun OnboardingProfileScreen(contentPadding: PaddingValues) {
         }
 
         state.error?.let {
-            Text(text = it, color = MaterialTheme.colorScheme.error)
+            Text(text = it.toOnboardingUiText(strings), color = MaterialTheme.colorScheme.error)
         }
     }
 
@@ -179,5 +186,18 @@ fun OnboardingProfileScreen(contentPadding: PaddingValues) {
                 .fillMaxWidth()
                 .padding(16.dp)
         )
+    }
+}
+
+private fun String.toOnboardingUiText(strings: com.agc.bwitch.localization.OnboardingStrings): String {
+    return when (this) {
+        ONBOARDING_USERNAME_REQUIRED_ERROR_KEY -> strings.usernameRequiredError
+        ONBOARDING_USERNAME_INVALID_ERROR_KEY -> strings.usernameError
+        ONBOARDING_BIRTH_DATE_INVALID_ERROR_KEY -> strings.birthDateFormatError
+        ONBOARDING_PROFILE_LOAD_ERROR_KEY -> strings.profileLoadError
+        ONBOARDING_PROFILE_SAVE_ERROR_KEY -> strings.profileSaveError
+        ONBOARDING_AVATAR_UPDATED_MESSAGE_KEY -> strings.avatarUpdatedMessage
+        ONBOARDING_AVATAR_UPLOAD_ERROR_KEY -> strings.avatarUploadError
+        else -> this
     }
 }

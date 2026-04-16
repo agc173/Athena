@@ -65,7 +65,7 @@ class OnboardingProfileViewModel(
             observe()
                 .catch { e ->
                     _uiState.update { it.copy(isInitialLoading = false, error = e.message) }
-                    _snackbarEvents.tryEmit(e.message ?: "Error cargando perfil")
+                    _snackbarEvents.tryEmit(e.message ?: ONBOARDING_PROFILE_LOAD_ERROR_KEY)
                 }
                 .collectLatest { profile ->
                     _uiState.update {
@@ -84,7 +84,7 @@ class OnboardingProfileViewModel(
             runCatching { get() }
                 .onFailure { e ->
                     _uiState.update { it.copy(isInitialLoading = false, error = e.message) }
-                    _snackbarEvents.tryEmit(e.message ?: "Error cargando perfil")
+                    _snackbarEvents.tryEmit(e.message ?: ONBOARDING_PROFILE_LOAD_ERROR_KEY)
                 }
         }
     }
@@ -94,17 +94,17 @@ class OnboardingProfileViewModel(
 
         val username = UsernameRules.normalize(usernameText)
         if (username == null) {
-            _uiState.update { it.copy(error = "El username es obligatorio") }
+            _uiState.update { it.copy(error = ONBOARDING_USERNAME_REQUIRED_ERROR_KEY) }
             return@launch
         }
         if (!UsernameRules.isValid(username)) {
-            _uiState.update { it.copy(error = "Username inválido. Usa 3-30 caracteres: letras, números, punto o guion bajo") }
+            _uiState.update { it.copy(error = ONBOARDING_USERNAME_INVALID_ERROR_KEY) }
             return@launch
         }
 
         val birthDate = runCatching { LocalDate.parse(birthDateText.trim()) }.getOrNull()
         if (birthDate == null) {
-            _uiState.update { it.copy(error = "Fecha inválida. Usa YYYY-MM-DD") }
+            _uiState.update { it.copy(error = ONBOARDING_BIRTH_DATE_INVALID_ERROR_KEY) }
             return@launch
         }
 
@@ -120,7 +120,7 @@ class OnboardingProfileViewModel(
         runCatching { save(updated) }
             .onFailure { e ->
                 _uiState.update { it.copy(error = e.message) }
-                _snackbarEvents.tryEmit(e.message ?: "No se pudo guardar el perfil")
+                _snackbarEvents.tryEmit(e.message ?: ONBOARDING_PROFILE_SAVE_ERROR_KEY)
             }
 
         _uiState.update { it.copy(isSaving = false) }
@@ -139,10 +139,10 @@ class OnboardingProfileViewModel(
                 previousUrl = current.photoUrl
             )
             save(current.copy(photoUrl = uploadedUrl))
-            _snackbarEvents.tryEmit("Avatar actualizado")
+            _snackbarEvents.tryEmit(ONBOARDING_AVATAR_UPDATED_MESSAGE_KEY)
         }.onFailure { e ->
             _uiState.update { it.copy(error = e.message) }
-            _snackbarEvents.tryEmit(e.message ?: "No se pudo subir el avatar")
+            _snackbarEvents.tryEmit(e.message ?: ONBOARDING_AVATAR_UPLOAD_ERROR_KEY)
         }
 
         _uiState.update { it.copy(isUploadingAvatar = false) }
@@ -161,3 +161,11 @@ class OnboardingProfileViewModel(
         )
     }
 }
+
+const val ONBOARDING_USERNAME_REQUIRED_ERROR_KEY = "onboarding.error.username_required"
+const val ONBOARDING_USERNAME_INVALID_ERROR_KEY = "onboarding.error.username_invalid"
+const val ONBOARDING_BIRTH_DATE_INVALID_ERROR_KEY = "onboarding.error.birth_date_invalid"
+const val ONBOARDING_PROFILE_LOAD_ERROR_KEY = "onboarding.error.profile_load"
+const val ONBOARDING_PROFILE_SAVE_ERROR_KEY = "onboarding.error.profile_save"
+const val ONBOARDING_AVATAR_UPDATED_MESSAGE_KEY = "onboarding.info.avatar_updated"
+const val ONBOARDING_AVATAR_UPLOAD_ERROR_KEY = "onboarding.error.avatar_upload"

@@ -101,7 +101,7 @@ class UserProfileViewModel(
             observe()
                 .catch { e ->
                     _uiState.update { it.copy(isInitialLoading = false, error = e.message) }
-                    _snackbarEvents.tryEmit(e.message ?: "Error cargando el perfil")
+                    _snackbarEvents.tryEmit(e.message ?: PROFILE_INIT_ERROR_KEY)
                 }
                 .collectLatest { profile ->
                     _uiState.update {
@@ -118,7 +118,7 @@ class UserProfileViewModel(
             runCatching { get() }
                 .onFailure { e ->
                     _uiState.update { it.copy(isInitialLoading = false, error = e.message) }
-                    _snackbarEvents.tryEmit(e.message ?: "Error cargando el perfil")
+                    _snackbarEvents.tryEmit(e.message ?: PROFILE_INIT_ERROR_KEY)
                 }
         }
 
@@ -153,7 +153,7 @@ class UserProfileViewModel(
 
                         runCatching { save(seeded) }
                             .onFailure { e ->
-                                _snackbarEvents.tryEmit(e.message ?: "No se pudo inicializar el perfil")
+                                _snackbarEvents.tryEmit(e.message ?: PROFILE_INIT_ERROR_KEY)
                             }
                     } finally {
                         isSeeding = false
@@ -179,8 +179,8 @@ class UserProfileViewModel(
             ?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
 
         if (!birthDateText.isNullOrBlank() && parsedBirthDate == null) {
-            _uiState.update { it.copy(isSaving = false, error = "Fecha inválida. Usa YYYY-MM-DD") }
-            _snackbarEvents.tryEmit("Fecha inválida. Usa YYYY-MM-DD")
+            _uiState.update { it.copy(isSaving = false, error = PROFILE_BIRTH_DATE_INVALID_ERROR_KEY) }
+            _snackbarEvents.tryEmit(PROFILE_BIRTH_DATE_INVALID_ERROR_KEY)
             return@launch
         }
 
@@ -191,10 +191,10 @@ class UserProfileViewModel(
             _uiState.update {
                 it.copy(
                     isSaving = false,
-                    error = "Username inválido. Usa 3-30 caracteres: letras, números, punto o guion bajo"
+                    error = PROFILE_USERNAME_INVALID_ERROR_KEY
                 )
             }
-            _snackbarEvents.tryEmit("Username inválido")
+            _snackbarEvents.tryEmit(PROFILE_USERNAME_INVALID_ERROR_KEY)
             return@launch
         }
 
@@ -208,10 +208,10 @@ class UserProfileViewModel(
         )
 
         runCatching { save(profile) }
-            .onSuccess { _snackbarEvents.tryEmit("Guardado correctamente") }
+            .onSuccess { _snackbarEvents.tryEmit(PROFILE_SAVE_SUCCESS_MESSAGE_KEY) }
             .onFailure { e ->
                 _uiState.update { it.copy(error = e.message) }
-                _snackbarEvents.tryEmit(e.message ?: "Error guardando el perfil")
+                _snackbarEvents.tryEmit(e.message ?: PROFILE_SAVE_ERROR_KEY)
             }
 
         _uiState.update { it.copy(isSaving = false) }
@@ -238,9 +238,9 @@ class UserProfileViewModel(
             )
 
             save(updated)
-            _snackbarEvents.tryEmit("Avatar actualizado")
+            _snackbarEvents.tryEmit(PROFILE_AVATAR_UPDATED_MESSAGE_KEY)
         }.onFailure { e ->
-            _snackbarEvents.tryEmit(e.message ?: "Error subiendo avatar")
+            _snackbarEvents.tryEmit(e.message ?: PROFILE_AVATAR_UPLOAD_ERROR_KEY)
             _uiState.update { it.copy(error = e.message) }
         }
 
@@ -253,10 +253,10 @@ class UserProfileViewModel(
         _uiState.update { it.copy(isRefreshing = true, error = null) }
 
         runCatching { pull() }
-            .onSuccess { _snackbarEvents.tryEmit("Perfil actualizado") }
+            .onSuccess { _snackbarEvents.tryEmit(PROFILE_REFRESH_SUCCESS_MESSAGE_KEY) }
             .onFailure { e ->
                 _uiState.update { it.copy(error = e.message) }
-                _snackbarEvents.tryEmit(e.message ?: "Error refrescando perfil")
+                _snackbarEvents.tryEmit(e.message ?: PROFILE_SAVE_ERROR_KEY)
             }
 
         loadHabitsProgress()
@@ -300,3 +300,12 @@ class UserProfileViewModel(
         return emptyName && emptyPhoto && emptyEmail && emptyUsername && emptyBirthDate && emptySign
     }
 }
+
+const val PROFILE_INIT_ERROR_KEY = "profile.error.init"
+const val PROFILE_BIRTH_DATE_INVALID_ERROR_KEY = "profile.error.birth_date_invalid"
+const val PROFILE_USERNAME_INVALID_ERROR_KEY = "profile.error.username_invalid"
+const val PROFILE_SAVE_SUCCESS_MESSAGE_KEY = "profile.info.saved_success"
+const val PROFILE_REFRESH_SUCCESS_MESSAGE_KEY = "profile.info.refresh_success"
+const val PROFILE_SAVE_ERROR_KEY = "profile.error.save"
+const val PROFILE_AVATAR_UPDATED_MESSAGE_KEY = "profile.info.avatar_updated"
+const val PROFILE_AVATAR_UPLOAD_ERROR_KEY = "profile.error.avatar_upload"

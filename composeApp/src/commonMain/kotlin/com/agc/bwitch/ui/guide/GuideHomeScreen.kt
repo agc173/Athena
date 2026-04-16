@@ -40,11 +40,12 @@ fun GuideHomeScreen(
 ) {
     val oracleStrings = appStrings.oracle
     val tarotStrings = appStrings.tarot
+    val guideStrings = appStrings.guide
 
     BWitchScreen(contentPadding = contentPadding) {
         BWitchSectionHeader(
-            title = "Explora tu intuición",
-            subtitle = "Elige una práctica para lo que necesitas comprender hoy",
+            title = guideStrings.headerTitle,
+            subtitle = guideStrings.headerSubtitle,
         )
 
         GuideOptionCard(
@@ -65,9 +66,9 @@ fun GuideHomeScreen(
         )
 
         GuideOptionCard(
-            title = "El Péndulo",
-            subtitle = "Una respuesta rápida para tu pregunta",
-            details = "Sí · No · Tal vez · Aún no",
+            title = guideStrings.pendulumTitle,
+            subtitle = guideStrings.pendulumSubtitle,
+            details = guideStrings.pendulumDetails,
             onClick = { onNavigate(Destination.Pendulum) },
             ornamentType = GuideCardOrnament.Pendulum,
             modifier = Modifier.height(GuideCardHeight),
