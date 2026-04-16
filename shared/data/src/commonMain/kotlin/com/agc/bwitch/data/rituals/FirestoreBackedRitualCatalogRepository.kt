@@ -44,6 +44,20 @@ class FirestoreBackedRitualCatalogRepository(
         readRitualsFromSettings().ifEmpty { allLocalRituals() }
 
 
+    private val localCategoriesByType: Map<RitualCategoryType, RitualCategory> by lazy {
+        local.getCategories().associateBy { category -> category.type }
+    }
+
+    private val localListItemsById: Map<String, RitualListItem> by lazy {
+        local.getCategories()
+            .flatMap { category -> local.getRitualsByCategory(category.type) }
+            .associateBy { item -> item.id }
+    }
+
+    private val localDetailsById: Map<String, RitualDetail> by lazy {
+        allLocalRituals().associateBy { detail -> detail.id }
+    }
+
     fun warmUp() {
         refreshIfNeeded()
     }
@@ -78,7 +92,9 @@ class FirestoreBackedRitualCatalogRepository(
 
     override fun getCategories(): List<RitualCategory> {
         refreshIfNeeded()
-        return categoriesCache.ifEmpty { local.getCategories() }
+        return categoriesCache
+            .ifEmpty { local.getCategories() }
+            .map { category -> category.withLocalContent() }
     }
 
     override fun getRitualsByCategory(category: RitualCategoryType): List<RitualListItem> {
@@ -87,14 +103,14 @@ class FirestoreBackedRitualCatalogRepository(
         return source
             .asSequence()
             .filter { ritual -> ritual.category == category }
-            .map { ritual -> ritual.toListItem() }
+            .map { ritual -> ritual.toListItem().withLocalContent() }
             .toList()
     }
 
     override fun getRitualById(id: String): RitualDetail? {
         refreshIfNeeded()
         val cached = ritualDetailsCache.firstOrNull { ritual -> ritual.id == id }
-        return cached ?: local.getRitualById(id)
+        return cached?.withLocalContent() ?: local.getRitualById(id)
     }
 
     private fun shouldRefresh(nowEpochMillis: Long): Boolean {
@@ -208,6 +224,15 @@ class FirestoreBackedRitualCatalogRepository(
                     .mapNotNull { item -> local.getRitualById(item.id) }
             }
     }
+
+    private fun RitualCategory.withLocalContent(): RitualCategory =
+        localCategoriesByType[type] ?: this
+
+    private fun RitualListItem.withLocalContent(): RitualListItem =
+        localListItemsById[id] ?: this
+
+    private fun RitualDetail.withLocalContent(): RitualDetail =
+        localDetailsById[id] ?: this
 }
 
 @Serializable
@@ -349,7 +374,7 @@ private fun String.toRitualCategoryTypeOrNull(): RitualCategoryType? {
 }
 
 private fun List<String>.toBwitchHint(): String {
-    if (isEmpty()) return "Materiales simples"
+    if (isEmpty()) return "ritual_catalog.common.materials_simple"
     return take(2).joinToString(" · ")
 }
 
