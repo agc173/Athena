@@ -5,13 +5,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import com.agc.bwitch.domain.rituals.RitualCatalogRepository
 import com.agc.bwitch.domain.rituals.RitualCategory
 import com.agc.bwitch.domain.rituals.RitualCategoryType
-import com.agc.bwitch.localization.RitualCatalogStrings
 import com.agc.bwitch.localization.appStrings
+import com.agc.bwitch.presentation.localization.AppLanguageViewModel
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
 import com.agc.bwitch.ui.common.designsystem.BWitchScreen
 import com.agc.bwitch.ui.common.designsystem.BWitchSectionHeader
@@ -23,9 +25,11 @@ fun RitualsCategoryScreen(
     onOpenCategory: (RitualCategoryType) -> Unit,
     modifier: Modifier = Modifier,
     repository: RitualCatalogRepository = koinInject(),
+    appLanguageViewModel: AppLanguageViewModel = koinInject(),
 ) {
     val categories = remember(repository) { repository.getCategories() }
     val strings = appStrings.ritualCatalog
+    val languageState by appLanguageViewModel.uiState.collectAsState()
 
     BWitchScreen(
         contentPadding = contentPadding,
@@ -38,21 +42,11 @@ fun RitualsCategoryScreen(
 
         categories.forEach { category ->
             RitualCategoryCard(
-                category = category.localize(strings),
+                category = category.localized(languageState.currentLanguage),
                 onClick = { onOpenCategory(category.type) },
             )
         }
     }
-}
-
-private fun RitualCategory.localize(strings: RitualCatalogStrings): RitualCategory {
-    val localizedTitle = when (type) {
-        RitualCategoryType.Love -> strings.categoryLove
-        RitualCategoryType.Prosperity -> strings.categoryAbundance
-        RitualCategoryType.Protection -> strings.categoryProtection
-        RitualCategoryType.Cleansing -> strings.categoryEnergy
-    }
-    return copy(title = localizedTitle)
 }
 
 @Composable

@@ -5,12 +5,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import com.agc.bwitch.domain.rituals.RitualCatalogRepository
 import com.agc.bwitch.domain.rituals.RitualCategoryType
 import com.agc.bwitch.domain.rituals.RitualListItem
 import com.agc.bwitch.localization.RitualCatalogStrings
+import com.agc.bwitch.presentation.localization.AppLanguageViewModel
 import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
 import com.agc.bwitch.ui.common.designsystem.BWitchScreen
@@ -24,9 +27,11 @@ fun RitualsListScreen(
     onOpenRitual: (String) -> Unit,
     modifier: Modifier = Modifier,
     repository: RitualCatalogRepository = koinInject(),
+    appLanguageViewModel: AppLanguageViewModel = koinInject(),
 ) {
     val rituals = remember(category, repository) { repository.getRitualsByCategory(category) }
     val strings = appStrings.ritualCatalog
+    val languageState by appLanguageViewModel.uiState.collectAsState()
 
     BWitchScreen(
         contentPadding = contentPadding,
@@ -39,7 +44,7 @@ fun RitualsListScreen(
 
         rituals.forEach { ritual ->
             RitualListCard(
-                ritual = ritual,
+                ritual = ritual.localized(languageState.currentLanguage),
                 materialsFormat = strings.materialsFormat,
                 onClick = { onOpenRitual(ritual.id) },
             )

@@ -20,7 +20,7 @@ class LocalRitualCatalogRepository : RitualCatalogRepository {
                     category = ritual.category,
                     title = ritual.title,
                     subtitle = ritual.subtitle,
-                    materialsHint = ritual.materials.toHint(),
+                    materialsHint = ritual.materialsHintKey(),
                 )
             }
     }
@@ -30,10 +30,5 @@ class LocalRitualCatalogRepository : RitualCatalogRepository {
     }
 }
 
-private fun List<String>.toHint(): String {
-    if (isEmpty()) return "Materiales simples"
-    if (size == 1) return first()
-
-    val preview = take(2).joinToString(" + ")
-    return if (size > 2) "$preview y más" else preview
-}
+private fun RitualDetail.materialsHintKey(): String =
+    "ritual_catalog.ritual.$id.materials_hint"
