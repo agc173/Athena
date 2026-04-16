@@ -30,6 +30,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import com.agc.bwitch.localization.HabitsStrings
+import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.presentation.rituals.HabitIntentionUiModel
 import com.agc.bwitch.presentation.rituals.HabitsUiState
 import com.agc.bwitch.presentation.rituals.HabitsViewModel
@@ -45,6 +47,7 @@ fun HabitsScreen(
     viewModel: HabitsViewModel = koinInject(),
 ) {
     val state by viewModel.uiState.collectAsState()
+    val strings = appStrings.habits
 
     BWitchScreen(
         contentPadding = contentPadding,
@@ -54,28 +57,29 @@ fun HabitsScreen(
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         BWitchSectionHeader(
-            title = "Hábitos",
-            subtitle = "Pequeñas acciones que transforman tu energía",
+            title = strings.headerTitle,
+            subtitle = strings.headerSubtitle,
         )
 
         if (state.isLoading) {
             BWitchCard {
                 Text(
-                    text = "Preparando tus intenciones de hoy…",
+                    text = strings.loading,
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }
         } else {
-            HabitsProgressCard(state = state)
+            HabitsProgressCard(state = state, strings = strings)
 
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(
-                    text = "Intenciones del día",
+                    text = strings.sectionTitle,
                     style = MaterialTheme.typography.titleMedium,
                 )
                 state.intentions.forEach { intention ->
                     HabitIntentionCard(
                         intention = intention,
+                        strings = strings,
                         onToggle = {
                             viewModel.onToggleIntention(
                                 intentionId = intention.id,
@@ -90,7 +94,10 @@ fun HabitsScreen(
 }
 
 @Composable
-private fun HabitsProgressCard(state: HabitsUiState) {
+private fun HabitsProgressCard(
+    state: HabitsUiState,
+    strings: HabitsStrings,
+) {
     val missing = (state.cycleTarget - state.progressPoints).coerceAtLeast(0)
 
     BWitchCard {
@@ -109,17 +116,17 @@ private fun HabitsProgressCard(state: HabitsUiState) {
 
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(
-                    text = "Has cultivado ${state.progressPoints} acciones en este ciclo",
+                    text = strings.progressCompletedFormat.withInts(state.progressPoints),
                     style = MaterialTheme.typography.titleMedium,
                 )
                 Text(
-                    text = "Te faltan $missing para completar este ciclo",
+                    text = strings.progressRemainingFormat.withInts(missing),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 if (state.completedCycles > 0) {
                     Text(
-                        text = "Ciclos completados: ${state.completedCycles}",
+                        text = strings.completedCyclesFormat.withInts(state.completedCycles),
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.primary,
                     )
@@ -132,6 +139,7 @@ private fun HabitsProgressCard(state: HabitsUiState) {
 @Composable
 private fun HabitIntentionCard(
     intention: HabitIntentionUiModel,
+    strings: HabitsStrings,
     onToggle: () -> Unit,
 ) {
     val isCompleted = intention.isCompleted
@@ -181,7 +189,7 @@ private fun HabitIntentionCard(
                 exit = fadeOut(),
             ) {
                 Text(
-                    text = "Integrada en tu práctica ✦",
+                    text = strings.integratedLabel,
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.primary,
                 )
@@ -196,17 +204,25 @@ private fun HabitIntentionCard(
                         onClick = onToggle,
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Text("Deshacer por ahora")
+                        Text(strings.undoCta)
                     }
                 } else {
                     Button(
                         onClick = onToggle,
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Text("Sumar a mi práctica")
+                        Text(strings.addCta)
                     }
                 }
             }
         }
     }
+}
+
+private fun String.withInts(vararg values: Int): String {
+    var resolved = this
+    values.forEach { value ->
+        resolved = resolved.replaceFirst("%d", value.toString())
+    }
+    return resolved
 }
