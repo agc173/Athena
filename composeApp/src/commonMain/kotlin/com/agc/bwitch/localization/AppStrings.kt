@@ -1911,8 +1911,11 @@ private val frenchAppStrings = fallbackAppStrings.copy(
     astrologyHome = fallbackAppStrings.astrologyHome.copy(
         headerTitle = "Ton ciel intérieur",
         headerSubtitle = "Explore ton essence et les rythmes qui t'accompagnent",
+        horoscopeCardTitle = "Horoscope",
         horoscopeCardSubtitle = "Ton énergie du jour… et ce qui arrive ensuite",
+        birthEssenceCardTitle = "Essence natale",
         birthEssenceCardSubtitle = "L'empreinte de ta naissance",
+        synastryCardTitle = "Synastrie",
         synastryCardSubtitle = "L'énergie entre deux",
     ),
     birthChart = fallbackAppStrings.birthChart.copy(
@@ -2243,8 +2246,11 @@ private val italianAppStrings = fallbackAppStrings.copy(
     astrologyHome = fallbackAppStrings.astrologyHome.copy(
         headerTitle = "Il tuo cielo interiore",
         headerSubtitle = "Esplora la tua essenza e i ritmi che ti accompagnano",
+        horoscopeCardTitle = "Oroscopo",
         horoscopeCardSubtitle = "La tua energia di oggi… e ciò che arriva",
+        birthEssenceCardTitle = "Essenza natale",
         birthEssenceCardSubtitle = "L'impronta della tua nascita",
+        synastryCardTitle = "Sinastria",
         synastryCardSubtitle = "L'energia tra due persone",
     ),
     birthChart = fallbackAppStrings.birthChart.copy(
@@ -2573,8 +2579,11 @@ private val germanAppStrings = fallbackAppStrings.copy(
     astrologyHome = fallbackAppStrings.astrologyHome.copy(
         headerTitle = "Dein innerer Himmel",
         headerSubtitle = "Erkunde deine Essenz und die Rhythmen, die dich begleiten",
+        horoscopeCardTitle = "Horoskop",
         horoscopeCardSubtitle = "Deine Energie für heute… und was als Nächstes kommt",
+        birthEssenceCardTitle = "Geburtsessenz",
         birthEssenceCardSubtitle = "Der Abdruck deiner Geburt",
+        synastryCardTitle = "Synastrie",
         synastryCardSubtitle = "Die Energie zwischen zwei",
     ),
     birthChart = fallbackAppStrings.birthChart.copy(
