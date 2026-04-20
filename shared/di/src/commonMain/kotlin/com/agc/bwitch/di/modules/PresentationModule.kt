@@ -8,6 +8,7 @@ import com.agc.bwitch.presentation.navigation.Destination
 import com.agc.bwitch.presentation.oracle.OracleAskViewModel
 import com.agc.bwitch.presentation.oracle.OracleStatusViewModel
 import com.agc.bwitch.presentation.pendulum.PendulumViewModel
+import com.agc.bwitch.presentation.localization.AppLanguageViewModel
 import com.agc.bwitch.presentation.navigation.Navigator
 import com.agc.bwitch.presentation.rituals.DailyRitualViewModel
 import com.agc.bwitch.presentation.rituals.HabitsViewModel
@@ -32,27 +33,28 @@ val presentationModule: Module = module {
     single {
         SessionViewModel(get())
     }
+    single { AppLanguageViewModel(get(), get(), get()) }
 
     /**
      * Horoscope
      */
-    factory { HoroscopeViewModel(get(), get(), get(), get(), get()) }
+    factory { HoroscopeViewModel(get(), get(), get(), get(), get(), get(), get()) }
 
     /**
      * BirthChart
      */
-    factory { BirthChartViewModel(get(), get(), get(), get(), get()) }
+    factory { BirthChartViewModel(get(), get(), get(), get(), get(), get(), get()) }
 
-    factory { SynastryViewModel(get()) }
+    factory { SynastryViewModel(get(), get(), get()) }
 
     factory { UserProfileViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     factory { OnboardingProfileViewModel(get(), get(), get(), get(), get(), get()) }
 
     factory { OracleStatusViewModel(get()) }
-    factory { OracleAskViewModel(get()) }
-    factory { TarotViewModel(get()) }
+    factory { OracleAskViewModel(get(), get(), get()) }
+    factory { TarotViewModel(get(), get(), get()) }
     factory { PendulumViewModel() }
     factory { DailyRitualViewModel(get()) }
-    factory { HabitsViewModel(get(), get()) }
+    factory { HabitsViewModel(get(), get(), get()) }
 
 }

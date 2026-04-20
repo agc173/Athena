@@ -13,6 +13,7 @@ data class SynastryPersonInput(
 data class SynastryInput(
     val personA: SynastryPersonInput,
     val personB: SynastryPersonInput,
+    val languageCode: String = "es",
 )
 
 enum class SynastryReadingDepth {

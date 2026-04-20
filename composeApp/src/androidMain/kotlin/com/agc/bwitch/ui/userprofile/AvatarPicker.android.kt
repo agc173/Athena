@@ -8,6 +8,9 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
+import bwitch.composeapp.generated.resources.Res
+import bwitch.composeapp.generated.resources.profile_select_avatar
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 actual fun AvatarPickerButton(
@@ -28,6 +31,6 @@ actual fun AvatarPickerButton(
         onClick = { launcher.launch("image/*") },
         enabled = enabled
     ) {
-        Text("Seleccionar avatar")
+        Text(stringResource(Res.string.profile_select_avatar))
     }
 }

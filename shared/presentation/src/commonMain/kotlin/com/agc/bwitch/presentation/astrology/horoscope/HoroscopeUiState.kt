@@ -8,6 +8,12 @@ data class HoroscopeUiState(
     val isLoading: Boolean = false,
     val isRefreshing: Boolean = false,
     val horoscope: DailyHoroscope? = null,
-    val errorMessage: String? = null,
-    val infoMessage: String? = null,
+    val errorMessage: HoroscopeFeedbackMessage? = null,
+    val infoMessage: HoroscopeFeedbackMessage? = null,
 )
+
+enum class HoroscopeFeedbackMessage {
+    AlreadyUpdated,
+    Updated,
+    RefreshFailed,
+}

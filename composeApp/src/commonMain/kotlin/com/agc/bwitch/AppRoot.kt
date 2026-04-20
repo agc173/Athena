@@ -48,6 +48,8 @@ import com.agc.bwitch.domain.userprofile.GetUserProfileUseCase
 import com.agc.bwitch.domain.userprofile.ObserveUserProfileUseCase
 import com.agc.bwitch.domain.userprofile.UserProfile
 import com.agc.bwitch.domain.userprofile.hasMinimumProfileCompleted
+import com.agc.bwitch.localization.NavigationStrings
+import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.presentation.auth.SessionViewModel
 import com.agc.bwitch.presentation.navigation.Destination
 import com.agc.bwitch.presentation.navigation.Navigator
@@ -121,6 +123,7 @@ fun AppRoot() {
     }
 
     val hasMinimumProfile = profileForGate.hasMinimumProfileCompleted()
+    val navigationStrings = appStrings.navigation
 
     LaunchedEffect(isAuthenticated, isProfileGateLoading, hasProfileGateSnapshot, hasMinimumProfile, dest) {
         if (!isAuthenticated) {
@@ -150,7 +153,7 @@ fun AppRoot() {
     val currentMainTab = remember(dest) { MainTab.items.firstOrNull { it.matches(dest) } }
 
     AppScaffold(
-        title = dest.title,
+        title = destinationTitle(dest, navigationStrings),
         canGoBack = navigator.canGoBack(),
         onBack = { navigator.goBack() },
         actions = {
@@ -164,6 +167,7 @@ fun AppRoot() {
             if (currentMainTab != null) {
                 MainBottomBar(
                     selectedTab = currentMainTab,
+                    navigationStrings = navigationStrings,
                     onTabSelected = { selected ->
                         if (selected == currentMainTab) {
                             if (!navigator.isAtRootOf(selected.rootDestination)) {
@@ -261,6 +265,34 @@ fun AppRoot() {
     }
 }
 
+private fun destinationTitle(
+    destination: Destination,
+    strings: NavigationStrings,
+): String {
+    return when (destination) {
+        Destination.AuthGate -> ""
+        Destination.OnboardingProfile -> strings.onboardingProfile
+        Destination.Astrology -> strings.astrology
+        Destination.BirthChart -> strings.birthChart
+        Destination.Synastry -> strings.synastry
+        Destination.UserProfile -> strings.profile
+        Destination.Settings -> strings.settings
+        Destination.Oracle -> strings.oracle
+        Destination.OracleDebug -> strings.oracleDebug
+        Destination.Guide -> strings.guide
+        Destination.Rituals -> strings.rituals
+        Destination.RitualsCategories -> strings.rituals
+        is Destination.RitualsList -> strings.rituals
+        is Destination.RitualDetail -> strings.ritual
+        Destination.DailyRitual -> strings.dailyRitual
+        Destination.Habits -> strings.habits
+        Destination.TarotHome -> strings.tarot
+        is Destination.Tarot -> strings.tarot
+        Destination.Pendulum -> strings.pendulum
+        is Destination.HoroscopeDaily -> strings.horoscopeDaily
+    }
+}
+
 @Composable
 private fun TopBarSettingsAction(onClick: () -> Unit) {
     val extras = BWitchThemeTokens.extras
@@ -312,20 +344,17 @@ private fun GearIcon(
 }
 
 private data class MainTab(
-    val label: String,
     val rootDestination: Destination,
     val matches: (Destination) -> Boolean,
 ) {
     companion object {
         val profile = MainTab(
-            label = "Perfil",
             rootDestination = Destination.UserProfile,
             matches = { destination ->
                 destination == Destination.UserProfile || destination == Destination.Settings
             },
         )
         val astrology = MainTab(
-            label = "Astro",
             rootDestination = Destination.Astrology,
             matches = { destination ->
                 destination == Destination.Astrology ||
@@ -335,7 +364,6 @@ private data class MainTab(
             },
         )
         val guide = MainTab(
-            label = "Guía",
             rootDestination = Destination.Guide,
             matches = { destination ->
                 destination == Destination.Guide ||
@@ -347,7 +375,6 @@ private data class MainTab(
             },
         )
         val rituals = MainTab(
-            label = "Rituales",
             rootDestination = Destination.Rituals,
             matches = { destination ->
                 destination == Destination.Rituals ||
@@ -366,6 +393,7 @@ private data class MainTab(
 @Composable
 private fun MainBottomBar(
     selectedTab: MainTab,
+    navigationStrings: NavigationStrings,
     onTabSelected: (MainTab) -> Unit,
 ) {
     val themeExtras = BWitchThemeTokens.extras
@@ -427,7 +455,7 @@ private fun MainBottomBar(
                         Spacer(modifier = Modifier.height(1.dp))
 
                         Text(
-                            text = tab.label,
+                            text = tabLabel(tab, navigationStrings),
                             textAlign = TextAlign.Center,
                             style = MaterialTheme.typography.labelMedium.copy(
                                 fontSize = 16.sp,
@@ -441,6 +469,17 @@ private fun MainBottomBar(
             }
         }
     }
+}
+
+private fun tabLabel(
+    tab: MainTab,
+    strings: NavigationStrings,
+): String = when (tab) {
+    MainTab.profile -> strings.profile
+    MainTab.astrology -> strings.astrology
+    MainTab.guide -> strings.guide
+    MainTab.rituals -> strings.rituals
+    else -> strings.profile
 }
 
 @Composable

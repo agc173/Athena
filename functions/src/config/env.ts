@@ -41,7 +41,7 @@ export const ENV = {
     (process.env.USE_MOCK_LLM ?? '').toLowerCase() === '1' ||
     (process.env.USE_MOCK_LLM ?? '').toLowerCase() === 'true',
 
-  // Se mantienen todos para futuro multi-idioma, pero NO lo activamos aÃºn.
+  // Lista total soportada por backend (whitelist).
   SUPPORTED_LANGS: toLangList(parseCsv('SUPPORTED_LANGS', 'es,en,pt,ru,fr,it,de'), ALL_LANGS),
 
   HOROSCOPE_USE_LANGS: (process.env.HOROSCOPE_USE_LANGS ?? '').toLowerCase() === 'true',
@@ -71,8 +71,8 @@ export const ENV = {
 
 };
 
-// ACTIVE_LANGS: parse + validate + filtrar contra SUPPORTED_LANGS
-// âœ… Paso 3: por defecto SOLO 'es' (single-language) hasta estabilizar DeepSeek.
+// ACTIVE_LANGS: parse + validate + filtrar contra SUPPORTED_LANGS.
+// Default conservador: solo 'es' si no se configura.
 ENV.ACTIVE_LANGS = toLangList(parseCsv('ACTIVE_LANGS', 'es'), ['es']).filter((l) =>
   ENV.SUPPORTED_LANGS.includes(l)
 );

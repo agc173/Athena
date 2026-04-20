@@ -4,6 +4,11 @@ import com.agc.bwitch.domain.rituals.DailyRitualStep
 import com.agc.bwitch.domain.rituals.DailyRitualTemplate
 import kotlinx.datetime.LocalDate
 
+enum class DailyRitualError {
+    TextRequired,
+    OptionRequired,
+}
+
 data class DailyRitualUiState(
     val isLoading: Boolean = false,
     val ritualDate: LocalDate? = null,
@@ -12,8 +17,8 @@ data class DailyRitualUiState(
     val currentStepIndex: Int = 0,
     val currentSteps: List<DailyRitualStep> = emptyList(),
     val textAnswer: String = "",
-    val selectedOption: String? = null,
+    val selectedOptionKey: String? = null,
     val isCompleted: Boolean = false,
     val streakCount: Int = 0,
-    val errorMessage: String? = null,
+    val error: DailyRitualError? = null,
 )

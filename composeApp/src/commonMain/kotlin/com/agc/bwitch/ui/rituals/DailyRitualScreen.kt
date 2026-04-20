@@ -20,8 +20,15 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.agc.bwitch.domain.rituals.i18n.DailyRitualContentRepository
+import com.agc.bwitch.domain.localization.AppLanguage
 import com.agc.bwitch.domain.rituals.DailyRitualStep
 import com.agc.bwitch.domain.rituals.DailyRitualStepKind
+import com.agc.bwitch.domain.rituals.DailyRitualTemplate
+import com.agc.bwitch.localization.DailyRitualStrings
+import com.agc.bwitch.localization.appStrings
+import com.agc.bwitch.presentation.localization.AppLanguageViewModel
+import com.agc.bwitch.presentation.rituals.DailyRitualError
 import com.agc.bwitch.presentation.rituals.DailyRitualUiState
 import com.agc.bwitch.presentation.rituals.DailyRitualViewModel
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
@@ -34,8 +41,11 @@ fun DailyRitualScreen(
     contentPadding: PaddingValues,
     onBack: () -> Unit,
     viewModel: DailyRitualViewModel = koinInject(),
+    appLanguageViewModel: AppLanguageViewModel = koinInject(),
 ) {
+    val strings = appStrings.dailyRitual
     val state by viewModel.uiState.collectAsState()
+    val languageState by appLanguageViewModel.uiState.collectAsState()
 
     LaunchedEffect(viewModel) {
         viewModel.onScreenVisible()
@@ -50,12 +60,14 @@ fun DailyRitualScreen(
     ) {
         when {
             state.isLoading -> {
-                Text("Preparando tu ritual…", style = MaterialTheme.typography.bodyMedium)
+                Text(strings.loading, style = MaterialTheme.typography.bodyMedium)
             }
 
             state.isCompleted -> {
                 CompletionBlock(
                     state = state,
+                    strings = strings,
+                    language = languageState.currentLanguage,
                     onBack = onBack,
                 )
             }
@@ -63,6 +75,8 @@ fun DailyRitualScreen(
             state.hasStarted -> {
                 StepFlowBlock(
                     state = state,
+                    strings = strings,
+                    language = languageState.currentLanguage,
                     onTextChanged = viewModel::onTextAnswerChange,
                     onOptionSelected = viewModel::onOptionSelected,
                     onContinue = viewModel::onContinue,
@@ -72,6 +86,8 @@ fun DailyRitualScreen(
             else -> {
                 IntroBlock(
                     state = state,
+                    strings = strings,
+                    language = languageState.currentLanguage,
                     onStart = viewModel::onStartRitual,
                 )
             }
@@ -82,25 +98,27 @@ fun DailyRitualScreen(
 @Composable
 private fun IntroBlock(
     state: DailyRitualUiState,
+    strings: DailyRitualStrings,
+    language: AppLanguage,
     onStart: () -> Unit,
 ) {
     val ritual = state.ritual ?: return
 
     BWitchSectionHeader(
-        title = ritual.title,
-        subtitle = ritual.subtitle,
+        title = ritual.localizedTitle(language),
+        subtitle = ritual.localizedSubtitle(language),
     )
 
     BWitchCard {
-        Text(text = ritual.intro, style = MaterialTheme.typography.bodyLarge)
+        Text(text = ritual.localizedIntro(language), style = MaterialTheme.typography.bodyLarge)
         Text(
-            text = "Duración estimada: ${ritual.estimatedMinutes} min",
+            text = strings.durationFormat.withInts(ritual.estimatedMinutes),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         if (state.streakCount > 0) {
             Text(
-                text = "Racha actual: ${state.streakCount}",
+                text = strings.streakFormat.withInts(state.streakCount),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.primary,
             )
@@ -109,7 +127,7 @@ private fun IntroBlock(
             onClick = onStart,
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Text("Comenzar")
+            Text(strings.startCta)
         }
     }
 }
@@ -117,6 +135,8 @@ private fun IntroBlock(
 @Composable
 private fun StepFlowBlock(
     state: DailyRitualUiState,
+    strings: DailyRitualStrings,
+    language: AppLanguage,
     onTextChanged: (String) -> Unit,
     onOptionSelected: (String) -> Unit,
     onContinue: () -> Unit,
@@ -124,7 +144,7 @@ private fun StepFlowBlock(
     val step = state.currentSteps.getOrNull(state.currentStepIndex) ?: return
 
     Text(
-        text = "Paso ${state.currentStepIndex + 1} de ${state.currentSteps.size}",
+        text = strings.stepProgressFormat.withInts(state.currentStepIndex + 1, state.currentSteps.size),
         style = MaterialTheme.typography.labelLarge,
         color = MaterialTheme.colorScheme.primary,
     )
@@ -132,15 +152,17 @@ private fun StepFlowBlock(
     BWitchCard {
         DailyRitualStepContent(
             step = step,
+            strings = strings,
+            language = language,
             textAnswer = state.textAnswer,
-            selectedOption = state.selectedOption,
+            selectedOptionKey = state.selectedOptionKey,
             onTextChanged = onTextChanged,
             onOptionSelected = onOptionSelected,
         )
 
-        state.errorMessage?.let { error ->
+        state.error?.let { error ->
             Text(
-                text = error,
+                text = error.toLocalizedMessage(strings),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.error,
             )
@@ -150,7 +172,7 @@ private fun StepFlowBlock(
             onClick = onContinue,
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Text(step.ctaLabel)
+            Text(step.localizedCtaLabel(language))
         }
     }
 }
@@ -158,19 +180,21 @@ private fun StepFlowBlock(
 @Composable
 private fun CompletionBlock(
     state: DailyRitualUiState,
+    strings: DailyRitualStrings,
+    language: AppLanguage,
     onBack: () -> Unit,
 ) {
     val ritual = state.ritual ?: return
 
     BWitchSectionHeader(
-        title = "Ritual completado",
-        subtitle = ritual.subtitle,
+        title = strings.completedTitle,
+        subtitle = ritual.localizedSubtitle(language),
     )
 
     BWitchCard {
-        Text(text = ritual.completionMessage, style = MaterialTheme.typography.bodyLarge)
+        Text(text = ritual.localizedCompletionMessage(language), style = MaterialTheme.typography.bodyLarge)
         Text(
-            text = "Tu racha actual es ${state.streakCount}.",
+            text = strings.currentStreakSentenceFormat.withInts(state.streakCount),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.primary,
         )
@@ -178,7 +202,7 @@ private fun CompletionBlock(
             onClick = onBack,
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Text("Volver")
+            Text(strings.backCta)
         }
     }
 }
@@ -186,13 +210,15 @@ private fun CompletionBlock(
 @Composable
 private fun DailyRitualStepContent(
     step: DailyRitualStep,
+    strings: DailyRitualStrings,
+    language: AppLanguage,
     textAnswer: String,
-    selectedOption: String?,
+    selectedOptionKey: String?,
     onTextChanged: (String) -> Unit,
     onOptionSelected: (String) -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Text(text = step.text, style = MaterialTheme.typography.bodyLarge)
+        Text(text = step.localizedText(language), style = MaterialTheme.typography.bodyLarge)
 
         when (step.kind) {
             DailyRitualStepKind.Info,
@@ -204,7 +230,7 @@ private fun DailyRitualStepContent(
                     value = textAnswer,
                     onValueChange = onTextChanged,
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Escribe aquí") },
+                    placeholder = { Text(strings.inputPlaceholder) },
                     singleLine = false,
                     maxLines = 3,
                 )
@@ -214,8 +240,9 @@ private fun DailyRitualStepContent(
             DailyRitualStepKind.BinaryChoice,
             -> {
                 ChoiceGroup(
-                    options = step.options,
-                    selectedOption = selectedOption,
+                    step = step,
+                    language = language,
+                    selectedOptionKey = selectedOptionKey,
                     onOptionSelected = onOptionSelected,
                 )
             }
@@ -225,30 +252,67 @@ private fun DailyRitualStepContent(
 
 @Composable
 private fun ChoiceGroup(
-    options: List<String>,
-    selectedOption: String?,
+    step: DailyRitualStep,
+    language: AppLanguage,
+    selectedOptionKey: String?,
     onOptionSelected: (String) -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        options.forEach { option ->
-            val isSelected = option == selectedOption
+        step.optionKeys.forEach { optionKey ->
+            val optionLabel = step.localizedOption(optionKey = optionKey, language = language)
+            val isSelected = optionKey == selectedOptionKey
             if (isSelected) {
                 Surface(
                     shape = MaterialTheme.shapes.medium,
                     color = MaterialTheme.colorScheme.primary.copy(alpha = 0.14f),
                 ) {
                     Text(
-                        text = option,
+                        text = optionLabel,
                         modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
                         color = MaterialTheme.colorScheme.primary,
                     )
                 }
             } else {
                 AssistChip(
-                    onClick = { onOptionSelected(option) },
-                    label = { Text(option) },
+                    onClick = { onOptionSelected(optionKey) },
+                    label = { Text(optionLabel) },
                 )
             }
         }
     }
+}
+
+private fun DailyRitualTemplate.localizedTitle(language: AppLanguage): String =
+    DailyRitualContentRepository.resolve(language = language, key = titleKey)
+
+private fun DailyRitualTemplate.localizedSubtitle(language: AppLanguage): String =
+    DailyRitualContentRepository.resolve(language = language, key = subtitleKey)
+
+private fun DailyRitualTemplate.localizedIntro(language: AppLanguage): String =
+    DailyRitualContentRepository.resolve(language = language, key = introKey)
+
+private fun DailyRitualTemplate.localizedCompletionMessage(language: AppLanguage): String =
+    DailyRitualContentRepository.resolve(language = language, key = completionMessageKey)
+
+private fun DailyRitualStep.localizedText(language: AppLanguage): String =
+    DailyRitualContentRepository.resolve(language = language, key = textKey)
+
+private fun DailyRitualStep.localizedCtaLabel(language: AppLanguage): String =
+    DailyRitualContentRepository.resolve(language = language, key = ctaLabelKey)
+
+private fun DailyRitualStep.localizedOption(optionKey: String, language: AppLanguage): String =
+    DailyRitualContentRepository.resolve(language = language, key = "daily_ritual.option.$id.$optionKey")
+
+private fun DailyRitualError.toLocalizedMessage(strings: DailyRitualStrings): String =
+    when (this) {
+        DailyRitualError.TextRequired -> strings.validationTextRequired
+        DailyRitualError.OptionRequired -> strings.validationOptionRequired
+    }
+
+private fun String.withInts(vararg values: Int): String {
+    var resolved = this
+    values.forEach { value ->
+        resolved = resolved.replaceFirst("%d", value.toString())
+    }
+    return resolved
 }

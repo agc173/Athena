@@ -6,6 +6,7 @@ import kotlinx.serialization.Serializable
 data class TarotDrawRequestDto(
     val requestType: String,
     val requestId: String,
+    // App language propagated from presentation to backend callable.
     val lang: String? = null,
     val question: String? = null,
     val adUnlock: AdUnlockDto? = null,

@@ -16,11 +16,41 @@ function normalizeQuestion(question?: string): string | undefined {
   return normalized.slice(0, 240);
 }
 
-export function buildSystemPrompt(requestType: RequestType.TAROT_1 | RequestType.TAROT_3): string {
+function languageName(lang: string): string {
+  switch (lang) {
+    case 'en':
+      return 'English';
+    case 'pt':
+      return 'Portuguese';
+    case 'ru':
+      return 'Russian';
+    case 'fr':
+      return 'French';
+    case 'it':
+      return 'Italian';
+    case 'de':
+      return 'German';
+    case 'es':
+    default:
+      return 'Spanish';
+  }
+}
+
+export function buildSystemPrompt(
+    requestType: RequestType.TAROT_1 | RequestType.TAROT_3,
+    lang: string
+): string {
+  const normalizedLang = normalizeWhitespace(lang) || 'es';
+  const outputLanguage = languageName(normalizedLang);
   const base = [
     'You are a tarot reader that returns JSON only.',
     'Return ONLY a single JSON object. No markdown. No extra keys.',
     'Use the exact card names provided by the user prompt with matching orientation and positions.',
+    `Output language required: ${outputLanguage}.`,
+    `Language hard rule: the whole response must be in ${outputLanguage}.`,
+    normalizedLang === 'es' ?
+      'Spanish is allowed.' :
+      'Spanish is forbidden for this response. If you output Spanish, the response is invalid.',
   ];
 
   if (requestType === RequestType.TAROT_1) {

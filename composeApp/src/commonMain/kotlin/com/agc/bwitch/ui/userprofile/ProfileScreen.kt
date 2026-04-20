@@ -45,6 +45,8 @@ import androidx.compose.ui.window.DialogProperties
 import com.agc.bwitch.domain.astrology.birthchart.BirthEssenceProfile
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
 import com.agc.bwitch.domain.rituals.completedHabitBadgesForCycles
+import com.agc.bwitch.localization.AppStrings
+import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.presentation.userprofile.UserProfileViewModel
 import com.agc.bwitch.ui.common.toVisualResource
 import com.agc.bwitch.ui.rituals.components.habitBadgeResourceFor
@@ -62,6 +64,8 @@ fun ProfileScreen(
     onOpenHabits: () -> Unit,
     onOpenStore: (() -> Unit)? = null,
 ) {
+    val strings = appStrings
+    val profileStrings = strings.profile
     val vm: UserProfileViewModel = koinInject()
     val state by vm.uiState.collectAsState()
     val savedEssence = state.savedBirthEssence
@@ -69,9 +73,9 @@ fun ProfileScreen(
 
     val profile = state.profile
     val username = profile?.username?.takeIf { it.isNotBlank() }
-    val usernameLine = username?.let { "@$it" } ?: "@perfil"
+    val usernameLine = username?.let { "@$it" } ?: "@${profileStrings.defaultUsername}"
     val zodiacSign = profile?.zodiacSign
-    val zodiacLabel = zodiacSign?.let { "${it.symbol()} ${it.label}" } ?: "✧ Signo pendiente"
+    val zodiacLabel = zodiacSign?.let { "${it.symbol()} ${it.localizedLabel(strings)}" } ?: "✧ ${profileStrings.pendingSign}"
     val avatarUrl = profile?.photoUrl?.takeIf { it.startsWith("http://") || it.startsWith("https://") }
     val profileDescription: String? = null
     val moonCredits: Int? = null
@@ -97,7 +101,7 @@ fun ProfileScreen(
             if (avatarUrl != null) {
                 KamelImage(
                     resource = asyncPainterResource(avatarUrl),
-                    contentDescription = "Avatar de perfil",
+                    contentDescription = profileStrings.avatarContentDescription,
                     modifier = Modifier
                         .size(96.dp)
                         .clip(CircleShape),
@@ -159,7 +163,7 @@ fun ProfileScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(2.dp),
                 ) {
-                    Text("Lunas", style = MaterialTheme.typography.labelMedium, color = extras.textSecondary)
+                    Text(profileStrings.moonCreditsTitle, style = MaterialTheme.typography.labelMedium, color = extras.textSecondary)
                     Text(
                         text = "🌙 x ${moonCredits ?: 0}",
                         style = MaterialTheme.typography.titleMedium,
@@ -169,8 +173,8 @@ fun ProfileScreen(
             }
 
             MiniAction(
-                label = "Tienda",
-                subLabel = if (onOpenStore == null) "Pronto" else "Abrir",
+                label = profileStrings.storeLabel,
+                subLabel = if (onOpenStore == null) profileStrings.storeSoon else profileStrings.storeOpen,
                 onClick = { onOpenStore?.invoke() },
                 enabled = onOpenStore != null,
                 modifier = Modifier.weight(0.8f),
@@ -197,16 +201,18 @@ fun ProfileScreen(
                 verticalArrangement = Arrangement.spacedBy(dimens.spacingXs),
             ) {
                 Text(
-                    text = "Esencia natal",
+                    text = profileStrings.birthEssenceTitle,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = if (savedEssence != null) {
-                        "SOL ${savedEssence.sunSign.label} · LUNA ${savedEssence.moonSign.label} · ASC ${savedEssence.risingSign.label}"
+                        "${profileStrings.birthEssenceSunLabel} ${savedEssence.sunSign.localizedLabel(strings)} · " +
+                            "${profileStrings.birthEssenceMoonLabel} ${savedEssence.moonSign.localizedLabel(strings)} · " +
+                            "${profileStrings.birthEssenceAscLabel} ${savedEssence.risingSign.localizedLabel(strings)}"
                     } else {
-                        "Aún no has vinculado tu esencia. Te acompañamos a descubrirla."
+                        profileStrings.birthEssenceEmpty
                     },
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -227,19 +233,19 @@ fun ProfileScreen(
                 verticalArrangement = Arrangement.spacedBy(dimens.spacingSm),
             ) {
                 Text(
-                    text = "Tu progreso",
+                    text = profileStrings.progressTitle,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                 )
                 Text(
-                    text = "Cada pequeña práctica deja una huella en tu camino.",
+                    text = profileStrings.progressSubtitle,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
 
                 if (habitsProgress.hasStarted) {
                     Text(
-                        text = "${habitsProgress.completedCycles} ciclos completados",
+                        text = "${habitsProgress.completedCycles} ${profileStrings.completedCyclesSuffix}",
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.primary,
                     )
@@ -261,7 +267,7 @@ fun ProfileScreen(
                     }
                 } else {
                     Text(
-                        text = "Aún no has comenzado este ciclo. Completa una práctica en Hábitos para dar el primer paso.",
+                        text = profileStrings.progressNotStarted,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -271,7 +277,7 @@ fun ProfileScreen(
                     onClick = onOpenHabits,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Text("Abrir Hábitos")
+                    Text(profileStrings.openHabits)
                 }
             }
         }
@@ -281,6 +287,7 @@ fun ProfileScreen(
         if (showBirthEssenceDialog) {
             BirthEssenceDialog(
                 essence = essence,
+                strings = strings,
                 onDismiss = { showBirthEssenceDialog = false },
             )
         }
@@ -400,8 +407,10 @@ private fun MiniAction(
 @Composable
 private fun BirthEssenceDialog(
     essence: BirthEssenceProfile,
+    strings: AppStrings,
     onDismiss: () -> Unit,
 ) {
+    val profileStrings = strings.profile
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = true),
@@ -418,19 +427,22 @@ private fun BirthEssenceDialog(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Text("Esencia natal", style = MaterialTheme.typography.titleLarge)
+                Text(profileStrings.birthEssenceTitle, style = MaterialTheme.typography.titleLarge)
                 Text(
-                    text = "Sol: ${essence.sunSign.label} · Luna: ${essence.moonSign.label} · Ascendente: ${essence.risingSign.label}",
+                    text = "${strings.birthChart.triadSunLabel}: ${essence.sunSign.localizedLabel(strings)} · " +
+                        "${strings.birthChart.triadMoonLabel}: ${essence.moonSign.localizedLabel(strings)} · " +
+                        "${strings.birthChart.risingSignLabel}: ${essence.risingSign.localizedLabel(strings)}",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
 
                 essence.archetype?.let { archetype ->
-                    Text("Arquetipo", style = MaterialTheme.typography.labelLarge)
-                    Text(archetype.displayNameEs, style = MaterialTheme.typography.titleMedium)
+                    val archetypeName = archetype.displayName(essence.languageCode)
+                    Text(profileStrings.archetypeLabel, style = MaterialTheme.typography.labelLarge)
+                    Text(archetypeName, style = MaterialTheme.typography.titleMedium)
                     androidx.compose.foundation.Image(
                         painter = painterResource(archetype.toVisualResource()),
-                        contentDescription = "Visual ${archetype.displayNameEs}",
+                        contentDescription = "${profileStrings.birthEssenceVisualContentDescriptionPrefix} $archetypeName",
                         modifier = Modifier
                             .fillMaxWidth()
                             .aspectRatio(1.6f),
@@ -447,11 +459,26 @@ private fun BirthEssenceDialog(
                     onClick = onDismiss,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Text("Cerrar")
+                    Text(profileStrings.birthEssenceDialogClose)
                 }
             }
         }
     }
+}
+
+private fun ZodiacSign.localizedLabel(strings: AppStrings): String = when (this) {
+    ZodiacSign.aries -> strings.zodiac.aries
+    ZodiacSign.taurus -> strings.zodiac.taurus
+    ZodiacSign.gemini -> strings.zodiac.gemini
+    ZodiacSign.cancer -> strings.zodiac.cancer
+    ZodiacSign.leo -> strings.zodiac.leo
+    ZodiacSign.virgo -> strings.zodiac.virgo
+    ZodiacSign.libra -> strings.zodiac.libra
+    ZodiacSign.scorpio -> strings.zodiac.scorpio
+    ZodiacSign.sagittarius -> strings.zodiac.sagittarius
+    ZodiacSign.capricorn -> strings.zodiac.capricorn
+    ZodiacSign.aquarius -> strings.zodiac.aquarius
+    ZodiacSign.pisces -> strings.zodiac.pisces
 }
 
 private fun ZodiacSign.symbol(): String = when (this) {

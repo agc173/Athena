@@ -12,12 +12,12 @@ class SettingsHoroscopePullMarkerRepository(
 
     private val settings: Settings = settingsFactory.create("horoscope_pull_marker")
 
-    private val KEY_LAST_PULLED_DATE_ISO = "last_pulled_date_iso"
+    override fun getLastPulledDateIso(languageCode: String): String? =
+        settings[key(languageCode)]
 
-    override fun getLastPulledDateIso(): String? =
-        settings[KEY_LAST_PULLED_DATE_ISO]
-
-    override fun setLastPulledDateIso(dateIso: String) {
-        settings[KEY_LAST_PULLED_DATE_ISO] = dateIso
+    override fun setLastPulledDateIso(dateIso: String, languageCode: String) {
+        settings[key(languageCode)] = dateIso
     }
+
+    private fun key(languageCode: String): String = "last_pulled_date_iso_${languageCode.lowercase()}"
 }

@@ -19,6 +19,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
+import com.agc.bwitch.localization.OracleStrings
+import com.agc.bwitch.localization.appStrings
+import com.agc.bwitch.presentation.oracle.OracleAskMessage
+import com.agc.bwitch.presentation.oracle.OracleAskMessageId
 import com.agc.bwitch.presentation.oracle.OracleAskViewModel
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
 import com.agc.bwitch.ui.common.designsystem.BWitchPrimaryButton
@@ -37,6 +41,7 @@ fun OracleScreen(
 ) {
     val dimens = BWitchThemeTokens.dimens
     val colors = MaterialTheme.colorScheme
+    val strings = appStrings.oracle
     val state by viewModel.uiState.collectAsState()
 
     BWitchScreen(
@@ -44,13 +49,13 @@ fun OracleScreen(
         modifier = modifier.verticalScroll(rememberScrollState()),
     ) {
         BWitchSectionHeader(
-            title = "Consulta intuitiva",
-            subtitle = "Haz una pregunta clara para recibir una guía enfocada",
+            title = strings.headerTitle,
+            subtitle = strings.headerSubtitle,
         )
 
         if (state.answer == null && state.error == null && !state.inProgress && !state.isLoading) {
             Text(
-                text = "Escribe una pregunta específica y el Oráculo te ofrecerá guía práctica para tu situación.",
+                text = strings.introText,
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.onSurfaceVariant,
             )
@@ -60,7 +65,7 @@ fun OracleScreen(
             value = state.question,
             onValueChange = viewModel::onQuestionChange,
             modifier = Modifier.fillMaxWidth(),
-            label = { Text("Tu pregunta") },
+            label = { Text(strings.questionLabel) },
             enabled = !state.isLoading,
             minLines = 3,
         )
@@ -70,7 +75,7 @@ fun OracleScreen(
             modifier = Modifier.fillMaxWidth(),
             enabled = !state.isLoading && !state.inProgress,
         ) {
-            Text("Consultar Oráculo")
+            Text(strings.askCta)
         }
 
         if (state.isLoading) {
@@ -86,7 +91,7 @@ fun OracleScreen(
                 ) {
                     CircularProgressIndicator()
                     Text(
-                        text = "Consultando el Oráculo...",
+                        text = strings.loading,
                         style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Center,
                     )
@@ -96,7 +101,7 @@ fun OracleScreen(
 
         if (state.inProgress) {
             Text(
-                text = "Tu consulta sigue en proceso. Puedes editar tu pregunta para iniciar una nueva consulta.",
+                text = strings.inProgressMessage,
                 style = MaterialTheme.typography.bodyMedium,
             )
         }
@@ -109,32 +114,32 @@ fun OracleScreen(
                     Text(it, style = MaterialTheme.typography.titleLarge)
                 }
 
-                Text("Guía", style = MaterialTheme.typography.titleMedium)
+                Text(strings.guidanceTitle, style = MaterialTheme.typography.titleMedium)
                 Text(answer.coreGuidance, style = MaterialTheme.typography.bodyLarge)
 
                 if (answer.doList.isNotEmpty()) {
-                    Text("Haz", style = MaterialTheme.typography.titleSmall)
+                    Text(strings.doTitle, style = MaterialTheme.typography.titleSmall)
                     answer.doList.forEach { item ->
                         Text("• $item", style = MaterialTheme.typography.bodyMedium)
                     }
                 }
 
                 if (answer.avoidList.isNotEmpty()) {
-                    Text("Evita", style = MaterialTheme.typography.titleSmall)
+                    Text(strings.avoidTitle, style = MaterialTheme.typography.titleSmall)
                     answer.avoidList.forEach { item ->
                         Text("• $item", style = MaterialTheme.typography.bodyMedium)
                     }
                 }
 
                 answer.reflection?.let {
-                    Text("Reflexión", style = MaterialTheme.typography.titleSmall)
+                    Text(strings.reflectionTitle, style = MaterialTheme.typography.titleSmall)
                     Text(it, style = MaterialTheme.typography.bodyMedium)
                 }
 
                 state.quotaSnapshot?.let { quota ->
                     val quotaLines = buildList {
-                        quota.maxRequestsRemaining?.let { add("Consultas restantes hoy: $it") }
-                        quota.adUnlockRemaining?.let { add("Desbloqueos por anuncio restantes: $it") }
+                        quota.maxRequestsRemaining?.let { add("${strings.quotaRemainingTodayLabel}: $it") }
+                        quota.adUnlockRemaining?.let { add("${strings.adUnlockRemainingLabel}: $it") }
                     }
                     if (quotaLines.isNotEmpty()) {
                         Surface(
@@ -163,7 +168,7 @@ fun OracleScreen(
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !state.isLoading,
             ) {
-                Text("Nueva consulta")
+                Text(strings.newConsultationCta)
             }
         }
 
@@ -173,7 +178,7 @@ fun OracleScreen(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
             ) {
                 Text(
-                    text = error,
+                    text = error.toUiText(strings),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onErrorContainer,
                 )
@@ -182,9 +187,25 @@ fun OracleScreen(
                     modifier = Modifier.fillMaxWidth(),
                     enabled = !state.isLoading && !state.inProgress,
                 ) {
-                    Text("Reintentar")
+                    Text(strings.retryCta)
                 }
             }
         }
     }
+}
+
+private fun OracleAskMessage.toUiText(strings: OracleStrings) = when (id) {
+    OracleAskMessageId.EmptyQuestion -> strings.errorEmptyQuestion
+    OracleAskMessageId.Unauthenticated -> strings.errorUnauthenticated
+    OracleAskMessageId.PermissionDenied -> strings.errorPermissionDenied
+    OracleAskMessageId.ResourceExhaustedWithAdUnlock -> strings.errorResourceExhaustedWithAdUnlock
+    OracleAskMessageId.ResourceExhaustedGeneric -> strings.errorResourceExhaustedGeneric
+    OracleAskMessageId.FailedPreconditionWithAdUnlock -> strings.errorFailedPreconditionWithAdUnlock
+    OracleAskMessageId.FailedPreconditionTemporaryUnavailable -> strings.errorFailedPreconditionTemporaryUnavailable
+    OracleAskMessageId.FailedPreconditionGeneric -> strings.errorFailedPreconditionGeneric
+    OracleAskMessageId.InvalidArgumentFallback -> strings.errorInvalidArgumentFallback
+    OracleAskMessageId.InternalTemporaryUnavailable -> strings.errorInternalTemporaryUnavailable
+    OracleAskMessageId.InternalGeneric -> strings.errorInternalGeneric
+    OracleAskMessageId.UnknownFallback -> strings.errorUnknownFallback
+    OracleAskMessageId.RawBackendMessage -> rawMessage ?: strings.errorUnknownFallback
 }

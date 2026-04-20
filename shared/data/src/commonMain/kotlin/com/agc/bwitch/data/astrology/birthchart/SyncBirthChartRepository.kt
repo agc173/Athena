@@ -87,6 +87,7 @@ class SyncBirthChartRepository(
             moonSign = draft.moonSign,
             risingSign = draft.risingSign,
             interpretation = draft.interpretation,
+            languageCode = draft.languageCode,
             archetype = draft.archetype,
             savedAtEpochMillis = current?.savedAtEpochMillis ?: now,
             updatedAtEpochMillis = now,
@@ -104,6 +105,8 @@ class SyncBirthChartRepository(
                     sunSign = input.sunSign.name.uppercase(),
                     moonSign = input.moonSign.name.uppercase(),
                     risingSign = input.risingSign.name.uppercase(),
+                    languageCode = input.languageCode,
+                    lang = input.languageCode,
                     archetype = input.archetypeHint?.name,
                 ),
                 requestSerializer = BirthEssenceGenerateRequestDto.serializer(),
@@ -115,6 +118,8 @@ class SyncBirthChartRepository(
                 ApiResult.Ok(
                     BirthEssenceReading(
                         interpretation = result.value.interpretation,
+                        languageCode = normalizeLanguageCode(result.value.languageCode).orEmpty()
+                            .ifBlank { input.languageCode },
                         archetype = null,
                     )
                 )
@@ -176,6 +181,7 @@ class SyncBirthChartRepository(
             moonSign = moonSign,
             risingSign = risingSign,
             interpretation = interpretation,
+            languageCode = languageCode,
             archetype = archetype,
         )
 }
@@ -186,6 +192,7 @@ data class BirthEssenceRemoteDto(
     val moonSign: String,
     val risingSign: String,
     val interpretation: String,
+    val languageCode: String? = null,
     val archetype: String? = null,
     val savedAtEpochMillis: Long,
     val updatedAtEpochMillis: Long,
@@ -196,6 +203,7 @@ data class BirthEssenceRemoteDto(
             moonSign = com.agc.bwitch.domain.astrology.horoscope.ZodiacSign.valueOf(moonSign.lowercase()),
             risingSign = com.agc.bwitch.domain.astrology.horoscope.ZodiacSign.valueOf(risingSign.lowercase()),
             interpretation = interpretation,
+            languageCode = normalizeLanguageCode(languageCode) ?: "es",
             archetype = BirthEssenceArchetype.fromRawOrNull(archetype),
             savedAtEpochMillis = savedAtEpochMillis,
             updatedAtEpochMillis = updatedAtEpochMillis,
@@ -208,6 +216,7 @@ data class BirthEssenceRemoteDto(
                 moonSign = data.moonSign.name,
                 risingSign = data.risingSign.name,
                 interpretation = data.interpretation,
+                languageCode = data.languageCode,
                 archetype = data.archetype?.name,
                 savedAtEpochMillis = data.savedAtEpochMillis,
                 updatedAtEpochMillis = data.updatedAtEpochMillis,
@@ -220,11 +229,22 @@ data class BirthEssenceGenerateRequestDto(
     val sunSign: String,
     val moonSign: String,
     val risingSign: String,
+    val languageCode: String,
+    val lang: String,
     val archetype: String? = null,
 )
 
 @Serializable
 data class BirthEssenceGenerateResponseDto(
     val interpretation: String,
+    val languageCode: String? = null,
     val archetype: String? = null,
 )
+
+private fun normalizeLanguageCode(raw: String?): String? =
+    raw
+        ?.trim()
+        ?.lowercase()
+        ?.substringBefore('-')
+        ?.substringBefore('_')
+        ?.ifBlank { null }

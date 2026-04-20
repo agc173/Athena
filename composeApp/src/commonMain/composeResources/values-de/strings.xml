@@ -1,0 +1,41 @@
+<resources>
+    <string name="app_language_section_title">App-Sprache</string>
+    <string name="app_language_section_subtitle">Wähle die Sprache, die BWitch in der Oberfläche verwenden soll.</string>
+    <string name="app_language_selected_prefix">✓ </string>
+
+    <string name="onboarding_profile_title">Vervollständige dein Profil</string>
+    <string name="onboarding_profile_subtitle">Wir benötigen deinen Benutzernamen und dein Geburtsdatum, um dein Erlebnis zu personalisieren.</string>
+    <string name="onboarding_profile_avatar_cd">Profilbild</string>
+    <string name="onboarding_username_label">Benutzername *</string>
+    <string name="onboarding_username_error">Verwende 3-30 Zeichen: Buchstaben, Zahlen, Punkt oder Unterstrich.</string>
+    <string name="onboarding_birth_date_label">Geburtsdatum *</string>
+    <string name="onboarding_birth_date_placeholder">JJJJ-MM-TT</string>
+    <string name="onboarding_birth_date_format_error">Erwartetes Format: JJJJ-MM-TT.</string>
+    <string name="onboarding_continue_button">Speichern und weiter</string>
+
+    <string name="settings_title">Einstellungen</string>
+    <string name="settings_subtitle">Hier kannst du Änderungen verwalten, die nach dem Onboarding verfügbar sind.</string>
+    <string name="settings_refresh_profile">Profil aktualisieren</string>
+    <string name="settings_sign_out">Abmelden</string>
+
+    <string name="bottom_tab_profile">Profil</string>
+    <string name="bottom_tab_astro">Astro</string>
+    <string name="bottom_tab_guide">Guide</string>
+    <string name="bottom_tab_rituals">Rituale</string>
+
+
+    <string name="app_brand_name">BWitch</string>
+    <string name="auth_sign_in_subtitle">Melde dich an, um deine Daten zu synchronisieren.</string>
+    <string name="auth_continue_with_google">Mit Google fortfahren</string>
+    <string name="auth_email_label">E-Mail</string>
+    <string name="auth_password_label">Passwort</string>
+    <string name="auth_sign_in">Anmelden</string>
+    <string name="auth_sign_up">Konto erstellen</string>
+    <string name="auth_connecting">Verbinden…</string>
+    <string name="auth_google_sign_in_failed_fallback">Google-Anmeldung fehlgeschlagen</string>
+    <string name="profile_select_avatar">Avatar auswählen</string>
+    <string name="nav_back_content_description">Zurück</string>
+    <string name="nav_title_onboarding_profile">Vervollständige dein Profil</string>
+    <string name="nav_title_user_profile">Profil</string>
+    <string name="nav_title_settings">Einstellungen</string>
+</resources>

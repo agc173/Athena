@@ -2,8 +2,8 @@ package com.agc.bwitch.domain.rituals
 
 data class HabitIntention(
     val id: String,
-    val title: String,
-    val actionText: String,
+    val titleKey: String,
+    val actionTextKey: String,
 )
 
 data class HabitsProgress(

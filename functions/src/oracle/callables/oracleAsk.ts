@@ -65,7 +65,11 @@ function stripUndefinedDeep<T>(value: T): T {
 
 function normalizeLang(lang?: string): string {
   if (!lang) return 'es';
-  return lang.trim().toLowerCase().startsWith('en') ? 'en' : 'es';
+  const normalized = lang.trim().toLowerCase().split('-')[0].split('_')[0];
+  if ((ENV.SUPPORTED_LANGS as readonly string[]).includes(normalized)) {
+    return normalized;
+  }
+  return 'es';
 }
 
 function normalizeQuestion(question: string): string {

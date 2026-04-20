@@ -3,13 +3,18 @@ import {buildRouter} from '../../llm/buildRouter';
 import {ENV} from '../../config/env';
 import {addLlmTokens, reserveLlmCallOrThrow, type DailyCaps} from '../../firestore/usageDaily';
 import {createLlmClientFromRouter} from '../../oracle/shared/routerLlmClient';
+import type {Lang} from '../../config/env';
 
 type BirthEssenceGenerateData = {
   sunSign?: unknown;
   moonSign?: unknown;
   risingSign?: unknown;
+  languageCode?: unknown;
+  lang?: unknown;
   archetype?: unknown;
 };
+
+const SUPPORTED_OUTPUT_LANGS: readonly Lang[] = ['es', 'en', 'pt', 'ru', 'fr', 'it', 'de'];
 
 const ALLOWED_SIGNS = new Set([
   'ARIES', 'TAURUS', 'GEMINI', 'CANCER', 'LEO', 'VIRGO',
@@ -50,6 +55,73 @@ function caps(): DailyCaps {
 
 function signLabel(sign: string): string {
   return sign.toLowerCase();
+}
+
+function parseLanguageCode(data: BirthEssenceGenerateData): Lang {
+  const raw = typeof data.languageCode === 'string' ? data.languageCode : data.lang;
+  if (typeof raw !== 'string') return 'es';
+  const normalized = raw.trim().toLowerCase().split('-')[0].split('_')[0];
+  if (
+    SUPPORTED_OUTPUT_LANGS.includes(normalized as Lang) &&
+    ENV.SUPPORTED_LANGS.includes(normalized as Lang)
+  ) {
+    return normalized as Lang;
+  }
+  return 'es';
+}
+
+function languageMeta(lang: Lang): {name: string; toneHint: string; secondPerson: string} {
+  switch (lang) {
+    case 'en':
+      return {
+        name: 'English',
+        toneHint: 'Use natural contemporary English, never Spanish.',
+        secondPerson: 'you',
+      };
+    case 'pt':
+      return {
+        name: 'Portuguese',
+        toneHint: 'Use natural Brazilian/neutral Portuguese, never Spanish.',
+        secondPerson: 'você',
+      };
+    case 'ru':
+      return {
+        name: 'Russian',
+        toneHint: 'Пиши естественным русским языком, без испанских фраз.',
+        secondPerson: 'ты',
+      };
+    case 'fr':
+      return {
+        name: 'French',
+        toneHint: 'Utilise un français naturel, sans espagnol.',
+        secondPerson: 'tu',
+      };
+    case 'it':
+      return {
+        name: 'Italian',
+        toneHint: 'Usa italiano naturale, senza frasi in spagnolo.',
+        secondPerson: 'tu',
+      };
+    case 'de':
+      return {
+        name: 'German',
+        toneHint: 'Nutze natürliches Deutsch, ohne Spanisch.',
+        secondPerson: 'du',
+      };
+    case 'es':
+    default:
+      return {
+        name: 'Spanish',
+        toneHint: 'Usa español natural y cercano.',
+        secondPerson: 'tú',
+      };
+  }
+}
+
+function looksSpanish(text: string): boolean {
+  const normalized = ` ${text.toLowerCase()} `;
+  const markers = [' tú ', ' tu energía ', ' tu intuición ', ' luna ', ' ascendente ', ' eres '];
+  return markers.filter((marker) => normalized.includes(marker)).length >= 2;
 }
 
 function cleanInterpretation(raw: string): string {
@@ -105,10 +177,21 @@ export const birthEssenceGenerate = onCall(
       if (!uid) throw new HttpsError('unauthenticated', 'Authentication is required');
 
       const data = (request.data ?? {}) as BirthEssenceGenerateData;
+      const requestLanguageCode = typeof data.languageCode === 'string' ? data.languageCode : null;
+      const requestLang = typeof data.lang === 'string' ? data.lang : null;
       const sunSign = asSign(data.sunSign, 'sunSign');
       const moonSign = asSign(data.moonSign, 'moonSign');
       const risingSign = asSign(data.risingSign, 'risingSign');
+      const languageCode = parseLanguageCode(data);
+      const language = languageMeta(languageCode);
       const archetypeHint = asArchetypeHint(data.archetype);
+
+      console.info('BIRTH_ESSENCE_LANGUAGE_REQUEST', {
+        uid,
+        requestedLanguageCode: requestLanguageCode,
+        requestedLang: requestLang,
+        normalizedLanguageCode: languageCode,
+      });
 
       const {dateIso} = await reserveLlmCallOrThrow('unknown', caps());
 
@@ -129,8 +212,14 @@ export const birthEssenceGenerate = onCall(
           '- no expliques astrología',
           '- no uses etiquetas, encabezados ni formato',
           '- no menciones arquetipos',
+          `Return ONLY the final interpretation in ${language.name}.`,
+          `Language hard rule: the whole output must be in ${language.name}.`,
+          language.toneHint,
         ].join('\n'),
         userPrompt: [
+          `Output language required: ${language.name}.`,
+          `Return ONLY the final interpretation in ${language.name}.`,
+          `Write in second person (${language.secondPerson}) and keep BWitch mystical empowering tone.`,
           `Sol=${signLabel(sunSign)}, Luna=${signLabel(moonSign)}, Ascendente=${signLabel(risingSign)}.`,
           archetypeHint ? `Energía base: ${archetypeHint}.` : null,
         ].filter(Boolean).join('\n'),
@@ -140,6 +229,24 @@ export const birthEssenceGenerate = onCall(
 
       await addLlmTokens('unknown', dateIso, response.inputTokens ?? 0, response.outputTokens ?? 0);
 
-      return parseModelOutput(response.text);
+      const parsed = parseModelOutput(response.text);
+      const possibleSpanishMismatch = languageCode !== 'es' && looksSpanish(parsed.interpretation);
+
+      console.info('BIRTH_ESSENCE_LANGUAGE_RESULT', {
+        uid,
+        languageCode,
+        possibleSpanishMismatch,
+      });
+
+      // Manual validation checklist:
+      // 1) languageCode=en with ARIES/CANCER/LEO should return fully English interpretation.
+      // 2) languageCode=pt-BR should normalize to pt and return Portuguese interpretation.
+      // 3) languageCode=fr with archetype hint should keep French output and BWitch tone.
+      // 4) languageCode=xx should fallback to es.
+
+      return {
+        ...parsed,
+        languageCode,
+      };
     }
 );

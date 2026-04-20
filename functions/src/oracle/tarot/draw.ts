@@ -1,5 +1,5 @@
 import {RequestType} from '../types';
-import {TAROT_DECK, type TarotLang} from './deck';
+import {TAROT_DECK, normalizeTarotLang, resolveTarotCardName, type TarotLang} from './deck';
 
 export type CardOrientation = 'upright' | 'reversed';
 export type TarotPosition = 'past' | 'present' | 'future';
@@ -42,7 +42,7 @@ function mulberry32(seed: number): () => number {
 }
 
 function normalizeLang(lang: string): TarotLang {
-  return lang.toLowerCase().startsWith('es') ? 'es' : 'en';
+  return normalizeTarotLang(lang);
 }
 
 function shuffledIndexes(rng: () => number, size: number): number[] {
@@ -68,7 +68,7 @@ export function drawTarotCards(params: {
     const card = TAROT_DECK[index];
     return {
       id: card.id,
-      name: card.nameByLang[lang],
+      name: resolveTarotCardName(card.id, lang),
       orientation: rng() < 0.5 ? 'upright' : 'reversed',
     };
   };

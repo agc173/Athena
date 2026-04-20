@@ -2,11 +2,19 @@ import {ENV, type Lang} from '../config/env';
 import type {ZodiacSign} from '../firestore/paths';
 import {createDocIfAbsent} from '../firestore/writeOnce';
 import type {LLMRouter} from '../llm/LLMRouter';
-import {horoscopeSystemPrompt, horoscopeUserPrompt} from '../llm/prompts/horoscopePrompt';
+import {
+  horoscopeCanonicalSystemPrompt,
+  horoscopeCanonicalUserPrompt,
+  horoscopeSystemPrompt,
+  horoscopeTranslationSystemPrompt,
+  horoscopeTranslationUserPrompt,
+  horoscopeUserPrompt,
+} from '../llm/prompts/horoscopePrompt';
 import {horoscopeLangDocPath, horoscopeSignDocPath} from '../firestore/paths';
 import {getFirestore} from 'firebase-admin/firestore';
 
 export type HoroscopeDoc = {
+  languageCode: Lang;
   text: string;
   mood: string;
   luckyNumber: number;
@@ -28,7 +36,7 @@ function safeParseJson(text: string): unknown {
 
 function normalize(
     doc: unknown,
-): Omit<HoroscopeDoc, 'createdAtEpochMillis' | 'updatedAtEpochMillis' | 'generatorVersion' | 'llmProvider'> {
+): Omit<HoroscopeDoc, 'languageCode' | 'createdAtEpochMillis' | 'updatedAtEpochMillis' | 'generatorVersion' | 'llmProvider'> {
   const source = (doc ?? {}) as Record<string, unknown>;
   const out = {
     text: String(source.text ?? '').trim(),
@@ -45,6 +53,25 @@ function normalize(
   }
   if (!out.luckyColor) throw new Error('Invalid: luckyColor empty');
   if (!out.shareText) throw new Error('Invalid: shareText empty');
+
+  return out;
+}
+
+function normalizeTranslation(
+    doc: unknown,
+): Pick<HoroscopeDoc, 'text' | 'shareText' | 'mood' | 'luckyColor'> {
+  const source = (doc ?? {}) as Record<string, unknown>;
+  const out = {
+    text: String(source.text ?? '').trim(),
+    shareText: String(source.shareText ?? '').trim(),
+    mood: String(source.mood ?? '').trim(),
+    luckyColor: String(source.luckyColor ?? '').trim(),
+  };
+
+  if (!out.text) throw new Error('Invalid: translation text empty');
+  if (!out.shareText) throw new Error('Invalid: translation shareText empty');
+  if (!out.mood) throw new Error('Invalid: translation mood empty');
+  if (!out.luckyColor) throw new Error('Invalid: translation luckyColor empty');
 
   return out;
 }
@@ -82,6 +109,7 @@ export class HoroscopeGenerator {
     const parsed = normalize(safeParseJson(res.text));
 
     const doc: HoroscopeDoc = {
+      languageCode: lang,
       ...parsed,
       createdAtEpochMillis: now,
       updatedAtEpochMillis: now,
@@ -93,6 +121,107 @@ export class HoroscopeGenerator {
     const result = await createDocIfAbsent(path, doc);
 
     // If a race happened, createDocIfAbsent may report skipped; that's fine.
+    return {result, path, provider: res.provider};
+  }
+
+  async generateCanonical(dateIso: string, sign: ZodiacSign) {
+    const path = horoscopeSignDocPath(dateIso, sign);
+    const snap = await this.db.doc(path).get();
+    if (snap.exists) {
+      return {result: 'skipped', path, provider: 'none'};
+    }
+
+    const now = Date.now();
+    const res = await this.llm.generate({
+      scope: 'horoscope',
+      messages: [
+        {role: 'system', content: horoscopeCanonicalSystemPrompt()},
+        {role: 'user', content: horoscopeCanonicalUserPrompt(dateIso, sign)},
+      ],
+      temperature: ENV.LLM_TEMPERATURE,
+      maxTokens: ENV.LLM_MAX_TOKENS,
+    });
+
+    const parsed = normalize(safeParseJson(res.text));
+    const doc: HoroscopeDoc = {
+      languageCode: 'es',
+      ...parsed,
+      createdAtEpochMillis: now,
+      updatedAtEpochMillis: now,
+      generatorVersion: ENV.GENERATOR_VERSION,
+      llmProvider: res.provider,
+    };
+
+    const result = await createDocIfAbsent(path, doc);
+    return {result, path, provider: res.provider};
+  }
+
+  async generateTranslation(dateIso: string, sign: ZodiacSign, lang: Lang) {
+    if (lang === 'es') {
+      return {result: 'skipped', path: horoscopeLangDocPath(dateIso, sign, lang), provider: 'none'};
+    }
+
+    const path = horoscopeLangDocPath(dateIso, sign, lang);
+    const translationSnap = await this.db.doc(path).get();
+    if (translationSnap.exists) {
+      return {result: 'skipped', path, provider: 'none'};
+    }
+
+    const canonicalPath = horoscopeSignDocPath(dateIso, sign);
+    const canonicalSnap = await this.db.doc(canonicalPath).get();
+    if (!canonicalSnap.exists) {
+      return {result: 'skipped', path, provider: 'none'};
+    }
+
+    const canonical = canonicalSnap.data() as Partial<HoroscopeDoc> | undefined;
+    const canonicalText = String(canonical?.text ?? '').trim();
+    const canonicalShareText = String(canonical?.shareText ?? '').trim();
+    const canonicalMood = String(canonical?.mood ?? '').trim();
+    const canonicalLuckyNumber = Number(canonical?.luckyNumber);
+    const canonicalLuckyColor = String(canonical?.luckyColor ?? '').trim();
+
+    if (!canonicalText || !canonicalShareText || !canonicalMood || !canonicalLuckyColor ||
+      !Number.isInteger(canonicalLuckyNumber)) {
+      throw new Error(`Invalid canonical horoscope payload at ${canonicalPath}`);
+    }
+
+    const now = Date.now();
+    const res = await this.llm.generate({
+      scope: 'horoscope',
+      messages: [
+        {role: 'system', content: horoscopeTranslationSystemPrompt(lang)},
+        {
+          role: 'user',
+          content: horoscopeTranslationUserPrompt(
+              dateIso,
+              sign,
+              lang,
+              canonicalText,
+              canonicalShareText,
+              canonicalMood,
+              canonicalLuckyColor
+          ),
+        },
+      ],
+      temperature: ENV.LLM_TEMPERATURE,
+      maxTokens: ENV.LLM_MAX_TOKENS,
+    });
+
+    const parsed = normalizeTranslation(safeParseJson(res.text));
+    const doc: HoroscopeDoc = {
+      languageCode: lang,
+      text: parsed.text,
+      shareText: parsed.shareText,
+      mood: parsed.mood,
+      luckyNumber: canonicalLuckyNumber,
+      luckyColor: parsed.luckyColor,
+      createdAtEpochMillis: now,
+      updatedAtEpochMillis: now,
+      generatorVersion: ENV.GENERATOR_VERSION,
+      llmProvider: res.provider,
+    };
+
+    const result = await createDocIfAbsent(path, doc);
     return {result, path, provider: res.provider};
   }
 }

@@ -25,6 +25,7 @@ import bwitch.composeapp.generated.resources.Res
 import bwitch.composeapp.generated.resources.essence_ornament
 import bwitch.composeapp.generated.resources.horoscope_ornament
 import bwitch.composeapp.generated.resources.synastry_ornament
+import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.presentation.navigation.Destination
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
 import com.agc.bwitch.ui.common.designsystem.BWitchScreen
@@ -36,36 +37,38 @@ fun AstrologyScreen(
     contentPadding: PaddingValues,
     onNavigate: (Destination) -> Unit
 ) {
+    val strings = appStrings.astrologyHome
+
     BWitchScreen(
         contentPadding = contentPadding,
         modifier = Modifier.verticalScroll(rememberScrollState())
     ) {
         BWitchSectionHeader(
-            title = "Tu cielo interior",
-            subtitle = "Explora tu esencia y los ritmos que te acompañan",
+            title = strings.headerTitle,
+            subtitle = strings.headerSubtitle,
             titleStyle = MaterialTheme.typography.headlineSmall,
             subtitleStyle = MaterialTheme.typography.bodyLarge,
         )
 
         AstrologyFeatureCard(
-            title = "Horóscopo",
-            subtitle = "Tu energía de hoy… y lo que viene",
+            title = strings.horoscopeCardTitle,
+            subtitle = strings.horoscopeCardSubtitle,
             onClick = { onNavigate(Destination.HoroscopeDaily()) },
             modifier = Modifier.height(168.dp),
             ornamentType = AstrologyCardOrnament.Horoscope,
         )
 
         AstrologyFeatureCard(
-            title = "Esencia natal",
-            subtitle = "La huella de tu nacimiento",
+            title = strings.birthEssenceCardTitle,
+            subtitle = strings.birthEssenceCardSubtitle,
             onClick = { onNavigate(Destination.BirthChart) },
             modifier = Modifier.height(168.dp),
             ornamentType = AstrologyCardOrnament.Essence,
         )
 
         AstrologyFeatureCard(
-            title = "Sinastría",
-            subtitle = "La energía entre dos",
+            title = strings.synastryCardTitle,
+            subtitle = strings.synastryCardSubtitle,
             onClick = { onNavigate(Destination.Synastry) },
             modifier = Modifier.height(168.dp),
             ornamentType = AstrologyCardOrnament.Synastry,

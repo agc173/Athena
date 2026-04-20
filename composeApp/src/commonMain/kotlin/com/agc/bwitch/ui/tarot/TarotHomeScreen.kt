@@ -11,12 +11,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.agc.bwitch.domain.tarot.TarotRequestType
+import com.agc.bwitch.localization.appStrings
 
 @Composable
 fun TarotHomeScreen(
     contentPadding: PaddingValues,
     onSelectRequestType: (TarotRequestType) -> Unit,
 ) {
+    val strings = appStrings.tarot
+
     Column(
         modifier = Modifier
             .padding(contentPadding)
@@ -24,20 +27,20 @@ fun TarotHomeScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text(
-            "Las cartas ofrecen una lectura simbólica para tu momento actual",
+            strings.homeIntro,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
         TarotOptionCard(
-            title = "Carta única",
-            subtitle = "Una guía clara para tu situación actual",
+            title = strings.homeSingleCardTitle,
+            subtitle = strings.homeSingleCardSubtitle,
             onClick = { onSelectRequestType(TarotRequestType.TAROT_1) },
         )
 
         TarotOptionCard(
-            title = "Tirada de 3 cartas",
-            subtitle = "Pasado · Presente · Futuro",
+            title = strings.homeThreeCardTitle,
+            subtitle = strings.homeThreeCardSubtitle,
             onClick = { onSelectRequestType(TarotRequestType.TAROT_3) },
         )
     }

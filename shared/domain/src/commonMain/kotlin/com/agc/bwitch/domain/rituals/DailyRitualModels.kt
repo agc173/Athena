@@ -18,21 +18,21 @@ enum class DailyRitualStepKind {
 data class DailyRitualStep(
     val id: String,
     val kind: DailyRitualStepKind,
-    val text: String,
-    val options: List<String> = emptyList(),
-    val ctaLabel: String = "Continuar",
+    val textKey: String,
+    val optionKeys: List<String> = emptyList(),
+    val ctaLabelKey: String = "daily_ritual.cta.continue",
 )
 
 data class DailyRitualTemplate(
     val id: String,
     val theme: DailyRitualTheme,
-    val title: String,
-    val subtitle: String,
-    val intro: String,
+    val titleKey: String,
+    val subtitleKey: String,
+    val introKey: String,
     val estimatedMinutes: Int,
     val steps: List<DailyRitualStep>,
     val branches: Map<String, List<DailyRitualStep>> = emptyMap(),
-    val completionMessage: String,
+    val completionMessageKey: String,
 )
 
-fun dailyRitualBranchKey(stepId: String, option: String): String = "${stepId}:${option.trim()}"
+fun dailyRitualBranchKey(stepId: String, optionKey: String): String = "${stepId}:${optionKey.trim()}"

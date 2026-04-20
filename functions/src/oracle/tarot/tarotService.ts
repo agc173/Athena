@@ -27,7 +27,7 @@ export async function generateTarotReading(params: {
     lang: params.lang,
   });
 
-  const systemPrompt = buildSystemPrompt(params.requestType);
+  const systemPrompt = buildSystemPrompt(params.requestType, params.lang);
   const userPrompt = buildUserPrompt({
     requestType: params.requestType,
     lang: params.lang,
@@ -43,7 +43,7 @@ export async function generateTarotReading(params: {
   });
 
   const parsed = parseStrictJsonObject(llmResponse.text);
-  const reading = validateTarotReading(parsed, draw);
+  const reading = validateTarotReading(parsed, draw, params.lang);
 
   return {
     reading,

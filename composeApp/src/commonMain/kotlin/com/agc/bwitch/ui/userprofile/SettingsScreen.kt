@@ -24,8 +24,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.agc.bwitch.domain.session.ClearLocalUserDataUseCase
+import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.presentation.auth.SessionViewModel
+import com.agc.bwitch.presentation.localization.AppLanguageViewModel
 import com.agc.bwitch.presentation.userprofile.UserProfileViewModel
+import com.agc.bwitch.presentation.userprofile.PROFILE_AVATAR_UPDATED_MESSAGE_KEY
+import com.agc.bwitch.presentation.userprofile.PROFILE_AVATAR_UPLOAD_ERROR_KEY
+import com.agc.bwitch.presentation.userprofile.PROFILE_BIRTH_DATE_INVALID_ERROR_KEY
+import com.agc.bwitch.presentation.userprofile.PROFILE_INIT_ERROR_KEY
+import com.agc.bwitch.presentation.userprofile.PROFILE_REFRESH_SUCCESS_MESSAGE_KEY
+import com.agc.bwitch.presentation.userprofile.PROFILE_SAVE_ERROR_KEY
+import com.agc.bwitch.presentation.userprofile.PROFILE_SAVE_SUCCESS_MESSAGE_KEY
+import com.agc.bwitch.presentation.userprofile.PROFILE_USERNAME_INVALID_ERROR_KEY
+import com.agc.bwitch.ui.localization.LanguageSelectorSection
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
@@ -33,6 +44,10 @@ import org.koin.compose.koinInject
 fun SettingsScreen(contentPadding: PaddingValues) {
     val vm: UserProfileViewModel = koinInject()
     val state by vm.uiState.collectAsState()
+    val strings = appStrings
+    val profileStrings = appStrings.profile
+    val appLanguageVm: AppLanguageViewModel = koinInject()
+    val appLanguageState by appLanguageVm.uiState.collectAsState()
     val sessionVm: SessionViewModel = koinInject()
     val clearLocalUserData: ClearLocalUserDataUseCase = koinInject()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -40,7 +55,7 @@ fun SettingsScreen(contentPadding: PaddingValues) {
 
     LaunchedEffect(Unit) {
         vm.snackbarEvents.collect { message ->
-            snackbarHostState.showSnackbar(message)
+            snackbarHostState.showSnackbar(message.toProfileUiText(profileStrings))
         }
     }
 
@@ -51,11 +66,21 @@ fun SettingsScreen(contentPadding: PaddingValues) {
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text("Ajustes", style = MaterialTheme.typography.headlineSmall)
         Text(
-            text = "Aquí puedes gestionar solo cambios disponibles después del onboarding.",
+            text = strings.navigation.settings,
+            style = MaterialTheme.typography.headlineSmall,
+        )
+        Text(
+            text = strings.settings.subtitle,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        LanguageSelectorSection(
+            currentLanguage = appLanguageState.currentLanguage,
+            supportedLanguages = appLanguageState.supportedLanguages,
+            onLanguageSelected = appLanguageVm::onLanguageSelected,
+            enabled = !state.isBusy,
         )
 
         AvatarPickerButton(enabled = !state.isBusy) { uriString, mimeType ->
@@ -70,7 +95,7 @@ fun SettingsScreen(contentPadding: PaddingValues) {
             if (state.isRefreshing) {
                 CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
             } else {
-                Text("Refrescar perfil")
+                Text(strings.settings.refreshProfile)
             }
         }
 
@@ -84,11 +109,11 @@ fun SettingsScreen(contentPadding: PaddingValues) {
             enabled = !state.isBusy,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Cerrar sesión")
+            Text(strings.settings.signOut)
         }
 
         state.error?.let {
-            Text(text = it, color = MaterialTheme.colorScheme.error)
+            Text(text = it.toProfileUiText(profileStrings), color = MaterialTheme.colorScheme.error)
         }
     }
 
@@ -99,5 +124,19 @@ fun SettingsScreen(contentPadding: PaddingValues) {
                 .fillMaxWidth()
                 .padding(16.dp)
         )
+    }
+}
+
+private fun String.toProfileUiText(strings: com.agc.bwitch.localization.ProfileStrings): String {
+    return when (this) {
+        PROFILE_INIT_ERROR_KEY -> strings.profileInitError
+        PROFILE_BIRTH_DATE_INVALID_ERROR_KEY -> strings.birthDateFormatError
+        PROFILE_USERNAME_INVALID_ERROR_KEY -> strings.usernameValidationError
+        PROFILE_SAVE_SUCCESS_MESSAGE_KEY -> strings.saveSuccessMessage
+        PROFILE_REFRESH_SUCCESS_MESSAGE_KEY -> strings.saveSuccessMessage
+        PROFILE_SAVE_ERROR_KEY -> strings.saveErrorMessage
+        PROFILE_AVATAR_UPDATED_MESSAGE_KEY -> strings.avatarUpdatedMessage
+        PROFILE_AVATAR_UPLOAD_ERROR_KEY -> strings.avatarUploadError
+        else -> this
     }
 }
