@@ -65,6 +65,9 @@ class TarotViewModel(
     init {
         scope.launch {
             runCatching { resolveCurrentLanguageUseCase() }
+                .onSuccess { language ->
+                    currentLanguageCode.value = language.code
+                }
         }
 
         scope.launch {
