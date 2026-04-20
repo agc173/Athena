@@ -224,9 +224,18 @@ class SynastryReadingGeneratorTest {
         assertTrue(deReading.narrative.contains(" bilden eine Kombination "))
         assertTrue(ptReading.narrative.contains(" formam uma combinação "))
 
-        assertTrue(frReading.dailyOverlay?.dailyGuidance?.contains("Privilégiez") == true)
-        assertTrue(deReading.dailyOverlay?.dailyGuidance?.contains("Priorisiert") == true)
-        assertTrue(ptReading.dailyOverlay?.dailyGuidance?.contains("Priorizem") == true)
+        val spanishGuidances = setOf(
+            "Prioricen una conversación breve y clara antes de reaccionar.",
+            "Hoy suma más escuchar el ritmo del otro que intentar imponer el propio.",
+            "Canalicen la intensidad hacia acuerdos concretos y alcanzables.",
+            "Una pequeña muestra de cuidado puede cambiar todo el tono del día.",
+            "Revisen expectativas y nombren una intención compartida para hoy.",
+            "Eviten suposiciones rápidas: verifiquen lo que cada uno quiso decir.",
+        )
+
+        assertFalse(frReading.dailyOverlay?.dailyGuidance in spanishGuidances)
+        assertFalse(deReading.dailyOverlay?.dailyGuidance in spanishGuidances)
+        assertFalse(ptReading.dailyOverlay?.dailyGuidance in spanishGuidances)
     }
 
     private fun sampleInput(): SynastryInput = SynastryInput(
