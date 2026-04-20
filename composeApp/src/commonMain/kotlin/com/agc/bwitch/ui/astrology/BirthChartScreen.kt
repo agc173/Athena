@@ -205,7 +205,7 @@ private fun String.toBirthChartUiText(strings: com.agc.bwitch.localization.Birth
         BIRTH_CHART_SAVE_ERROR_KEY -> strings.saveErrorMessage
         BIRTH_CHART_GENERATE_UNAVAILABLE_KEY -> strings.generateUnavailableError
         BIRTH_CHART_GENERATE_ERROR_FALLBACK_KEY -> strings.generateErrorFallback
-        else -> this
+        else -> strings.generateErrorFallback
     }
 }
 

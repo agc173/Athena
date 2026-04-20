@@ -301,9 +301,9 @@ fun TarotScreen(
                 }
             }
 
-            state.error?.let { error ->
+            state.error?.let { _ ->
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    val errorMessage = error.ifBlank { strings.unknownErrorFallback }
+                    val errorMessage = strings.unknownErrorFallback
                     Text("${strings.errorPrefix} $errorMessage", color = MaterialTheme.colorScheme.error)
                     Button(
                         onClick = viewModel::retry,

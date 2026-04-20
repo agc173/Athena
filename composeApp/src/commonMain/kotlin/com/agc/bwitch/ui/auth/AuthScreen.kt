@@ -62,9 +62,9 @@ fun AuthScreen(
                 scope.launch {
                     runCatching { googleProvider.getIdToken() }
                         .onSuccess { token -> viewModel.signInWithGoogle(token) }
-                        .onFailure { e ->
+                        .onFailure { _ ->
                             isSubmitting = false
-                            localError = e.message ?: strings.googleSignInErrorFallback
+                            localError = strings.googleSignInErrorFallback
                         }
                 }
             },
@@ -138,7 +138,7 @@ fun AuthScreen(
         }
 
         state.error?.let {
-            Text(it, color = MaterialTheme.colorScheme.error)
+            Text(strings.authErrorFallback, color = MaterialTheme.colorScheme.error)
             LaunchedEffect(it) { isSubmitting = false }
         }
     }

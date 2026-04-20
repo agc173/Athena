@@ -32,6 +32,7 @@ data class AuthStrings(
     val signUp: String,
     val connecting: String,
     val googleSignInErrorFallback: String,
+    val authErrorFallback: String,
 )
 
 data class OnboardingStrings(
@@ -450,6 +451,7 @@ val fallbackAppStrings: AppStrings = AppStrings(
         signUp = "Crear cuenta",
         connecting = "Conectando…",
         googleSignInErrorFallback = "No se pudo iniciar sesión con Google",
+        authErrorFallback = "No se pudo completar el acceso. Inténtalo de nuevo.",
     ),
     onboarding = OnboardingStrings(
         profileTitle = "Completa tu perfil",
@@ -842,6 +844,7 @@ private val englishAppStrings = fallbackAppStrings.copy(
         signUp = "Create account",
         connecting = "Connecting…",
         googleSignInErrorFallback = "Google sign-in failed",
+        authErrorFallback = "We couldn't complete sign-in. Please try again.",
     ),
     onboarding = fallbackAppStrings.onboarding.copy(
         profileTitle = "Complete your profile",
@@ -1228,6 +1231,7 @@ private val portugueseAppStrings = fallbackAppStrings.copy(
         signUp = "Criar conta",
         connecting = "Conectando…",
         googleSignInErrorFallback = "Não foi possível entrar com o Google",
+        authErrorFallback = "Não foi possível concluir o acesso. Tente novamente.",
     ),
     onboarding = fallbackAppStrings.onboarding.copy(
         profileTitle = "Complete seu perfil",
@@ -1599,6 +1603,7 @@ private val russianAppStrings = fallbackAppStrings.copy(
         signUp = "Создать аккаунт",
         connecting = "Подключение…",
         googleSignInErrorFallback = "Не удалось войти через Google",
+        authErrorFallback = "Не удалось выполнить вход. Попробуйте ещё раз.",
     ),
     onboarding = fallbackAppStrings.onboarding.copy(
         profileTitle = "Заполните профиль",
@@ -1986,6 +1991,7 @@ private val frenchAppStrings = fallbackAppStrings.copy(
         signUp = "Créer un compte",
         connecting = "Connexion…",
         googleSignInErrorFallback = "Impossible de se connecter avec Google",
+        authErrorFallback = "Connexion impossible pour le moment. Réessaie.",
     ),
     onboarding = fallbackAppStrings.onboarding.copy(
         profileTitle = "Complète ton profil",
@@ -2361,6 +2367,7 @@ private val italianAppStrings = fallbackAppStrings.copy(
         signUp = "Crea account",
         connecting = "Connessione…",
         googleSignInErrorFallback = "Accesso con Google non riuscito",
+        authErrorFallback = "Impossibile completare l'accesso. Riprova.",
     ),
     onboarding = fallbackAppStrings.onboarding.copy(
         profileTitle = "Completa il tuo profilo",
@@ -2734,6 +2741,7 @@ private val germanAppStrings = fallbackAppStrings.copy(
         signUp = "Konto erstellen",
         connecting = "Verbinden…",
         googleSignInErrorFallback = "Google-Anmeldung fehlgeschlagen",
+        authErrorFallback = "Anmeldung konnte nicht abgeschlossen werden. Bitte versuche es erneut.",
     ),
     onboarding = fallbackAppStrings.onboarding.copy(
         profileTitle = "Vervollständige dein Profil",
