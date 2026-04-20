@@ -150,7 +150,7 @@ fun PendulumScreen(
                     fontStyle = FontStyle.Italic,
                 )
                 Text(
-                    text = "${strings.resultPrefix} ${answer.label(strings)}",
+                    text = strings.resultSentenceFormat.withTexts(strings.resultPrefix, answer.label(strings)),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -388,4 +388,12 @@ private fun PendulumAnswer.mysticalMessage(strings: PendulumStrings): String = w
     PendulumAnswer.NO -> strings.messageNo
     PendulumAnswer.MAYBE -> strings.messageMaybe
     PendulumAnswer.NOT_NOW -> strings.messageNotNow
+}
+
+private fun String.withTexts(vararg values: String): String {
+    var resolved = this
+    values.forEach { value ->
+        resolved = resolved.replaceFirst("%s", value)
+    }
+    return resolved
 }

@@ -61,7 +61,9 @@ fun RitualDetailScreen(
                 style = MaterialTheme.typography.titleMedium,
             )
             Text(
-                text = localizedRitual.materials.joinToString(separator = "\n") { item -> "• $item" },
+                text = localizedRitual.materials.joinToString(separator = "\n") { item ->
+                    strings.detailMaterialBulletFormat.withText(item)
+                },
                 style = MaterialTheme.typography.bodyMedium,
             )
         }
@@ -82,3 +84,5 @@ fun RitualDetailScreen(
         }
     }
 }
+
+private fun String.withText(value: String): String = replaceFirst("%s", value)
