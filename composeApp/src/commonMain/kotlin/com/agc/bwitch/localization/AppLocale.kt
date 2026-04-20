@@ -1,22 +1,20 @@
 package com.agc.bwitch.localization
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.key
 
 /**
- * Boundary mínimo y seguro para la fase actual:
- * - Recompone el árbol cuando cambia el idioma seleccionado por BWitch.
- * - No muta locale global de plataforma desde composición.
+ * Boundary para cambios de idioma en runtime.
  *
- * Nota: esto por sí solo no fuerza que `stringResource(...)` ignore el locale del sistema.
- * Mantiene una base honesta hasta definir una estrategia robusta de runtime locale en Compose MPP.
+ * Importante: no debe recrear el árbol completo de composición, porque eso
+ * puede reinicializar estado local en niveles altos (p.ej. AppRoot) y disparar
+ * efectos colaterales de navegación.
  */
 @Composable
 fun AppLocaleEnvironment(
     languageCode: String,
     content: @Composable () -> Unit,
 ) {
-    key(languageCode) {
-        content()
-    }
+    // `languageCode` se conserva en la firma para mantener el contrato actual.
+    // Los textos se actualizan por recomposición vía LocalAppStrings.
+    content()
 }
