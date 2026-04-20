@@ -120,14 +120,20 @@ fun OracleScreen(
                 if (answer.doList.isNotEmpty()) {
                     Text(strings.doTitle, style = MaterialTheme.typography.titleSmall)
                     answer.doList.forEach { item ->
-                        Text("• $item", style = MaterialTheme.typography.bodyMedium)
+                        Text(
+                            strings.listItemBulletFormat.replaceFirst("%s", item),
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
                     }
                 }
 
                 if (answer.avoidList.isNotEmpty()) {
                     Text(strings.avoidTitle, style = MaterialTheme.typography.titleSmall)
                     answer.avoidList.forEach { item ->
-                        Text("• $item", style = MaterialTheme.typography.bodyMedium)
+                        Text(
+                            strings.listItemBulletFormat.replaceFirst("%s", item),
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
                     }
                 }
 

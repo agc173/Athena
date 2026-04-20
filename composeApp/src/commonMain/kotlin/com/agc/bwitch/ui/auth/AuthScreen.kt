@@ -29,6 +29,7 @@ fun AuthScreen(
     val extras = BWitchThemeTokens.extras
     val state by viewModel.uiState.collectAsState()
     val strings = appStrings.auth
+    val commonStrings = appStrings.common
 
     val context = rememberPlatformContext()
     val googleProvider: GoogleIdTokenProvider = koinInject { parametersOf(context) }
@@ -48,7 +49,7 @@ fun AuthScreen(
             .padding(dimens.spacingMd),
         verticalArrangement = Arrangement.spacedBy(dimens.spacingSm + dimens.spacingXs)
     ) {
-        Text("BWitch", style = MaterialTheme.typography.headlineMedium)
+        Text(commonStrings.appName, style = MaterialTheme.typography.headlineMedium)
         Text(
             strings.subtitle,
             color = extras.textSecondary,
