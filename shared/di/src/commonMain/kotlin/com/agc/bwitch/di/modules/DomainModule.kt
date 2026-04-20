@@ -15,7 +15,10 @@ import com.agc.bwitch.domain.localization.ResolveCurrentLanguageUseCase
 import com.agc.bwitch.domain.localization.SetCurrentLanguageUseCase
 import com.agc.bwitch.domain.session.ClearLocalUserDataUseCase
 import com.agc.bwitch.domain.settings.GetNotificationSettingsUseCase
+import com.agc.bwitch.domain.settings.GetSubscriptionStatusUseCase
 import com.agc.bwitch.domain.settings.ObserveNotificationSettingsUseCase
+import com.agc.bwitch.domain.settings.ObserveSubscriptionStatusUseCase
+import com.agc.bwitch.domain.settings.RestorePurchasesUseCase
 import com.agc.bwitch.domain.settings.UpdateNotificationSettingsUseCase
 import com.agc.bwitch.domain.userprofile.GetUserProfileUseCase
 import com.agc.bwitch.domain.userprofile.ObserveUserProfileUseCase
@@ -55,6 +58,9 @@ val domainModule: Module = module {
     factory { ObserveNotificationSettingsUseCase(get()) }
     factory { GetNotificationSettingsUseCase(get()) }
     factory { UpdateNotificationSettingsUseCase(get()) }
+    factory { ObserveSubscriptionStatusUseCase(get()) }
+    factory { GetSubscriptionStatusUseCase(get()) }
+    factory { RestorePurchasesUseCase(get()) }
 
     // Localization
     factory { ObserveCurrentLanguageUseCase(get()) }

@@ -37,11 +37,15 @@ import androidx.compose.ui.unit.dp
 import com.agc.bwitch.config.SettingsLinks
 import com.agc.bwitch.domain.localization.AppLanguage
 import com.agc.bwitch.domain.session.ClearLocalUserDataUseCase
+import com.agc.bwitch.domain.settings.SubscriptionStatus
 import com.agc.bwitch.localization.appStrings
+import com.agc.bwitch.localization.SettingsStrings
 import com.agc.bwitch.platform.getAppVersionLabel
 import com.agc.bwitch.presentation.auth.SessionViewModel
 import com.agc.bwitch.presentation.localization.AppLanguageViewModel
+import com.agc.bwitch.presentation.userprofile.SettingsFeedback
 import com.agc.bwitch.presentation.userprofile.SettingsViewModel
+import com.agc.bwitch.presentation.userprofile.SubscriptionPrimaryAction
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
 import com.agc.bwitch.ui.common.designsystem.BWitchScreen
 import com.agc.bwitch.ui.common.designsystem.BWitchSectionHeader
@@ -77,6 +81,18 @@ fun SettingsScreen(contentPadding: PaddingValues) {
     LaunchedEffect(settingsState.error) {
         val error = settingsState.error ?: return@LaunchedEffect
         snackbarHostState.showSnackbar(error)
+    }
+
+    LaunchedEffect(settingsState.feedback) {
+        val feedback = settingsState.feedback ?: return@LaunchedEffect
+        val message = when (feedback) {
+            SettingsFeedback.SubscriptionSubscribeComingSoon -> strings.subscriptionSubscribeComingSoon
+            SettingsFeedback.SubscriptionManageComingSoon -> strings.subscriptionManageComingSoon
+            SettingsFeedback.RestorePurchasesSuccess -> strings.subscriptionRestoreSuccess
+            SettingsFeedback.RestorePurchasesNoPurchases -> strings.subscriptionRestoreNoPurchases
+        }
+        snackbarHostState.showSnackbar(message)
+        settingsVm.onFeedbackConsumed()
     }
 
     if (showLanguageDialog) {
@@ -153,15 +169,21 @@ fun SettingsScreen(contentPadding: PaddingValues) {
         }
 
         SettingsSectionCard(title = strings.sectionPurchasesSubscription) {
-            SettingsRow(label = strings.subscriptionStatus, value = strings.subscriptionStatusFree)
             SettingsRow(
-                label = if (settingsState.hasActiveSubscription) strings.subscriptionActionManage else strings.subscriptionActionSubscribe,
-                onClick = { scope.launch { snackbarHostState.showSnackbar(strings.comingSoon) } },
+                label = strings.subscriptionStatus,
+                value = settingsState.subscriptionStatus.toLocalizedLabel(strings),
+            )
+            SettingsRow(
+                label = when (settingsState.subscriptionPrimaryAction) {
+                    SubscriptionPrimaryAction.Subscribe -> strings.subscriptionActionSubscribe
+                    SubscriptionPrimaryAction.Manage -> strings.subscriptionActionManage
+                },
+                onClick = settingsVm::onSubscriptionPrimaryActionClicked,
             )
             SettingsRow(
                 label = strings.restorePurchases,
                 showDivider = false,
-                onClick = { scope.launch { snackbarHostState.showSnackbar(strings.comingSoon) } },
+                onClick = settingsVm::onRestorePurchasesClicked,
             )
         }
 
@@ -358,4 +380,11 @@ private fun SettingsSwitchRow(
             HorizontalDivider()
         }
     }
+}
+
+private fun SubscriptionStatus.toLocalizedLabel(strings: SettingsStrings): String = when (this) {
+    SubscriptionStatus.Unknown -> strings.subscriptionStatusUnknown
+    SubscriptionStatus.Inactive -> strings.subscriptionStatusInactive
+    SubscriptionStatus.ActiveMonthly -> strings.subscriptionStatusActiveMonthly
+    SubscriptionStatus.ActiveAnnual -> strings.subscriptionStatusActiveAnnual
 }
