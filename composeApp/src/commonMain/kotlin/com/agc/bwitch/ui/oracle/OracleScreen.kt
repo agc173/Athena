@@ -207,5 +207,5 @@ private fun OracleAskMessage.toUiText(strings: OracleStrings) = when (id) {
     OracleAskMessageId.InternalTemporaryUnavailable -> strings.errorInternalTemporaryUnavailable
     OracleAskMessageId.InternalGeneric -> strings.errorInternalGeneric
     OracleAskMessageId.UnknownFallback -> strings.errorUnknownFallback
-    OracleAskMessageId.RawBackendMessage -> rawMessage ?: strings.errorUnknownFallback
+    OracleAskMessageId.RawBackendMessage -> strings.errorUnknownFallback
 }

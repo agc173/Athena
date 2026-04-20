@@ -123,7 +123,7 @@ fun SynastryScreen(
                 text = when (error) {
                     "required_sun_signs_error" -> synastryStrings.requiredSunSignsError
                     "generic_generate_error" -> synastryStrings.genericGenerateError
-                    else -> error
+                    else -> synastryStrings.genericGenerateError
                 },
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodyMedium,
