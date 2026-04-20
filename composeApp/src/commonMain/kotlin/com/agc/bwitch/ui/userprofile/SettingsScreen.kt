@@ -30,9 +30,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.agc.bwitch.config.SettingsLinks
 import com.agc.bwitch.domain.localization.AppLanguage
 import com.agc.bwitch.domain.session.ClearLocalUserDataUseCase
 import com.agc.bwitch.localization.appStrings
@@ -60,6 +62,7 @@ fun SettingsScreen(contentPadding: PaddingValues) {
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val appVersionLabel = remember { getAppVersionLabel() }
+    val uriHandler = LocalUriHandler.current
 
     var showLanguageDialog by rememberSaveable { mutableStateOf(false) }
 
@@ -165,11 +168,17 @@ fun SettingsScreen(contentPadding: PaddingValues) {
         SettingsSectionCard(title = strings.sectionHelpSupport) {
             SettingsRow(
                 label = strings.contactSupport,
-                onClick = { scope.launch { snackbarHostState.showSnackbar(strings.comingSoon) } },
+                onClick = {
+                    runCatching { uriHandler.openUri(SettingsLinks.contactSupportMailto()) }
+                        .onFailure { scope.launch { snackbarHostState.showSnackbar(strings.comingSoon) } }
+                },
             )
             SettingsRow(
                 label = strings.reportIssue,
-                onClick = { scope.launch { snackbarHostState.showSnackbar(strings.comingSoon) } },
+                onClick = {
+                    runCatching { uriHandler.openUri(SettingsLinks.reportIssueMailto()) }
+                        .onFailure { scope.launch { snackbarHostState.showSnackbar(strings.comingSoon) } }
+                },
             )
             SettingsRow(
                 label = strings.appVersion,
@@ -181,12 +190,18 @@ fun SettingsScreen(contentPadding: PaddingValues) {
         SettingsSectionCard(title = strings.sectionPrivacyLegal) {
             SettingsRow(
                 label = strings.privacyPolicy,
-                onClick = { scope.launch { snackbarHostState.showSnackbar(strings.comingSoon) } },
+                onClick = {
+                    runCatching { uriHandler.openUri(SettingsLinks.privacyPolicyUrl) }
+                        .onFailure { scope.launch { snackbarHostState.showSnackbar(strings.comingSoon) } }
+                },
             )
             SettingsRow(
                 label = strings.termsAndConditions,
                 showDivider = false,
-                onClick = { scope.launch { snackbarHostState.showSnackbar(strings.comingSoon) } },
+                onClick = {
+                    runCatching { uriHandler.openUri(SettingsLinks.termsAndConditionsUrl) }
+                        .onFailure { scope.launch { snackbarHostState.showSnackbar(strings.comingSoon) } }
+                },
             )
         }
 
