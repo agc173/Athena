@@ -90,6 +90,7 @@ fun SettingsScreen(contentPadding: PaddingValues) {
             SettingsFeedback.SubscriptionManageComingSoon -> strings.subscriptionManageComingSoon
             SettingsFeedback.RestorePurchasesSuccess -> strings.subscriptionRestoreSuccess
             SettingsFeedback.RestorePurchasesNoPurchases -> strings.subscriptionRestoreNoPurchases
+            SettingsFeedback.DeleteAccountComingSoon -> strings.deleteAccountComingSoonFeedback
         }
         snackbarHostState.showSnackbar(message)
         settingsVm.onFeedbackConsumed()
@@ -107,6 +108,17 @@ fun SettingsScreen(contentPadding: PaddingValues) {
                 appLanguageVm.onLanguageSelected(language)
                 showLanguageDialog = false
             },
+        )
+    }
+
+    if (settingsState.isDeleteAccountConfirmationVisible) {
+        DeleteAccountConfirmationDialog(
+            title = strings.deleteAccountDialogTitle,
+            message = strings.deleteAccountDialogMessage,
+            dismissLabel = strings.deleteAccountDialogCancel,
+            confirmLabel = strings.deleteAccountDialogConfirm,
+            onDismiss = settingsVm::onDeleteAccountConfirmationDismissed,
+            onConfirm = settingsVm::onDeleteAccountConfirmed,
         )
     }
 
@@ -238,12 +250,38 @@ fun SettingsScreen(contentPadding: PaddingValues) {
                 label = strings.deleteAccount,
                 isDestructive = true,
                 showDivider = false,
-                onClick = { scope.launch { snackbarHostState.showSnackbar(strings.comingSoon) } },
+                onClick = settingsVm::onDeleteAccountClicked,
             )
         }
 
         SnackbarHost(hostState = snackbarHostState)
     }
+}
+
+@Composable
+private fun DeleteAccountConfirmationDialog(
+    title: String,
+    message: String,
+    dismissLabel: String,
+    confirmLabel: String,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(text = title) },
+        text = { Text(text = message) },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(dismissLabel)
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text(confirmLabel)
+            }
+        },
+    )
 }
 
 @Composable
