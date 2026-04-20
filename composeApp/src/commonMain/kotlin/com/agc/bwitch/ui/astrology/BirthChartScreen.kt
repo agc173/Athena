@@ -61,7 +61,7 @@ fun BirthChartScreen(
     val strings = appStrings
     val birthChartStrings = strings.birthChart
     val state by viewModel.uiState.collectAsState()
-    val shareLauncher = rememberBirthEssenceShareLauncher()
+    val shareLauncher = rememberBirthEssenceShareLauncher(birthChartStrings)
     var shareError by remember { mutableStateOf<String?>(null) }
     var sharePreviewEssence by remember { mutableStateOf<BirthEssenceProfile?>(null) }
 

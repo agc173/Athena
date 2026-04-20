@@ -3,12 +3,15 @@ package com.agc.bwitch.ui.astrology
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import com.agc.bwitch.domain.astrology.birthchart.BirthEssenceProfile
+import com.agc.bwitch.localization.BirthChartStrings
 
 @Composable
-actual fun rememberBirthEssenceShareLauncher(): BirthEssenceShareLauncher =
-    remember { IosBirthEssenceShareLauncher }
+actual fun rememberBirthEssenceShareLauncher(strings: BirthChartStrings): BirthEssenceShareLauncher =
+    remember(strings) { IosBirthEssenceShareLauncher(strings) }
 
-private data object IosBirthEssenceShareLauncher : BirthEssenceShareLauncher {
+private data class IosBirthEssenceShareLauncher(
+    private val strings: BirthChartStrings,
+) : BirthEssenceShareLauncher {
     override fun share(essence: BirthEssenceProfile, captureBounds: ShareCaptureBounds): Result<Unit> =
-        Result.failure(NotImplementedError("El share de esencia solo está implementado en Android"))
+        Result.failure(NotImplementedError(strings.shareNotAvailablePlatformError))
 }
