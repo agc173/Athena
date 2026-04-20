@@ -40,6 +40,7 @@ data class SettingsUiState(
     val appVersion: String = "",
     val subscriptionStatus: SubscriptionStatus = SubscriptionStatus.Unknown,
     val subscriptionPrimaryAction: SubscriptionPrimaryAction = SubscriptionPrimaryAction.Subscribe,
+    val isDeleteAccountConfirmationVisible: Boolean = false,
     val feedback: SettingsFeedback? = null,
     val error: String? = null,
 )
@@ -54,6 +55,7 @@ enum class SettingsFeedback {
     SubscriptionManageComingSoon,
     RestorePurchasesSuccess,
     RestorePurchasesNoPurchases,
+    DeleteAccountComingSoon,
 }
 
 class SettingsViewModel(
@@ -190,6 +192,23 @@ class SettingsViewModel(
 
     fun onFeedbackConsumed() {
         _uiState.update { it.copy(feedback = null) }
+    }
+
+    fun onDeleteAccountClicked() {
+        _uiState.update { it.copy(isDeleteAccountConfirmationVisible = true) }
+    }
+
+    fun onDeleteAccountConfirmationDismissed() {
+        _uiState.update { it.copy(isDeleteAccountConfirmationVisible = false) }
+    }
+
+    fun onDeleteAccountConfirmed() {
+        _uiState.update {
+            it.copy(
+                isDeleteAccountConfirmationVisible = false,
+                feedback = SettingsFeedback.DeleteAccountComingSoon,
+            )
+        }
     }
 
     fun onAppVersionResolved(appVersion: String) {
