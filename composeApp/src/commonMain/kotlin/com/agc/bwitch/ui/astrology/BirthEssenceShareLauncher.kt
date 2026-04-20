@@ -2,6 +2,7 @@ package com.agc.bwitch.ui.astrology
 
 import androidx.compose.runtime.Composable
 import com.agc.bwitch.domain.astrology.birthchart.BirthEssenceProfile
+import com.agc.bwitch.localization.BirthChartStrings
 
 data class ShareCaptureBounds(
     val left: Int,
@@ -15,4 +16,4 @@ interface BirthEssenceShareLauncher {
 }
 
 @Composable
-expect fun rememberBirthEssenceShareLauncher(): BirthEssenceShareLauncher
+expect fun rememberBirthEssenceShareLauncher(strings: BirthChartStrings): BirthEssenceShareLauncher
