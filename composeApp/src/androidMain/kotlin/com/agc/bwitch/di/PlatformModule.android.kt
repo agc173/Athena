@@ -23,7 +23,7 @@ fun platformModule(app: Application): Module = module {
     single { OkHttp.create() }
     single { SettingsFactory(app) }
     single<Settings> { get<SettingsFactory>().create("bwitch") }
-    single<SubscriptionBillingDataSource>(override = true) { GooglePlaySubscriptionBillingDataSource(app) }
+    single<SubscriptionBillingDataSource> { GooglePlaySubscriptionBillingDataSource(app) }
     single<TarotSoundPlayer> { AndroidTarotSoundPlayer(app) }
     single<TarotHaptics> { AndroidTarotHaptics(app) }
 
