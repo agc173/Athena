@@ -6,7 +6,6 @@ import com.agc.bwitch.domain.settings.NotificationSettingsRepository
 import com.russhwolf.settings.Settings
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
 
 class SettingsNotificationSettingsRepository(
     settingsFactory: SettingsFactory,
@@ -18,7 +17,7 @@ class SettingsNotificationSettingsRepository(
 
     override suspend fun get(): NotificationSettings = state.value
 
-    override fun observe(): Flow<NotificationSettings> = state.distinctUntilChanged()
+    override fun observe(): Flow<NotificationSettings> = state
 
     override suspend fun update(settings: NotificationSettings) {
         persist(settings)
