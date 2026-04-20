@@ -6,6 +6,8 @@ import com.agc.bwitch.audio.AndroidTarotHaptics
 import com.agc.bwitch.audio.AndroidTarotSoundPlayer
 import com.agc.bwitch.audio.TarotHaptics
 import com.agc.bwitch.audio.TarotSoundPlayer
+import com.agc.bwitch.data.settings.billing.SubscriptionBillingDataSource
+import com.agc.bwitch.data.settings.billing.googleplay.GooglePlaySubscriptionBillingDataSource
 import com.agc.bwitch.data.storage.SettingsFactory
 import com.agc.bwitch.presentation.auth.GoogleIdTokenProvider
 import com.agc.bwitch.presentation.auth.GoogleIdTokenProviderAndroid
@@ -21,6 +23,7 @@ fun platformModule(app: Application): Module = module {
     single { OkHttp.create() }
     single { SettingsFactory(app) }
     single<Settings> { get<SettingsFactory>().create("bwitch") }
+    single<SubscriptionBillingDataSource>(override = true) { GooglePlaySubscriptionBillingDataSource(app) }
     single<TarotSoundPlayer> { AndroidTarotSoundPlayer(app) }
     single<TarotHaptics> { AndroidTarotHaptics(app) }
 
