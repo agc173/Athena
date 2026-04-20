@@ -3,9 +3,15 @@ package com.agc.bwitch.presentation.userprofile
 import com.agc.bwitch.domain.localization.AppLanguage
 import com.agc.bwitch.domain.localization.ObserveCurrentLanguageUseCase
 import com.agc.bwitch.domain.settings.GetNotificationSettingsUseCase
+import com.agc.bwitch.domain.settings.GetSubscriptionStatusUseCase
 import com.agc.bwitch.domain.settings.NotificationSettings
 import com.agc.bwitch.domain.settings.ObserveNotificationSettingsUseCase
+import com.agc.bwitch.domain.settings.ObserveSubscriptionStatusUseCase
+import com.agc.bwitch.domain.settings.RestorePurchasesResult
+import com.agc.bwitch.domain.settings.RestorePurchasesUseCase
+import com.agc.bwitch.domain.settings.SubscriptionStatus
 import com.agc.bwitch.domain.settings.UpdateNotificationSettingsUseCase
+import com.agc.bwitch.domain.settings.isActive
 import com.agc.bwitch.domain.userprofile.GetUserProfileUseCase
 import com.agc.bwitch.domain.userprofile.ObserveUserProfileUseCase
 import com.agc.bwitch.presentation.auth.SessionViewModel
@@ -32,9 +38,23 @@ data class SettingsUiState(
     val ritualOfDayEnabled: Boolean = false,
     val habitsEnabled: Boolean = false,
     val appVersion: String = "",
-    val hasActiveSubscription: Boolean = false,
+    val subscriptionStatus: SubscriptionStatus = SubscriptionStatus.Unknown,
+    val subscriptionPrimaryAction: SubscriptionPrimaryAction = SubscriptionPrimaryAction.Subscribe,
+    val feedback: SettingsFeedback? = null,
     val error: String? = null,
 )
+
+enum class SubscriptionPrimaryAction {
+    Subscribe,
+    Manage,
+}
+
+enum class SettingsFeedback {
+    SubscriptionSubscribeComingSoon,
+    SubscriptionManageComingSoon,
+    RestorePurchasesSuccess,
+    RestorePurchasesNoPurchases,
+}
 
 class SettingsViewModel(
     private val observeUserProfile: ObserveUserProfileUseCase,
@@ -44,6 +64,9 @@ class SettingsViewModel(
     private val observeNotificationSettings: ObserveNotificationSettingsUseCase,
     private val getNotificationSettings: GetNotificationSettingsUseCase,
     private val updateNotificationSettings: UpdateNotificationSettingsUseCase,
+    private val observeSubscriptionStatus: ObserveSubscriptionStatusUseCase,
+    private val getSubscriptionStatus: GetSubscriptionStatusUseCase,
+    private val restorePurchases: RestorePurchasesUseCase,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
@@ -109,6 +132,22 @@ class SettingsViewModel(
                 }
                 .onFailure { error -> _uiState.update { it.copy(error = error.message) } }
         }
+
+        scope.launch {
+            observeSubscriptionStatus()
+                .catch { error -> _uiState.update { it.copy(error = error.message) } }
+                .collect { subscriptionStatus ->
+                    _uiState.update { it.copyWithSubscription(subscriptionStatus) }
+                }
+        }
+
+        scope.launch {
+            runCatching { getSubscriptionStatus() }
+                .onSuccess { subscriptionStatus ->
+                    _uiState.update { it.copyWithSubscription(subscriptionStatus) }
+                }
+                .onFailure { error -> _uiState.update { it.copy(error = error.message) } }
+        }
     }
 
     fun onNotificationsEnabledChanged(enabled: Boolean) {
@@ -125,6 +164,32 @@ class SettingsViewModel(
 
     fun onHabitsEnabledChanged(enabled: Boolean) {
         updateNotificationSettings { it.copy(habitsEnabled = enabled) }
+    }
+
+    fun onSubscriptionPrimaryActionClicked() {
+        val feedback = when (_uiState.value.subscriptionPrimaryAction) {
+            SubscriptionPrimaryAction.Subscribe -> SettingsFeedback.SubscriptionSubscribeComingSoon
+            SubscriptionPrimaryAction.Manage -> SettingsFeedback.SubscriptionManageComingSoon
+        }
+        _uiState.update { it.copy(feedback = feedback) }
+    }
+
+    fun onRestorePurchasesClicked() {
+        scope.launch {
+            runCatching { restorePurchases() }
+                .onSuccess { result ->
+                    val feedback = when (result) {
+                        is RestorePurchasesResult.NoPurchasesFound -> SettingsFeedback.RestorePurchasesNoPurchases
+                        is RestorePurchasesResult.Restored -> SettingsFeedback.RestorePurchasesSuccess
+                    }
+                    _uiState.update { it.copy(feedback = feedback) }
+                }
+                .onFailure { error -> _uiState.update { it.copy(error = error.message) } }
+        }
+    }
+
+    fun onFeedbackConsumed() {
+        _uiState.update { it.copy(feedback = null) }
     }
 
     fun onAppVersionResolved(appVersion: String) {
@@ -154,4 +219,13 @@ private fun SettingsUiState.copyFrom(settings: NotificationSettings): SettingsUi
     dailyHoroscopeEnabled = settings.dailyHoroscopeEnabled,
     ritualOfDayEnabled = settings.ritualOfDayEnabled,
     habitsEnabled = settings.habitsEnabled,
+)
+
+private fun SettingsUiState.copyWithSubscription(subscriptionStatus: SubscriptionStatus): SettingsUiState = copy(
+    subscriptionStatus = subscriptionStatus,
+    subscriptionPrimaryAction = if (subscriptionStatus.isActive) {
+        SubscriptionPrimaryAction.Manage
+    } else {
+        SubscriptionPrimaryAction.Subscribe
+    },
 )
