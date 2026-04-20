@@ -6,6 +6,7 @@ import com.agc.bwitch.domain.settings.SubscriptionStatus
 import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingClientStateListener
 import com.android.billingclient.api.BillingResult
+import com.android.billingclient.api.PendingPurchasesParams
 import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.QueryPurchasesParams
 import kotlinx.coroutines.sync.Mutex
@@ -22,7 +23,11 @@ class GooglePlaySubscriptionBillingDataSource(
     private val connectionMutex = Mutex()
 
     private val billingClient: BillingClient = BillingClient.newBuilder(appContext)
-        .enablePendingPurchases()
+        .enablePendingPurchases(
+            PendingPurchasesParams.newBuilder()
+                .enableOneTimeProducts()
+                .build(),
+        )
         .setListener { _, _ ->
             // No-op en esta iteración: solo hacemos consulta/restauración pasiva.
         }
