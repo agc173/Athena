@@ -14,6 +14,9 @@ import com.agc.bwitch.domain.localization.ObserveCurrentLanguageUseCase
 import com.agc.bwitch.domain.localization.ResolveCurrentLanguageUseCase
 import com.agc.bwitch.domain.localization.SetCurrentLanguageUseCase
 import com.agc.bwitch.domain.session.ClearLocalUserDataUseCase
+import com.agc.bwitch.domain.settings.GetNotificationSettingsUseCase
+import com.agc.bwitch.domain.settings.ObserveNotificationSettingsUseCase
+import com.agc.bwitch.domain.settings.UpdateNotificationSettingsUseCase
 import com.agc.bwitch.domain.userprofile.GetUserProfileUseCase
 import com.agc.bwitch.domain.userprofile.ObserveUserProfileUseCase
 import com.agc.bwitch.domain.userprofile.PullUserProfileUseCase
@@ -47,6 +50,11 @@ val domainModule: Module = module {
     factory { UploadAvatarUseCase(get()) }
     factory { ClearLocalUserDataUseCase(get()) }
     factory { PullUserProfileUseCase(get()) }
+
+    // Settings
+    factory { ObserveNotificationSettingsUseCase(get()) }
+    factory { GetNotificationSettingsUseCase(get()) }
+    factory { UpdateNotificationSettingsUseCase(get()) }
 
     // Localization
     factory { ObserveCurrentLanguageUseCase(get()) }

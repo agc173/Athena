@@ -19,6 +19,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -38,7 +39,7 @@ import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.platform.getAppVersionLabel
 import com.agc.bwitch.presentation.auth.SessionViewModel
 import com.agc.bwitch.presentation.localization.AppLanguageViewModel
-import com.agc.bwitch.presentation.userprofile.UserProfileViewModel
+import com.agc.bwitch.presentation.userprofile.SettingsViewModel
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
 import com.agc.bwitch.ui.common.designsystem.BWitchScreen
 import com.agc.bwitch.ui.common.designsystem.BWitchSectionHeader
@@ -47,42 +48,41 @@ import org.koin.compose.koinInject
 
 @Composable
 fun SettingsScreen(contentPadding: PaddingValues) {
-    val profileVm: UserProfileViewModel = koinInject()
+    val settingsVm: SettingsViewModel = koinInject()
     val sessionVm: SessionViewModel = koinInject()
     val appLanguageVm: AppLanguageViewModel = koinInject()
     val clearLocalUserData: ClearLocalUserDataUseCase = koinInject()
 
-    val profileState by profileVm.uiState.collectAsState()
-    val sessionState by sessionVm.uiState.collectAsState()
-    val languageState by appLanguageVm.uiState.collectAsState()
+    val settingsState by settingsVm.uiState.collectAsState()
 
     val strings = appStrings.settings
     val commonStrings = appStrings.common
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    val appVersionLabel = remember { getAppVersionLabel() }
 
-    var notificationsEnabled by rememberSaveable { mutableStateOf(false) }
-    var dailyHoroscopeEnabled by rememberSaveable { mutableStateOf(false) }
-    var ritualOfDayEnabled by rememberSaveable { mutableStateOf(false) }
-    var habitsEnabled by rememberSaveable { mutableStateOf(false) }
     var showLanguageDialog by rememberSaveable { mutableStateOf(false) }
 
-    val profile = profileState.profile
-    val username = profile?.username?.takeUnless { it.isBlank() } ?: strings.notAvailable
-    val email = profile?.email?.takeUnless { it.isBlank() }
-        ?: sessionState.email?.takeUnless { it.isBlank() }
-        ?: strings.notAvailable
-    val birthDate = profile?.birthDate?.toString() ?: strings.notAvailable
-    val appVersion = getAppVersionLabel()
-    val hasActiveSubscription = false
+    val username = settingsState.username?.takeUnless { it.isBlank() } ?: strings.notAvailable
+    val email = settingsState.email?.takeUnless { it.isBlank() } ?: strings.notAvailable
+    val birthDate = settingsState.birthDate ?: strings.notAvailable
+
+    LaunchedEffect(appVersionLabel) {
+        settingsVm.onAppVersionResolved(appVersionLabel)
+    }
+
+    LaunchedEffect(settingsState.error) {
+        val error = settingsState.error ?: return@LaunchedEffect
+        snackbarHostState.showSnackbar(error)
+    }
 
     if (showLanguageDialog) {
         LanguageSelectorDialog(
             title = strings.languageDialogTitle,
             closeLabel = strings.close,
             selectedPrefix = commonStrings.languageSelectedPrefix,
-            currentLanguage = languageState.currentLanguage,
-            supportedLanguages = languageState.supportedLanguages,
+            currentLanguage = settingsState.currentLanguage,
+            supportedLanguages = AppLanguage.supported,
             onDismiss = { showLanguageDialog = false },
             onLanguageSelected = { language ->
                 appLanguageVm.onLanguageSelected(language)
@@ -106,7 +106,7 @@ fun SettingsScreen(contentPadding: PaddingValues) {
             SettingsRow(label = strings.birthDate, value = birthDate)
             SettingsRow(
                 label = strings.language,
-                value = languageState.currentLanguage.nativeLabel,
+                value = settingsState.currentLanguage.nativeLabel,
                 onClick = { showLanguageDialog = true },
             )
             SettingsRow(
@@ -125,34 +125,34 @@ fun SettingsScreen(contentPadding: PaddingValues) {
         SettingsSectionCard(title = strings.sectionNotifications) {
             SettingsSwitchRow(
                 label = strings.notificationsEnabled,
-                checked = notificationsEnabled,
-                onCheckedChange = { notificationsEnabled = it },
+                checked = settingsState.notificationsEnabled,
+                onCheckedChange = settingsVm::onNotificationsEnabledChanged,
             )
             SettingsSwitchRow(
                 label = strings.dailyHoroscope,
-                checked = dailyHoroscopeEnabled,
-                enabled = notificationsEnabled,
-                onCheckedChange = { dailyHoroscopeEnabled = it },
+                checked = settingsState.dailyHoroscopeEnabled,
+                enabled = settingsState.notificationsEnabled,
+                onCheckedChange = settingsVm::onDailyHoroscopeEnabledChanged,
             )
             SettingsSwitchRow(
                 label = strings.ritualOfDay,
-                checked = ritualOfDayEnabled,
-                enabled = notificationsEnabled,
-                onCheckedChange = { ritualOfDayEnabled = it },
+                checked = settingsState.ritualOfDayEnabled,
+                enabled = settingsState.notificationsEnabled,
+                onCheckedChange = settingsVm::onRitualOfDayEnabledChanged,
             )
             SettingsSwitchRow(
                 label = strings.habits,
-                checked = habitsEnabled,
-                enabled = notificationsEnabled,
+                checked = settingsState.habitsEnabled,
+                enabled = settingsState.notificationsEnabled,
                 showDivider = false,
-                onCheckedChange = { habitsEnabled = it },
+                onCheckedChange = settingsVm::onHabitsEnabledChanged,
             )
         }
 
         SettingsSectionCard(title = strings.sectionPurchasesSubscription) {
             SettingsRow(label = strings.subscriptionStatus, value = strings.subscriptionStatusFree)
             SettingsRow(
-                label = if (hasActiveSubscription) strings.subscriptionActionManage else strings.subscriptionActionSubscribe,
+                label = if (settingsState.hasActiveSubscription) strings.subscriptionActionManage else strings.subscriptionActionSubscribe,
                 onClick = { scope.launch { snackbarHostState.showSnackbar(strings.comingSoon) } },
             )
             SettingsRow(
@@ -173,7 +173,7 @@ fun SettingsScreen(contentPadding: PaddingValues) {
             )
             SettingsRow(
                 label = strings.appVersion,
-                value = appVersion,
+                value = settingsState.appVersion,
                 showDivider = false,
             )
         }
