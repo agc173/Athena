@@ -32,6 +32,7 @@ fun BirthEssenceShareCard(
     val archetype = essence.archetype
     val archetypeName = archetype?.displayName(essence.languageCode).orEmpty()
     val firstSentence = essence.firstSentence()
+    val birthChartStrings = appStrings.birthChart
     val zodiacStrings = appStrings.zodiac
 
     Surface(
@@ -77,7 +78,7 @@ fun BirthEssenceShareCard(
             )
 
             Text(
-                text = "BWitch ✨",
+                text = birthChartStrings.shareCardSignature,
                 style = MaterialTheme.typography.labelSmall,
                 color = extras.textSecondary,
             )

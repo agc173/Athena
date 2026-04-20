@@ -165,7 +165,7 @@ fun ProfileScreen(
                 ) {
                     Text(profileStrings.moonCreditsTitle, style = MaterialTheme.typography.labelMedium, color = extras.textSecondary)
                     Text(
-                        text = "🌙 x ${moonCredits ?: 0}",
+                        text = profileStrings.moonCreditsValueFormat.replaceFirst("%d", "${moonCredits ?: 0}"),
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.primary,
                     )
