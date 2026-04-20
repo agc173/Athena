@@ -24,6 +24,7 @@ kotlinx-datetime = "0.6.1"
 multiplatform-settings = "1.2.0"
 kotlinx-serialization = "1.6.3"
 kamel = "1.0.9"
+googlePlayBilling = "8.0.0"
 
 
 
@@ -70,6 +71,7 @@ ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "kto
 multiplatform-settings = { module = "com.russhwolf:multiplatform-settings", version.ref = "multiplatform-settings" }
 multiplatform-settings-test = { module = "com.russhwolf:multiplatform-settings-test", version.ref = "multiplatform-settings" }
 kamel-image-default = { module = "media.kamel:kamel-image-default", version.ref = "kamel" }
+google-play-billing = { module = "com.android.billingclient:billing-ktx", version.ref = "googlePlayBilling" }
 
 
 

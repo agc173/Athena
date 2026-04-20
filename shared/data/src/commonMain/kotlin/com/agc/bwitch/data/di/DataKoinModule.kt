@@ -16,7 +16,9 @@ import com.agc.bwitch.data.rituals.SettingsHabitsRepository
 import com.agc.bwitch.data.rituals.SyncHabitsRepository
 import com.agc.bwitch.data.session.LocalUserDataRepositoryImpl
 import com.agc.bwitch.data.settings.SettingsNotificationSettingsRepository
-import com.agc.bwitch.data.settings.SettingsSubscriptionRepository
+import com.agc.bwitch.data.settings.BillingBackedSubscriptionRepository
+import com.agc.bwitch.data.settings.billing.SubscriptionBillingDataSource
+import com.agc.bwitch.data.settings.billing.UnsupportedSubscriptionBillingDataSource
 import com.agc.bwitch.data.tarot.TarotRepositoryImpl
 import com.agc.bwitch.data.userprofile.FirebaseAvatarRepository
 import com.agc.bwitch.data.userprofile.SettingsUserProfileRepository
@@ -56,7 +58,8 @@ val dataKoinModule: Module = module {
     single<AppLanguageRepository> { SettingsAppLanguageRepository(get(), get()) }
 
     single<NotificationSettingsRepository> { SettingsNotificationSettingsRepository(get()) }
-    single<SubscriptionRepository> { SettingsSubscriptionRepository(get()) }
+    single<SubscriptionBillingDataSource> { UnsupportedSubscriptionBillingDataSource }
+    single<SubscriptionRepository> { BillingBackedSubscriptionRepository(get(), get()) }
 
     /**
      * Auth

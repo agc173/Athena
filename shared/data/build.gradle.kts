@@ -25,6 +25,10 @@ kotlin {
     }
 
     sourceSets {
+        androidMain.dependencies {
+            implementation(libs.google.play.billing)
+        }
+
         commonMain.dependencies {
             implementation(project(":shared:domain"))
 
