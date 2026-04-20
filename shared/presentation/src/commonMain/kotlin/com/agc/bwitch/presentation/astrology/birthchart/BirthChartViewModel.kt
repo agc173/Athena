@@ -8,6 +8,8 @@ import com.agc.bwitch.domain.astrology.birthchart.ObserveBirthEssenceUseCase
 import com.agc.bwitch.domain.astrology.birthchart.PullBirthEssenceUseCase
 import com.agc.bwitch.domain.astrology.birthchart.SaveBirthEssenceUseCase
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
+import com.agc.bwitch.domain.localization.ObserveCurrentLanguageUseCase
+import com.agc.bwitch.domain.localization.ResolveCurrentLanguageUseCase
 import com.agc.bwitch.domain.shared.ApiError
 import com.agc.bwitch.domain.shared.ApiResult
 import kotlinx.coroutines.CoroutineScope
@@ -15,6 +17,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -24,6 +28,8 @@ class BirthChartViewModel(
     private val saveBirthEssence: SaveBirthEssenceUseCase,
     private val pullBirthEssence: PullBirthEssenceUseCase,
     private val generateBirthEssence: GenerateBirthEssenceUseCase,
+    private val resolveCurrentLanguageUseCase: ResolveCurrentLanguageUseCase,
+    private val observeCurrentLanguageUseCase: ObserveCurrentLanguageUseCase,
 ) {
     private val scope = CoroutineScope(Dispatchers.Main)
 
@@ -32,17 +38,53 @@ class BirthChartViewModel(
 
     init {
         scope.launch {
+            runCatching { resolveCurrentLanguageUseCase() }
+        }
+
+        scope.launch {
+            observeCurrentLanguageUseCase()
+                .map { it.code }
+                .distinctUntilChanged()
+                .collectLatest { languageCode ->
+                    _uiState.update {
+                        it.copy(
+                            currentLanguageCode = languageCode,
+                            generatedInterpretation = null,
+                            generatedArchetype = null,
+                            generatedLanguageCode = languageCode,
+                            error = null,
+                        )
+                    }
+                    getBirthEssence()
+                }
+        }
+
+        scope.launch {
             observeBirthEssence().collectLatest { essence ->
                 _uiState.update { s ->
+                    val matchesCurrentLanguage = essence?.languageCode == null ||
+                        essence.languageCode == s.currentLanguageCode
                     s.copy(
                         isLoading = false,
                         selectedSunSign = essence?.sunSign ?: s.selectedSunSign,
                         selectedMoonSign = essence?.moonSign ?: s.selectedMoonSign,
                         selectedRisingSign = essence?.risingSign ?: s.selectedRisingSign,
-                        generatedInterpretation = essence?.interpretation?.sanitizeInterpretation()
-                            ?: s.generatedInterpretation,
-                        generatedArchetype = essence?.archetype ?: s.generatedArchetype,
-                        hasSavedEssence = essence != null,
+                        generatedInterpretation = if (matchesCurrentLanguage) {
+                            essence?.interpretation?.sanitizeInterpretation() ?: s.generatedInterpretation
+                        } else {
+                            s.generatedInterpretation
+                        },
+                        generatedArchetype = if (matchesCurrentLanguage) {
+                            essence?.archetype ?: s.generatedArchetype
+                        } else {
+                            s.generatedArchetype
+                        },
+                        generatedLanguageCode = if (matchesCurrentLanguage) {
+                            essence?.languageCode ?: s.generatedLanguageCode
+                        } else {
+                            s.generatedLanguageCode
+                        },
+                        hasSavedEssence = matchesCurrentLanguage && essence != null,
                     )
                 }
             }
@@ -63,16 +105,16 @@ class BirthChartViewModel(
             .onSuccess {
                 val localAfterSync = runCatching { getBirthEssence() }.getOrNull()
                 val summary = when {
-                    localAfterSync == null -> "No había esencia para sincronizar"
-                    localBeforeSync == null -> "Esencia remota cargada"
+                    localAfterSync == null -> BIRTH_CHART_SYNC_NO_ESSENCE_KEY
+                    localBeforeSync == null -> BIRTH_CHART_SYNC_REMOTE_LOADED_KEY
                     localAfterSync.updatedAtEpochMillis > (localBeforeSync.updatedAtEpochMillis) ->
-                        "Esencia actualizada desde sincronización"
+                        BIRTH_CHART_SYNC_UPDATED_KEY
 
-                    else -> "Tu esencia ya estaba al día"
+                    else -> BIRTH_CHART_SYNC_UP_TO_DATE_KEY
                 }
                 _uiState.update { it.copy(savedSummary = summary) }
             }
-            .onFailure { e -> _uiState.update { it.copy(error = e.message ?: "No se pudo refrescar") } }
+            .onFailure { e -> _uiState.update { it.copy(error = e.message ?: BIRTH_CHART_REFRESH_ERROR_KEY) } }
 
         _uiState.update { it.copy(isRefreshing = false) }
     }
@@ -99,6 +141,7 @@ class BirthChartViewModel(
                         sunSign = s.selectedSunSign,
                         moonSign = s.selectedMoonSign,
                         risingSign = s.selectedRisingSign,
+                        languageCode = s.currentLanguageCode,
                     )
                 )
             ) {
@@ -106,6 +149,7 @@ class BirthChartViewModel(
                     _uiState.update {
                         it.copy(
                             generatedInterpretation = result.value.interpretation.sanitizeInterpretation(),
+                            generatedLanguageCode = result.value.languageCode,
                             generatedArchetype = result.value.archetype,
                         )
                     }
@@ -125,7 +169,7 @@ class BirthChartViewModel(
     fun saveActiveEssence() {
         val s = _uiState.value
         val interpretation = s.generatedInterpretation ?: run {
-            _uiState.update { it.copy(error = "Primero genera una esencia") }
+            _uiState.update { it.copy(error = BIRTH_CHART_GENERATE_FIRST_ERROR_KEY) }
             return
         }
 
@@ -140,6 +184,7 @@ class BirthChartViewModel(
                         moonSign = s.selectedMoonSign,
                         risingSign = s.selectedRisingSign,
                         interpretation = interpretation,
+                        languageCode = s.generatedLanguageCode,
                         archetype = s.generatedArchetype,
                     )
                 )
@@ -148,12 +193,12 @@ class BirthChartViewModel(
                     _uiState.update {
                         it.copy(
                             hasSavedEssence = true,
-                            savedSummary = "Esencia guardada como activa",
+                            savedSummary = BIRTH_CHART_SAVE_SUCCESS_SUMMARY_KEY,
                         )
                     }
                 }
                 .onFailure { e ->
-                    _uiState.update { it.copy(error = e.message ?: "No se pudo guardar") }
+                    _uiState.update { it.copy(error = e.message ?: BIRTH_CHART_SAVE_ERROR_KEY) }
                 }
 
             _uiState.update { it.copy(isSaving = false) }
@@ -163,10 +208,10 @@ class BirthChartViewModel(
     private fun mapGenerateError(error: ApiError): String {
         val rawMessage = error.message.orEmpty()
         if (rawMessage.contains("not_found", ignoreCase = true)) {
-            return "La generación de esencia no está disponible todavía"
+            return BIRTH_CHART_GENERATE_UNAVAILABLE_KEY
         }
 
-        return rawMessage.ifBlank { "No se pudo generar la esencia" }
+        return rawMessage.ifBlank { BIRTH_CHART_GENERATE_ERROR_FALLBACK_KEY }
     }
 
     private fun String.sanitizeInterpretation(): String {
@@ -205,3 +250,14 @@ class BirthChartViewModel(
             else -> this
         }
 }
+
+const val BIRTH_CHART_SYNC_NO_ESSENCE_KEY = "birth_chart.sync.no_essence"
+const val BIRTH_CHART_SYNC_REMOTE_LOADED_KEY = "birth_chart.sync.remote_loaded"
+const val BIRTH_CHART_SYNC_UPDATED_KEY = "birth_chart.sync.updated"
+const val BIRTH_CHART_SYNC_UP_TO_DATE_KEY = "birth_chart.sync.up_to_date"
+const val BIRTH_CHART_REFRESH_ERROR_KEY = "birth_chart.error.refresh"
+const val BIRTH_CHART_GENERATE_FIRST_ERROR_KEY = "birth_chart.error.generate_first"
+const val BIRTH_CHART_SAVE_SUCCESS_SUMMARY_KEY = "birth_chart.save.success"
+const val BIRTH_CHART_SAVE_ERROR_KEY = "birth_chart.error.save"
+const val BIRTH_CHART_GENERATE_UNAVAILABLE_KEY = "birth_chart.error.generate_unavailable"
+const val BIRTH_CHART_GENERATE_ERROR_FALLBACK_KEY = "birth_chart.error.generate_fallback"

@@ -16,7 +16,12 @@ class GenerateBirthEssenceUseCase(
 
         return when (val result = repository.generateBirthEssence(input.copy(archetypeHint = resolvedArchetype))) {
             is ApiResult.Err -> result
-            is ApiResult.Ok -> ApiResult.Ok(result.value.copy(archetype = resolvedArchetype))
+            is ApiResult.Ok -> ApiResult.Ok(
+                result.value.copy(
+                    languageCode = result.value.languageCode.ifBlank { input.languageCode },
+                    archetype = resolvedArchetype,
+                )
+            )
         }
     }
 }

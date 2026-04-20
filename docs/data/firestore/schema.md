@@ -5,6 +5,44 @@
 
 ## Colecciones
 
+### /horoscopeDaily/{dateIso}/signs/{sign}
+Documento legacy de horóscopo diario por signo (single-language, históricamente español).
+
+Campos:
+- text: string
+- mood: string
+- luckyNumber: number
+- luckyColor: string
+- shareText: string (opcional)
+- updatedAtEpochMillis: number
+- createdAtEpochMillis: number (opcional)
+- generatorVersion: number (opcional)
+- llmProvider: string (opcional)
+
+Notas:
+- Mantener como fallback de compatibilidad para clientes/cron que aún no usan subruta por idioma.
+
+### /horoscopeDaily/{dateIso}/signs/{sign}/langs/{lang}
+Documento canónico de horóscopo diario por signo e idioma.
+
+Campos:
+- languageCode: string (ISO corto, ej. `es`, `en`, `pt`)
+- text: string
+- mood: string
+- luckyNumber: number
+- luckyColor: string
+- shareText: string (opcional)
+- updatedAtEpochMillis: number
+- createdAtEpochMillis: number (opcional)
+- generatorVersion: number (opcional)
+- llmProvider: string (opcional)
+
+Notas:
+- El cliente debe priorizar esta ruta por idioma.
+- Solo si no existe documento en `langs/{lang}`, puede hacer fallback controlado al doc legacy sin idioma.
+
+---
+
 ### /users/{userId}
 Perfil del usuario y progreso.
 
@@ -60,6 +98,7 @@ Campos:
 - moonSign: string (enum ZodiacSign, obligatorio)
 - risingSign: string (enum ZodiacSign, obligatorio)
 - interpretation: string (lectura breve generada por LLM)
+- languageCode: string (ISO corto `es|en|pt|ru|fr|it|de`, opcional en docs legacy)
 - archetype: string (opcional)
 - savedAtEpochMillis: number
 - updatedAtEpochMillis: number
@@ -67,6 +106,7 @@ Campos:
 Notas:
 - Solo existe un documento activo (`current`) por usuario.
 - Cada nuevo guardado reemplaza la esencia activa anterior.
+- Si `languageCode` no existe (documentos legacy), el cliente usa fallback explícito a `es`.
 
 ---
 

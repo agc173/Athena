@@ -27,6 +27,7 @@ class InMemoryBirthChartRepository : BirthChartRepository {
             moonSign = draft.moonSign,
             risingSign = draft.risingSign,
             interpretation = draft.interpretation,
+            languageCode = draft.languageCode,
             archetype = draft.archetype,
             savedAtEpochMillis = current?.savedAtEpochMillis ?: now,
             updatedAtEpochMillis = now,
@@ -37,6 +38,7 @@ class InMemoryBirthChartRepository : BirthChartRepository {
         ApiResult.Ok(
             BirthEssenceReading(
                 interpretation = "Tu combinación ${input.sunSign.name.lowercase()}-${input.moonSign.name.lowercase()}-${input.risingSign.name.lowercase()} trae una energía versátil y en evolución.",
+                languageCode = input.languageCode,
                 archetype = null,
             )
         )

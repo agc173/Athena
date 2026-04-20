@@ -6,6 +6,8 @@ import com.agc.bwitch.data.auth.FirebaseAuthRepository
 import com.agc.bwitch.data.functions.FunctionsClient
 import com.agc.bwitch.data.functions.GitLiveFunctionsClient
 import com.agc.bwitch.data.oracle.OracleRepositoryImpl
+import com.agc.bwitch.data.localization.SettingsAppLanguageRepository
+import com.agc.bwitch.data.localization.SystemLanguageCodeProvider
 import com.agc.bwitch.data.rituals.LocalRitualCatalogRepository
 import com.agc.bwitch.data.rituals.SettingsDailyRitualRepository
 import com.agc.bwitch.data.rituals.SyncDailyRitualRepository
@@ -21,6 +23,7 @@ import com.agc.bwitch.domain.astrology.birthchart.BirthChartRepository
 import com.agc.bwitch.domain.astrology.horoscope.HoroscopeRepository
 import com.agc.bwitch.domain.auth.AuthRepository
 import com.agc.bwitch.domain.oracle.OracleRepository
+import com.agc.bwitch.domain.localization.AppLanguageRepository
 import com.agc.bwitch.domain.rituals.DailyRitualRepository
 import com.agc.bwitch.domain.rituals.HabitsRepository
 import com.agc.bwitch.domain.rituals.RitualCatalogRepository
@@ -42,6 +45,11 @@ import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.gitlive.firebase.firestore.firestore
 
 val dataKoinModule: Module = module {
+    /**
+     * Localization
+     */
+    single { SystemLanguageCodeProvider() }
+    single<AppLanguageRepository> { SettingsAppLanguageRepository(get(), get()) }
 
     /**
      * Auth

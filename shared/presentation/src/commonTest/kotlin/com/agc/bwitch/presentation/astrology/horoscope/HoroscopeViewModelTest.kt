@@ -8,6 +8,13 @@ import com.agc.bwitch.domain.astrology.horoscope.HoroscopeRepository
 import com.agc.bwitch.domain.astrology.horoscope.ObserveDailyHoroscopeUseCase
 import com.agc.bwitch.domain.astrology.horoscope.PullDailyHoroscopeUseCase
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
+import com.agc.bwitch.domain.localization.AppLanguage
+import com.agc.bwitch.domain.localization.AppLanguageRepository
+import com.agc.bwitch.domain.localization.ObserveCurrentLanguageUseCase
+import com.agc.bwitch.domain.localization.ResolveCurrentLanguageUseCase
+import com.agc.bwitch.domain.userprofile.ObserveUserProfileUseCase
+import com.agc.bwitch.domain.userprofile.UserProfile
+import com.agc.bwitch.domain.userprofile.UserProfileRepository
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -32,6 +39,10 @@ class HoroscopeViewModelTest {
         val observeUseCase = ObserveDailyHoroscopeUseCase(repo)
         val getUseCase = GetDailyHoroscopeUseCase(repo)
         val pullUseCase = PullDailyHoroscopeUseCase(FakeSync())
+        val languageRepository = FakeAppLanguageRepository()
+        val resolveLanguageUseCase = ResolveCurrentLanguageUseCase(languageRepository)
+        val observeLanguageUseCase = ObserveCurrentLanguageUseCase(languageRepository)
+        val observeUserProfileUseCase = ObserveUserProfileUseCase(FakeUserProfileRepo())
 
         val pullMarker = FakePullMarker(lastPulledDateIso = null) // fuerza pull (pero FakeSync no falla)
 
@@ -40,6 +51,7 @@ class HoroscopeViewModelTest {
             DailyHoroscope(
                 sign = ZodiacSign.aries,
                 dateIso = "2026-02-25",
+                languageCode = "es",
                 text = "Texto para Aries",
                 mood = "Positivo",
                 luckyNumber = 7,
@@ -52,6 +64,9 @@ class HoroscopeViewModelTest {
             getDailyHoroscopeUseCase = getUseCase,
             pullDailyHoroscopeUseCase = pullUseCase,
             pullMarker = pullMarker,
+            resolveCurrentLanguageUseCase = resolveLanguageUseCase,
+            observeCurrentLanguageUseCase = observeLanguageUseCase,
+            observeUserProfileUseCase = observeUserProfileUseCase,
             dispatcher = dispatcher,
         )
 
@@ -71,6 +86,10 @@ class HoroscopeViewModelTest {
         val observeUseCase = ObserveDailyHoroscopeUseCase(repo)
         val getUseCase = GetDailyHoroscopeUseCase(repo)
         val pullUseCase = PullDailyHoroscopeUseCase(FakeSync())
+        val languageRepository = FakeAppLanguageRepository()
+        val resolveLanguageUseCase = ResolveCurrentLanguageUseCase(languageRepository)
+        val observeLanguageUseCase = ObserveCurrentLanguageUseCase(languageRepository)
+        val observeUserProfileUseCase = ObserveUserProfileUseCase(FakeUserProfileRepo())
 
         val pullMarker = FakePullMarker(lastPulledDateIso = null)
 
@@ -79,6 +98,7 @@ class HoroscopeViewModelTest {
             DailyHoroscope(
                 sign = ZodiacSign.aries,
                 dateIso = "2026-02-25",
+                languageCode = "es",
                 text = "Texto Aries",
                 mood = "Positivo",
                 luckyNumber = 7,
@@ -91,6 +111,9 @@ class HoroscopeViewModelTest {
             getDailyHoroscopeUseCase = getUseCase,
             pullDailyHoroscopeUseCase = pullUseCase,
             pullMarker = pullMarker,
+            resolveCurrentLanguageUseCase = resolveLanguageUseCase,
+            observeCurrentLanguageUseCase = observeLanguageUseCase,
+            observeUserProfileUseCase = observeUserProfileUseCase,
             dispatcher = dispatcher,
         )
 
@@ -102,6 +125,7 @@ class HoroscopeViewModelTest {
             DailyHoroscope(
                 sign = ZodiacSign.leo,
                 dateIso = "2026-02-25",
+                languageCode = "es",
                 text = "Texto Leo",
                 mood = "Fuerte",
                 luckyNumber = 1,
@@ -124,6 +148,10 @@ class HoroscopeViewModelTest {
         val repo = FakeRepo()
         val observeUseCase = ObserveDailyHoroscopeUseCase(repo)
         val getUseCase = GetDailyHoroscopeUseCase(repo)
+        val languageRepository = FakeAppLanguageRepository()
+        val resolveLanguageUseCase = ResolveCurrentLanguageUseCase(languageRepository)
+        val observeLanguageUseCase = ObserveCurrentLanguageUseCase(languageRepository)
+        val observeUserProfileUseCase = ObserveUserProfileUseCase(FakeUserProfileRepo())
 
         // Este sync fallaría si se llamase pull()
         val pullUseCase = PullDailyHoroscopeUseCase(FailingSync())
@@ -144,6 +172,9 @@ class HoroscopeViewModelTest {
             getDailyHoroscopeUseCase = getUseCase,
             pullDailyHoroscopeUseCase = pullUseCase,
             pullMarker = pullMarker,
+            resolveCurrentLanguageUseCase = resolveLanguageUseCase,
+            observeCurrentLanguageUseCase = observeLanguageUseCase,
+            observeUserProfileUseCase = observeUserProfileUseCase,
             dispatcher = dispatcher,
         )
 
@@ -161,24 +192,24 @@ class HoroscopeViewModelTest {
             state.value = value
         }
 
-        override fun observeDaily(dateIso: String, sign: ZodiacSign): Flow<DailyHoroscope?> {
+        override fun observeDaily(dateIso: String, sign: ZodiacSign, languageCode: String): Flow<DailyHoroscope?> {
             // Simplificación: ignoramos filtros (date/sign) y emitimos lo que toque.
             return state.asStateFlow()
         }
 
-        override suspend fun getDaily(dateIso: String, sign: ZodiacSign): DailyHoroscope? {
+        override suspend fun getDaily(dateIso: String, sign: ZodiacSign, languageCode: String): DailyHoroscope? {
             return state.value
         }
     }
 
     private class FakeSync : HoroscopeDailySyncController {
-        override suspend fun pull(dateIso: String) {
+        override suspend fun pull(dateIso: String, languageCode: String) {
             // NO-OP
         }
     }
 
     private class FailingSync : HoroscopeDailySyncController {
-        override suspend fun pull(dateIso: String) {
+        override suspend fun pull(dateIso: String, languageCode: String) {
             throw RuntimeException("boom")
         }
     }
@@ -187,11 +218,26 @@ class HoroscopeViewModelTest {
         private var lastPulledDateIso: String?
     ) : HoroscopePullMarker {
 
-        override fun getLastPulledDateIso(): String? = lastPulledDateIso
+        override fun getLastPulledDateIso(languageCode: String): String? = lastPulledDateIso
 
-        override fun setLastPulledDateIso(dateIso: String) {
+        override fun setLastPulledDateIso(dateIso: String, languageCode: String) {
             lastPulledDateIso = dateIso
         }
+    }
+
+    private class FakeAppLanguageRepository : AppLanguageRepository {
+        override suspend fun resolveCurrentLanguage(): AppLanguage = AppLanguage.Spanish
+        override suspend fun getCurrentLanguage(): AppLanguage = AppLanguage.Spanish
+        override suspend fun setCurrentLanguage(language: AppLanguage) = Unit
+        override fun observeCurrentLanguage(): Flow<AppLanguage> = MutableStateFlow(AppLanguage.Spanish)
+    }
+
+    private class FakeUserProfileRepo : UserProfileRepository {
+        override fun observeUserProfile(): Flow<UserProfile?> = MutableStateFlow(null)
+
+        override suspend fun getUserProfile(): UserProfile? = null
+
+        override suspend fun saveUserProfile(profile: UserProfile) = Unit
     }
 }
 

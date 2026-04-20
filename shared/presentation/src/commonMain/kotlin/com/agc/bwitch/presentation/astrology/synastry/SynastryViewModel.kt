@@ -4,8 +4,14 @@ import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
 import com.agc.bwitch.domain.astrology.synastry.SynastryInput
 import com.agc.bwitch.domain.astrology.synastry.SynastryPersonInput
 import com.agc.bwitch.domain.astrology.synastry.SynastryReadingGenerator
+import com.agc.bwitch.domain.localization.ObserveCurrentLanguageUseCase
+import com.agc.bwitch.domain.localization.ResolveCurrentLanguageUseCase
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -13,11 +19,28 @@ import kotlinx.coroutines.launch
 
 class SynastryViewModel(
     private val readingGenerator: SynastryReadingGenerator,
+    private val resolveCurrentLanguageUseCase: ResolveCurrentLanguageUseCase,
+    private val observeCurrentLanguageUseCase: ObserveCurrentLanguageUseCase,
+    dispatcher: CoroutineDispatcher = Dispatchers.Main,
 ) {
-    private val scope = CoroutineScope(Dispatchers.Main)
+    private val scope = CoroutineScope(SupervisorJob() + dispatcher)
 
     private val _uiState = MutableStateFlow(SynastryUiState())
     val uiState: StateFlow<SynastryUiState> = _uiState
+
+    init {
+        scope.launch {
+            runCatching { resolveCurrentLanguageUseCase() }
+                .onSuccess { _uiState.update { state -> state.copy(currentLanguageCode = it.code) } }
+        }
+        scope.launch {
+            observeCurrentLanguageUseCase()
+                .distinctUntilChanged()
+                .collect { language ->
+                    _uiState.update { it.copy(currentLanguageCode = language.code) }
+                }
+        }
+    }
 
     fun onPersonASunSignChange(value: ZodiacSign?) =
         _uiState.update { it.copy(personA = it.personA.copy(sunSign = value), error = null) }
@@ -44,7 +67,7 @@ class SynastryViewModel(
     fun generate() {
         val state = _uiState.value
         if (!state.canGenerate) {
-            _uiState.update { it.copy(error = "El signo solar es obligatorio para ambas personas") }
+            _uiState.update { it.copy(error = "required_sun_signs_error") }
             return
         }
 
@@ -67,6 +90,7 @@ class SynastryViewModel(
                             moonSign = state.personB.moonSign,
                             risingSign = state.personB.risingSign,
                         ),
+                        languageCode = state.currentLanguageCode,
                     )
                 )
             }.onSuccess { reading ->
@@ -75,7 +99,7 @@ class SynastryViewModel(
                 _uiState.update {
                     it.copy(
                         isGenerating = false,
-                        error = throwable.message ?: "No se pudo generar la lectura de sinastría",
+                        error = throwable.message ?: "generic_generate_error",
                     )
                 }
             }

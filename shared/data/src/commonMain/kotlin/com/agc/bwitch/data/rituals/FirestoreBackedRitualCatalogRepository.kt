@@ -13,6 +13,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
 import kotlinx.datetime.Clock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
@@ -32,22 +33,30 @@ class FirestoreBackedRitualCatalogRepository(
     private val ritualsKey = "rituals_v1"
     private val syncStaleMillis = 5 * 60 * 1_000L
 
-    private val syncLock = Any()
+    private val syncMutex = Mutex()
 
-    @Volatile
-    private var isSyncInFlight: Boolean = false
-
-    @Volatile
     private var lastSyncAtEpochMillis: Long? = null
 
-    @Volatile
     private var categoriesCache: List<RitualCategory> =
         readCategoriesFromSettings().ifEmpty { local.getCategories() }
 
-    @Volatile
     private var ritualDetailsCache: List<RitualDetail> =
         readRitualsFromSettings().ifEmpty { allLocalRituals() }
 
+
+    private val localCategoriesByType: Map<RitualCategoryType, RitualCategory> by lazy {
+        local.getCategories().associateBy { category -> category.type }
+    }
+
+    private val localListItemsById: Map<String, RitualListItem> by lazy {
+        local.getCategories()
+            .flatMap { category -> local.getRitualsByCategory(category.type) }
+            .associateBy { item -> item.id }
+    }
+
+    private val localDetailsById: Map<String, RitualDetail> by lazy {
+        allLocalRituals().associateBy { detail -> detail.id }
+    }
 
     fun warmUp() {
         refreshIfNeeded()
@@ -57,34 +66,35 @@ class FirestoreBackedRitualCatalogRepository(
         val now = Clock.System.now().toEpochMilliseconds()
         if (!force && !shouldRefresh(now)) return
 
-        synchronized(syncLock) {
-            if (isSyncInFlight) return
-            if (!force && !shouldRefresh(now)) return
-            isSyncInFlight = true
-        }
+        if (!syncMutex.tryLock()) return
 
         scope.launch {
             var syncSucceeded = false
+            val syncNow = Clock.System.now().toEpochMilliseconds()
 
-            runCatching {
-                syncFromRemote()
-                syncSucceeded = true
-            }.onFailure { error ->
-                println("BWITCH_RITUAL_CATALOG sync failed: ${error.message}")
-            }
-
-            synchronized(syncLock) {
+            try {
+                if (force || shouldRefresh(syncNow)) {
+                    runCatching {
+                        syncFromRemote()
+                        syncSucceeded = true
+                    }.onFailure { error ->
+                        println("BWITCH_RITUAL_CATALOG sync failed: ${error.message}")
+                    }
+                }
                 if (syncSucceeded) {
                     lastSyncAtEpochMillis = Clock.System.now().toEpochMilliseconds()
                 }
-                isSyncInFlight = false
+            } finally {
+                syncMutex.unlock()
             }
         }
     }
 
     override fun getCategories(): List<RitualCategory> {
         refreshIfNeeded()
-        return categoriesCache.ifEmpty { local.getCategories() }
+        return categoriesCache
+            .ifEmpty { local.getCategories() }
+            .map { category -> category.withLocalContent() }
     }
 
     override fun getRitualsByCategory(category: RitualCategoryType): List<RitualListItem> {
@@ -93,14 +103,14 @@ class FirestoreBackedRitualCatalogRepository(
         return source
             .asSequence()
             .filter { ritual -> ritual.category == category }
-            .map { ritual -> ritual.toListItem() }
+            .map { ritual -> ritual.toListItem().withLocalContent() }
             .toList()
     }
 
     override fun getRitualById(id: String): RitualDetail? {
         refreshIfNeeded()
         val cached = ritualDetailsCache.firstOrNull { ritual -> ritual.id == id }
-        return cached ?: local.getRitualById(id)
+        return cached?.withLocalContent() ?: local.getRitualById(id)
     }
 
     private fun shouldRefresh(nowEpochMillis: Long): Boolean {
@@ -214,6 +224,15 @@ class FirestoreBackedRitualCatalogRepository(
                     .mapNotNull { item -> local.getRitualById(item.id) }
             }
     }
+
+    private fun RitualCategory.withLocalContent(): RitualCategory =
+        localCategoriesByType[type] ?: this
+
+    private fun RitualListItem.withLocalContent(): RitualListItem =
+        localListItemsById[id] ?: this
+
+    private fun RitualDetail.withLocalContent(): RitualDetail =
+        localDetailsById[id] ?: this
 }
 
 @Serializable
@@ -355,7 +374,7 @@ private fun String.toRitualCategoryTypeOrNull(): RitualCategoryType? {
 }
 
 private fun List<String>.toBwitchHint(): String {
-    if (isEmpty()) return "Materiales simples"
+    if (isEmpty()) return "ritual_catalog.common.materials_simple"
     return take(2).joinToString(" · ")
 }
 

@@ -6,6 +6,7 @@ import kotlinx.serialization.Serializable
 data class DailyHoroscope(
     val sign: ZodiacSign,
     val dateIso: String,
+    val languageCode: String,
     val text: String,
     val mood: String,
     val luckyNumber: Int,

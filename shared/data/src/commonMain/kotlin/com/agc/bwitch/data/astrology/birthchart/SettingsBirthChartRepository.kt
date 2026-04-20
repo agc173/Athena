@@ -61,6 +61,7 @@ class SettingsBirthChartRepository(
             risingSign = draft.risingSign.name,
             archetype = draft.archetype?.name,
             interpretation = draft.interpretation,
+            languageCode = draft.languageCode,
             savedAtEpochMillis = savedAtEpochMillis,
             updatedAtEpochMillis = updatedAtEpochMillis,
         )
@@ -95,6 +96,7 @@ class SettingsBirthChartRepository(
         val risingSign: String,
         val archetype: String? = null,
         val interpretation: String,
+        val languageCode: String? = null,
         val savedAtEpochMillis: Long,
         val updatedAtEpochMillis: Long,
     ) {
@@ -107,6 +109,7 @@ class SettingsBirthChartRepository(
                 moonSign = moon,
                 risingSign = rising,
                 interpretation = interpretation,
+                languageCode = normalizeLanguageCode(languageCode) ?: "es",
                 archetype = BirthEssenceArchetype.fromRawOrNull(archetype),
                 savedAtEpochMillis = savedAtEpochMillis,
                 updatedAtEpochMillis = updatedAtEpochMillis,
@@ -114,3 +117,11 @@ class SettingsBirthChartRepository(
         }
     }
 }
+
+private fun normalizeLanguageCode(raw: String?): String? =
+    raw
+        ?.trim()
+        ?.lowercase()
+        ?.substringBefore('-')
+        ?.substringBefore('_')
+        ?.ifBlank { null }

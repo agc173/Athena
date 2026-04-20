@@ -46,12 +46,31 @@ android {
     lint {
         abortOnError = false
         checkReleaseBuilds = true
-}
-    tasks.matching {
-        it.name == "lintAnalyzeDebug" ||
-                it.name == "lintDebug"
-    }.configureEach {
-        enabled = false
     }
+}
 
+// ---------------------------------------------------------------------------------------------
+// LINT WORKAROUND (KMP + Android Lint instability)
+//
+// Why this exists:
+// - This module can hit lint analysis crashes on KMP code paths in debug analysis.
+//
+// Scope:
+// - Limited to debug lint tasks in this module (main + unit/androidTest variants).
+// - Release lint checks remain enabled via `checkReleaseBuilds = true`.
+//
+// Revisit plan:
+// - Re-test on AGP/Kotlin update batch and remove these disables incrementally.
+// ---------------------------------------------------------------------------------------------
+tasks.matching {
+    it.name in setOf(
+        "lintAnalyzeDebug",
+        "lintAnalyzeDebugUnitTest",
+        "lintAnalyzeDebugAndroidTest",
+        "lintDebug",
+        "lintDebugUnitTest",
+        "lintDebugAndroidTest",
+    )
+}.configureEach {
+    enabled = false
 }

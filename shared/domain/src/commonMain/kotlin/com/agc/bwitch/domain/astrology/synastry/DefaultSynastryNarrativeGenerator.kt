@@ -1,6 +1,5 @@
 package com.agc.bwitch.domain.astrology.synastry
 
-import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -19,23 +18,81 @@ class DefaultSynastryNarrativeGenerator : SynastryNarrativeGenerator {
         input: SynastryInput,
         structured: SynastryReadingStructured,
     ): String {
-        val pairLabel = "${input.personA.sunSign.humanLabel()} y ${input.personB.sunSign.humanLabel()}"
+        val lang = synastryLang(input.languageCode)
+        val pairLabel = when (lang) {
+            SynastryLang.EN -> "${input.personA.sunSign.localizedLabel(input.languageCode)} and ${input.personB.sunSign.localizedLabel(input.languageCode)}"
+            SynastryLang.PT -> "${input.personA.sunSign.localizedLabel(input.languageCode)} e ${input.personB.sunSign.localizedLabel(input.languageCode)}"
+            SynastryLang.RU -> "${input.personA.sunSign.localizedLabel(input.languageCode)} и ${input.personB.sunSign.localizedLabel(input.languageCode)}"
+            SynastryLang.FR -> "${input.personA.sunSign.localizedLabel(input.languageCode)} et ${input.personB.sunSign.localizedLabel(input.languageCode)}"
+            SynastryLang.IT -> "${input.personA.sunSign.localizedLabel(input.languageCode)} e ${input.personB.sunSign.localizedLabel(input.languageCode)}"
+            SynastryLang.DE -> "${input.personA.sunSign.localizedLabel(input.languageCode)} und ${input.personB.sunSign.localizedLabel(input.languageCode)}"
+            SynastryLang.ES -> "${input.personA.sunSign.localizedLabel(input.languageCode)} y ${input.personB.sunSign.localizedLabel(input.languageCode)}"
+        }
+
         val orderedDimensions = structured.scores.entries.sortedByDescending { it.value.value }
-        val strongestDimension = orderedDimensions.first().key
-        val secondDimension = orderedDimensions.getOrNull(1)?.key ?: strongestDimension
-        val challengeDimension = orderedDimensions.last().key
+        val strongestDimension = orderedDimensions.first().key.localizedLabel(input.languageCode).lowercase()
+        val secondDimension = (orderedDimensions.getOrNull(1)?.key ?: orderedDimensions.first().key)
+            .localizedLabel(input.languageCode)
+            .lowercase()
+        val challengeDimension = orderedDimensions.last().key.localizedLabel(input.languageCode).lowercase()
 
-        val paragraphOne = buildString {
-            append("$pairLabel forman una combinación de ${strongestDimension.humanLabel()} y ${secondDimension.humanLabel()}. ")
-            append("El vínculo se percibe vivo cuando alternan impulso y escucha con un ritmo compartido.")
+        val paragraphOne = when (lang) {
+            SynastryLang.ES -> "$pairLabel forman una combinación de $strongestDimension y $secondDimension. El vínculo se percibe vivo cuando alternan impulso y escucha con un ritmo compartido."
+            SynastryLang.EN -> "$pairLabel form a combination of $strongestDimension and $secondDimension. The bond feels alive when impulse and listening are balanced through a shared rhythm."
+            SynastryLang.PT -> "$pairLabel formam uma combinação de $strongestDimension e $secondDimension. O vínculo ganha vida quando alternam impulso e escuta com ritmo compartilhado."
+            SynastryLang.RU -> "$pairLabel образуют сочетание $strongestDimension и $secondDimension. Связь становится живой, когда импульс и внимательное слушание идут в общем ритме."
+            SynastryLang.FR -> "$pairLabel forment une combinaison de $strongestDimension et $secondDimension. Le lien reste vivant quand l'élan et l'écoute s'équilibrent dans un rythme partagé."
+            SynastryLang.IT -> "$pairLabel formano una combinazione di $strongestDimension e $secondDimension. Il legame resta vivo quando slancio e ascolto si alternano in un ritmo condiviso."
+            SynastryLang.DE -> "$pairLabel bilden eine Kombination aus $strongestDimension und $secondDimension. Die Verbindung bleibt lebendig, wenn Impuls und Zuhören in einem gemeinsamen Rhythmus ausbalanciert sind."
         }
 
-        val paragraphTwo = buildString {
-            append("El equilibrio general mejora cuando las diferencias se usan para ajustar expectativas, en lugar de forzar respuestas rápidas. ")
-            append("La zona que pide más conciencia es ${challengeDimension.humanLabelWithArticle()}, porque ahí suele definirse el tono de fondo de la relación.")
+        val paragraphTwo = when (lang) {
+            SynastryLang.ES -> "El equilibrio general mejora cuando las diferencias se usan para ajustar expectativas, en lugar de forzar respuestas rápidas. La zona que pide más conciencia es $challengeDimension, porque ahí suele definirse el tono de fondo de la relación."
+            SynastryLang.EN -> "Overall balance improves when differences are used to adjust expectations instead of forcing quick responses. The area needing more awareness is $challengeDimension, because it usually defines the baseline tone of the relationship."
+            SynastryLang.PT -> "O equilíbrio geral melhora quando as diferenças são usadas para ajustar expectativas, em vez de forçar respostas rápidas. A área que pede mais consciência é $challengeDimension, pois ali costuma se definir o tom de fundo da relação."
+            SynastryLang.RU -> "Общий баланс улучшается, когда различия помогают согласовывать ожидания, а не подталкивают к быстрым реакциям. Зона, требующая большего внимания, — $challengeDimension, потому что именно там обычно задаётся фоновый тон отношений."
+            SynastryLang.FR -> "L'équilibre global s'améliore lorsque les différences servent à ajuster les attentes plutôt qu'à forcer des réponses rapides. La zone qui demande le plus de conscience est $challengeDimension, car c'est souvent là que se définit le ton de fond de la relation."
+            SynastryLang.IT -> "L'equilibrio generale migliora quando le differenze vengono usate per regolare le aspettative, invece di forzare risposte rapide. L'area che richiede più consapevolezza è $challengeDimension, perché lì si definisce spesso il tono di fondo della relazione."
+            SynastryLang.DE -> "Die Gesamtbalance verbessert sich, wenn Unterschiede genutzt werden, um Erwartungen abzustimmen, statt schnelle Reaktionen zu erzwingen. Der Bereich mit dem größten Bewusstseinsbedarf ist $challengeDimension, weil dort häufig der Grundton der Beziehung entsteht."
         }
 
-        val paragraphThree = structured.depthInfo.depth.closingCopy()
+        val paragraphThree = when (lang) {
+            SynastryLang.ES -> when (structured.depthInfo.depth) {
+                SynastryReadingDepth.BASIC -> "Con la Luna y el Ascendente de ambas cartas, esta lectura podría revelar matices más profundos."
+                SynastryReadingDepth.PARTIAL -> "Con los datos faltantes, la lectura puede ganar precisión y mostrar matices más finos."
+                SynastryReadingDepth.COMPLETE -> "Con la información disponible, el mapa del vínculo se percibe sólido y bien delineado."
+            }
+            SynastryLang.EN -> when (structured.depthInfo.depth) {
+                SynastryReadingDepth.BASIC -> "Adding Moon and Rising for both charts could reveal deeper nuances."
+                SynastryReadingDepth.PARTIAL -> "With the missing data, the reading can gain precision and show finer details."
+                SynastryReadingDepth.COMPLETE -> "With the current information, the bond map feels solid and well-defined."
+            }
+            SynastryLang.PT -> when (structured.depthInfo.depth) {
+                SynastryReadingDepth.BASIC -> "Com Lua e Ascendente de ambos os mapas, esta leitura pode revelar nuances mais profundas."
+                SynastryReadingDepth.PARTIAL -> "Com os dados faltantes, a leitura pode ganhar precisão e mostrar nuances mais finas."
+                SynastryReadingDepth.COMPLETE -> "Com as informações disponíveis, o mapa do vínculo se mostra sólido e bem definido."
+            }
+            SynastryLang.RU -> when (structured.depthInfo.depth) {
+                SynastryReadingDepth.BASIC -> "С Луной и Асцендентом обеих карт это чтение может показать более глубокие нюансы."
+                SynastryReadingDepth.PARTIAL -> "С недостающими данными чтение станет точнее и покажет более тонкие детали."
+                SynastryReadingDepth.COMPLETE -> "С доступной информацией карта связи выглядит цельной и хорошо очерченной."
+            }
+            SynastryLang.FR -> when (structured.depthInfo.depth) {
+                SynastryReadingDepth.BASIC -> "Avec la Lune et l'Ascendant des deux cartes, cette lecture pourrait révéler des nuances plus profondes."
+                SynastryReadingDepth.PARTIAL -> "Avec les données manquantes, la lecture peut gagner en précision et montrer des nuances plus fines."
+                SynastryReadingDepth.COMPLETE -> "Avec les informations disponibles, la carte du lien paraît solide et bien définie."
+            }
+            SynastryLang.IT -> when (structured.depthInfo.depth) {
+                SynastryReadingDepth.BASIC -> "Con Luna e Ascendente di entrambe le carte, questa lettura può rivelare sfumature più profonde."
+                SynastryReadingDepth.PARTIAL -> "Con i dati mancanti, la lettura può guadagnare precisione e mostrare sfumature più sottili."
+                SynastryReadingDepth.COMPLETE -> "Con le informazioni disponibili, la mappa del legame risulta solida e ben delineata."
+            }
+            SynastryLang.DE -> when (structured.depthInfo.depth) {
+                SynastryReadingDepth.BASIC -> "Mit Mond und Aszendent beider Karten kann diese Deutung tiefere Nuancen sichtbar machen."
+                SynastryReadingDepth.PARTIAL -> "Mit den fehlenden Daten kann die Deutung präziser werden und feinere Nuancen zeigen."
+                SynastryReadingDepth.COMPLETE -> "Mit den verfügbaren Informationen wirkt die Beziehungslandkarte solide und klar konturiert."
+            }
+        }
 
         return listOf(paragraphOne, paragraphTwo, paragraphThree).joinToString("\n\n")
     }
@@ -102,9 +159,12 @@ class SynastryDailyOverlayGenerator {
             ?: highlightedRanking.firstOrNull { it != highlighted }
             ?: SynastryDimension.entries.first { it != highlighted }
 
+        val lang = synastryLang(input.languageCode)
         val primaryAxis = axes.maxByOrNull { kotlin.math.abs(it.value) } ?: axes.first()
-        val energyLabel = axisEnergyLabel(primaryAxis)
-        val guidance = DAILY_GUIDANCES[(seed and Int.MAX_VALUE) % DAILY_GUIDANCES.size]
+        val energyLabel = axisEnergyLabel(primaryAxis, lang)
+        val guidanceCatalog = dailyGuidances(lang)
+        val guidance = guidanceCatalog[(seed and Int.MAX_VALUE) % guidanceCatalog.size]
+        val sentenceAxis = primaryAxis.toAxisSentence(lang)
 
         return SynastryDailyOverlay(
             dateIso = date.toString(),
@@ -112,9 +172,14 @@ class SynastryDailyOverlayGenerator {
             sensitiveDimension = sensitive,
             dailyEnergyLabel = energyLabel,
             dailyGuidance = guidance,
-            dailyNarrativeFragment = buildString {
-                append("El clima de hoy se define por ${primaryAxis.toAxisSentence()}. ")
-                append("Conviene ajustar el ritmo entre iniciativa y receptividad para sostener el equilibrio.")
+            dailyNarrativeFragment = when (lang) {
+                SynastryLang.ES -> "El clima de hoy se define por $sentenceAxis. Conviene ajustar el ritmo entre iniciativa y receptividad para sostener el equilibrio."
+                SynastryLang.EN -> "Today's tone is defined by $sentenceAxis. Adjusting the rhythm between initiative and receptivity helps sustain balance."
+                SynastryLang.PT -> "O clima de hoje é definido por $sentenceAxis. Ajustar o ritmo entre iniciativa e receptividade ajuda a sustentar o equilíbrio."
+                SynastryLang.RU -> "Тон дня определяется через $sentenceAxis. Полезно согласовать ритм между инициативой и восприимчивостью, чтобы сохранить баланс."
+                SynastryLang.FR -> "La tonalité du jour est définie par $sentenceAxis. Ajuster le rythme entre initiative et réceptivité aide à maintenir l'équilibre."
+                SynastryLang.IT -> "Il tono di oggi è definito da $sentenceAxis. Regolare il ritmo tra iniziativa e ricettività aiuta a mantenere l'equilibrio."
+                SynastryLang.DE -> "Der Ton des Tages wird durch $sentenceAxis bestimmt. Den Rhythmus zwischen Initiative und Aufnahmefähigkeit anzupassen hilft, das Gleichgewicht zu halten."
             },
             axes = axes,
         )
@@ -182,90 +247,138 @@ class SynastryDailyOverlayGenerator {
         return key.fold(23) { acc, c -> (acc * 37) + c.code }
     }
 
-    private fun axisEnergyLabel(primaryAxis: SynastryDailyAxisState): String = when (primaryAxis.axis) {
-        SynastryEnergyAxis.HARMONY_INTENSITY -> if (primaryAxis.value >= 0) "Energía de intensidad creativa" else "Energía de armonización"
-        SynastryEnergyAxis.STABILITY_TRANSFORMATION -> if (primaryAxis.value >= 0) "Energía de transformación" else "Energía de estabilidad"
-        SynastryEnergyAxis.CALM_MOVEMENT -> if (primaryAxis.value >= 0) "Energía de movimiento" else "Energía de calma"
+    private fun axisEnergyLabel(primaryAxis: SynastryDailyAxisState, lang: SynastryLang): String = when (lang) {
+        SynastryLang.ES -> when (primaryAxis.axis) {
+            SynastryEnergyAxis.HARMONY_INTENSITY -> if (primaryAxis.value >= 0) "Energía de intensidad creativa" else "Energía de armonización"
+            SynastryEnergyAxis.STABILITY_TRANSFORMATION -> if (primaryAxis.value >= 0) "Energía de transformación" else "Energía de estabilidad"
+            SynastryEnergyAxis.CALM_MOVEMENT -> if (primaryAxis.value >= 0) "Energía de movimiento" else "Energía de calma"
+        }
+        SynastryLang.EN -> when (primaryAxis.axis) {
+            SynastryEnergyAxis.HARMONY_INTENSITY -> if (primaryAxis.value >= 0) "Creative intensity energy" else "Harmonizing energy"
+            SynastryEnergyAxis.STABILITY_TRANSFORMATION -> if (primaryAxis.value >= 0) "Transformation energy" else "Stability energy"
+            SynastryEnergyAxis.CALM_MOVEMENT -> if (primaryAxis.value >= 0) "Movement energy" else "Calm energy"
+        }
+        SynastryLang.PT -> when (primaryAxis.axis) {
+            SynastryEnergyAxis.HARMONY_INTENSITY -> if (primaryAxis.value >= 0) "Energia de intensidade criativa" else "Energia de harmonização"
+            SynastryEnergyAxis.STABILITY_TRANSFORMATION -> if (primaryAxis.value >= 0) "Energia de transformação" else "Energia de estabilidade"
+            SynastryEnergyAxis.CALM_MOVEMENT -> if (primaryAxis.value >= 0) "Energia de movimento" else "Energia de calma"
+        }
+        SynastryLang.RU -> when (primaryAxis.axis) {
+            SynastryEnergyAxis.HARMONY_INTENSITY -> if (primaryAxis.value >= 0) "Энергия творческой интенсивности" else "Энергия гармонизации"
+            SynastryEnergyAxis.STABILITY_TRANSFORMATION -> if (primaryAxis.value >= 0) "Энергия трансформации" else "Энергия стабильности"
+            SynastryEnergyAxis.CALM_MOVEMENT -> if (primaryAxis.value >= 0) "Энергия движения" else "Энергия спокойствия"
+        }
+        SynastryLang.FR -> when (primaryAxis.axis) {
+            SynastryEnergyAxis.HARMONY_INTENSITY -> if (primaryAxis.value >= 0) "Énergie d'intensité créative" else "Énergie d'harmonisation"
+            SynastryEnergyAxis.STABILITY_TRANSFORMATION -> if (primaryAxis.value >= 0) "Énergie de transformation" else "Énergie de stabilité"
+            SynastryEnergyAxis.CALM_MOVEMENT -> if (primaryAxis.value >= 0) "Énergie de mouvement" else "Énergie de calme"
+        }
+        SynastryLang.IT -> when (primaryAxis.axis) {
+            SynastryEnergyAxis.HARMONY_INTENSITY -> if (primaryAxis.value >= 0) "Energia di intensità creativa" else "Energia di armonizzazione"
+            SynastryEnergyAxis.STABILITY_TRANSFORMATION -> if (primaryAxis.value >= 0) "Energia di trasformazione" else "Energia di stabilità"
+            SynastryEnergyAxis.CALM_MOVEMENT -> if (primaryAxis.value >= 0) "Energia di movimento" else "Energia di calma"
+        }
+        SynastryLang.DE -> when (primaryAxis.axis) {
+            SynastryEnergyAxis.HARMONY_INTENSITY -> if (primaryAxis.value >= 0) "Energie kreativer Intensität" else "Energie der Harmonisierung"
+            SynastryEnergyAxis.STABILITY_TRANSFORMATION -> if (primaryAxis.value >= 0) "Energie der Transformation" else "Energie der Stabilität"
+            SynastryEnergyAxis.CALM_MOVEMENT -> if (primaryAxis.value >= 0) "Energie der Bewegung" else "Energie der Ruhe"
+        }
+    }
+
+    private fun SynastryDailyAxisState.toAxisSentence(lang: SynastryLang): String = when (lang) {
+        SynastryLang.ES -> when (axis) {
+            SynastryEnergyAxis.HARMONY_INTENSITY -> if (value >= 0) "más Intensidad que Armonía" else "más Armonía que Intensidad"
+            SynastryEnergyAxis.STABILITY_TRANSFORMATION -> if (value >= 0) "más Transformación que Estabilidad" else "más Estabilidad que Transformación"
+            SynastryEnergyAxis.CALM_MOVEMENT -> if (value >= 0) "más Movimiento que Calma" else "más Calma que Movimiento"
+        }
+        SynastryLang.EN -> when (axis) {
+            SynastryEnergyAxis.HARMONY_INTENSITY -> if (value >= 0) "more Intensity than Harmony" else "more Harmony than Intensity"
+            SynastryEnergyAxis.STABILITY_TRANSFORMATION -> if (value >= 0) "more Transformation than Stability" else "more Stability than Transformation"
+            SynastryEnergyAxis.CALM_MOVEMENT -> if (value >= 0) "more Movement than Calm" else "more Calm than Movement"
+        }
+        SynastryLang.PT -> when (axis) {
+            SynastryEnergyAxis.HARMONY_INTENSITY -> if (value >= 0) "mais Intensidade do que Harmonia" else "mais Harmonia do que Intensidade"
+            SynastryEnergyAxis.STABILITY_TRANSFORMATION -> if (value >= 0) "mais Transformação do que Estabilidade" else "mais Estabilidade do que Transformação"
+            SynastryEnergyAxis.CALM_MOVEMENT -> if (value >= 0) "mais Movimento do que Calma" else "mais Calma do que Movimento"
+        }
+        SynastryLang.RU -> when (axis) {
+            SynastryEnergyAxis.HARMONY_INTENSITY -> if (value >= 0) "больше Интенсивности, чем Гармонии" else "больше Гармонии, чем Интенсивности"
+            SynastryEnergyAxis.STABILITY_TRANSFORMATION -> if (value >= 0) "больше Трансформации, чем Стабильности" else "больше Стабильности, чем Трансформации"
+            SynastryEnergyAxis.CALM_MOVEMENT -> if (value >= 0) "больше Движения, чем Спокойствия" else "больше Спокойствия, чем Движения"
+        }
+        SynastryLang.FR -> when (axis) {
+            SynastryEnergyAxis.HARMONY_INTENSITY -> if (value >= 0) "plus d'Intensité que d'Harmonie" else "plus d'Harmonie que d'Intensité"
+            SynastryEnergyAxis.STABILITY_TRANSFORMATION -> if (value >= 0) "plus de Transformation que de Stabilité" else "plus de Stabilité que de Transformation"
+            SynastryEnergyAxis.CALM_MOVEMENT -> if (value >= 0) "plus de Mouvement que de Calme" else "plus de Calme que de Mouvement"
+        }
+        SynastryLang.IT -> when (axis) {
+            SynastryEnergyAxis.HARMONY_INTENSITY -> if (value >= 0) "più Intensità che Armonia" else "più Armonia che Intensità"
+            SynastryEnergyAxis.STABILITY_TRANSFORMATION -> if (value >= 0) "più Trasformazione che Stabilità" else "più Stabilità che Trasformazione"
+            SynastryEnergyAxis.CALM_MOVEMENT -> if (value >= 0) "più Movimento che Calma" else "più Calma che Movimento"
+        }
+        SynastryLang.DE -> when (axis) {
+            SynastryEnergyAxis.HARMONY_INTENSITY -> if (value >= 0) "mehr Intensität als Harmonie" else "mehr Harmonie als Intensität"
+            SynastryEnergyAxis.STABILITY_TRANSFORMATION -> if (value >= 0) "mehr Transformation als Stabilität" else "mehr Stabilität als Transformation"
+            SynastryEnergyAxis.CALM_MOVEMENT -> if (value >= 0) "mehr Bewegung als Ruhe" else "mehr Ruhe als Bewegung"
+        }
+    }
+
+    private fun dailyGuidances(lang: SynastryLang): List<String> = when (lang) {
+        SynastryLang.ES -> listOf(
+            "Prioricen una conversación breve y clara antes de reaccionar.",
+            "Hoy suma más escuchar el ritmo del otro que intentar imponer el propio.",
+            "Canalicen la intensidad hacia acuerdos concretos y alcanzables.",
+            "Una pequeña muestra de cuidado puede cambiar todo el tono del día.",
+            "Revisen expectativas y nombren una intención compartida para hoy.",
+            "Eviten suposiciones rápidas: verifiquen lo que cada uno quiso decir.",
+        )
+        SynastryLang.EN -> listOf(
+            "Prioritize a short, clear conversation before reacting.",
+            "Today it helps more to listen to each other's rhythm than to impose your own.",
+            "Channel intensity into concrete and reachable agreements.",
+            "A small act of care can shift the whole tone of the day.",
+            "Review expectations and name a shared intention for today.",
+            "Avoid quick assumptions: verify what each person meant.",
+        )
+        SynastryLang.PT -> listOf(
+            "Priorizem uma conversa breve e clara antes de reagir.",
+            "Hoje ajuda mais ouvir o ritmo do outro do que impor o próprio.",
+            "Canalizem a intensidade para acordos concretos e possíveis.",
+            "Um pequeno gesto de cuidado pode mudar todo o tom do dia.",
+            "Revisem expectativas e definam uma intenção compartilhada para hoje.",
+            "Evitem suposições rápidas: confirmem o que cada pessoa quis dizer.",
+        )
+        SynastryLang.RU -> listOf(
+            "Сначала выберите короткий и ясный разговор, а уже потом реакцию.",
+            "Сегодня важнее услышать ритм другого, чем навязывать свой.",
+            "Направьте интенсивность в конкретные и достижимые договорённости.",
+            "Небольшой жест заботы может изменить весь тон дня.",
+            "Пересмотрите ожидания и обозначьте общее намерение на сегодня.",
+            "Избегайте поспешных предположений: уточняйте, что имел в виду каждый.",
+        )
+        SynastryLang.FR -> listOf(
+            "Privilégiez une conversation courte et claire avant de réagir.",
+            "Aujourd'hui, écouter le rythme de l'autre aide plus que d'imposer le sien.",
+            "Canalisez l'intensité vers des accords concrets et atteignables.",
+            "Un petit geste d'attention peut changer toute la tonalité du jour.",
+            "Revoyez vos attentes et nommez une intention partagée pour aujourd'hui.",
+            "Évitez les suppositions rapides : vérifiez ce que chacun voulait dire.",
+        )
+        SynastryLang.IT -> listOf(
+            "Date priorità a un dialogo breve e chiaro prima di reagire.",
+            "Oggi aiuta di più ascoltare il ritmo dell'altro che imporre il proprio.",
+            "Canalizzate l'intensità verso accordi concreti e realizzabili.",
+            "Un piccolo gesto di cura può cambiare tutto il tono della giornata.",
+            "Rivedete le aspettative e nominate un'intenzione condivisa per oggi.",
+            "Evitate supposizioni rapide: verificate cosa intendeva dire ciascuno.",
+        )
+        SynastryLang.DE -> listOf(
+            "Priorisiert ein kurzes, klares Gespräch, bevor ihr reagiert.",
+            "Heute hilft es mehr, den Rhythmus des anderen zu hören, als den eigenen durchzusetzen.",
+            "Lenkt die Intensität in konkrete und erreichbare Vereinbarungen.",
+            "Eine kleine Geste der Fürsorge kann den ganzen Tageston verändern.",
+            "Prüft Erwartungen und benennt eine gemeinsame Intention für heute.",
+            "Vermeidet vorschnelle Annahmen: klärt, was jede Person wirklich meinte.",
+        )
     }
 }
-
-private fun SynastryDailyAxisState.toAxisSentence(): String = when (axis) {
-    SynastryEnergyAxis.HARMONY_INTENSITY -> if (value >= 0) "más Intensidad que Armonía" else "más Armonía que Intensidad"
-    SynastryEnergyAxis.STABILITY_TRANSFORMATION -> if (value >= 0) "más Transformación que Estabilidad" else "más Estabilidad que Transformación"
-    SynastryEnergyAxis.CALM_MOVEMENT -> if (value >= 0) "más Movimiento que Calma" else "más Calma que Movimiento"
-}
-
-private fun SynastryDimension.humanLabel(): String = when (this) {
-    SynastryDimension.EMOTIONAL -> "resonancia emocional"
-    SynastryDimension.COMMUNICATION -> "comunicación"
-    SynastryDimension.ATTRACTION -> "atracción"
-    SynastryDimension.GROWTH -> "crecimiento"
-}
-
-private fun SynastryDimension.humanLabelWithArticle(): String = when (this) {
-    SynastryDimension.EMOTIONAL -> "la resonancia emocional"
-    SynastryDimension.COMMUNICATION -> "la comunicación"
-    SynastryDimension.ATTRACTION -> "la atracción"
-    SynastryDimension.GROWTH -> "el crecimiento"
-}
-
-private fun SynastryDimension.strengthFallbackCopy(): String = when (this) {
-    SynastryDimension.EMOTIONAL -> "una sensibilidad compartida"
-    SynastryDimension.COMMUNICATION -> "una forma de diálogo que puede ordenarse rápido"
-    SynastryDimension.ATTRACTION -> "una química presente desde el inicio"
-    SynastryDimension.GROWTH -> "la apertura para evolucionar sin estancarse"
-}
-
-private fun SynastryDimension.guidanceFallbackCopy(): String = when (this) {
-    SynastryDimension.EMOTIONAL -> "Conviene crear espacios seguros para nombrar lo que sienten con honestidad."
-    SynastryDimension.COMMUNICATION -> "Conviene revisar tiempos y formas de diálogo para evitar malentendidos."
-    SynastryDimension.ATTRACTION -> "Conviene cuidar el ritmo del vínculo para que la intensidad no opaque la escucha."
-    SynastryDimension.GROWTH -> "Conviene mantener conversaciones abiertas sobre expectativas y dirección común."
-}
-
-private fun SynastrySignal.humanLabel(): String = when (this) {
-    SynastrySignal.STRONG_EMOTIONAL_RESONANCE -> "una resonancia emocional genuina"
-    SynastrySignal.DIFFERENT_EMOTIONAL_RHYTHMS -> "ritmos emocionales distintos"
-    SynastrySignal.NATURAL_SPARK -> "una chispa espontánea"
-    SynastrySignal.COMMUNICATION_FLOW -> "una comunicación que fluye"
-    SynastrySignal.STABILITY_POTENTIAL -> "una base estable para sostener el vínculo"
-    SynastrySignal.GROWTH_THROUGH_DIFFERENCE -> "la capacidad de crecer a través de la diferencia"
-    SynastrySignal.HIGH_INTENSITY -> "una intensidad alta en ciertos momentos"
-    SynastrySignal.NEED_FOR_PATIENCE -> "una necesidad de más paciencia entre ambos"
-    SynastrySignal.GROUNDING_BOND -> "un lazo que aporta calma y aterrizaje"
-    SynastrySignal.MENTAL_STIMULATION -> "una estimulación mental constante"
-    SynastrySignal.CREATE_SHARED_RHYTHM -> "crear un ritmo compartido"
-    SynastrySignal.USE_DIFFERENCE_AS_GROWTH -> "usar la diferencia como camino de crecimiento"
-    SynastrySignal.PROTECT_THE_SOFTNESS -> "proteger la parte más sensible de la relación"
-    SynastrySignal.SLOW_DOWN_REACTIVITY -> "bajar la reactividad antes de responder"
-}
-
-private fun SynastryReadingDepth.closingCopy(): String = when (this) {
-    SynastryReadingDepth.BASIC -> "Con la Luna y el Ascendente de ambas cartas, esta lectura podría revelar matices más profundos."
-    SynastryReadingDepth.PARTIAL -> "Con los datos faltantes, la lectura puede ganar precisión y mostrar matices más finos."
-    SynastryReadingDepth.COMPLETE -> "Con la información disponible, el mapa del vínculo se percibe sólido y bien delineado."
-}
-
-private fun ZodiacSign.humanLabel(): String = when (this) {
-    ZodiacSign.aries -> "Aries"
-    ZodiacSign.taurus -> "Tauro"
-    ZodiacSign.gemini -> "Géminis"
-    ZodiacSign.cancer -> "Cáncer"
-    ZodiacSign.leo -> "Leo"
-    ZodiacSign.virgo -> "Virgo"
-    ZodiacSign.libra -> "Libra"
-    ZodiacSign.scorpio -> "Escorpio"
-    ZodiacSign.sagittarius -> "Sagitario"
-    ZodiacSign.capricorn -> "Capricornio"
-    ZodiacSign.aquarius -> "Acuario"
-    ZodiacSign.pisces -> "Piscis"
-}
-
-private val DAILY_GUIDANCES = listOf(
-    "Prioricen una conversación breve y clara antes de reaccionar.",
-    "Hoy suma más escuchar el ritmo del otro que intentar imponer el propio.",
-    "Canalicen la intensidad hacia acuerdos concretos y alcanzables.",
-    "Una pequeña muestra de cuidado puede cambiar todo el tono del día.",
-    "Revisen expectativas y nombren una intención compartida para hoy.",
-    "Eviten suposiciones rápidas: verifiquen lo que cada uno quiso decir.",
-)

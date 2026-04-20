@@ -194,66 +194,24 @@ class SettingsHabitsRepository(
         private const val UPDATED_AT_EPOCH_MILLIS_KEY = "habits_updated_at_epoch_millis"
 
         private val intentionsPool = listOf(
-            HabitIntention(
-                id = "conexion",
-                title = "Conexión",
-                actionText = "Escribe a alguien con quien hace tiempo no hablas",
-            ),
-            HabitIntention(
-                id = "gratitud",
-                title = "Gratitud",
-                actionText = "Escribe tres cosas por las que te sientes agradecido hoy",
-            ),
-            HabitIntention(
-                id = "calma",
-                title = "Calma",
-                actionText = "Respira durante 3 minutos sin distracciones",
-            ),
-            HabitIntention(
-                id = "presencia",
-                title = "Presencia",
-                actionText = "Bebe un vaso de agua con atención plena",
-            ),
-            HabitIntention(
-                id = "limpieza",
-                title = "Limpieza",
-                actionText = "Ordena un pequeño rincón de tu casa",
-            ),
-            HabitIntention(
-                id = "cuidado",
-                title = "Cuidado",
-                actionText = "Dedica 10 minutos a algo que te haga bien",
-            ),
-            HabitIntention(
-                id = "silencio",
-                title = "Silencio",
-                actionText = "Regálate unos minutos sin móvil ni ruido",
-            ),
-            HabitIntention(
-                id = "orden",
-                title = "Orden",
-                actionText = "Guarda o limpia un objeto que uses a diario",
-            ),
-            HabitIntention(
-                id = "movimiento",
-                title = "Movimiento",
-                actionText = "Da un paseo breve sin mirar el móvil",
-            ),
-            HabitIntention(
-                id = "introspeccion",
-                title = "Introspección",
-                actionText = "Escribe una frase sobre cómo quieres sentirte hoy",
-            ),
-            HabitIntention(
-                id = "descanso",
-                title = "Descanso",
-                actionText = "Baja el ritmo durante cinco minutos y respira",
-            ),
-            HabitIntention(
-                id = "apertura",
-                title = "Apertura",
-                actionText = "Abre una ventana y renueva el aire de tu espacio",
-            ),
+            intention(id = "conexion"),
+            intention(id = "gratitud"),
+            intention(id = "calma"),
+            intention(id = "presencia"),
+            intention(id = "limpieza"),
+            intention(id = "cuidado"),
+            intention(id = "silencio"),
+            intention(id = "orden"),
+            intention(id = "movimiento"),
+            intention(id = "introspeccion"),
+            intention(id = "descanso"),
+            intention(id = "apertura"),
+        )
+
+        private fun intention(id: String): HabitIntention = HabitIntention(
+            id = id,
+            titleKey = "habits.intention.$id.title",
+            actionTextKey = "habits.intention.$id.action",
         )
     }
 }

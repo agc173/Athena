@@ -28,8 +28,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
-import com.agc.bwitch.presentation.userprofile.OnboardingProfileViewModel
 import com.agc.bwitch.domain.userprofile.UsernameRules
+import com.agc.bwitch.localization.appStrings
+import com.agc.bwitch.presentation.localization.AppLanguageViewModel
+import com.agc.bwitch.presentation.userprofile.ONBOARDING_AVATAR_UPDATED_MESSAGE_KEY
+import com.agc.bwitch.presentation.userprofile.ONBOARDING_AVATAR_UPLOAD_ERROR_KEY
+import com.agc.bwitch.presentation.userprofile.ONBOARDING_BIRTH_DATE_INVALID_ERROR_KEY
+import com.agc.bwitch.presentation.userprofile.ONBOARDING_PROFILE_LOAD_ERROR_KEY
+import com.agc.bwitch.presentation.userprofile.ONBOARDING_PROFILE_SAVE_ERROR_KEY
+import com.agc.bwitch.presentation.userprofile.ONBOARDING_USERNAME_INVALID_ERROR_KEY
+import com.agc.bwitch.presentation.userprofile.ONBOARDING_USERNAME_REQUIRED_ERROR_KEY
+import com.agc.bwitch.presentation.userprofile.OnboardingProfileViewModel
+import com.agc.bwitch.ui.localization.LanguageSelectorSection
 import com.agc.bwitch.ui.userprofile.AvatarPickerButton
 import io.kamel.image.KamelImage
 import io.kamel.image.asyncPainterResource
@@ -40,6 +50,9 @@ import org.koin.compose.koinInject
 fun OnboardingProfileScreen(contentPadding: PaddingValues) {
     val vm: OnboardingProfileViewModel = koinInject()
     val state by vm.uiState.collectAsState()
+    val strings = appStrings.onboarding
+    val appLanguageVm: AppLanguageViewModel = koinInject()
+    val appLanguageState by appLanguageVm.uiState.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
     var username by remember { mutableStateOf("") }
@@ -48,7 +61,7 @@ fun OnboardingProfileScreen(contentPadding: PaddingValues) {
 
     LaunchedEffect(Unit) {
         vm.snackbarEvents.collect { message ->
-            snackbarHostState.showSnackbar(message)
+            snackbarHostState.showSnackbar(message.toOnboardingUiText(strings))
         }
     }
 
@@ -75,9 +88,12 @@ fun OnboardingProfileScreen(contentPadding: PaddingValues) {
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text("Completa tu perfil", style = MaterialTheme.typography.headlineSmall)
         Text(
-            "Necesitamos tu username y fecha de nacimiento para personalizar tu experiencia.",
+            text = strings.profileTitle,
+            style = MaterialTheme.typography.headlineSmall,
+        )
+        Text(
+            text = strings.profileSubtitle,
             style = MaterialTheme.typography.bodyMedium
         )
 
@@ -88,10 +104,17 @@ fun OnboardingProfileScreen(contentPadding: PaddingValues) {
             )
         }
 
+        LanguageSelectorSection(
+            currentLanguage = appLanguageState.currentLanguage,
+            supportedLanguages = appLanguageState.supportedLanguages,
+            onLanguageSelected = appLanguageVm::onLanguageSelected,
+            enabled = !state.isBusy,
+        )
+
         if (!photoUrl.isNullOrBlank()) {
             KamelImage(
                 resource = asyncPainterResource(photoUrl),
-                contentDescription = "Avatar",
+                contentDescription = strings.profileAvatarContentDescription,
                 modifier = Modifier.size(96.dp),
                 contentScale = ContentScale.Crop
             )
@@ -105,11 +128,11 @@ fun OnboardingProfileScreen(contentPadding: PaddingValues) {
             },
             enabled = !state.isBusy,
             modifier = Modifier.fillMaxWidth(),
-            label = { Text("Username *") },
+            label = { Text(strings.usernameLabel) },
             isError = touched && !usernameValid,
             supportingText = {
                 if (touched && !usernameValid) {
-                    Text("Usa 3-30 caracteres: letras, números, punto o guion bajo")
+                    Text(strings.usernameError)
                 }
             }
         )
@@ -122,12 +145,12 @@ fun OnboardingProfileScreen(contentPadding: PaddingValues) {
             },
             enabled = !state.isBusy,
             modifier = Modifier.fillMaxWidth(),
-            label = { Text("Fecha de nacimiento *") },
-            placeholder = { Text("YYYY-MM-DD") },
+            label = { Text(strings.birthDateLabel) },
+            placeholder = { Text(strings.birthDatePlaceholder) },
             isError = touched && !birthDateValid,
             supportingText = {
                 if (touched && !birthDateValid) {
-                    Text("Formato esperado: YYYY-MM-DD")
+                    Text(strings.birthDateFormatError)
                 }
             }
         )
@@ -147,12 +170,12 @@ fun OnboardingProfileScreen(contentPadding: PaddingValues) {
             if (state.isSaving) {
                 CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
             } else {
-                Text("Guardar y continuar")
+                Text(strings.continueButton)
             }
         }
 
         state.error?.let {
-            Text(text = it, color = MaterialTheme.colorScheme.error)
+            Text(text = it.toOnboardingUiText(strings), color = MaterialTheme.colorScheme.error)
         }
     }
 
@@ -163,5 +186,18 @@ fun OnboardingProfileScreen(contentPadding: PaddingValues) {
                 .fillMaxWidth()
                 .padding(16.dp)
         )
+    }
+}
+
+private fun String.toOnboardingUiText(strings: com.agc.bwitch.localization.OnboardingStrings): String {
+    return when (this) {
+        ONBOARDING_USERNAME_REQUIRED_ERROR_KEY -> strings.usernameRequiredError
+        ONBOARDING_USERNAME_INVALID_ERROR_KEY -> strings.usernameError
+        ONBOARDING_BIRTH_DATE_INVALID_ERROR_KEY -> strings.birthDateFormatError
+        ONBOARDING_PROFILE_LOAD_ERROR_KEY -> strings.profileLoadError
+        ONBOARDING_PROFILE_SAVE_ERROR_KEY -> strings.profileSaveError
+        ONBOARDING_AVATAR_UPDATED_MESSAGE_KEY -> strings.avatarUpdatedMessage
+        ONBOARDING_AVATAR_UPLOAD_ERROR_KEY -> strings.avatarUploadError
+        else -> this
     }
 }

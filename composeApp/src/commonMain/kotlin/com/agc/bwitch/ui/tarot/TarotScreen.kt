@@ -55,6 +55,7 @@ import com.agc.bwitch.audio.TarotSoundPlayer
 import com.agc.bwitch.domain.tarot.TarotCardPosition
 import com.agc.bwitch.domain.tarot.TarotReadingDetails
 import com.agc.bwitch.domain.tarot.TarotRequestType
+import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.presentation.tarot.TarotRevealPhase
 import com.agc.bwitch.presentation.tarot.TarotViewModel
 import com.agc.bwitch.ui.tarot.components.TarotCardView
@@ -74,7 +75,7 @@ fun TarotScreen(
     tarotHaptics: TarotHaptics = koinInject(),
 ) {
     val state by viewModel.uiState.collectAsState()
-    val language = currentTarotUiLanguage()
+    val strings = appStrings.tarot
 
     LaunchedEffect(initialRequestType) {
         initialRequestType?.let { viewModel.newRequest(it) }
@@ -90,7 +91,7 @@ fun TarotScreen(
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
-                    "Revela tus cartas y explora su lectura",
+                    strings.revealIntro,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -104,7 +105,7 @@ fun TarotScreen(
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         TarotCardView(card = null, revealed = false, onClick = viewModel::startShuffle)
-                        Text("Pulsa el mazo para barajar", style = MaterialTheme.typography.bodyMedium)
+                        Text(strings.tapDeckToShuffle, style = MaterialTheme.typography.bodyMedium)
                     }
                 }
 
@@ -113,13 +114,13 @@ fun TarotScreen(
                     val loadingSubtitle: String
                     when (state.selectedType) {
                         TarotRequestType.TAROT_1 -> {
-                            loadingTitle = "Barajando las cartas..."
-                            loadingSubtitle = "Tu lectura se está preparando"
+                            loadingTitle = strings.loadingSingleTitle
+                            loadingSubtitle = strings.loadingSingleSubtitle
                         }
 
                         TarotRequestType.TAROT_3 -> {
-                            loadingTitle = "Preparando tu tirada..."
-                            loadingSubtitle = "Las cartas están revelando su mensaje"
+                            loadingTitle = strings.loadingThreeTitle
+                            loadingSubtitle = strings.loadingThreeSubtitle
                         }
                     }
                     TarotLoadingDeck(
@@ -135,7 +136,7 @@ fun TarotScreen(
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         TarotCardView(card = null, revealed = false, onClick = viewModel::startReveal)
-                        Text("Pulsa para revelar tus cartas", style = MaterialTheme.typography.bodyMedium)
+                        Text(strings.tapToReveal, style = MaterialTheme.typography.bodyMedium)
                     }
                 }
 
@@ -146,19 +147,19 @@ fun TarotScreen(
                 if (response.cards.isNotEmpty() && state.revealedCardCount > 0) {
                     val allCardsRevealed = state.revealedCardCount >= response.cards.size
                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Text("Tus cartas", style = MaterialTheme.typography.titleMedium)
+                        Text(strings.yourCardsTitle, style = MaterialTheme.typography.titleMedium)
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
                         ) {
                             response.cards.take(state.revealedCardCount).forEachIndexed { index, card ->
                                 val label = when (state.selectedType) {
-                                    TarotRequestType.TAROT_1 -> "Carta"
+                                    TarotRequestType.TAROT_1 -> strings.cardLabel
                                     TarotRequestType.TAROT_3 -> when (card.position) {
-                                        TarotCardPosition.PAST -> "Pasado"
-                                        TarotCardPosition.PRESENT -> "Presente"
-                                        TarotCardPosition.FUTURE -> "Futuro"
-                                        null -> "Carta ${index + 1}"
+                                        TarotCardPosition.PAST -> strings.pastLabel
+                                        TarotCardPosition.PRESENT -> strings.presentLabel
+                                        TarotCardPosition.FUTURE -> strings.futureLabel
+                                        null -> "${strings.cardNumberLabelPrefix} ${index + 1}"
                                     }
                                 }
                                 TarotMiniCard(
@@ -182,7 +183,7 @@ fun TarotScreen(
                             onClick = viewModel::showReading,
                             modifier = Modifier.fillMaxWidth(),
                         ) {
-                            Text("Ver lectura")
+                            Text(strings.viewReadingCta)
                         }
                     }
                 }
@@ -201,30 +202,30 @@ fun TarotScreen(
                                 }
                             }
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Text("Lectura", style = MaterialTheme.typography.titleMedium)
+                                Text(strings.readingTitle, style = MaterialTheme.typography.titleMedium)
                                 AnimatedVisibility(
                                     visible = sectionVisibility[0],
                                     enter = fadeIn(animationSpec = tween(400)),
                                 ) {
-                                    TarotReadingSection(title = "Tema", body = details.theme)
+                                    TarotReadingSection(title = strings.themeTitle, body = details.theme)
                                 }
                                 AnimatedVisibility(
                                     visible = sectionVisibility[1],
                                     enter = fadeIn(animationSpec = tween(400)),
                                 ) {
-                                    TarotReadingSection(title = "Significado", body = details.meaning)
+                                    TarotReadingSection(title = strings.meaningTitle, body = details.meaning)
                                 }
                                 AnimatedVisibility(
                                     visible = sectionVisibility[2],
                                     enter = fadeIn(animationSpec = tween(400)),
                                 ) {
-                                    TarotReadingSection(title = "Consejo", body = details.advice)
+                                    TarotReadingSection(title = strings.adviceTitle, body = details.advice)
                                 }
                                 AnimatedVisibility(
                                     visible = sectionVisibility[3],
                                     enter = fadeIn(animationSpec = tween(400)),
                                 ) {
-                                    TarotReadingSection(title = "Atención", body = details.watchOut)
+                                    TarotReadingSection(title = strings.watchOutTitle, body = details.watchOut)
                                 }
                             }
                         }
@@ -242,13 +243,13 @@ fun TarotScreen(
                             }
                             val cardsByPosition = details.cards.associateBy { it.position }
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Text("Lectura", style = MaterialTheme.typography.titleMedium)
+                                Text(strings.readingTitle, style = MaterialTheme.typography.titleMedium)
                                 AnimatedVisibility(
                                     visible = sectionVisibility[0],
                                     enter = fadeIn(animationSpec = tween(400)),
                                 ) {
                                     TarotReadingSection(
-                                        title = "Pasado",
+                                        title = strings.pastLabel,
                                         body = cardsByPosition[TarotCardPosition.PAST]?.meaning.orEmpty(),
                                     )
                                 }
@@ -257,7 +258,7 @@ fun TarotScreen(
                                     enter = fadeIn(animationSpec = tween(400)),
                                 ) {
                                     TarotReadingSection(
-                                        title = "Presente",
+                                        title = strings.presentLabel,
                                         body = cardsByPosition[TarotCardPosition.PRESENT]?.meaning.orEmpty(),
                                     )
                                 }
@@ -266,7 +267,7 @@ fun TarotScreen(
                                     enter = fadeIn(animationSpec = tween(400)),
                                 ) {
                                     TarotReadingSection(
-                                        title = "Futuro",
+                                        title = strings.futureLabel,
                                         body = cardsByPosition[TarotCardPosition.FUTURE]?.meaning.orEmpty(),
                                     )
                                 }
@@ -274,13 +275,13 @@ fun TarotScreen(
                                     visible = sectionVisibility[3],
                                     enter = fadeIn(animationSpec = tween(400)),
                                 ) {
-                                    TarotReadingSection(title = "Resumen", body = details.summary)
+                                    TarotReadingSection(title = strings.summaryTitle, body = details.summary)
                                 }
                                 AnimatedVisibility(
                                     visible = sectionVisibility[4],
                                     enter = fadeIn(animationSpec = tween(400)),
                                 ) {
-                                    TarotReadingSection(title = "Consejo", body = details.advice)
+                                    TarotReadingSection(title = strings.adviceTitle, body = details.advice)
                                 }
                             }
                         }
@@ -288,7 +289,7 @@ fun TarotScreen(
                         null -> {
                             if (response.interpretation.isNotBlank()) {
                                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    Text("Lectura", style = MaterialTheme.typography.titleMedium)
+                                    Text(strings.readingTitle, style = MaterialTheme.typography.titleMedium)
                                     Text(
                                         text = response.interpretation,
                                         style = MaterialTheme.typography.bodyLarge,
@@ -302,13 +303,14 @@ fun TarotScreen(
 
             state.error?.let { error ->
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Error: $error", color = MaterialTheme.colorScheme.error)
+                    val errorMessage = error.ifBlank { strings.unknownErrorFallback }
+                    Text("${strings.errorPrefix} $errorMessage", color = MaterialTheme.colorScheme.error)
                     Button(
                         onClick = viewModel::retry,
                         modifier = Modifier.fillMaxWidth(),
                         enabled = !state.isLoading && state.requestId != null,
                     ) {
-                        Text("Reintentar")
+                        Text(strings.retryCta)
                     }
                 }
             }
@@ -378,8 +380,8 @@ fun TarotScreen(
                                         animationSpec = tween(durationMillis = OVERLAY_CARD_EXIT_DURATION_MS),
                                     ),
                         ) {
-                            val labels = remember(overlayCard.id, language) {
-                                tarotOverlayLabels(overlayCard, language)
+                            val labels = remember(overlayCard.id, strings) {
+                                tarotOverlayLabels(overlayCard, strings)
                             }
                             val metadataPrimaryColor = Color(0xFFF8EEFF)
                             val metadataSecondaryColor = Color(0xFFD5C4E9)

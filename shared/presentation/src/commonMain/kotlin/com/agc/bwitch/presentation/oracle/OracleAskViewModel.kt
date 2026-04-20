@@ -6,6 +6,9 @@ import com.agc.bwitch.domain.oracle.OracleAskResult
 import com.agc.bwitch.domain.oracle.OracleQuotaSnapshot
 import com.agc.bwitch.domain.oracle.OracleRepository
 import com.agc.bwitch.domain.oracle.OracleTopic
+import com.agc.bwitch.domain.localization.AppLanguage
+import com.agc.bwitch.domain.localization.ObserveCurrentLanguageUseCase
+import com.agc.bwitch.domain.localization.ResolveCurrentLanguageUseCase
 import com.agc.bwitch.domain.shared.ApiError
 import com.agc.bwitch.domain.shared.ApiResult
 import kotlin.uuid.ExperimentalUuidApi
@@ -13,6 +16,9 @@ import kotlin.uuid.Uuid
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -29,16 +35,55 @@ data class OracleAskUiState(
     val answer: OracleAnswer? = null,
     val quotaSnapshot: OracleQuotaSnapshot? = null,
     val inProgress: Boolean = false,
-    val error: String? = null,
+    val error: OracleAskMessage? = null,
 )
+
+data class OracleAskMessage(
+    val id: OracleAskMessageId,
+    val rawMessage: String? = null,
+)
+
+enum class OracleAskMessageId {
+    EmptyQuestion,
+    Unauthenticated,
+    PermissionDenied,
+    ResourceExhaustedWithAdUnlock,
+    ResourceExhaustedGeneric,
+    FailedPreconditionWithAdUnlock,
+    FailedPreconditionTemporaryUnavailable,
+    FailedPreconditionGeneric,
+    InvalidArgumentFallback,
+    InternalTemporaryUnavailable,
+    InternalGeneric,
+    UnknownFallback,
+    RawBackendMessage,
+}
 
 class OracleAskViewModel(
     private val oracleRepository: OracleRepository,
+    private val resolveCurrentLanguageUseCase: ResolveCurrentLanguageUseCase,
+    private val observeCurrentLanguageUseCase: ObserveCurrentLanguageUseCase,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     private val _uiState = MutableStateFlow(OracleAskUiState())
     val uiState: StateFlow<OracleAskUiState> = _uiState.asStateFlow()
+    private val currentLanguageCode = MutableStateFlow(AppLanguage.fallback.code)
+
+    init {
+        scope.launch {
+            runCatching { resolveCurrentLanguageUseCase() }
+        }
+
+        scope.launch {
+            observeCurrentLanguageUseCase()
+                .map { it.code }
+                .distinctUntilChanged()
+                .collectLatest { languageCode ->
+                    currentLanguageCode.value = languageCode
+                }
+        }
+    }
 
     fun onQuestionChange(value: String) {
         _uiState.update {
@@ -56,7 +101,13 @@ class OracleAskViewModel(
     fun ask(topic: OracleTopic? = null, lang: String? = null) {
         val trimmedQuestion = _uiState.value.question.trim().take(MAX_QUESTION_LENGTH)
         if (trimmedQuestion.isBlank()) {
-            _uiState.update { it.copy(error = "Escribe una pregunta para consultar al Oráculo") }
+            _uiState.update {
+                it.copy(
+                    error = OracleAskMessage(
+                        id = OracleAskMessageId.EmptyQuestion,
+                    )
+                )
+            }
             return
         }
 
@@ -75,13 +126,14 @@ class OracleAskViewModel(
         }
 
         scope.launch {
+            val effectiveLang = lang ?: currentLanguageCode.value
             when (
                 val result = oracleRepository.ask(
                     OracleAskRequest(
                         requestId = requestId,
                         question = trimmedQuestion,
                         topic = topic,
-                        lang = lang,
+                        lang = effectiveLang,
                     )
                 )
             ) {
@@ -126,26 +178,38 @@ class OracleAskViewModel(
     @OptIn(ExperimentalUuidApi::class)
     private fun generateRequestId(): String = Uuid.random().toString()
 
-    private fun ApiError.toUserMessage(): String {
+    private fun ApiError.toUserMessage(): OracleAskMessage {
         val backendMessage = message.orEmpty()
         return when (this) {
-            is ApiError.Unauthenticated -> "Necesitas iniciar sesión para usar el Oráculo"
-            is ApiError.PermissionDenied -> "No podemos completar esta consulta con tu cuenta actual."
+            is ApiError.Unauthenticated -> OracleAskMessage(id = OracleAskMessageId.Unauthenticated)
+            is ApiError.PermissionDenied -> OracleAskMessage(id = OracleAskMessageId.PermissionDenied)
             is ApiError.ResourceExhausted -> when {
-                backendMessage.hasAdUnlockHint() -> "Alcanzaste el límite de hoy. Mira un anuncio para desbloquear otra consulta."
-                else -> "Ya usaste tus consultas de hoy. Vuelve mañana para seguir consultando."
+                backendMessage.hasAdUnlockHint() -> OracleAskMessage(id = OracleAskMessageId.ResourceExhaustedWithAdUnlock)
+                else -> OracleAskMessage(id = OracleAskMessageId.ResourceExhaustedGeneric)
             }
             is ApiError.FailedPrecondition -> when {
-                backendMessage.hasAdUnlockHint() -> "Necesitas desbloquear la siguiente consulta viendo un anuncio."
-                backendMessage.isTemporaryUnavailabilityHint() -> "El Oráculo está momentáneamente no disponible. Inténtalo en unos minutos."
-                else -> "No pudimos completar tu consulta en este momento."
+                backendMessage.hasAdUnlockHint() -> OracleAskMessage(id = OracleAskMessageId.FailedPreconditionWithAdUnlock)
+                backendMessage.isTemporaryUnavailabilityHint() -> OracleAskMessage(id = OracleAskMessageId.FailedPreconditionTemporaryUnavailable)
+                else -> OracleAskMessage(id = OracleAskMessageId.FailedPreconditionGeneric)
             }
-            is ApiError.InvalidArgument -> message ?: "La pregunta no es válida"
+            is ApiError.InvalidArgument -> {
+                if (message.isNullOrBlank()) {
+                    OracleAskMessage(id = OracleAskMessageId.InvalidArgumentFallback)
+                } else {
+                    OracleAskMessage(id = OracleAskMessageId.RawBackendMessage, rawMessage = message)
+                }
+            }
             is ApiError.Internal -> when {
-                backendMessage.isTemporaryUnavailabilityHint() -> "El Oráculo está temporalmente ocupado. Inténtalo nuevamente en breve."
-                else -> "Tuvimos un problema al procesar tu consulta. Inténtalo nuevamente."
+                backendMessage.isTemporaryUnavailabilityHint() -> OracleAskMessage(id = OracleAskMessageId.InternalTemporaryUnavailable)
+                else -> OracleAskMessage(id = OracleAskMessageId.InternalGeneric)
             }
-            is ApiError.Unknown -> message ?: "No se pudo conectar con el Oráculo"
+            is ApiError.Unknown -> {
+                if (message.isNullOrBlank()) {
+                    OracleAskMessage(id = OracleAskMessageId.UnknownFallback)
+                } else {
+                    OracleAskMessage(id = OracleAskMessageId.RawBackendMessage, rawMessage = message)
+                }
+            }
         }
     }
 

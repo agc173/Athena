@@ -23,6 +23,7 @@ import bwitch.composeapp.generated.resources.Res
 import bwitch.composeapp.generated.resources.oracle_ornament
 import bwitch.composeapp.generated.resources.pendulum_ornament
 import bwitch.composeapp.generated.resources.tarot_ornament
+import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.presentation.navigation.Destination
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
 import com.agc.bwitch.ui.common.designsystem.BWitchScreen
@@ -37,33 +38,37 @@ fun GuideHomeScreen(
     contentPadding: PaddingValues,
     onNavigate: (Destination) -> Unit,
 ) {
+    val oracleStrings = appStrings.oracle
+    val tarotStrings = appStrings.tarot
+    val guideStrings = appStrings.guide
+
     BWitchScreen(contentPadding = contentPadding) {
         BWitchSectionHeader(
-            title = "Explora tu intuición",
-            subtitle = "Elige una práctica para lo que necesitas comprender hoy",
+            title = guideStrings.headerTitle,
+            subtitle = guideStrings.headerSubtitle,
         )
 
         GuideOptionCard(
-            title = "Tarot",
-            subtitle = "Lecturas e interpretación simbólica",
-            details = "Carta única · Tirada de 3",
+            title = tarotStrings.guideEntryTitle,
+            subtitle = tarotStrings.guideEntrySubtitle,
+            details = tarotStrings.guideEntryDetails,
             onClick = { onNavigate(Destination.TarotHome) },
             ornamentType = GuideCardOrnament.Tarot,
             modifier = Modifier.height(GuideCardHeight),
         )
 
         GuideOptionCard(
-            title = "Oráculo",
-            subtitle = "Haz una pregunta y recibe guía",
+            title = oracleStrings.guideEntryTitle,
+            subtitle = oracleStrings.guideEntrySubtitle,
             onClick = { onNavigate(Destination.Oracle) },
             ornamentType = GuideCardOrnament.Oracle,
             modifier = Modifier.height(GuideCardHeight),
         )
 
         GuideOptionCard(
-            title = "El Péndulo",
-            subtitle = "Una respuesta rápida para tu pregunta",
-            details = "Sí · No · Tal vez · Aún no",
+            title = guideStrings.pendulumTitle,
+            subtitle = guideStrings.pendulumSubtitle,
+            details = guideStrings.pendulumDetails,
             onClick = { onNavigate(Destination.Pendulum) },
             ornamentType = GuideCardOrnament.Pendulum,
             modifier = Modifier.height(GuideCardHeight),
