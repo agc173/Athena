@@ -115,28 +115,24 @@ class GooglePlaySubscriptionBillingDataSource(
     suspend fun launchPurchaseFlow(
         activity: Activity,
         productId: String,
-    ): Result<Unit> {
+    ): Result<Unit> = runCatching {
         val deferred = connectionMutex.withLock {
             ensureReadyConnection()
 
             val productDetails = querySubscriptionProductDetails()
                 .firstOrNull { it.productId == productId }
-                ?: return Result.failure(
-                    GooglePlayBillingException(
-                        phase = "queryProductDetailsMissing",
-                        responseCode = BillingClient.BillingResponseCode.ITEM_UNAVAILABLE,
-                        debugMessage = "Configured product not returned by Play Billing",
-                    ),
+                ?: throw GooglePlayBillingException(
+                    phase = "queryProductDetailsMissingProduct",
+                    responseCode = BillingClient.BillingResponseCode.ITEM_UNAVAILABLE,
+                    debugMessage = "Configured product not returned by Play Billing",
                 )
             val offerToken = productDetails.subscriptionOfferDetails
                 ?.firstOrNull()
                 ?.offerToken
-                ?: return Result.failure(
-                    GooglePlayBillingException(
-                        phase = "queryProductDetailsMissingOffer",
-                        responseCode = BillingClient.BillingResponseCode.ITEM_UNAVAILABLE,
-                        debugMessage = "No subscription offer token available for product",
-                    ),
+                ?: throw GooglePlayBillingException(
+                    phase = "queryProductDetailsMissingOffer",
+                    responseCode = BillingClient.BillingResponseCode.ITEM_UNAVAILABLE,
+                    debugMessage = "No subscription offer token available for product",
                 )
 
             val productParams = BillingFlowParams.ProductDetailsParams.newBuilder()
@@ -153,18 +149,18 @@ class GooglePlaySubscriptionBillingDataSource(
             val launchResult = billingClient.launchBillingFlow(activity, flowParams)
             if (launchResult.responseCode != BillingClient.BillingResponseCode.OK) {
                 purchaseFlowResult = null
-                return Result.failure(
-                    GooglePlayBillingException(
-                        phase = "launchBillingFlow",
-                        responseCode = launchResult.responseCode,
-                        debugMessage = launchResult.debugMessage,
-                    ),
+                throw GooglePlayBillingException(
+                    phase = "launchBillingFlow",
+                    responseCode = launchResult.responseCode,
+                    debugMessage = launchResult.debugMessage,
                 )
             }
             purchaseDeferred
         }
 
-        return deferred.await()
+        deferred.await()
+    }.getOrElse { error ->
+        Result.failure(error)
     }
 
     private suspend fun queryStatusWithConnection(): SubscriptionStatus = connectionMutex.withLock {
@@ -258,7 +254,11 @@ class GooglePlaySubscriptionBillingDataSource(
                 if (productDetailsList.isEmpty()) {
                     continuation.resumeWith(
                         Result.failure(
-                            IllegalStateException("No ProductDetails found for configured subscriptions"),
+                            GooglePlayBillingException(
+                                phase = "queryProductDetailsMissing",
+                                responseCode = BillingClient.BillingResponseCode.ITEM_UNAVAILABLE,
+                                debugMessage = "No ProductDetails found for configured subscriptions",
+                            ),
                         ),
                     )
                     return@queryProductDetailsAsync
