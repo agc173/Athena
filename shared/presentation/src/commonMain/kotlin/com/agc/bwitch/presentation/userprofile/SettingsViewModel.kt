@@ -190,7 +190,7 @@ class SettingsViewModel(
             runCatching { getSubscriptionCatalog() }
                 .onSuccess { plans ->
                     _uiState.update {
-                        it.copy(subscriptionCatalog = plans.map { plan -> plan.toUiPlan() })
+                        it.copy(subscriptionCatalog = plans.sortedForUi().map { plan -> plan.toUiPlan() })
                     }
                 }
                 .onFailure { error -> _uiState.update { it.copy(error = error.message) } }
@@ -237,7 +237,7 @@ class SettingsViewModel(
                 scope.launch {
                     _uiEffects.emit(
                         SettingsUiEffect.LaunchManageSubscription(
-                            productId = _uiState.value.subscriptionStatus.toKnownProductIdOrNull(),
+                            productId = _uiState.value.resolveManageSubscriptionProductId(),
                         ),
                     )
                 }
@@ -401,10 +401,32 @@ private fun SubscriptionPlan.toUiPlan(): SubscriptionPlanUi = SubscriptionPlanUi
     },
 )
 
-private fun SubscriptionStatus.toKnownProductIdOrNull(): String? = when (this) {
-    SubscriptionStatus.ActiveMonthly -> KnownSubscriptionProducts.MONTHLY
-    SubscriptionStatus.ActiveAnnual -> KnownSubscriptionProducts.ANNUAL
-    SubscriptionStatus.Unknown,
-    SubscriptionStatus.Inactive,
-    -> null
+private fun SettingsUiState.resolveManageSubscriptionProductId(): String? {
+    val preferredType = when (subscriptionStatus) {
+        SubscriptionStatus.ActiveMonthly -> SubscriptionPlanSelection.Monthly
+        SubscriptionStatus.ActiveAnnual -> SubscriptionPlanSelection.Annual
+        SubscriptionStatus.Unknown,
+        SubscriptionStatus.Inactive,
+        -> null
+    }
+
+    if (preferredType != null) {
+        subscriptionCatalog.firstOrNull { it.type == preferredType }?.productId?.let { return it }
+    }
+
+    return when (subscriptionStatus) {
+        SubscriptionStatus.ActiveMonthly -> KnownSubscriptionProducts.MONTHLY
+        SubscriptionStatus.ActiveAnnual -> KnownSubscriptionProducts.ANNUAL
+        SubscriptionStatus.Unknown,
+        SubscriptionStatus.Inactive,
+        -> null
+    }
+}
+
+private fun List<SubscriptionPlan>.sortedForUi(): List<SubscriptionPlan> = sortedBy { plan ->
+    when (plan.type) {
+        SubscriptionPlanType.Monthly -> 0
+        SubscriptionPlanType.Annual -> 1
+        SubscriptionPlanType.Unknown -> 2
+    }
 }
