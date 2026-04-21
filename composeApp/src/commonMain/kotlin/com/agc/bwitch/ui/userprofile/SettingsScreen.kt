@@ -44,6 +44,7 @@ import com.agc.bwitch.platform.getAppVersionLabel
 import com.agc.bwitch.presentation.auth.SessionViewModel
 import com.agc.bwitch.presentation.localization.AppLanguageViewModel
 import com.agc.bwitch.presentation.userprofile.SettingsFeedback
+import com.agc.bwitch.presentation.userprofile.SubscriptionPlanUi
 import com.agc.bwitch.presentation.userprofile.SettingsUiEffect
 import com.agc.bwitch.presentation.userprofile.SettingsViewModel
 import com.agc.bwitch.presentation.userprofile.SubscriptionPlanSelection
@@ -71,6 +72,7 @@ fun SettingsScreen(contentPadding: PaddingValues) {
     val appVersionLabel = remember { getAppVersionLabel() }
     val uriHandler = LocalUriHandler.current
     val purchaseLauncher = rememberSubscriptionPurchaseLauncher()
+    val managementLauncher = rememberSubscriptionManagementLauncher()
 
     var showLanguageDialog by rememberSaveable { mutableStateOf(false) }
     var showSubscriptionPlanDialog by rememberSaveable { mutableStateOf(false) }
@@ -109,6 +111,16 @@ fun SettingsScreen(contentPadding: PaddingValues) {
                     val outcome = purchaseLauncher.launch(effect.plan)
                     settingsVm.onSubscriptionPurchaseCompleted(outcome)
                 }
+
+                is SettingsUiEffect.LaunchSubscriptionPurchaseWithProduct -> {
+                    val outcome = purchaseLauncher.launch(effect.productId)
+                    settingsVm.onSubscriptionPurchaseCompleted(outcome)
+                }
+
+                is SettingsUiEffect.LaunchManageSubscription -> {
+                    val outcome = managementLauncher.launch(effect.productId)
+                    settingsVm.onSubscriptionManagementCompleted(outcome)
+                }
             }
         }
     }
@@ -132,8 +144,9 @@ fun SettingsScreen(contentPadding: PaddingValues) {
         SubscriptionPlanDialog(
             title = strings.subscriptionActionSubscribe,
             closeLabel = strings.close,
-            monthlyLabel = strings.subscriptionPlanMonthlyLabel,
-            annualLabel = strings.subscriptionPlanAnnualLabel,
+            plans = settingsState.subscriptionCatalog,
+            monthlyLabelFallback = strings.subscriptionPlanMonthlyLabel,
+            annualLabelFallback = strings.subscriptionPlanAnnualLabel,
             onDismiss = { showSubscriptionPlanDialog = false },
             onMonthlySelected = {
                 showSubscriptionPlanDialog = false
@@ -142,6 +155,10 @@ fun SettingsScreen(contentPadding: PaddingValues) {
             onAnnualSelected = {
                 showSubscriptionPlanDialog = false
                 settingsVm.onSubscribeClicked(SubscriptionPlanSelection.Annual)
+            },
+            onCatalogPlanSelected = { plan ->
+                showSubscriptionPlanDialog = false
+                settingsVm.onCatalogSubscriptionSelected(plan.productId)
             },
         )
     }
@@ -369,22 +386,40 @@ private fun LanguageSelectorDialog(
 private fun SubscriptionPlanDialog(
     title: String,
     closeLabel: String,
-    monthlyLabel: String,
-    annualLabel: String,
+    plans: List<SubscriptionPlanUi>,
+    monthlyLabelFallback: String,
+    annualLabelFallback: String,
     onDismiss: () -> Unit,
     onMonthlySelected: () -> Unit,
     onAnnualSelected: () -> Unit,
+    onCatalogPlanSelected: (SubscriptionPlanUi) -> Unit,
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(text = title) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                TextButton(onClick = onMonthlySelected, modifier = Modifier.fillMaxWidth()) {
-                    Text(text = monthlyLabel)
-                }
-                TextButton(onClick = onAnnualSelected, modifier = Modifier.fillMaxWidth()) {
-                    Text(text = annualLabel)
+                if (plans.isNotEmpty()) {
+                    plans.forEach { plan ->
+                        TextButton(
+                            onClick = { onCatalogPlanSelected(plan) },
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            val label = if (plan.formattedPrice.isBlank()) {
+                                plan.title
+                            } else {
+                                "${plan.title} · ${plan.formattedPrice}"
+                            }
+                            Text(text = label)
+                        }
+                    }
+                } else {
+                    TextButton(onClick = onMonthlySelected, modifier = Modifier.fillMaxWidth()) {
+                        Text(text = monthlyLabelFallback)
+                    }
+                    TextButton(onClick = onAnnualSelected, modifier = Modifier.fillMaxWidth()) {
+                        Text(text = annualLabelFallback)
+                    }
                 }
             }
         },

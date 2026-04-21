@@ -2,6 +2,8 @@ package com.agc.bwitch.data.settings
 
 import com.agc.bwitch.data.settings.billing.SubscriptionBillingDataSource
 import com.agc.bwitch.domain.settings.RestorePurchasesResult
+import com.agc.bwitch.domain.settings.SubscriptionPlan
+import com.agc.bwitch.domain.settings.SubscriptionPlanType
 import com.agc.bwitch.domain.settings.SubscriptionStatus
 import com.russhwolf.settings.MapSettings
 import kotlinx.coroutines.test.runTest
@@ -71,6 +73,23 @@ class BillingBackedSubscriptionRepositoryTest {
         )
     }
 
+    @Test
+    fun `getCatalog usa billing cuando esta soportado`() = runTest {
+        val plan = SubscriptionPlan(
+            productId = "monthly",
+            title = "Monthly",
+            formattedPrice = "$4.99",
+            type = SubscriptionPlanType.Monthly,
+        )
+        val repository = repository(
+            billing = FakeBillingDataSource(isSupported = true, catalogFromQuery = listOf(plan)),
+        )
+
+        val catalog = repository.getCatalog()
+
+        assertEquals(listOf(plan), catalog)
+    }
+
     private fun repository(
         settings: MapSettings = MapSettings(),
         billing: SubscriptionBillingDataSource,
@@ -87,11 +106,14 @@ private class FakeBillingDataSource(
     private val statusFromRestore: SubscriptionStatus = statusFromQuery,
     private val queryError: Throwable? = null,
     private val restoreError: Throwable? = null,
+    private val catalogFromQuery: List<SubscriptionPlan> = emptyList(),
 ) : SubscriptionBillingDataSource {
     override suspend fun querySubscriptionStatus(): SubscriptionStatus {
         queryError?.let { throw it }
         return statusFromQuery
     }
+
+    override suspend fun querySubscriptionCatalog(): List<SubscriptionPlan> = catalogFromQuery
 
     override suspend fun restoreSubscriptionStatus(): SubscriptionStatus {
         restoreError?.let { throw it }

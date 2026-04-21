@@ -3,6 +3,7 @@ package com.agc.bwitch.data.settings
 import com.agc.bwitch.data.settings.billing.SubscriptionBillingDataSource
 import com.agc.bwitch.data.storage.SettingsFactory
 import com.agc.bwitch.domain.settings.RestorePurchasesResult
+import com.agc.bwitch.domain.settings.SubscriptionPlan
 import com.agc.bwitch.domain.settings.SubscriptionRepository
 import com.agc.bwitch.domain.settings.SubscriptionStatus
 import com.agc.bwitch.domain.settings.isActive
@@ -39,6 +40,12 @@ class BillingBackedSubscriptionRepository private constructor(
     }
 
     override fun observeStatus(): Flow<SubscriptionStatus> = status
+
+    override suspend fun getCatalog(): List<SubscriptionPlan> {
+        if (!billingDataSource.isSupported) return emptyList()
+        return runCatching { billingDataSource.querySubscriptionCatalog() }
+            .getOrDefault(emptyList())
+    }
 
     override suspend fun restorePurchases(): RestorePurchasesResult {
         if (!billingDataSource.isSupported) {

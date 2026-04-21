@@ -2,7 +2,11 @@ package com.agc.bwitch.data.settings.billing.googleplay
 
 import android.app.Activity
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import com.agc.bwitch.data.settings.billing.SubscriptionBillingDataSource
+import com.agc.bwitch.domain.settings.SubscriptionPlan
+import com.agc.bwitch.domain.settings.SubscriptionPlanType
 import com.agc.bwitch.domain.settings.SubscriptionStatus
 import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingClientStateListener
@@ -68,8 +72,45 @@ class GooglePlaySubscriptionBillingDataSource(
     override suspend fun querySubscriptionStatus(): SubscriptionStatus =
         queryStatusWithConnection()
 
+    override suspend fun querySubscriptionCatalog(): List<SubscriptionPlan> = connectionMutex.withLock {
+        ensureReadyConnection()
+        querySubscriptionProductDetails()
+            .mapNotNull { details -> details.toSubscriptionPlan() }
+            .sortedBy { plan ->
+                when (plan.type) {
+                    SubscriptionPlanType.Monthly -> 0
+                    SubscriptionPlanType.Annual -> 1
+                    SubscriptionPlanType.Unknown -> 2
+                }
+            }
+    }
+
     override suspend fun restoreSubscriptionStatus(): SubscriptionStatus =
         queryStatusWithConnection()
+
+    fun launchManageSubscriptions(
+        activity: Activity,
+        productId: String?,
+    ): Result<Unit> = runCatching {
+        val withSkuUri = productId?.let { sku ->
+            Uri.parse("https://play.google.com/store/account/subscriptions?sku=$sku&package=${activity.packageName}")
+        }
+        val genericUri = Uri.parse("https://play.google.com/store/account/subscriptions")
+
+        val primaryIntent = Intent(Intent.ACTION_VIEW, withSkuUri ?: genericUri)
+        if (primaryIntent.resolveActivity(activity.packageManager) != null) {
+            activity.startActivity(primaryIntent)
+            return@runCatching
+        }
+
+        val fallbackIntent = Intent(Intent.ACTION_VIEW, genericUri)
+        if (fallbackIntent.resolveActivity(activity.packageManager) != null) {
+            activity.startActivity(fallbackIntent)
+            return@runCatching
+        }
+
+        throw IllegalStateException("No activity available to manage subscriptions")
+    }
 
     suspend fun launchPurchaseFlow(
         activity: Activity,
@@ -261,4 +302,37 @@ private fun List<Purchase>.toSubscriptionStatus(): SubscriptionStatus {
         activeProductIds.intersect(GooglePlayBillingSubscriptionProducts.knownProducts).isNotEmpty() -> SubscriptionStatus.ActiveMonthly
         else -> SubscriptionStatus.Inactive
     }
+}
+
+private fun com.android.billingclient.api.ProductDetails.toSubscriptionPlan(): SubscriptionPlan? {
+    val offer = subscriptionOfferDetails
+        ?.firstOrNull { details ->
+            details.pricingPhases.pricingPhaseList.any { phase -> phase.billingPeriod.isNotBlank() }
+        }
+        ?: subscriptionOfferDetails?.firstOrNull()
+        ?: return null
+
+    val pricingPhase = offer.pricingPhases.pricingPhaseList
+        .firstOrNull { phase -> phase.formattedPrice.isNotBlank() }
+        ?: return null
+
+    val resolvedTitle = offer.basePlanId
+        ?.takeUnless(String::isBlank)
+        ?.replace('_', ' ')
+        ?.replaceFirstChar { it.uppercase() }
+        ?: title.takeUnless(String::isBlank)
+        ?: productId
+
+    return SubscriptionPlan(
+        productId = productId,
+        title = resolvedTitle,
+        formattedPrice = pricingPhase.formattedPrice,
+        type = pricingPhase.billingPeriod.toSubscriptionPlanType(),
+    )
+}
+
+private fun String.toSubscriptionPlanType(): SubscriptionPlanType = when {
+    contains("P1Y", ignoreCase = true) -> SubscriptionPlanType.Annual
+    contains("P1M", ignoreCase = true) -> SubscriptionPlanType.Monthly
+    else -> SubscriptionPlanType.Unknown
 }
