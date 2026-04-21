@@ -32,17 +32,20 @@ actual fun rememberSubscriptionPurchaseLauncher(): SubscriptionPurchaseLauncher 
             override suspend fun launch(productId: String): SubscriptionPurchaseOutcome {
                 val activity = context as? Activity ?: return SubscriptionPurchaseOutcome.Unsupported
 
-                return billingDataSource.launchPurchaseFlow(activity = activity, productId = productId)
-                    .fold(
-                        onSuccess = { SubscriptionPurchaseOutcome.Success },
-                        onFailure = { error ->
-                            if (error is CancellationException) {
-                                SubscriptionPurchaseOutcome.Cancelled
-                            } else {
-                                SubscriptionPurchaseOutcome.Failed
-                            }
-                        },
-                    )
+                return runCatching {
+                    billingDataSource.launchPurchaseFlow(activity = activity, productId = productId)
+                }.getOrElse { error ->
+                    Result.failure(error)
+                }.fold(
+                    onSuccess = { SubscriptionPurchaseOutcome.Success },
+                    onFailure = { error ->
+                        if (error is CancellationException) {
+                            SubscriptionPurchaseOutcome.Cancelled
+                        } else {
+                            SubscriptionPurchaseOutcome.Failed
+                        }
+                    },
+                )
             }
         }
     }
