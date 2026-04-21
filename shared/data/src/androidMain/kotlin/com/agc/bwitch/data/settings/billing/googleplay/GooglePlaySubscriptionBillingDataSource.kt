@@ -222,7 +222,7 @@ class GooglePlaySubscriptionBillingDataSource(
     private suspend fun querySubscriptionProductDetails():
             List<com.android.billingclient.api.ProductDetails> =
         suspendCancellableCoroutine { continuation ->
-            val products = GooglePlayBillingSubscriptionProducts.knownProducts.map { productId ->
+            val products = GooglePlayBillingSubscriptionProducts.queryOrder.map { productId ->
                 QueryProductDetailsParams.Product.newBuilder()
                     .setProductId(productId)
                     .setProductType(BillingClient.ProductType.SUBS)
@@ -307,15 +307,23 @@ private fun List<Purchase>.toSubscriptionStatus(): SubscriptionStatus {
 private fun com.android.billingclient.api.ProductDetails.toSubscriptionPlan(): SubscriptionPlan? {
     val offer = subscriptionOfferDetails
         ?.firstOrNull { details ->
-            details.pricingPhases.pricingPhaseList.any { phase -> phase.billingPeriod.isNotBlank() }
+            details.pricingPhases.pricingPhaseList.any { phase ->
+                phase.formattedPrice.isNotBlank() && phase.billingPeriod.isNotBlank()
+            }
         }
-        ?: subscriptionOfferDetails?.firstOrNull()
+        ?: subscriptionOfferDetails?.firstOrNull { details ->
+            details.pricingPhases.pricingPhaseList.any { phase -> phase.formattedPrice.isNotBlank() }
+        }
         ?: return null
 
     val pricingPhase = offer.pricingPhases.pricingPhaseList
-        .firstOrNull { phase -> phase.formattedPrice.isNotBlank() }
+        .firstOrNull { phase ->
+            phase.formattedPrice.isNotBlank() && phase.billingPeriod.isNotBlank()
+        }
+        ?: offer.pricingPhases.pricingPhaseList.firstOrNull { phase -> phase.formattedPrice.isNotBlank() }
         ?: return null
 
+    val resolvedType = resolveSubscriptionPlanType(productId = productId, billingPeriod = pricingPhase.billingPeriod)
     val resolvedTitle = offer.basePlanId
         ?.takeUnless(String::isBlank)
         ?.replace('_', ' ')
@@ -327,8 +335,22 @@ private fun com.android.billingclient.api.ProductDetails.toSubscriptionPlan(): S
         productId = productId,
         title = resolvedTitle,
         formattedPrice = pricingPhase.formattedPrice,
-        type = pricingPhase.billingPeriod.toSubscriptionPlanType(),
+        type = resolvedType,
     )
+}
+
+private fun resolveSubscriptionPlanType(
+    productId: String,
+    billingPeriod: String,
+): SubscriptionPlanType {
+    val inferredByPeriod = billingPeriod.toSubscriptionPlanType()
+    if (inferredByPeriod != SubscriptionPlanType.Unknown) return inferredByPeriod
+
+    return when (productId) {
+        GooglePlayBillingSubscriptionProducts.MONTHLY -> SubscriptionPlanType.Monthly
+        GooglePlayBillingSubscriptionProducts.ANNUAL -> SubscriptionPlanType.Annual
+        else -> SubscriptionPlanType.Unknown
+    }
 }
 
 private fun String.toSubscriptionPlanType(): SubscriptionPlanType = when {

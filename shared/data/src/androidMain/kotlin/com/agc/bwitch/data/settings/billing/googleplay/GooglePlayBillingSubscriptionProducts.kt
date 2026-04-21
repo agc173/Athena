@@ -6,5 +6,6 @@ object GooglePlayBillingSubscriptionProducts {
     const val MONTHLY = KnownSubscriptionProducts.MONTHLY
     const val ANNUAL = KnownSubscriptionProducts.ANNUAL
 
+    val queryOrder: List<String> = KnownSubscriptionProducts.ordered
     val knownProducts: Set<String> = KnownSubscriptionProducts.all
 }
