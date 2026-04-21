@@ -182,41 +182,42 @@ class GooglePlaySubscriptionBillingDataSource(
             }
         }
 
-    private suspend fun querySubscriptionProductDetails() =
-        suspendCancellableCoroutine<List<com.android.billingclient.api.ProductDetails>> { continuation ->
+    private suspend fun querySubscriptionProductDetails():
+            List<com.android.billingclient.api.ProductDetails> =
+        suspendCancellableCoroutine { continuation ->
             val products = GooglePlayBillingSubscriptionProducts.knownProducts.map { productId ->
                 QueryProductDetailsParams.Product.newBuilder()
                     .setProductId(productId)
                     .setProductType(BillingClient.ProductType.SUBS)
                     .build()
             }
+
             val params = QueryProductDetailsParams.newBuilder()
                 .setProductList(products)
                 .build()
 
-            billingClient.queryProductDetailsAsync(params) { result, productDetailsList ->
+            billingClient.queryProductDetailsAsync(params) { billingResult, queryResult ->
                 if (continuation.isCompleted) return@queryProductDetailsAsync
-                if (result.responseCode != BillingClient.BillingResponseCode.OK) {
+
+                if (billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
                     continuation.resumeWith(
                         Result.failure(
                             GooglePlayBillingException(
                                 phase = "queryProductDetails",
-                                responseCode = result.responseCode,
-                                debugMessage = result.debugMessage,
+                                responseCode = billingResult.responseCode,
+                                debugMessage = billingResult.debugMessage,
                             ),
                         ),
                     )
                     return@queryProductDetailsAsync
                 }
 
+                val productDetailsList = queryResult.productDetailsList
+
                 if (productDetailsList.isEmpty()) {
                     continuation.resumeWith(
                         Result.failure(
-                            GooglePlayBillingException(
-                                phase = "queryProductDetailsEmpty",
-                                responseCode = BillingClient.BillingResponseCode.ITEM_UNAVAILABLE,
-                                debugMessage = "No ProductDetails found for configured subscriptions",
-                            ),
+                            IllegalStateException("No ProductDetails found for configured subscriptions"),
                         ),
                     )
                     return@queryProductDetailsAsync
