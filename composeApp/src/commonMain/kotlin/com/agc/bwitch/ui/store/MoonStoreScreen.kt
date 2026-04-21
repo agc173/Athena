@@ -75,7 +75,7 @@ fun MoonStoreScreen(
                         onClick = viewModel::clearFeedback,
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Text(appStrings.common.close)
+                        Text(appStrings.settings.close)
                     }
                 }
             }
