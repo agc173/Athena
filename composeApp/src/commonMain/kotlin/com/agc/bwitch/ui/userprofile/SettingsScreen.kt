@@ -2,9 +2,11 @@ package com.agc.bwitch.ui.userprofile
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -174,145 +176,153 @@ fun SettingsScreen(contentPadding: PaddingValues) {
         )
     }
 
-    BWitchScreen(
-        contentPadding = contentPadding,
-        modifier = Modifier.verticalScroll(rememberScrollState()),
-    ) {
-        BWitchSectionHeader(
-            title = appStrings.navigation.settings,
-            subtitle = strings.subtitle,
-        )
-
-        SettingsSectionCard(title = strings.sectionAccount) {
-            SettingsRow(label = strings.username, value = username)
-            SettingsRow(label = strings.email, value = email)
-            SettingsRow(label = strings.birthDate, value = birthDate)
-            SettingsRow(
-                label = strings.language,
-                value = settingsState.currentLanguage.nativeLabel,
-                onClick = { showLanguageDialog = true },
-            )
-            SettingsRow(
-                label = strings.signOut,
-                isDestructive = true,
-                showDivider = false,
-                onClick = {
-                    scope.launch {
-                        runCatching { sessionVm.signOut() }
-                        runCatching { clearLocalUserData() }
-                    }
-                },
-            )
-        }
-
-        SettingsSectionCard(title = strings.sectionNotifications) {
-            SettingsSwitchRow(
-                label = strings.notificationsEnabled,
-                checked = settingsState.notificationsEnabled,
-                onCheckedChange = settingsVm::onNotificationsEnabledChanged,
-            )
-            SettingsSwitchRow(
-                label = strings.dailyHoroscope,
-                checked = settingsState.dailyHoroscopeEnabled,
-                enabled = settingsState.notificationsEnabled,
-                onCheckedChange = settingsVm::onDailyHoroscopeEnabledChanged,
-            )
-            SettingsSwitchRow(
-                label = strings.ritualOfDay,
-                checked = settingsState.ritualOfDayEnabled,
-                enabled = settingsState.notificationsEnabled,
-                onCheckedChange = settingsVm::onRitualOfDayEnabledChanged,
-            )
-            SettingsSwitchRow(
-                label = strings.habits,
-                checked = settingsState.habitsEnabled,
-                enabled = settingsState.notificationsEnabled,
-                showDivider = false,
-                onCheckedChange = settingsVm::onHabitsEnabledChanged,
-            )
-        }
-
-        SettingsSectionCard(title = strings.sectionPurchasesSubscription) {
-            SettingsRow(
-                label = strings.subscriptionStatus,
-                value = settingsState.subscriptionStatus.toLocalizedLabel(strings),
-            )
-            SettingsRow(
-                label = when (settingsState.subscriptionPrimaryAction) {
-                    SubscriptionPrimaryAction.Subscribe -> strings.subscriptionActionSubscribe
-                    SubscriptionPrimaryAction.Manage -> strings.subscriptionActionManage
-                },
-                onClick = {
-                    if (settingsState.subscriptionPrimaryAction == SubscriptionPrimaryAction.Subscribe) {
-                        showSubscriptionPlanDialog = true
-                    } else {
-                        settingsVm.onSubscriptionPrimaryActionClicked()
-                    }
-                },
-            )
-            SettingsRow(
-                label = strings.restorePurchases,
-                showDivider = false,
-                onClick = settingsVm::onRestorePurchasesClicked,
-            )
-        }
-
-        SettingsSectionCard(title = strings.sectionHelpSupport) {
-            SettingsRow(
-                label = strings.contactSupport,
-                onClick = {
-                    runCatching { uriHandler.openUri(SettingsLinks.contactSupportMailto()) }
-                        .onFailure { scope.launch { snackbarHostState.showSnackbar(strings.comingSoon) } }
-                },
-            )
-            SettingsRow(
-                label = strings.reportIssue,
-                onClick = {
-                    runCatching { uriHandler.openUri(SettingsLinks.reportIssueMailto()) }
-                        .onFailure { scope.launch { snackbarHostState.showSnackbar(strings.comingSoon) } }
-                },
-            )
-            SettingsRow(
-                label = strings.appVersion,
-                value = settingsState.appVersion,
-                showDivider = false,
-            )
-        }
-
-        SettingsSectionCard(title = strings.sectionPrivacyLegal) {
-            SettingsRow(
-                label = strings.privacyPolicy,
-                onClick = {
-                    runCatching { uriHandler.openUri(SettingsLinks.privacyPolicyUrl) }
-                        .onFailure { scope.launch { snackbarHostState.showSnackbar(strings.comingSoon) } }
-                },
-            )
-            SettingsRow(
-                label = strings.termsAndConditions,
-                showDivider = false,
-                onClick = {
-                    runCatching { uriHandler.openUri(SettingsLinks.termsAndConditionsUrl) }
-                        .onFailure { scope.launch { snackbarHostState.showSnackbar(strings.comingSoon) } }
-                },
-            )
-        }
-
-        SettingsSectionCard(
-            title = strings.sectionDangerZone,
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.errorContainer,
-                contentColor = MaterialTheme.colorScheme.onErrorContainer,
-            ),
+    Box(modifier = Modifier.fillMaxSize()) {
+        BWitchScreen(
+            contentPadding = contentPadding,
+            modifier = Modifier.verticalScroll(rememberScrollState()),
         ) {
-            SettingsRow(
-                label = strings.deleteAccount,
-                isDestructive = true,
-                showDivider = false,
-                onClick = settingsVm::onDeleteAccountClicked,
+            BWitchSectionHeader(
+                title = appStrings.navigation.settings,
+                subtitle = strings.subtitle,
             )
+
+            SettingsSectionCard(title = strings.sectionAccount) {
+                SettingsRow(label = strings.username, value = username)
+                SettingsRow(label = strings.email, value = email)
+                SettingsRow(label = strings.birthDate, value = birthDate)
+                SettingsRow(
+                    label = strings.language,
+                    value = settingsState.currentLanguage.nativeLabel,
+                    onClick = { showLanguageDialog = true },
+                )
+                SettingsRow(
+                    label = strings.signOut,
+                    isDestructive = true,
+                    showDivider = false,
+                    onClick = {
+                        scope.launch {
+                            runCatching { sessionVm.signOut() }
+                            runCatching { clearLocalUserData() }
+                        }
+                    },
+                )
+            }
+
+            SettingsSectionCard(title = strings.sectionNotifications) {
+                SettingsSwitchRow(
+                    label = strings.notificationsEnabled,
+                    checked = settingsState.notificationsEnabled,
+                    onCheckedChange = settingsVm::onNotificationsEnabledChanged,
+                )
+                SettingsSwitchRow(
+                    label = strings.dailyHoroscope,
+                    checked = settingsState.dailyHoroscopeEnabled,
+                    enabled = settingsState.notificationsEnabled,
+                    onCheckedChange = settingsVm::onDailyHoroscopeEnabledChanged,
+                )
+                SettingsSwitchRow(
+                    label = strings.ritualOfDay,
+                    checked = settingsState.ritualOfDayEnabled,
+                    enabled = settingsState.notificationsEnabled,
+                    onCheckedChange = settingsVm::onRitualOfDayEnabledChanged,
+                )
+                SettingsSwitchRow(
+                    label = strings.habits,
+                    checked = settingsState.habitsEnabled,
+                    enabled = settingsState.notificationsEnabled,
+                    showDivider = false,
+                    onCheckedChange = settingsVm::onHabitsEnabledChanged,
+                )
+            }
+
+            SettingsSectionCard(title = strings.sectionPurchasesSubscription) {
+                SettingsRow(
+                    label = strings.subscriptionStatus,
+                    value = settingsState.subscriptionStatus.toLocalizedLabel(strings),
+                )
+                SettingsRow(
+                    label = when (settingsState.subscriptionPrimaryAction) {
+                        SubscriptionPrimaryAction.Subscribe -> strings.subscriptionActionSubscribe
+                        SubscriptionPrimaryAction.Manage -> strings.subscriptionActionManage
+                    },
+                    onClick = {
+                        if (settingsState.subscriptionPrimaryAction == SubscriptionPrimaryAction.Subscribe) {
+                            showSubscriptionPlanDialog = true
+                        } else {
+                            settingsVm.onSubscriptionPrimaryActionClicked()
+                        }
+                    },
+                )
+                SettingsRow(
+                    label = strings.restorePurchases,
+                    showDivider = false,
+                    onClick = settingsVm::onRestorePurchasesClicked,
+                )
+            }
+
+            SettingsSectionCard(title = strings.sectionHelpSupport) {
+                SettingsRow(
+                    label = strings.contactSupport,
+                    onClick = {
+                        runCatching { uriHandler.openUri(SettingsLinks.contactSupportMailto()) }
+                            .onFailure { scope.launch { snackbarHostState.showSnackbar(strings.comingSoon) } }
+                    },
+                )
+                SettingsRow(
+                    label = strings.reportIssue,
+                    onClick = {
+                        runCatching { uriHandler.openUri(SettingsLinks.reportIssueMailto()) }
+                            .onFailure { scope.launch { snackbarHostState.showSnackbar(strings.comingSoon) } }
+                    },
+                )
+                SettingsRow(
+                    label = strings.appVersion,
+                    value = settingsState.appVersion,
+                    showDivider = false,
+                )
+            }
+
+            SettingsSectionCard(title = strings.sectionPrivacyLegal) {
+                SettingsRow(
+                    label = strings.privacyPolicy,
+                    onClick = {
+                        runCatching { uriHandler.openUri(SettingsLinks.privacyPolicyUrl) }
+                            .onFailure { scope.launch { snackbarHostState.showSnackbar(strings.comingSoon) } }
+                    },
+                )
+                SettingsRow(
+                    label = strings.termsAndConditions,
+                    showDivider = false,
+                    onClick = {
+                        runCatching { uriHandler.openUri(SettingsLinks.termsAndConditionsUrl) }
+                            .onFailure { scope.launch { snackbarHostState.showSnackbar(strings.comingSoon) } }
+                    },
+                )
+            }
+
+            SettingsSectionCard(
+                title = strings.sectionDangerZone,
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                    contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                ),
+            ) {
+                SettingsRow(
+                    label = strings.deleteAccount,
+                    isDestructive = true,
+                    showDivider = false,
+                    onClick = settingsVm::onDeleteAccountClicked,
+                )
+            }
         }
 
-        SnackbarHost(hostState = snackbarHostState)
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(contentPadding)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+        )
     }
 }
 
