@@ -18,7 +18,9 @@ import com.agc.bwitch.presentation.auth.SessionViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
@@ -53,9 +55,28 @@ enum class SubscriptionPrimaryAction {
 enum class SettingsFeedback {
     SubscriptionSubscribeComingSoon,
     SubscriptionManageComingSoon,
+    SubscriptionPurchaseFailed,
     RestorePurchasesSuccess,
     RestorePurchasesNoPurchases,
     DeleteAccountComingSoon,
+}
+
+enum class SubscriptionPlanSelection {
+    Monthly,
+    Annual,
+}
+
+sealed interface SettingsUiEffect {
+    data class LaunchSubscriptionPurchase(
+        val plan: SubscriptionPlanSelection,
+    ) : SettingsUiEffect
+}
+
+sealed interface SubscriptionPurchaseOutcome {
+    data object Success : SubscriptionPurchaseOutcome
+    data object Cancelled : SubscriptionPurchaseOutcome
+    data object Unsupported : SubscriptionPurchaseOutcome
+    data object Failed : SubscriptionPurchaseOutcome
 }
 
 class SettingsViewModel(
@@ -74,6 +95,9 @@ class SettingsViewModel(
 
     private val _uiState = MutableStateFlow(SettingsUiState())
     val uiState: StateFlow<SettingsUiState> = _uiState
+
+    private val _uiEffects = MutableSharedFlow<SettingsUiEffect>()
+    val uiEffects: SharedFlow<SettingsUiEffect> = _uiEffects
 
     init {
         scope.launch {
@@ -169,11 +193,61 @@ class SettingsViewModel(
     }
 
     fun onSubscriptionPrimaryActionClicked() {
-        val feedback = when (_uiState.value.subscriptionPrimaryAction) {
-            SubscriptionPrimaryAction.Subscribe -> SettingsFeedback.SubscriptionSubscribeComingSoon
-            SubscriptionPrimaryAction.Manage -> SettingsFeedback.SubscriptionManageComingSoon
+        if (_uiState.value.isLoading) return
+        when (_uiState.value.subscriptionPrimaryAction) {
+            SubscriptionPrimaryAction.Subscribe -> onSubscribeClicked()
+            SubscriptionPrimaryAction.Manage -> {
+                _uiState.update { it.copy(feedback = SettingsFeedback.SubscriptionManageComingSoon) }
+            }
         }
-        _uiState.update { it.copy(feedback = feedback) }
+    }
+
+    fun onSubscribeClicked(plan: SubscriptionPlanSelection = SubscriptionPlanSelection.Monthly) {
+        if (_uiState.value.isLoading) return
+        scope.launch {
+            _uiState.update { it.copy(isLoading = true, error = null) }
+            _uiEffects.emit(SettingsUiEffect.LaunchSubscriptionPurchase(plan))
+        }
+    }
+
+    fun onSubscriptionPurchaseCompleted(outcome: SubscriptionPurchaseOutcome) {
+        when (outcome) {
+            SubscriptionPurchaseOutcome.Success -> {
+                scope.launch {
+                    runCatching { getSubscriptionStatus() }
+                        .onSuccess { subscriptionStatus ->
+                            _uiState.update {
+                                it.copyWithSubscription(subscriptionStatus).copy(isLoading = false, error = null)
+                            }
+                        }
+                        .onFailure { error ->
+                            _uiState.update { it.copy(isLoading = false, error = error.message) }
+                        }
+                }
+            }
+
+            SubscriptionPurchaseOutcome.Cancelled -> {
+                _uiState.update { it.copy(isLoading = false) }
+            }
+
+            SubscriptionPurchaseOutcome.Unsupported -> {
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        feedback = SettingsFeedback.SubscriptionSubscribeComingSoon,
+                    )
+                }
+            }
+
+            SubscriptionPurchaseOutcome.Failed -> {
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        feedback = SettingsFeedback.SubscriptionPurchaseFailed,
+                    )
+                }
+            }
+        }
     }
 
     fun onRestorePurchasesClicked() {

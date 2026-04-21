@@ -1,14 +1,19 @@
 package com.agc.bwitch.data.settings.billing.googleplay
 
+import android.app.Activity
 import android.content.Context
 import com.agc.bwitch.data.settings.billing.SubscriptionBillingDataSource
 import com.agc.bwitch.domain.settings.SubscriptionStatus
 import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingClientStateListener
 import com.android.billingclient.api.BillingResult
+import com.android.billingclient.api.BillingFlowParams
 import com.android.billingclient.api.PendingPurchasesParams
 import com.android.billingclient.api.Purchase
+import com.android.billingclient.api.QueryProductDetailsParams
 import com.android.billingclient.api.QueryPurchasesParams
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -28,16 +33,98 @@ class GooglePlaySubscriptionBillingDataSource(
                 .enableOneTimeProducts()
                 .build(),
         )
-        .setListener { _, _ ->
-            // No-op en esta iteración: solo hacemos consulta/restauración pasiva.
+        .setListener { result, purchases ->
+            val deferred = purchaseFlowResult
+            if (deferred == null || deferred.isCompleted) return@setListener
+
+            val hasRelevantPurchasedSubscription = purchases
+                .orEmpty()
+                .any { purchase ->
+                    purchase.purchaseState == Purchase.PurchaseState.PURCHASED &&
+                        purchase.products.any { productId ->
+                            productId in GooglePlayBillingSubscriptionProducts.knownProducts
+                        }
+                }
+
+            when {
+                result.responseCode == BillingClient.BillingResponseCode.OK && hasRelevantPurchasedSubscription ->
+                    deferred.complete(Result.success(Unit))
+                result.responseCode == BillingClient.BillingResponseCode.USER_CANCELED ->
+                    deferred.complete(Result.failure(PurchaseFlowCancelledException))
+                else -> deferred.complete(
+                    Result.failure(
+                        GooglePlayBillingException(
+                            phase = "purchase",
+                            responseCode = result.responseCode,
+                            debugMessage = result.debugMessage,
+                        ),
+                    ),
+                )
+            }
         }
         .build()
+    private var purchaseFlowResult: CompletableDeferred<Result<Unit>>? = null
 
     override suspend fun querySubscriptionStatus(): SubscriptionStatus =
         queryStatusWithConnection()
 
     override suspend fun restoreSubscriptionStatus(): SubscriptionStatus =
         queryStatusWithConnection()
+
+    suspend fun launchPurchaseFlow(
+        activity: Activity,
+        productId: String,
+    ): Result<Unit> {
+        val deferred = connectionMutex.withLock {
+            ensureReadyConnection()
+
+            val productDetails = querySubscriptionProductDetails()
+                .firstOrNull { it.productId == productId }
+                ?: return Result.failure(
+                    GooglePlayBillingException(
+                        phase = "queryProductDetailsMissing",
+                        responseCode = BillingClient.BillingResponseCode.ITEM_UNAVAILABLE,
+                        debugMessage = "Configured product not returned by Play Billing",
+                    ),
+                )
+            val offerToken = productDetails.subscriptionOfferDetails
+                ?.firstOrNull()
+                ?.offerToken
+                ?: return Result.failure(
+                    GooglePlayBillingException(
+                        phase = "queryProductDetailsMissingOffer",
+                        responseCode = BillingClient.BillingResponseCode.ITEM_UNAVAILABLE,
+                        debugMessage = "No subscription offer token available for product",
+                    ),
+                )
+
+            val productParams = BillingFlowParams.ProductDetailsParams.newBuilder()
+                .setProductDetails(productDetails)
+                .setOfferToken(offerToken)
+                .build()
+            val flowParams = BillingFlowParams.newBuilder()
+                .setProductDetailsParamsList(listOf(productParams))
+                .build()
+
+            val purchaseDeferred = CompletableDeferred<Result<Unit>>()
+            purchaseFlowResult = purchaseDeferred
+            purchaseDeferred.invokeOnCompletion { purchaseFlowResult = null }
+            val launchResult = billingClient.launchBillingFlow(activity, flowParams)
+            if (launchResult.responseCode != BillingClient.BillingResponseCode.OK) {
+                purchaseFlowResult = null
+                return Result.failure(
+                    GooglePlayBillingException(
+                        phase = "launchBillingFlow",
+                        responseCode = launchResult.responseCode,
+                        debugMessage = launchResult.debugMessage,
+                    ),
+                )
+            }
+            purchaseDeferred
+        }
+
+        return deferred.await()
+    }
 
     private suspend fun queryStatusWithConnection(): SubscriptionStatus = connectionMutex.withLock {
         ensureReadyConnection()
@@ -95,6 +182,50 @@ class GooglePlaySubscriptionBillingDataSource(
             }
         }
 
+    private suspend fun querySubscriptionProductDetails() =
+        suspendCancellableCoroutine<List<com.android.billingclient.api.ProductDetails>> { continuation ->
+            val products = GooglePlayBillingSubscriptionProducts.knownProducts.map { productId ->
+                QueryProductDetailsParams.Product.newBuilder()
+                    .setProductId(productId)
+                    .setProductType(BillingClient.ProductType.SUBS)
+                    .build()
+            }
+            val params = QueryProductDetailsParams.newBuilder()
+                .setProductList(products)
+                .build()
+
+            billingClient.queryProductDetailsAsync(params) { result, productDetailsList ->
+                if (continuation.isCompleted) return@queryProductDetailsAsync
+                if (result.responseCode != BillingClient.BillingResponseCode.OK) {
+                    continuation.resumeWith(
+                        Result.failure(
+                            GooglePlayBillingException(
+                                phase = "queryProductDetails",
+                                responseCode = result.responseCode,
+                                debugMessage = result.debugMessage,
+                            ),
+                        ),
+                    )
+                    return@queryProductDetailsAsync
+                }
+
+                if (productDetailsList.isEmpty()) {
+                    continuation.resumeWith(
+                        Result.failure(
+                            GooglePlayBillingException(
+                                phase = "queryProductDetailsEmpty",
+                                responseCode = BillingClient.BillingResponseCode.ITEM_UNAVAILABLE,
+                                debugMessage = "No ProductDetails found for configured subscriptions",
+                            ),
+                        ),
+                    )
+                    return@queryProductDetailsAsync
+                }
+
+                continuation.resume(productDetailsList)
+            }
+        }
+
     private fun disconnectedResult(): BillingResult = BillingResult.newBuilder()
         .setResponseCode(BillingClient.BillingResponseCode.SERVICE_DISCONNECTED)
         .setDebugMessage("Billing service disconnected")
@@ -108,6 +239,8 @@ internal class GooglePlayBillingException(
 ) : IllegalStateException(
     "Play Billing $phase failed (code=$responseCode): $debugMessage",
 )
+
+private object PurchaseFlowCancelledException : CancellationException("Purchase flow cancelled by user")
 
 private fun List<Purchase>.toSubscriptionStatus(): SubscriptionStatus {
     val activePurchases = this.filter { purchase ->
