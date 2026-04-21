@@ -95,6 +95,19 @@ fun TarotScreen(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+                Text(
+                    text = appStrings.profile.moonCreditsValueFormat.replaceFirst("%d", "${state.moonBalance}"),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
+
+            state.insufficientMoonsMessage?.let {
+                Text(
+                    text = strings.insufficientMoonsForExtraReading,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
             }
 
             when (state.revealPhase) {

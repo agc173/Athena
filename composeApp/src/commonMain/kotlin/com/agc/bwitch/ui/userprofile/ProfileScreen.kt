@@ -78,7 +78,7 @@ fun ProfileScreen(
     val zodiacLabel = zodiacSign?.let { "${it.symbol()} ${it.localizedLabel(strings)}" } ?: "✧ ${profileStrings.pendingSign}"
     val avatarUrl = profile?.photoUrl?.takeIf { it.startsWith("http://") || it.startsWith("https://") }
     val profileDescription: String? = null
-    val moonCredits: Int? = null
+    val moonCredits = state.moonBalance
     val habitsProgress = state.habitsProgress
     val completedBadges = completedHabitBadgesForCycles(habitsProgress.completedCycles)
 
@@ -165,7 +165,7 @@ fun ProfileScreen(
                 ) {
                     Text(profileStrings.moonCreditsTitle, style = MaterialTheme.typography.labelMedium, color = extras.textSecondary)
                     Text(
-                        text = profileStrings.moonCreditsValueFormat.replaceFirst("%d", "${moonCredits ?: 0}"),
+                        text = profileStrings.moonCreditsValueFormat.replaceFirst("%d", "$moonCredits"),
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.primary,
                     )

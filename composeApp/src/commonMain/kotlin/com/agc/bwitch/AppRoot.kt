@@ -70,6 +70,7 @@ import com.agc.bwitch.ui.rituals.RitualDetailScreen
 import com.agc.bwitch.ui.rituals.RitualsCategoryScreen
 import com.agc.bwitch.ui.rituals.RitualsListScreen
 import com.agc.bwitch.ui.rituals.RitualsPlaceholderScreen
+import com.agc.bwitch.ui.store.MoonStoreScreen
 import com.agc.bwitch.ui.tarot.TarotHomeScreen
 import com.agc.bwitch.ui.tarot.TarotScreen
 import com.agc.bwitch.ui.userprofile.ProfileScreen
@@ -205,7 +206,10 @@ fun AppRoot() {
                 onEditProfile = { navigator.navigate(Destination.Settings) },
                 onDiscoverEssence = { navigator.navigate(Destination.Astrology) },
                 onOpenHabits = { navigator.navigate(Destination.Habits) },
+                onOpenStore = { navigator.navigate(Destination.MoonStore) },
             )
+
+            Destination.MoonStore -> MoonStoreScreen(contentPadding = padding)
 
             Destination.Settings -> SettingsScreen(contentPadding = padding)
 
@@ -276,6 +280,7 @@ private fun destinationTitle(
         Destination.BirthChart -> strings.birthChart
         Destination.Synastry -> strings.synastry
         Destination.UserProfile -> strings.profile
+        Destination.MoonStore -> strings.profile
         Destination.Settings -> strings.settings
         Destination.Oracle -> strings.oracle
         Destination.OracleDebug -> strings.oracleDebug
@@ -352,6 +357,7 @@ private data class MainTab(
             rootDestination = Destination.UserProfile,
             matches = { destination ->
                 destination == Destination.UserProfile || destination == Destination.Settings
+                    || destination == Destination.MoonStore
             },
         )
         val astrology = MainTab(

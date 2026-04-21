@@ -4,6 +4,12 @@ import com.agc.bwitch.domain.shared.ApiResult
 import com.agc.bwitch.domain.localization.AppLanguage
 import com.agc.bwitch.domain.localization.ObserveCurrentLanguageUseCase
 import com.agc.bwitch.domain.localization.ResolveCurrentLanguageUseCase
+import com.agc.bwitch.domain.moons.AddMoonsUseCase
+import com.agc.bwitch.domain.moons.MoonUnlockCostCatalog
+import com.agc.bwitch.domain.moons.MoonUnlockFeature
+import com.agc.bwitch.domain.moons.ObserveMoonBalanceUseCase
+import com.agc.bwitch.domain.moons.SpendMoonsResult
+import com.agc.bwitch.domain.moons.SpendMoonsUseCase
 import com.agc.bwitch.domain.tarot.TarotDrawResponse
 import com.agc.bwitch.domain.tarot.TarotRepository
 import com.agc.bwitch.domain.tarot.TarotRequestType
@@ -46,12 +52,18 @@ data class TarotUiState(
     val overlayCardIndex: Int? = null,
     val overlayCardRevealed: Boolean = false,
     val openedMiniCardIndex: Int? = null,
+    val moonBalance: Int = 0,
+    val extraReadingCost: Int = MoonUnlockCostCatalog.costFor(MoonUnlockFeature.TarotExtraReading),
+    val insufficientMoonsMessage: String? = null,
 )
 
 class TarotViewModel(
     private val tarotRepository: TarotRepository,
     private val resolveCurrentLanguageUseCase: ResolveCurrentLanguageUseCase,
     private val observeCurrentLanguageUseCase: ObserveCurrentLanguageUseCase,
+    private val observeMoonBalanceUseCase: ObserveMoonBalanceUseCase,
+    private val spendMoonsUseCase: SpendMoonsUseCase,
+    private val addMoonsUseCase: AddMoonsUseCase,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var shuffleDelayJob: Job? = null
@@ -78,6 +90,12 @@ class TarotViewModel(
                     currentLanguageCode.value = languageCode
                 }
         }
+
+        scope.launch {
+            observeMoonBalanceUseCase().collectLatest { balance ->
+                _uiState.update { it.copy(moonBalance = balance.amount) }
+            }
+        }
     }
 
     fun newRequest(type: TarotRequestType) {
@@ -100,9 +118,40 @@ class TarotViewModel(
                 overlayCardIndex = null,
                 overlayCardRevealed = false,
                 openedMiniCardIndex = null,
+                insufficientMoonsMessage = null,
             )
         }
-        draw(requestId, type)
+        scope.launch {
+            // Regla de negocio: la tirada extra se cobra al iniciar request (no al barajar),
+            // porque aquí ya se dispara la llamada costosa al backend/LLM.
+            val canContinue = if (type == TarotRequestType.TAROT_3) {
+                when (val spendResult = spendMoonsUseCase(_uiState.value.extraReadingCost)) {
+                    is SpendMoonsResult.Success -> {
+                        _uiState.update { it.copy(moonBalance = spendResult.updatedBalance.amount) }
+                        true
+                    }
+
+                    is SpendMoonsResult.InsufficientBalance -> {
+                        _uiState.update {
+                            it.copy(
+                                requestId = null,
+                                revealPhase = TarotRevealPhase.IDLE,
+                                isLoading = false,
+                                insufficientMoonsMessage = TAROT_EXTRA_READING_NOT_ENOUGH_MOONS_KEY,
+                                moonBalance = spendResult.currentBalance.amount,
+                            )
+                        }
+                        false
+                    }
+                }
+            } else {
+                true
+            }
+
+            if (canContinue) {
+                draw(requestId, type)
+            }
+        }
     }
 
     fun startShuffle() {
@@ -162,28 +211,7 @@ class TarotViewModel(
     }
 
     fun retry() {
-        shuffleDelayJob?.cancel()
-        shuffleMinDurationElapsed = false
-        shuffleRequestId = null
-
-        val currentState = _uiState.value
-        val requestId = generateRequestId()
-        _uiState.update {
-            it.copy(
-                requestId = requestId,
-                revealPhase = TarotRevealPhase.WAITING_TO_SHUFFLE,
-                revealedCardCount = 0,
-                activeCardIndex = 0,
-                activeCardRevealed = false,
-                overlayVisible = false,
-                overlayCardIndex = null,
-                overlayCardRevealed = false,
-                response = null,
-                error = null,
-                openedMiniCardIndex = null,
-            )
-        }
-        draw(requestId, currentState.selectedType)
+        newRequest(_uiState.value.selectedType)
     }
 
     fun toggleMiniCard(index: Int) {
@@ -289,7 +317,7 @@ class TarotViewModel(
                             overlayCardIndex = null,
                             overlayCardRevealed = false,
                             openedMiniCardIndex = null,
-                            error = result.error.message.orEmpty(),
+                            error = TAROT_DRAW_ERROR_KEY,
                         )
                     }
                 }
@@ -300,7 +328,17 @@ class TarotViewModel(
     @OptIn(ExperimentalUuidApi::class)
     private fun generateRequestId(): String = Uuid.random().toString()
 
+    fun grantOneMoonFromFutureRewardedAd() {
+        scope.launch {
+            val balance = addMoonsUseCase(1)
+            _uiState.update { it.copy(moonBalance = balance.amount) }
+        }
+    }
+
     private companion object {
         const val MIN_SHUFFLE_DURATION_MS = 1200L
     }
 }
+
+const val TAROT_EXTRA_READING_NOT_ENOUGH_MOONS_KEY = "tarot.error.not_enough_moons"
+const val TAROT_DRAW_ERROR_KEY = "tarot.error.draw_failed"

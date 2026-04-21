@@ -8,17 +8,23 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.agc.bwitch.domain.tarot.TarotRequestType
 import com.agc.bwitch.localization.appStrings
+import com.agc.bwitch.presentation.tarot.TarotViewModel
+import org.koin.compose.koinInject
 
 @Composable
 fun TarotHomeScreen(
     contentPadding: PaddingValues,
     onSelectRequestType: (TarotRequestType) -> Unit,
+    viewModel: TarotViewModel = koinInject(),
 ) {
     val strings = appStrings.tarot
+    val state by viewModel.uiState.collectAsState()
 
     Column(
         modifier = Modifier
@@ -40,8 +46,14 @@ fun TarotHomeScreen(
 
         TarotOptionCard(
             title = strings.homeThreeCardTitle,
-            subtitle = strings.homeThreeCardSubtitle,
+            subtitle = "${strings.homeThreeCardSubtitle} · ${state.extraReadingCost} ${appStrings.profile.moonCreditsTitle}",
             onClick = { onSelectRequestType(TarotRequestType.TAROT_3) },
+        )
+
+        Text(
+            text = appStrings.profile.moonCreditsValueFormat.replaceFirst("%d", "${state.moonBalance}"),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
         )
     }
 }
