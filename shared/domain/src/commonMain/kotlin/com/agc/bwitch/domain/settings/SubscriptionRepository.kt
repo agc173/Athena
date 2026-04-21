@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface SubscriptionRepository {
     suspend fun getStatus(): SubscriptionStatus
+    suspend fun getCatalog(): List<SubscriptionPlan>
     fun observeStatus(): Flow<SubscriptionStatus>
     suspend fun restorePurchases(): RestorePurchasesResult
 }

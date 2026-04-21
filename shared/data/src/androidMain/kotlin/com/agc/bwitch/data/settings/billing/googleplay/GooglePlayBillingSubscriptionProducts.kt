@@ -1,9 +1,10 @@
 package com.agc.bwitch.data.settings.billing.googleplay
 
-object GooglePlayBillingSubscriptionProducts {
-    // TODO(product-catalog): reemplazar por los IDs reales de Play Console en el próximo corte.
-    const val MONTHLY = "bwitch_subscription_monthly"
-    const val ANNUAL = "bwitch_subscription_annual"
+import com.agc.bwitch.domain.settings.KnownSubscriptionProducts
 
-    val knownProducts: Set<String> = setOf(MONTHLY, ANNUAL)
+object GooglePlayBillingSubscriptionProducts {
+    const val MONTHLY = KnownSubscriptionProducts.MONTHLY
+    const val ANNUAL = KnownSubscriptionProducts.ANNUAL
+
+    val knownProducts: Set<String> = KnownSubscriptionProducts.all
 }

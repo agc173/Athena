@@ -3,13 +3,17 @@ package com.agc.bwitch.presentation.userprofile
 import com.agc.bwitch.domain.localization.AppLanguage
 import com.agc.bwitch.domain.localization.ObserveCurrentLanguageUseCase
 import com.agc.bwitch.domain.settings.GetNotificationSettingsUseCase
+import com.agc.bwitch.domain.settings.GetSubscriptionCatalogUseCase
 import com.agc.bwitch.domain.settings.GetSubscriptionStatusUseCase
+import com.agc.bwitch.domain.settings.KnownSubscriptionProducts
 import com.agc.bwitch.domain.settings.NotificationSettings
 import com.agc.bwitch.domain.settings.ObserveNotificationSettingsUseCase
 import com.agc.bwitch.domain.settings.ObserveSubscriptionStatusUseCase
 import com.agc.bwitch.domain.settings.RestorePurchasesResult
 import com.agc.bwitch.domain.settings.RestorePurchasesUseCase
 import com.agc.bwitch.domain.settings.SubscriptionStatus
+import com.agc.bwitch.domain.settings.SubscriptionPlanType
+import com.agc.bwitch.domain.settings.SubscriptionPlan
 import com.agc.bwitch.domain.settings.UpdateNotificationSettingsUseCase
 import com.agc.bwitch.domain.settings.isActive
 import com.agc.bwitch.domain.userprofile.GetUserProfileUseCase
@@ -41,6 +45,7 @@ data class SettingsUiState(
     val habitsEnabled: Boolean = false,
     val appVersion: String = "",
     val subscriptionStatus: SubscriptionStatus = SubscriptionStatus.Unknown,
+    val subscriptionCatalog: List<SubscriptionPlanUi> = emptyList(),
     val subscriptionPrimaryAction: SubscriptionPrimaryAction = SubscriptionPrimaryAction.Subscribe,
     val isDeleteAccountConfirmationVisible: Boolean = false,
     val feedback: SettingsFeedback? = null,
@@ -61,6 +66,13 @@ enum class SettingsFeedback {
     DeleteAccountComingSoon,
 }
 
+data class SubscriptionPlanUi(
+    val productId: String,
+    val title: String,
+    val formattedPrice: String,
+    val type: SubscriptionPlanSelection?,
+)
+
 enum class SubscriptionPlanSelection {
     Monthly,
     Annual,
@@ -70,6 +82,14 @@ sealed interface SettingsUiEffect {
     data class LaunchSubscriptionPurchase(
         val plan: SubscriptionPlanSelection,
     ) : SettingsUiEffect
+
+    data class LaunchSubscriptionPurchaseWithProduct(
+        val productId: String,
+    ) : SettingsUiEffect
+
+    data class LaunchManageSubscription(
+        val productId: String?,
+    ) : SettingsUiEffect
 }
 
 sealed interface SubscriptionPurchaseOutcome {
@@ -77,6 +97,12 @@ sealed interface SubscriptionPurchaseOutcome {
     data object Cancelled : SubscriptionPurchaseOutcome
     data object Unsupported : SubscriptionPurchaseOutcome
     data object Failed : SubscriptionPurchaseOutcome
+}
+
+sealed interface SubscriptionManagementOutcome {
+    data object Opened : SubscriptionManagementOutcome
+    data object Unsupported : SubscriptionManagementOutcome
+    data object Failed : SubscriptionManagementOutcome
 }
 
 class SettingsViewModel(
@@ -89,6 +115,7 @@ class SettingsViewModel(
     private val updateNotificationSettings: UpdateNotificationSettingsUseCase,
     private val observeSubscriptionStatus: ObserveSubscriptionStatusUseCase,
     private val getSubscriptionStatus: GetSubscriptionStatusUseCase,
+    private val getSubscriptionCatalog: GetSubscriptionCatalogUseCase,
     private val restorePurchases: RestorePurchasesUseCase,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -160,6 +187,16 @@ class SettingsViewModel(
         }
 
         scope.launch {
+            runCatching { getSubscriptionCatalog() }
+                .onSuccess { plans ->
+                    _uiState.update {
+                        it.copy(subscriptionCatalog = plans.map { plan -> plan.toUiPlan() })
+                    }
+                }
+                .onFailure { error -> _uiState.update { it.copy(error = error.message) } }
+        }
+
+        scope.launch {
             observeSubscriptionStatus()
                 .catch { error -> _uiState.update { it.copy(error = error.message) } }
                 .collect { subscriptionStatus ->
@@ -197,7 +234,13 @@ class SettingsViewModel(
         when (_uiState.value.subscriptionPrimaryAction) {
             SubscriptionPrimaryAction.Subscribe -> onSubscribeClicked()
             SubscriptionPrimaryAction.Manage -> {
-                _uiState.update { it.copy(feedback = SettingsFeedback.SubscriptionManageComingSoon) }
+                scope.launch {
+                    _uiEffects.emit(
+                        SettingsUiEffect.LaunchManageSubscription(
+                            productId = _uiState.value.subscriptionStatus.toKnownProductIdOrNull(),
+                        ),
+                    )
+                }
             }
         }
     }
@@ -244,6 +287,30 @@ class SettingsViewModel(
                     it.copy(
                         isLoading = false,
                         feedback = SettingsFeedback.SubscriptionPurchaseFailed,
+                    )
+                }
+            }
+        }
+    }
+
+    fun onCatalogSubscriptionSelected(productId: String) {
+        if (_uiState.value.isLoading) return
+        scope.launch {
+            _uiState.update { it.copy(isLoading = true, error = null) }
+            _uiEffects.emit(SettingsUiEffect.LaunchSubscriptionPurchaseWithProduct(productId))
+        }
+    }
+
+    fun onSubscriptionManagementCompleted(outcome: SubscriptionManagementOutcome) {
+        when (outcome) {
+            SubscriptionManagementOutcome.Opened -> _uiState.update { it.copy(isLoading = false) }
+            SubscriptionManagementOutcome.Unsupported,
+            SubscriptionManagementOutcome.Failed,
+            -> {
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        feedback = SettingsFeedback.SubscriptionManageComingSoon,
                     )
                 }
             }
@@ -322,3 +389,22 @@ private fun SettingsUiState.copyWithSubscription(subscriptionStatus: Subscriptio
         SubscriptionPrimaryAction.Subscribe
     },
 )
+
+private fun SubscriptionPlan.toUiPlan(): SubscriptionPlanUi = SubscriptionPlanUi(
+    productId = productId,
+    title = title,
+    formattedPrice = formattedPrice,
+    type = when (type) {
+        SubscriptionPlanType.Monthly -> SubscriptionPlanSelection.Monthly
+        SubscriptionPlanType.Annual -> SubscriptionPlanSelection.Annual
+        SubscriptionPlanType.Unknown -> null
+    },
+)
+
+private fun SubscriptionStatus.toKnownProductIdOrNull(): String? = when (this) {
+    SubscriptionStatus.ActiveMonthly -> KnownSubscriptionProducts.MONTHLY
+    SubscriptionStatus.ActiveAnnual -> KnownSubscriptionProducts.ANNUAL
+    SubscriptionStatus.Unknown,
+    SubscriptionStatus.Inactive,
+    -> null
+}
