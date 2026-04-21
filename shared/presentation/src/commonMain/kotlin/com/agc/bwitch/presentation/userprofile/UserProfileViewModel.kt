@@ -3,6 +3,7 @@ package com.agc.bwitch.presentation.userprofile
 import com.agc.bwitch.domain.astrology.birthchart.BirthEssenceProfile
 import com.agc.bwitch.domain.astrology.birthchart.ObserveBirthEssenceUseCase
 import com.agc.bwitch.domain.astrology.horoscope.DeriveZodiacSignUseCase
+import com.agc.bwitch.domain.moons.ObserveMoonBalanceUseCase
 import com.agc.bwitch.domain.rituals.DailyRitualRepository
 import com.agc.bwitch.domain.rituals.HabitBadgeType
 import com.agc.bwitch.domain.rituals.HabitsRepository
@@ -44,6 +45,7 @@ data class UserProfileUiState(
     val isRefreshing: Boolean = false,
     val profile: UserProfile? = null,
     val savedBirthEssence: BirthEssenceProfile? = null,
+    val moonBalance: Int = 0,
     val habitsProgress: ProfileHabitsProgressUi = ProfileHabitsProgressUi(),
     val error: String? = null
 ) {
@@ -68,6 +70,7 @@ class UserProfileViewModel(
     private val pull: PullUserProfileUseCase,
     private val deriveZodiacSign: DeriveZodiacSignUseCase,
     private val observeBirthEssence: ObserveBirthEssenceUseCase,
+    private val observeMoonBalanceUseCase: ObserveMoonBalanceUseCase,
     private val habitsRepository: HabitsRepository,
     private val dailyRitualRepository: DailyRitualRepository,
 ) {
@@ -94,6 +97,14 @@ class UserProfileViewModel(
                 }
                 .collectLatest { essence ->
                     _uiState.update { it.copy(savedBirthEssence = essence) }
+                }
+        }
+
+        scope.launch {
+            observeMoonBalanceUseCase()
+                .catch { }
+                .collectLatest { moonBalance ->
+                    _uiState.update { it.copy(moonBalance = moonBalance.amount) }
                 }
         }
 

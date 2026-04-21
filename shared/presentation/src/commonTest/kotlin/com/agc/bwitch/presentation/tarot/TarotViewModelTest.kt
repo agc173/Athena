@@ -4,6 +4,12 @@ import com.agc.bwitch.domain.localization.AppLanguage
 import com.agc.bwitch.domain.localization.AppLanguageRepository
 import com.agc.bwitch.domain.localization.ObserveCurrentLanguageUseCase
 import com.agc.bwitch.domain.localization.ResolveCurrentLanguageUseCase
+import com.agc.bwitch.domain.moons.AddMoonsUseCase
+import com.agc.bwitch.domain.moons.MoonBalance
+import com.agc.bwitch.domain.moons.MoonRepository
+import com.agc.bwitch.domain.moons.ObserveMoonBalanceUseCase
+import com.agc.bwitch.domain.moons.SpendMoonsResult
+import com.agc.bwitch.domain.moons.SpendMoonsUseCase
 import com.agc.bwitch.domain.shared.ApiError
 import com.agc.bwitch.domain.shared.ApiResult
 import com.agc.bwitch.domain.tarot.TarotDrawResponse
@@ -31,10 +37,14 @@ class TarotViewModelTest {
         try {
             val repo = FakeTarotRepository()
             val languageRepo = FakeLanguageRepository(MutableStateFlow(AppLanguage.German))
+            val moonRepository = FakeMoonRepository()
             val viewModel = TarotViewModel(
                 tarotRepository = repo,
                 resolveCurrentLanguageUseCase = ResolveCurrentLanguageUseCase(languageRepo),
                 observeCurrentLanguageUseCase = ObserveCurrentLanguageUseCase(languageRepo),
+                observeMoonBalanceUseCase = ObserveMoonBalanceUseCase(moonRepository),
+                spendMoonsUseCase = SpendMoonsUseCase(moonRepository),
+                addMoonsUseCase = AddMoonsUseCase(moonRepository),
             )
 
             viewModel.newRequest(TarotRequestType.TAROT_1)
@@ -44,6 +54,54 @@ class TarotViewModelTest {
         } finally {
             Dispatchers.resetMain()
         }
+    }
+
+    @Test
+    fun `retry for tarot_3 reuses newRequest flow and spends moons again`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val repo = FakeTarotRepository()
+            val languageRepo = FakeLanguageRepository(MutableStateFlow(AppLanguage.Spanish))
+            val moonRepository = FakeMoonRepository(initialBalance = 10)
+            val viewModel = TarotViewModel(
+                tarotRepository = repo,
+                resolveCurrentLanguageUseCase = ResolveCurrentLanguageUseCase(languageRepo),
+                observeCurrentLanguageUseCase = ObserveCurrentLanguageUseCase(languageRepo),
+                observeMoonBalanceUseCase = ObserveMoonBalanceUseCase(moonRepository),
+                spendMoonsUseCase = SpendMoonsUseCase(moonRepository),
+                addMoonsUseCase = AddMoonsUseCase(moonRepository),
+            )
+
+            viewModel.newRequest(TarotRequestType.TAROT_3)
+            advanceUntilIdle()
+            viewModel.retry()
+            advanceUntilIdle()
+
+            assertEquals(2, moonRepository.spendCalls)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    private class FakeMoonRepository(initialBalance: Int = 0) : MoonRepository {
+        private val state = MutableStateFlow(MoonBalance(initialBalance))
+        var spendCalls: Int = 0
+        override suspend fun getBalance(): MoonBalance = state.value
+        override fun observeBalance(): Flow<MoonBalance> = state
+        override suspend fun addMoons(amount: Int): MoonBalance = state.value
+        override suspend fun spendMoons(amount: Int): SpendMoonsResult {
+            spendCalls += 1
+            val current = state.value
+            return if (current.amount < amount) {
+                SpendMoonsResult.InsufficientBalance(currentBalance = current, required = amount)
+            } else {
+                val updated = MoonBalance(current.amount - amount)
+                state.value = updated
+                SpendMoonsResult.Success(updated)
+            }
+        }
+        override suspend fun hasEnough(amount: Int): Boolean = true
     }
 
     private class FakeTarotRepository : TarotRepository {

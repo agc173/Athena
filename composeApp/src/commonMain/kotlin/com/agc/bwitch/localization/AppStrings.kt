@@ -423,6 +423,7 @@ data class TarotStrings(
     val errorPrefix: String,
     val unknownErrorFallback: String,
     val retryCta: String,
+    val insufficientMoonsForExtraReading: String = "No tienes suficientes Lunas para esta tirada.",
     val overlayOrientationReversed: String,
     val overlayOrientationUpright: String,
     val overlayOrientationUnknown: String,

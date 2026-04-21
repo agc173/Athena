@@ -13,6 +13,12 @@ import com.agc.bwitch.domain.astrology.synastry.SynastryReadingGenerator
 import com.agc.bwitch.domain.localization.ObserveCurrentLanguageUseCase
 import com.agc.bwitch.domain.localization.ResolveCurrentLanguageUseCase
 import com.agc.bwitch.domain.localization.SetCurrentLanguageUseCase
+import com.agc.bwitch.domain.moons.AddMoonsUseCase
+import com.agc.bwitch.domain.moons.GetMoonBalanceUseCase
+import com.agc.bwitch.domain.moons.GetMoonPacksUseCase
+import com.agc.bwitch.domain.moons.HasEnoughMoonsUseCase
+import com.agc.bwitch.domain.moons.ObserveMoonBalanceUseCase
+import com.agc.bwitch.domain.moons.SpendMoonsUseCase
 import com.agc.bwitch.domain.session.ClearLocalUserDataUseCase
 import com.agc.bwitch.domain.settings.GetNotificationSettingsUseCase
 import com.agc.bwitch.domain.settings.GetSubscriptionCatalogUseCase
@@ -63,6 +69,14 @@ val domainModule: Module = module {
     factory { GetSubscriptionStatusUseCase(get()) }
     factory { GetSubscriptionCatalogUseCase(get()) }
     factory { RestorePurchasesUseCase(get()) }
+
+    // Moons
+    factory { GetMoonBalanceUseCase(get()) }
+    factory { ObserveMoonBalanceUseCase(get()) }
+    factory { AddMoonsUseCase(get()) }
+    factory { SpendMoonsUseCase(get()) }
+    factory { HasEnoughMoonsUseCase(get()) }
+    factory { GetMoonPacksUseCase(get()) }
 
     // Localization
     factory { ObserveCurrentLanguageUseCase(get()) }

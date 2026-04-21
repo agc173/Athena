@@ -8,6 +8,8 @@ import com.agc.bwitch.data.functions.GitLiveFunctionsClient
 import com.agc.bwitch.data.oracle.OracleRepositoryImpl
 import com.agc.bwitch.data.localization.SettingsAppLanguageRepository
 import com.agc.bwitch.data.localization.SystemLanguageCodeProvider
+import com.agc.bwitch.data.moons.MockMoonPackRepository
+import com.agc.bwitch.data.moons.SettingsMoonRepository
 import com.agc.bwitch.data.rituals.LocalRitualCatalogRepository
 import com.agc.bwitch.data.rituals.SettingsDailyRitualRepository
 import com.agc.bwitch.data.rituals.SyncDailyRitualRepository
@@ -28,6 +30,8 @@ import com.agc.bwitch.domain.astrology.horoscope.HoroscopeRepository
 import com.agc.bwitch.domain.auth.AuthRepository
 import com.agc.bwitch.domain.oracle.OracleRepository
 import com.agc.bwitch.domain.localization.AppLanguageRepository
+import com.agc.bwitch.domain.moons.MoonPackRepository
+import com.agc.bwitch.domain.moons.MoonRepository
 import com.agc.bwitch.domain.rituals.DailyRitualRepository
 import com.agc.bwitch.domain.rituals.HabitsRepository
 import com.agc.bwitch.domain.rituals.RitualCatalogRepository
@@ -60,6 +64,8 @@ val dataKoinModule: Module = module {
     single<NotificationSettingsRepository> { SettingsNotificationSettingsRepository(get()) }
     single<SubscriptionBillingDataSource> { UnsupportedSubscriptionBillingDataSource }
     single<SubscriptionRepository> { BillingBackedSubscriptionRepository(get(), get()) }
+    single<MoonRepository> { SettingsMoonRepository(get()) }
+    single<MoonPackRepository> { MockMoonPackRepository() }
 
     /**
      * Auth

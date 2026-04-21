@@ -26,6 +26,7 @@ sealed class Destination(val title: String) {
      * Próximo módulo
      */
     data object UserProfile : Destination("Perfil")
+    data object MoonStore : Destination("Tienda")
 
     data object Settings : Destination("Ajustes")
 
