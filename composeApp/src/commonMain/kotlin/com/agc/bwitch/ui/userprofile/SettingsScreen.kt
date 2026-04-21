@@ -44,11 +44,14 @@ import com.agc.bwitch.platform.getAppVersionLabel
 import com.agc.bwitch.presentation.auth.SessionViewModel
 import com.agc.bwitch.presentation.localization.AppLanguageViewModel
 import com.agc.bwitch.presentation.userprofile.SettingsFeedback
+import com.agc.bwitch.presentation.userprofile.SettingsUiEffect
 import com.agc.bwitch.presentation.userprofile.SettingsViewModel
+import com.agc.bwitch.presentation.userprofile.SubscriptionPlanSelection
 import com.agc.bwitch.presentation.userprofile.SubscriptionPrimaryAction
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
 import com.agc.bwitch.ui.common.designsystem.BWitchScreen
 import com.agc.bwitch.ui.common.designsystem.BWitchSectionHeader
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
@@ -67,8 +70,10 @@ fun SettingsScreen(contentPadding: PaddingValues) {
     val scope = rememberCoroutineScope()
     val appVersionLabel = remember { getAppVersionLabel() }
     val uriHandler = LocalUriHandler.current
+    val purchaseLauncher = rememberSubscriptionPurchaseLauncher()
 
     var showLanguageDialog by rememberSaveable { mutableStateOf(false) }
+    var showSubscriptionPlanDialog by rememberSaveable { mutableStateOf(false) }
 
     val username = settingsState.username?.takeUnless { it.isBlank() } ?: strings.notAvailable
     val email = settingsState.email?.takeUnless { it.isBlank() } ?: strings.notAvailable
@@ -88,12 +93,24 @@ fun SettingsScreen(contentPadding: PaddingValues) {
         val message = when (feedback) {
             SettingsFeedback.SubscriptionSubscribeComingSoon -> strings.subscriptionSubscribeComingSoon
             SettingsFeedback.SubscriptionManageComingSoon -> strings.subscriptionManageComingSoon
+            SettingsFeedback.SubscriptionPurchaseFailed -> strings.subscriptionPurchaseFailed
             SettingsFeedback.RestorePurchasesSuccess -> strings.subscriptionRestoreSuccess
             SettingsFeedback.RestorePurchasesNoPurchases -> strings.subscriptionRestoreNoPurchases
             SettingsFeedback.DeleteAccountComingSoon -> strings.deleteAccountComingSoonFeedback
         }
         snackbarHostState.showSnackbar(message)
         settingsVm.onFeedbackConsumed()
+    }
+
+    LaunchedEffect(Unit) {
+        settingsVm.uiEffects.collect { effect ->
+            when (effect) {
+                is SettingsUiEffect.LaunchSubscriptionPurchase -> {
+                    val outcome = purchaseLauncher.launch(effect.plan)
+                    settingsVm.onSubscriptionPurchaseCompleted(outcome)
+                }
+            }
+        }
     }
 
     if (showLanguageDialog) {
@@ -107,6 +124,24 @@ fun SettingsScreen(contentPadding: PaddingValues) {
             onLanguageSelected = { language ->
                 appLanguageVm.onLanguageSelected(language)
                 showLanguageDialog = false
+            },
+        )
+    }
+
+    if (showSubscriptionPlanDialog) {
+        SubscriptionPlanDialog(
+            title = strings.subscriptionActionSubscribe,
+            closeLabel = strings.close,
+            monthlyLabel = strings.subscriptionPlanMonthlyLabel,
+            annualLabel = strings.subscriptionPlanAnnualLabel,
+            onDismiss = { showSubscriptionPlanDialog = false },
+            onMonthlySelected = {
+                showSubscriptionPlanDialog = false
+                settingsVm.onSubscribeClicked(SubscriptionPlanSelection.Monthly)
+            },
+            onAnnualSelected = {
+                showSubscriptionPlanDialog = false
+                settingsVm.onSubscribeClicked(SubscriptionPlanSelection.Annual)
             },
         )
     }
@@ -190,7 +225,13 @@ fun SettingsScreen(contentPadding: PaddingValues) {
                     SubscriptionPrimaryAction.Subscribe -> strings.subscriptionActionSubscribe
                     SubscriptionPrimaryAction.Manage -> strings.subscriptionActionManage
                 },
-                onClick = settingsVm::onSubscriptionPrimaryActionClicked,
+                onClick = {
+                    if (settingsState.subscriptionPrimaryAction == SubscriptionPrimaryAction.Subscribe) {
+                        showSubscriptionPlanDialog = true
+                    } else {
+                        settingsVm.onSubscriptionPrimaryActionClicked()
+                    }
+                },
             )
             SettingsRow(
                 label = strings.restorePurchases,
@@ -317,6 +358,38 @@ private fun LanguageSelectorDialog(
             }
         },
         confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(closeLabel)
+            }
+        },
+    )
+}
+
+@Composable
+private fun SubscriptionPlanDialog(
+    title: String,
+    closeLabel: String,
+    monthlyLabel: String,
+    annualLabel: String,
+    onDismiss: () -> Unit,
+    onMonthlySelected: () -> Unit,
+    onAnnualSelected: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(text = title) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(onClick = onMonthlySelected, modifier = Modifier.fillMaxWidth()) {
+                    Text(text = monthlyLabel)
+                }
+                TextButton(onClick = onAnnualSelected, modifier = Modifier.fillMaxWidth()) {
+                    Text(text = annualLabel)
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text(closeLabel)
             }
