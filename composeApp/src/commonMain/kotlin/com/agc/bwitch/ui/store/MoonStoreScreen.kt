@@ -12,11 +12,13 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.agc.bwitch.localization.appStrings
+import com.agc.bwitch.presentation.economy.EconomyViewModel
 import com.agc.bwitch.presentation.moons.MoonStoreViewModel
 import com.agc.bwitch.presentation.moons.STORE_COMING_SOON_KEY
 import org.koin.compose.koinInject
@@ -25,9 +27,23 @@ import org.koin.compose.koinInject
 fun MoonStoreScreen(
     contentPadding: PaddingValues,
     viewModel: MoonStoreViewModel = koinInject(),
+    economyViewModel: EconomyViewModel = koinInject(),
 ) {
     val strings = appStrings.profile
     val state by viewModel.uiState.collectAsState()
+    val economyState by economyViewModel.uiState.collectAsState()
+
+    val visibleBalance = if (!economyState.isLoading && economyState.error == null) {
+        economyState.balance
+    } else {
+        state.balance
+    }
+
+    LaunchedEffect(economyState.isLoading, economyState.error, economyState.balance) {
+        if (!economyState.isLoading) {
+            println("[MoonStoreScreen] Economy backend balance=${economyState.balance}, error=${economyState.error}")
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -37,7 +53,7 @@ fun MoonStoreScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text(
-            text = strings.moonCreditsValueFormat.replaceFirst("%d", "${state.balance}"),
+            text = strings.moonCreditsValueFormat.replaceFirst("%d", "$visibleBalance"),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.primary,
         )
