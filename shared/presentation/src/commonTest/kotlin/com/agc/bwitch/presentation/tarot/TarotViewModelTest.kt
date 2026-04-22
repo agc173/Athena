@@ -4,6 +4,9 @@ import com.agc.bwitch.domain.localization.AppLanguage
 import com.agc.bwitch.domain.localization.AppLanguageRepository
 import com.agc.bwitch.domain.localization.ObserveCurrentLanguageUseCase
 import com.agc.bwitch.domain.localization.ResolveCurrentLanguageUseCase
+import com.agc.bwitch.domain.economy.EconomyBalance
+import com.agc.bwitch.domain.economy.EconomyRepository
+import com.agc.bwitch.domain.economy.EconomyStatus
 import com.agc.bwitch.domain.moons.AddMoonsUseCase
 import com.agc.bwitch.domain.moons.MoonBalance
 import com.agc.bwitch.domain.moons.MoonRepository
@@ -15,8 +18,10 @@ import com.agc.bwitch.domain.shared.ApiResult
 import com.agc.bwitch.domain.tarot.TarotDrawResponse
 import com.agc.bwitch.domain.tarot.TarotRepository
 import com.agc.bwitch.domain.tarot.TarotRequestType
+import kotlin.collections.ArrayDeque
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -43,8 +48,9 @@ class TarotViewModelTest {
                 resolveCurrentLanguageUseCase = ResolveCurrentLanguageUseCase(languageRepo),
                 observeCurrentLanguageUseCase = ObserveCurrentLanguageUseCase(languageRepo),
                 observeMoonBalanceUseCase = ObserveMoonBalanceUseCase(moonRepository),
-                spendMoonsUseCase = SpendMoonsUseCase(moonRepository),
                 addMoonsUseCase = AddMoonsUseCase(moonRepository),
+                spendMoonsUseCase = SpendMoonsUseCase(moonRepository),
+                economyRepository = FakeEconomyRepository(balance = 0),
             )
 
             viewModel.newRequest(TarotRequestType.TAROT_1)
@@ -57,7 +63,7 @@ class TarotViewModelTest {
     }
 
     @Test
-    fun `retry for tarot_3 reuses newRequest flow and spends moons again`() = runTest {
+    fun `retry for tarot_3 reuses newRequest flow without local upfront spend`() = runTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
         Dispatchers.setMain(dispatcher)
         try {
@@ -69,8 +75,9 @@ class TarotViewModelTest {
                 resolveCurrentLanguageUseCase = ResolveCurrentLanguageUseCase(languageRepo),
                 observeCurrentLanguageUseCase = ObserveCurrentLanguageUseCase(languageRepo),
                 observeMoonBalanceUseCase = ObserveMoonBalanceUseCase(moonRepository),
-                spendMoonsUseCase = SpendMoonsUseCase(moonRepository),
                 addMoonsUseCase = AddMoonsUseCase(moonRepository),
+                spendMoonsUseCase = SpendMoonsUseCase(moonRepository),
+                economyRepository = FakeEconomyRepository(balance = 10),
             )
 
             viewModel.newRequest(TarotRequestType.TAROT_3)
@@ -78,7 +85,83 @@ class TarotViewModelTest {
             viewModel.retry()
             advanceUntilIdle()
 
-            assertEquals(2, moonRepository.spendCalls)
+            assertEquals(0, moonRepository.spendCalls)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun `tarot_3 legacy rewarded proof error falls back to local spend and retries`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val repo = FakeTarotRepository(
+                scriptedResults = listOf(
+                    ApiResult.Err(ApiError.FailedPrecondition("AD_UNLOCK rewardedProof required")),
+                    ApiResult.Ok(
+                        TarotDrawResponse(
+                            requestId = "req-1",
+                            status = "DONE",
+                            cards = emptyList(),
+                            interpretation = "ok",
+                        ),
+                    ),
+                ),
+            )
+            val languageRepo = FakeLanguageRepository(MutableStateFlow(AppLanguage.Spanish))
+            val moonRepository = FakeMoonRepository(initialBalance = 10)
+            val viewModel = TarotViewModel(
+                tarotRepository = repo,
+                resolveCurrentLanguageUseCase = ResolveCurrentLanguageUseCase(languageRepo),
+                observeCurrentLanguageUseCase = ObserveCurrentLanguageUseCase(languageRepo),
+                observeMoonBalanceUseCase = ObserveMoonBalanceUseCase(moonRepository),
+                addMoonsUseCase = AddMoonsUseCase(moonRepository),
+                spendMoonsUseCase = SpendMoonsUseCase(moonRepository),
+                economyRepository = FakeEconomyRepository(balance = 10),
+            )
+
+            viewModel.newRequest(TarotRequestType.TAROT_3)
+            advanceUntilIdle()
+
+            assertEquals(2, repo.callCount)
+            assertEquals(1, moonRepository.spendCalls)
+            assertNull(viewModel.uiState.value.error)
+            assertNull(viewModel.uiState.value.insufficientMoonsMessage)
+            assertEquals("DONE", viewModel.uiState.value.response?.status)
+            assertEquals(7, viewModel.uiState.value.moonBalance)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun `tarot_3 quota error does not map to insufficient moons`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val repo = FakeTarotRepository(
+                scriptedResults = listOf(
+                    ApiResult.Err(ApiError.ResourceExhausted("daily quota exceeded")),
+                ),
+            )
+            val languageRepo = FakeLanguageRepository(MutableStateFlow(AppLanguage.Spanish))
+            val moonRepository = FakeMoonRepository(initialBalance = 10)
+            val viewModel = TarotViewModel(
+                tarotRepository = repo,
+                resolveCurrentLanguageUseCase = ResolveCurrentLanguageUseCase(languageRepo),
+                observeCurrentLanguageUseCase = ObserveCurrentLanguageUseCase(languageRepo),
+                observeMoonBalanceUseCase = ObserveMoonBalanceUseCase(moonRepository),
+                addMoonsUseCase = AddMoonsUseCase(moonRepository),
+                spendMoonsUseCase = SpendMoonsUseCase(moonRepository),
+                economyRepository = FakeEconomyRepository(balance = 10),
+            )
+
+            viewModel.newRequest(TarotRequestType.TAROT_3)
+            advanceUntilIdle()
+
+            assertEquals(TAROT_DRAW_ERROR_KEY, viewModel.uiState.value.error)
+            assertNull(viewModel.uiState.value.insufficientMoonsMessage)
         } finally {
             Dispatchers.resetMain()
         }
@@ -104,8 +187,12 @@ class TarotViewModelTest {
         override suspend fun hasEnough(amount: Int): Boolean = true
     }
 
-    private class FakeTarotRepository : TarotRepository {
+    private class FakeTarotRepository(
+        scriptedResults: List<ApiResult<TarotDrawResponse>> = emptyList(),
+    ) : TarotRepository {
+        private val results = ArrayDeque(scriptedResults)
         var lastLang: String? = null
+        var callCount: Int = 0
 
         override suspend fun tarotDraw(
             requestId: String,
@@ -113,8 +200,10 @@ class TarotViewModelTest {
             lang: String?,
             question: String?,
         ): ApiResult<TarotDrawResponse> {
+            callCount += 1
             lastLang = lang
-            return ApiResult.Err(ApiError.Internal("mock error"))
+            return results.removeFirstOrNull()
+                ?: ApiResult.Err(ApiError.Internal("mock error"))
         }
     }
 
@@ -127,5 +216,22 @@ class TarotViewModelTest {
             state.value = language
         }
         override fun observeCurrentLanguage(): Flow<AppLanguage> = state
+    }
+
+    private class FakeEconomyRepository(
+        private val balance: Int,
+    ) : EconomyRepository {
+        override suspend fun getBalance(): EconomyBalance = EconomyBalance(
+            balance = balance,
+            dailyLoginClaimed = false,
+            rewardedAdsClaimed = 0,
+            rewardedAdsRemaining = 0,
+        )
+
+        override suspend fun getStatus(): EconomyStatus = EconomyStatus(
+            balance = balance,
+            isPremium = false,
+            todayDateIso = "2026-01-01",
+        )
     }
 }

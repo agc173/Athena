@@ -1,6 +1,7 @@
 package com.agc.bwitch.presentation.tarot
 
 import com.agc.bwitch.domain.shared.ApiResult
+import com.agc.bwitch.domain.economy.EconomyRepository
 import com.agc.bwitch.domain.localization.AppLanguage
 import com.agc.bwitch.domain.localization.ObserveCurrentLanguageUseCase
 import com.agc.bwitch.domain.localization.ResolveCurrentLanguageUseCase
@@ -62,8 +63,9 @@ class TarotViewModel(
     private val resolveCurrentLanguageUseCase: ResolveCurrentLanguageUseCase,
     private val observeCurrentLanguageUseCase: ObserveCurrentLanguageUseCase,
     private val observeMoonBalanceUseCase: ObserveMoonBalanceUseCase,
-    private val spendMoonsUseCase: SpendMoonsUseCase,
     private val addMoonsUseCase: AddMoonsUseCase,
+    private val spendMoonsUseCase: SpendMoonsUseCase,
+    private val economyRepository: EconomyRepository,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var shuffleDelayJob: Job? = null
@@ -122,35 +124,7 @@ class TarotViewModel(
             )
         }
         scope.launch {
-            // Regla de negocio: la tirada extra se cobra al iniciar request (no al barajar),
-            // porque aquí ya se dispara la llamada costosa al backend/LLM.
-            val canContinue = if (type == TarotRequestType.TAROT_3) {
-                when (val spendResult = spendMoonsUseCase(_uiState.value.extraReadingCost)) {
-                    is SpendMoonsResult.Success -> {
-                        _uiState.update { it.copy(moonBalance = spendResult.updatedBalance.amount) }
-                        true
-                    }
-
-                    is SpendMoonsResult.InsufficientBalance -> {
-                        _uiState.update {
-                            it.copy(
-                                requestId = null,
-                                revealPhase = TarotRevealPhase.IDLE,
-                                isLoading = false,
-                                insufficientMoonsMessage = TAROT_EXTRA_READING_NOT_ENOUGH_MOONS_KEY,
-                                moonBalance = spendResult.currentBalance.amount,
-                            )
-                        }
-                        false
-                    }
-                }
-            } else {
-                true
-            }
-
-            if (canContinue) {
-                draw(requestId, type)
-            }
+            draw(requestId, type)
         }
     }
 
@@ -271,13 +245,13 @@ class TarotViewModel(
         scope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
 
-            when (
-                val result = tarotRepository.tarotDraw(
-                    requestId = requestId,
-                    type = type,
-                    lang = currentLanguageCode.value,
-                )
-            ) {
+            val result = tarotRepository.tarotDraw(
+                requestId = requestId,
+                type = type,
+                lang = currentLanguageCode.value,
+            )
+
+            when (result) {
                 is ApiResult.Ok -> {
                     _uiState.update {
                         it.copy(
@@ -302,9 +276,100 @@ class TarotViewModel(
                             openedMiniCardIndex = null,
                         )
                     }
+                    if (type == TarotRequestType.TAROT_3) {
+                        refreshMoonBalanceFromBackend()
+                    }
                 }
 
                 is ApiResult.Err -> {
+                    if (type == TarotRequestType.TAROT_3 && result.error.requiresLegacyAdUnlockFallback()) {
+                        when (spendMoonsUseCase(_uiState.value.extraReadingCost)) {
+                            is SpendMoonsResult.Success -> {
+                                val retryResult = tarotRepository.tarotDraw(
+                                    requestId = requestId,
+                                    type = type,
+                                    lang = currentLanguageCode.value,
+                                )
+                                if (retryResult is ApiResult.Ok) {
+                                    _uiState.update {
+                                        it.copy(
+                                            isLoading = false,
+                                            response = retryResult.value,
+                                            error = null,
+                                            revealPhase = if (
+                                                it.revealPhase == TarotRevealPhase.SHUFFLING &&
+                                                shuffleMinDurationElapsed &&
+                                                it.requestId == shuffleRequestId
+                                            ) {
+                                                TarotRevealPhase.WAITING_TO_REVEAL
+                                            } else {
+                                                it.revealPhase
+                                            },
+                                            revealedCardCount = 0,
+                                            activeCardIndex = 0,
+                                            activeCardRevealed = false,
+                                            overlayVisible = false,
+                                            overlayCardIndex = null,
+                                            overlayCardRevealed = false,
+                                            openedMiniCardIndex = null,
+                                            insufficientMoonsMessage = null,
+                                        )
+                                    }
+                                    return@launch
+                                }
+                                if (retryResult is ApiResult.Err) {
+                                    val retryEconomyError = retryResult.error.isEconomyRestriction()
+                                    _uiState.update {
+                                        it.copy(
+                                            isLoading = false,
+                                            response = null,
+                                            revealPhase = TarotRevealPhase.IDLE,
+                                            revealedCardCount = 0,
+                                            activeCardIndex = 0,
+                                            activeCardRevealed = false,
+                                            overlayVisible = false,
+                                            overlayCardIndex = null,
+                                            overlayCardRevealed = false,
+                                            openedMiniCardIndex = null,
+                                            insufficientMoonsMessage = if (retryEconomyError) {
+                                                TAROT_EXTRA_READING_NOT_ENOUGH_MOONS_KEY
+                                            } else {
+                                                null
+                                            },
+                                            error = if (retryEconomyError) {
+                                                null
+                                            } else {
+                                                TAROT_DRAW_ERROR_KEY
+                                            },
+                                        )
+                                    }
+                                    return@launch
+                                }
+                            }
+
+                            is SpendMoonsResult.InsufficientBalance -> {
+                                _uiState.update {
+                                    it.copy(
+                                        isLoading = false,
+                                        response = null,
+                                        revealPhase = TarotRevealPhase.IDLE,
+                                        revealedCardCount = 0,
+                                        activeCardIndex = 0,
+                                        activeCardRevealed = false,
+                                        overlayVisible = false,
+                                        overlayCardIndex = null,
+                                        overlayCardRevealed = false,
+                                        openedMiniCardIndex = null,
+                                        insufficientMoonsMessage = TAROT_EXTRA_READING_NOT_ENOUGH_MOONS_KEY,
+                                        error = null,
+                                    )
+                                }
+                                return@launch
+                            }
+                        }
+                    }
+
+                    val economyError = type == TarotRequestType.TAROT_3 && result.error.isEconomyRestriction()
                     _uiState.update {
                         it.copy(
                             isLoading = false,
@@ -317,12 +382,44 @@ class TarotViewModel(
                             overlayCardIndex = null,
                             overlayCardRevealed = false,
                             openedMiniCardIndex = null,
-                            error = TAROT_DRAW_ERROR_KEY,
+                            insufficientMoonsMessage = if (economyError) {
+                                TAROT_EXTRA_READING_NOT_ENOUGH_MOONS_KEY
+                            } else {
+                                null
+                            },
+                            error = if (economyError) {
+                                null
+                            } else {
+                                TAROT_DRAW_ERROR_KEY
+                            },
                         )
+                    }
+                    if (type == TarotRequestType.TAROT_3) {
+                        refreshMoonBalanceFromBackend()
                     }
                 }
             }
         }
+    }
+
+    private suspend fun refreshMoonBalanceFromBackend() {
+        val backendBalance = runCatching { economyRepository.getStatus().balance }
+            .recoverCatching { economyRepository.getBalance().balance }
+            .getOrNull()
+            ?: return
+
+        val localBalance = _uiState.value.moonBalance
+        val delta = backendBalance - localBalance
+
+        when {
+            delta > 0 -> addMoonsUseCase(delta)
+            delta < 0 -> {
+                // TODO(economy-migration): sustituir ajuste por delta por sincronización de saldo absoluto.
+                spendMoonsUseCase(-delta)
+            }
+        }
+
+        _uiState.update { it.copy(moonBalance = backendBalance) }
     }
 
     @OptIn(ExperimentalUuidApi::class)
@@ -342,3 +439,25 @@ class TarotViewModel(
 
 const val TAROT_EXTRA_READING_NOT_ENOUGH_MOONS_KEY = "tarot.error.not_enough_moons"
 const val TAROT_DRAW_ERROR_KEY = "tarot.error.draw_failed"
+
+private fun com.agc.bwitch.domain.shared.ApiError.isEconomyRestriction(): Boolean {
+    val normalizedMessage = message.orEmpty().lowercase()
+    return this is com.agc.bwitch.domain.shared.ApiError.ResourceExhausted ||
+        this is com.agc.bwitch.domain.shared.ApiError.FailedPrecondition ||
+        "insufficient_moons" in normalizedMessage ||
+        "not_enough_moons" in normalizedMessage ||
+        "not enough moons" in normalizedMessage ||
+        "insufficient moons" in normalizedMessage ||
+        "moon_balance" in normalizedMessage
+}
+
+private fun com.agc.bwitch.domain.shared.ApiError.requiresLegacyAdUnlockFallback(): Boolean {
+    val normalizedMessage = message.orEmpty().lowercase()
+    return this is com.agc.bwitch.domain.shared.ApiError.FailedPrecondition &&
+        (
+            "rewardedproof" in normalizedMessage ||
+                "rewarded proof" in normalizedMessage ||
+                "ad_unlock" in normalizedMessage ||
+                "ad unlock" in normalizedMessage
+            )
+}
