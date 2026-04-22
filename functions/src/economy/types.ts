@@ -29,7 +29,7 @@ export type EconomyBalanceDoc = {
 };
 
 export type EconomyLedgerEntryDoc = {
-  type: 'DAILY_LOGIN_CLAIM' | 'TAROT_1_MOON_SPEND' | 'TAROT_3_MOON_SPEND' | 'REFUND';
+  type: 'DAILY_LOGIN_CLAIM' | 'TAROT_1_MOON_SPEND' | 'TAROT_3_MOON_SPEND' | 'ORACLE_1Q_MOON_SPEND' | 'REFUND';
   amount: number;
   createdAt: Timestamp;
   requestId: string;
@@ -46,7 +46,7 @@ export type EconomyRequestResult =
 
 export type EconomyRequestDoc = {
   requestId: string;
-  type: 'CLAIM_DAILY_LOGIN' | 'TAROT_1' | 'TAROT_3';
+  type: 'CLAIM_DAILY_LOGIN' | 'TAROT_1' | 'TAROT_3' | 'ORACLE_1Q';
   result: EconomyRequestResult;
   response?: ClaimDailyLoginResponse;
   responsePayload?: unknown;
