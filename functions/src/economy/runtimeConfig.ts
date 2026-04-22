@@ -2,10 +2,12 @@ import {getFirestore} from 'firebase-admin/firestore';
 
 export type EconomyRuntimeConfig = {
   tarotEconomyV2Enabled: boolean;
+  oracleEconomyV2Enabled: boolean;
 };
 
 const DEFAULT_CONFIG: EconomyRuntimeConfig = {
   tarotEconomyV2Enabled: false,
+  oracleEconomyV2Enabled: false,
 };
 
 const CONFIG_DOC_PATH = 'config/economy/current';
@@ -34,6 +36,10 @@ export async function getEconomyRuntimeConfig(): Promise<EconomyRuntimeConfig> {
         raw.tarotEconomyV2Enabled,
         DEFAULT_CONFIG.tarotEconomyV2Enabled
     ),
+    oracleEconomyV2Enabled: normalizeBoolean(
+        raw.oracleEconomyV2Enabled,
+        DEFAULT_CONFIG.oracleEconomyV2Enabled
+    ),
   };
 
   cachedConfig = parsed;
@@ -42,6 +48,17 @@ export async function getEconomyRuntimeConfig(): Promise<EconomyRuntimeConfig> {
 }
 
 export async function isTarotEconomyV2Enabled(): Promise<boolean> {
+  return isEconomyV2Enabled('tarot');
+}
+
+export async function isOracleEconomyV2Enabled(): Promise<boolean> {
+  return isEconomyV2Enabled('oracle');
+}
+
+
+export async function isEconomyV2Enabled(module: 'tarot' | 'oracle'): Promise<boolean> {
   const config = await getEconomyRuntimeConfig();
-  return config.tarotEconomyV2Enabled;
+  return module === 'tarot' ?
+    config.tarotEconomyV2Enabled :
+    config.oracleEconomyV2Enabled;
 }

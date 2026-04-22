@@ -8,3 +8,4 @@ export * from './callables/claimDailyLogin';
 
 export * from './runtimeConfig';
 export * from './tarotEconomy';
+export * from './oracleEconomy';

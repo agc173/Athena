@@ -325,6 +325,7 @@ Flags runtime para rollout gradual de economía backend.
 
 Campos:
 - tarotEconomyV2Enabled: boolean (default `false`)
+- oracleEconomyV2Enabled: boolean (default `false`)
 
 ### /economyBalances/{uid}
 Saldo de Lunas del usuario.
@@ -337,7 +338,7 @@ Campos:
 Libro mayor de movimientos de Lunas.
 
 Campos:
-- type: string (`DAILY_LOGIN_CLAIM` | `TAROT_1_MOON_SPEND` | `TAROT_3_MOON_SPEND` | `REFUND`)
+- type: string (`DAILY_LOGIN_CLAIM` | `TAROT_1_MOON_SPEND` | `TAROT_3_MOON_SPEND` | `ORACLE_1Q_MOON_SPEND` | `REFUND`)
 - amount: number
 - requestId: string
 - dateIso: string (`YYYY-MM-DD` Europe/Madrid)
@@ -382,7 +383,7 @@ Control de idempotencia para callables de economía.
 
 Campos (fase 2 Tarot v2):
 - requestId: string
-- type: string (`CLAIM_DAILY_LOGIN` | `TAROT_1` | `TAROT_3`)
+- type: string (`CLAIM_DAILY_LOGIN` | `TAROT_1` | `TAROT_3` | `ORACLE_1Q`)
 - result: string (`CLAIMED` | `ALREADY_CLAIMED` | `RESERVED` | `COMPLETED_SUCCESS` | `REFUNDED` | `FAILED`)
 - status: string opcional (`PROCESSING` | `FAILED` | `COMPLETED_SUCCESS`)
 - decisionSource: string opcional (`FREE` | `PREMIUM_INCLUDED` | `MOON` | `REJECT`)
@@ -394,7 +395,7 @@ Campos (fase 2 Tarot v2):
 - lang: string opcional
 - question: string opcional (truncada)
 - response: map opcional (payload estable para `claimDailyLogin`)
-- responsePayload: map opcional (payload estable para Tarot v2)
+- responsePayload: map opcional (payload estable para Tarot/Oracle v2)
 - llmMeta: map opcional
 - refundedAt: timestamp opcional
 - error: map opcional
