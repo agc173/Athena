@@ -5,6 +5,7 @@ export * from './premiumStatus';
 export * from './callables/getEconomyBalance';
 export * from './callables/getEconomyStatus';
 export * from './callables/claimDailyLogin';
+export * from './callables/claimRewardedAd';
 
 export * from './runtimeConfig';
 export * from './tarotEconomy';
