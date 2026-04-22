@@ -326,6 +326,7 @@ Flags runtime para rollout gradual de economía backend.
 Campos:
 - tarotEconomyV2Enabled: boolean (default `false`)
 - oracleEconomyV2Enabled: boolean (default `false`)
+- birthEssenceEconomyV2Enabled: boolean (default `false`)
 
 ### /economyBalances/{uid}
 Saldo de Lunas del usuario.
@@ -338,7 +339,7 @@ Campos:
 Libro mayor de movimientos de Lunas.
 
 Campos:
-- type: string (`DAILY_LOGIN_CLAIM` | `REWARDED_AD_CLAIM` | `TAROT_1_MOON_SPEND` | `TAROT_3_MOON_SPEND` | `ORACLE_1Q_MOON_SPEND` | `REFUND`)
+- type: string (`DAILY_LOGIN_CLAIM` | `REWARDED_AD_CLAIM` | `TAROT_1_MOON_SPEND` | `TAROT_3_MOON_SPEND` | `ORACLE_1Q_MOON_SPEND` | `BIRTH_ESSENCE_MOON_SPEND` | `REFUND`)
 - amount: number
 - requestId: string
 - dateIso: string (`YYYY-MM-DD` Europe/Madrid)
@@ -356,7 +357,8 @@ Campos (fase 1):
   - tarot1FreeUsed, tarot1PremiumUsed, tarot1MoonUsed
   - tarot3FreeUsed, tarot3PremiumUsed, tarot3MoonUsed
   - oracleFreeUsed, oraclePremiumUsed, oracleMoonUsed
-  - birthEssenceMoonUsed, birthEssencePremiumIncludedUsed, birthEssencePremiumExtraMoonUsed
+  - birthEssenceTotalUsed, birthEssenceMoonUsed, birthEssencePremiumExtraMoonUsed
+  - birthEssencePremiumIncludedUsed (legacy/compat opcional)
   - synastryFreeUsed, synastryMoonPacksUsed, synastryPremiumUsed
   - pendulumFreeUsed, pendulumMoonPacksUsed, pendulumPremiumUsed
 - updatedAt: timestamp (opcional)
@@ -384,19 +386,22 @@ Control de idempotencia para callables de economía.
 
 Campos (fase 5):
 - requestId: string
-- type: string (`CLAIM_DAILY_LOGIN` | `CLAIM_REWARDED_AD` | `TAROT_1` | `TAROT_3` | `ORACLE_1Q`)
+- type: string (`CLAIM_DAILY_LOGIN` | `CLAIM_REWARDED_AD` | `TAROT_1` | `TAROT_3` | `ORACLE_1Q` | `BIRTH_ESSENCE`)
 - result: string (`CLAIMED` | `DAILY_LIMIT_REACHED` | `ALREADY_CLAIMED` | `RESERVED` | `COMPLETED_SUCCESS` | `REFUNDED` | `FAILED`)
 - status: string opcional (`PROCESSING` | `FAILED` | `COMPLETED_SUCCESS`)
 - decisionSource: string opcional (`FREE` | `PREMIUM_INCLUDED` | `MOON` | `REJECT`)
 - moonCostCharged: number opcional
 - usageApplied.dailyCounter: string opcional
+- usageApplied.dailyCounters: string[] opcional
 - usageApplied.weeklyCounter: string opcional
+- usageApplied.monthlyCounter: string opcional
+- usageApplied.lifetimeFlag: string opcional
 - dateIso: string opcional
 - weekKey: string opcional
 - lang: string opcional
 - question: string opcional (truncada)
 - response: map opcional (payload estable para `claimDailyLogin` / `claimRewardedAd`)
-- responsePayload: map opcional (payload estable para Tarot/Oracle v2)
+- responsePayload: map opcional (payload estable para Tarot/Oracle/Birth Essence v2)
 - llmMeta: map opcional
 - refundedAt: timestamp opcional
 - error: map opcional

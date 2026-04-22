@@ -53,9 +53,17 @@ export type EconomyRequestResult =
   | 'REFUNDED'
   | 'FAILED';
 
+export type EconomyRequestType =
+  | 'CLAIM_DAILY_LOGIN'
+  | 'CLAIM_REWARDED_AD'
+  | 'TAROT_1'
+  | 'TAROT_3'
+  | 'ORACLE_1Q'
+  | 'BIRTH_ESSENCE';
+
 export type EconomyRequestDoc = {
   requestId: string;
-  type: 'CLAIM_DAILY_LOGIN' | 'CLAIM_REWARDED_AD' | 'TAROT_1' | 'TAROT_3' | 'ORACLE_1Q' | 'BIRTH_ESSENCE';
+  type: EconomyRequestType;
   result: EconomyRequestResult;
   response?: ClaimDailyLoginResponse | ClaimRewardedAdResponse;
   responsePayload?: unknown;
