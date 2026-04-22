@@ -12,3 +12,17 @@ data class EconomyStatus(
     val isPremium: Boolean,
     val todayDateIso: String,
 )
+
+data class EconomyClaimResult(
+    val result: EconomyClaimStatus,
+    val balance: Int,
+    val dailyLoginClaimed: Boolean,
+    val rewardedAdsClaimed: Int,
+    val rewardedAdsRemaining: Int,
+)
+
+enum class EconomyClaimStatus {
+    CLAIMED,
+    ALREADY_CLAIMED,
+    DAILY_LIMIT_REACHED,
+}

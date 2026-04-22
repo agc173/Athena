@@ -1,6 +1,8 @@
 package com.agc.bwitch.presentation.economy
 
 import com.agc.bwitch.domain.economy.EconomyRepository
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -15,9 +17,29 @@ data class EconomyUiState(
     val isLoading: Boolean = true,
     val balance: Int = 0,
     val isPremium: Boolean = false,
+    val dailyLoginClaimed: Boolean = false,
     val rewardedAdsRemaining: Int = 0,
+    val isClaimingDailyLogin: Boolean = false,
+    val isClaimingRewardedAd: Boolean = false,
+    val lastClaimResult: EconomyClaimUiResult? = null,
     val error: String? = null,
 )
+
+data class EconomyClaimUiResult(
+    val action: EconomyClaimAction,
+    val status: EconomyClaimUiStatus,
+)
+
+enum class EconomyClaimAction {
+    DAILY_LOGIN,
+    REWARDED_AD,
+}
+
+enum class EconomyClaimUiStatus {
+    CLAIMED,
+    ALREADY_CLAIMED,
+    DAILY_LIMIT_REACHED,
+}
 
 class EconomyViewModel(
     private val economyRepository: EconomyRepository,
@@ -52,6 +74,7 @@ class EconomyViewModel(
                     isLoading = false,
                     balance = status?.balance ?: balance?.balance ?: state.balance,
                     isPremium = status?.isPremium ?: state.isPremium,
+                    dailyLoginClaimed = balance?.dailyLoginClaimed ?: state.dailyLoginClaimed,
                     rewardedAdsRemaining = balance?.rewardedAdsRemaining ?: state.rewardedAdsRemaining,
                     error = if (statusResult.isFailure && balanceResult.isFailure) {
                         ECONOMY_LOAD_ERROR_KEY
@@ -62,6 +85,123 @@ class EconomyViewModel(
             }
         }
     }
+
+    fun claimDailyLogin() {
+        val currentState = _uiState.value
+        if (currentState.isClaimingDailyLogin || currentState.isLoading) return
+
+        scope.launch {
+            _uiState.update {
+                it.copy(
+                    isClaimingDailyLogin = true,
+                    error = null,
+                )
+            }
+
+            runCatching {
+                economyRepository.claimDailyLogin(requestId = generateRequestId())
+            }.onSuccess { result ->
+                _uiState.update {
+                    it.copy(
+                        isClaimingDailyLogin = false,
+                        balance = result.balance,
+                        dailyLoginClaimed = result.dailyLoginClaimed,
+                        rewardedAdsRemaining = result.rewardedAdsRemaining,
+                        lastClaimResult = EconomyClaimUiResult(
+                            action = EconomyClaimAction.DAILY_LOGIN,
+                            status = result.result.toUiStatus(),
+                        ),
+                        error = null,
+                    )
+                }
+                refreshEconomySnapshot()
+            }.onFailure { error ->
+                println("[EconomyViewModel] claimDailyLogin failed: ${error.message}")
+                _uiState.update {
+                    it.copy(
+                        isClaimingDailyLogin = false,
+                        error = ECONOMY_CLAIM_ERROR_KEY,
+                    )
+                }
+            }
+        }
+    }
+
+    fun claimRewardedAd(placement: String? = REWARDED_AD_DEFAULT_PLACEMENT) {
+        val currentState = _uiState.value
+        if (currentState.isClaimingRewardedAd || currentState.isLoading) return
+        if (currentState.rewardedAdsRemaining <= 0) return
+
+        scope.launch {
+            _uiState.update {
+                it.copy(
+                    isClaimingRewardedAd = true,
+                    error = null,
+                )
+            }
+
+            runCatching {
+                economyRepository.claimRewardedAd(
+                    requestId = generateRequestId(),
+                    adProof = REWARDED_AD_PLACEHOLDER_PROOF,
+                    placement = placement,
+                )
+            }.onSuccess { result ->
+                _uiState.update {
+                    it.copy(
+                        isClaimingRewardedAd = false,
+                        balance = result.balance,
+                        dailyLoginClaimed = result.dailyLoginClaimed,
+                        rewardedAdsRemaining = result.rewardedAdsRemaining,
+                        lastClaimResult = EconomyClaimUiResult(
+                            action = EconomyClaimAction.REWARDED_AD,
+                            status = result.result.toUiStatus(),
+                        ),
+                        error = null,
+                    )
+                }
+                refreshEconomySnapshot()
+            }.onFailure { error ->
+                println("[EconomyViewModel] claimRewardedAd failed: ${error.message}")
+                _uiState.update {
+                    it.copy(
+                        isClaimingRewardedAd = false,
+                        error = ECONOMY_CLAIM_ERROR_KEY,
+                    )
+                }
+            }
+        }
+    }
+
+    @OptIn(ExperimentalUuidApi::class)
+    private fun generateRequestId(): String = Uuid.random().toString()
+
+    private suspend fun refreshEconomySnapshot() {
+        val status = runCatching { economyRepository.getStatus() }.getOrNull()
+        val balance = runCatching { economyRepository.getBalance() }.getOrNull()
+
+        _uiState.update { state ->
+            state.copy(
+                balance = status?.balance ?: balance?.balance ?: state.balance,
+                isPremium = status?.isPremium ?: state.isPremium,
+                dailyLoginClaimed = balance?.dailyLoginClaimed ?: state.dailyLoginClaimed,
+                rewardedAdsRemaining = balance?.rewardedAdsRemaining ?: state.rewardedAdsRemaining,
+            )
+        }
+    }
 }
 
 const val ECONOMY_LOAD_ERROR_KEY = "economy.load.error"
+const val ECONOMY_CLAIM_ERROR_KEY = "economy.claim.error"
+const val REWARDED_AD_DEFAULT_PLACEMENT = "moon_store"
+
+// TODO(economy-rewarded-ad): Replace placeholder proof with SDK validated reward token.
+const val REWARDED_AD_PLACEHOLDER_PROOF = "client-placeholder-proof"
+
+private fun com.agc.bwitch.domain.economy.EconomyClaimStatus.toUiStatus(): EconomyClaimUiStatus {
+    return when (this) {
+        com.agc.bwitch.domain.economy.EconomyClaimStatus.CLAIMED -> EconomyClaimUiStatus.CLAIMED
+        com.agc.bwitch.domain.economy.EconomyClaimStatus.ALREADY_CLAIMED -> EconomyClaimUiStatus.ALREADY_CLAIMED
+        com.agc.bwitch.domain.economy.EconomyClaimStatus.DAILY_LIMIT_REACHED -> EconomyClaimUiStatus.DAILY_LIMIT_REACHED
+    }
+}

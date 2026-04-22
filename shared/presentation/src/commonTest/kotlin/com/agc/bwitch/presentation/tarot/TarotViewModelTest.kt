@@ -5,6 +5,8 @@ import com.agc.bwitch.domain.localization.AppLanguageRepository
 import com.agc.bwitch.domain.localization.ObserveCurrentLanguageUseCase
 import com.agc.bwitch.domain.localization.ResolveCurrentLanguageUseCase
 import com.agc.bwitch.domain.economy.EconomyBalance
+import com.agc.bwitch.domain.economy.EconomyClaimResult
+import com.agc.bwitch.domain.economy.EconomyClaimStatus
 import com.agc.bwitch.domain.economy.EconomyRepository
 import com.agc.bwitch.domain.economy.EconomyStatus
 import com.agc.bwitch.domain.moons.AddMoonsUseCase
@@ -232,6 +234,26 @@ class TarotViewModelTest {
             balance = balance,
             isPremium = false,
             todayDateIso = "2026-01-01",
+        )
+
+        override suspend fun claimDailyLogin(requestId: String): EconomyClaimResult = EconomyClaimResult(
+            result = EconomyClaimStatus.CLAIMED,
+            balance = balance,
+            dailyLoginClaimed = true,
+            rewardedAdsClaimed = 0,
+            rewardedAdsRemaining = 0,
+        )
+
+        override suspend fun claimRewardedAd(
+            requestId: String,
+            adProof: String,
+            placement: String?,
+        ): EconomyClaimResult = EconomyClaimResult(
+            result = EconomyClaimStatus.CLAIMED,
+            balance = balance + 1,
+            dailyLoginClaimed = false,
+            rewardedAdsClaimed = 1,
+            rewardedAdsRemaining = 0,
         )
     }
 }

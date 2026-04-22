@@ -23,3 +23,24 @@ data class EconomyStatusDto(
 data class PremiumDto(
     val isPremium: Boolean = false,
 )
+
+@Serializable
+data class EconomyClaimDailyLoginRequestDto(
+    val requestId: String,
+)
+
+@Serializable
+data class EconomyClaimRewardedAdRequestDto(
+    val requestId: String,
+    val adProof: String,
+    val placement: String? = null,
+)
+
+@Serializable
+data class EconomyClaimResultDto(
+    val result: String = "",
+    val balance: Int = 0,
+    val dailyLoginClaimed: Boolean = false,
+    val rewardedAdsClaimed: Int = 0,
+    val rewardedAdsRemaining: Int = 0,
+)
