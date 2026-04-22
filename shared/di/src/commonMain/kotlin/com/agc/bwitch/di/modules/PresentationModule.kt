@@ -4,6 +4,7 @@ import com.agc.bwitch.presentation.astrology.birthchart.BirthChartViewModel
 import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeViewModel
 import com.agc.bwitch.presentation.astrology.synastry.SynastryViewModel
 import com.agc.bwitch.presentation.auth.SessionViewModel
+import com.agc.bwitch.presentation.economy.EconomyViewModel
 import com.agc.bwitch.presentation.navigation.Destination
 import com.agc.bwitch.presentation.oracle.OracleAskViewModel
 import com.agc.bwitch.presentation.oracle.OracleStatusViewModel
@@ -57,6 +58,7 @@ val presentationModule: Module = module {
     factory { OracleAskViewModel(get(), get(), get()) }
     factory { TarotViewModel(get(), get(), get(), get(), get(), get()) }
     factory { MoonStoreViewModel(get(), get(), get()) }
+    factory { EconomyViewModel(get()) }
     factory { PendulumViewModel() }
     factory { DailyRitualViewModel(get()) }
     factory { HabitsViewModel(get(), get(), get()) }

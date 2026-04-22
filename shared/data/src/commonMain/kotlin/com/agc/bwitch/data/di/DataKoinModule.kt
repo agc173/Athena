@@ -3,9 +3,11 @@ package com.agc.bwitch.data.di
 import com.agc.bwitch.data.astrology.birthchart.SettingsBirthChartRepository
 import com.agc.bwitch.data.astrology.birthchart.SyncBirthChartRepository
 import com.agc.bwitch.data.auth.FirebaseAuthRepository
+import com.agc.bwitch.data.economy.EconomyRepositoryImpl
 import com.agc.bwitch.data.functions.FunctionsClient
 import com.agc.bwitch.data.functions.GitLiveFunctionsClient
 import com.agc.bwitch.data.oracle.OracleRepositoryImpl
+import com.agc.bwitch.data.remote.economy.EconomyRemoteDataSource
 import com.agc.bwitch.data.localization.SettingsAppLanguageRepository
 import com.agc.bwitch.data.localization.SystemLanguageCodeProvider
 import com.agc.bwitch.data.moons.MockMoonPackRepository
@@ -28,6 +30,7 @@ import com.agc.bwitch.data.userprofile.SyncUserProfileRepository
 import com.agc.bwitch.domain.astrology.birthchart.BirthChartRepository
 import com.agc.bwitch.domain.astrology.horoscope.HoroscopeRepository
 import com.agc.bwitch.domain.auth.AuthRepository
+import com.agc.bwitch.domain.economy.EconomyRepository
 import com.agc.bwitch.domain.oracle.OracleRepository
 import com.agc.bwitch.domain.localization.AppLanguageRepository
 import com.agc.bwitch.domain.moons.MoonPackRepository
@@ -125,6 +128,8 @@ val dataKoinModule: Module = module {
      * Cloud Functions
      */
     single<FunctionsClient> { GitLiveFunctionsClient() }
+    single { EconomyRemoteDataSource(get()) }
+    single<EconomyRepository> { EconomyRepositoryImpl(get()) }
     single<OracleRepository> { OracleRepositoryImpl(get()) }
     single<TarotRepository> { TarotRepositoryImpl(get()) }
 
