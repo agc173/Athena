@@ -55,7 +55,7 @@ val presentationModule: Module = module {
     factory { OnboardingProfileViewModel(get(), get(), get(), get(), get(), get()) }
 
     factory { OracleStatusViewModel(get()) }
-    factory { OracleAskViewModel(get(), get(), get()) }
+    factory { OracleAskViewModel(get(), get(), get(), get()) }
     factory { TarotViewModel(get(), get(), get(), get(), get(), get(), get()) }
     factory { MoonStoreViewModel(get(), get(), get()) }
     factory { EconomyViewModel(get()) }
