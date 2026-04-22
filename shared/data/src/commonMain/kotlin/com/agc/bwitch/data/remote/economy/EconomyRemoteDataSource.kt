@@ -35,9 +35,47 @@ class EconomyRemoteDataSource(
         }
     }
 
+    suspend fun claimDailyLogin(requestId: String): EconomyClaimResultDto {
+        return when (
+            val result = functionsClient.call(
+                name = CLAIM_DAILY_LOGIN_CALLABLE,
+                data = EconomyClaimDailyLoginRequestDto(requestId = requestId),
+                requestSerializer = EconomyClaimDailyLoginRequestDto.serializer(),
+                responseSerializer = EconomyClaimResultDto.serializer(),
+            )
+        ) {
+            is ApiResult.Ok -> result.value
+            is ApiResult.Err -> throw result.error.toException()
+        }
+    }
+
+    suspend fun claimRewardedAd(
+        requestId: String,
+        adProof: String,
+        placement: String?,
+    ): EconomyClaimResultDto {
+        return when (
+            val result = functionsClient.call(
+                name = CLAIM_REWARDED_AD_CALLABLE,
+                data = EconomyClaimRewardedAdRequestDto(
+                    requestId = requestId,
+                    adProof = adProof,
+                    placement = placement,
+                ),
+                requestSerializer = EconomyClaimRewardedAdRequestDto.serializer(),
+                responseSerializer = EconomyClaimResultDto.serializer(),
+            )
+        ) {
+            is ApiResult.Ok -> result.value
+            is ApiResult.Err -> throw result.error.toException()
+        }
+    }
+
     private companion object {
         const val GET_ECONOMY_BALANCE_CALLABLE = "getEconomyBalance"
         const val GET_ECONOMY_STATUS_CALLABLE = "getEconomyStatus"
+        const val CLAIM_DAILY_LOGIN_CALLABLE = "claimDailyLogin"
+        const val CLAIM_REWARDED_AD_CALLABLE = "claimRewardedAd"
     }
 }
 

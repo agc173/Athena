@@ -9,6 +9,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -32,6 +33,8 @@ fun MoonStoreScreen(
     val strings = appStrings.profile
     val state by viewModel.uiState.collectAsState()
     val economyState by economyViewModel.uiState.collectAsState()
+    val safeDailyClaimLabel = "${strings.storeOpen} +1 ${strings.moonCreditsTitle}"
+    val safeRewardedClaimLabel = "${appStrings.oracle.retryCta} +1 ${strings.moonCreditsTitle}"
 
     val visibleBalance = if (!economyState.isLoading && economyState.error == null) {
         economyState.balance
@@ -57,6 +60,46 @@ fun MoonStoreScreen(
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.primary,
         )
+
+        Card(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier.padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                if (!economyState.dailyLoginClaimed) {
+                    Button(
+                        onClick = economyViewModel::claimDailyLogin,
+                        enabled = !economyState.isClaimingDailyLogin && !economyState.isLoading,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        if (economyState.isClaimingDailyLogin) {
+                            CircularProgressIndicator()
+                        } else {
+                            Text(safeDailyClaimLabel)
+                        }
+                    }
+                }
+
+                Button(
+                    onClick = economyViewModel::claimRewardedAd,
+                    enabled = !economyState.isClaimingRewardedAd &&
+                        !economyState.isLoading &&
+                        economyState.rewardedAdsRemaining > 0,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    if (economyState.isClaimingRewardedAd) {
+                        CircularProgressIndicator()
+                    } else {
+                        Text(safeRewardedClaimLabel)
+                    }
+                }
+
+                Text(
+                    text = "${appStrings.oracle.adUnlockRemainingLabel}: ${economyState.rewardedAdsRemaining}",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
 
         state.packs.forEach { pack ->
             Card(modifier = Modifier.fillMaxWidth()) {
