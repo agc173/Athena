@@ -315,3 +315,75 @@ Campos:
 - costUsd: number
 - latencyMsTotal: number
 - updatedAt: timestamp
+
+---
+
+## Economy backend (fase 1)
+
+### /economyBalances/{uid}
+Saldo de Lunas del usuario.
+
+Campos:
+- balance: number (default 0)
+- updatedAt: timestamp (opcional)
+
+### /economyBalances/{uid}/ledger/{entryId}
+Libro mayor de movimientos de Lunas.
+
+Campos:
+- type: string (`DAILY_LOGIN_CLAIM` en fase 1)
+- amount: number
+- requestId: string
+- dateIso: string (`YYYY-MM-DD` Europe/Madrid)
+- createdAt: timestamp
+
+### /economyUsageDaily/{dateIso}/users/{uid}
+Uso diario de economía por usuario.
+
+Campos (fase 1):
+- dailyLoginClaimed: boolean
+- dailyLoginClaimedAt: timestamp (opcional)
+- rewardedAdsClaimed: number (default 0)
+- counters por módulo (opcionales, default 0)
+  - tarot1FreeUsed, tarot1PremiumUsed, tarot1MoonUsed
+  - tarot3FreeUsed, tarot3PremiumUsed, tarot3MoonUsed
+  - oracleFreeUsed, oraclePremiumUsed, oracleMoonUsed
+  - birthEssenceMoonUsed, birthEssencePremiumIncludedUsed, birthEssencePremiumExtraMoonUsed
+  - synastryFreeUsed, synastryMoonPacksUsed, synastryPremiumUsed
+  - pendulumFreeUsed, pendulumMoonPacksUsed, pendulumPremiumUsed
+- updatedAt: timestamp (opcional)
+
+### /economyUsageWeekly/{weekKey}/users/{uid}
+Uso semanal de economía por usuario.
+
+Campos (fase 1):
+- tarot3FreeUsed: number (opcional)
+
+### /economyUsageMonthly/{monthKey}/users/{uid}
+Uso mensual de economía por usuario.
+
+Campos (fase 1):
+- birthEssencePremiumIncludedUsed: number (opcional)
+
+### /economyLifetime/{uid}
+Flags lifetime de economía por usuario.
+
+Campos (fase 1):
+- birthEssenceFreeClaimed: boolean (opcional)
+
+### /economyRequests/{uid}/requests/{requestId}
+Control de idempotencia para callables de economía.
+
+Campos (fase 1):
+- requestId: string
+- type: string (`CLAIM_DAILY_LOGIN`)
+- result: string (`CLAIMED` | `ALREADY_CLAIMED`)
+- response: map (payload estable devuelto al cliente)
+- createdAt: timestamp
+- updatedAt: timestamp
+
+### /economyUnlocks/{uid}/horoscope/{unlockKey}
+Reservado para unlocks de horóscopo por fecha/período.
+
+Campos:
+- TBD en fases siguientes.
