@@ -10,6 +10,7 @@ import {withRetry} from './utils/retry';
 export {oracleGetStatus, tarotDraw, oracleAsk} from './oracle';
 export {saveUserProfile} from './userprofile';
 export {birthEssenceGenerate} from './birthessence';
+export {getEconomyBalance, getEconomyStatus, claimDailyLogin} from './economy';
 
 initializeApp();
 assertEnvForLLM();
