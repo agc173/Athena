@@ -442,9 +442,7 @@ const val TAROT_DRAW_ERROR_KEY = "tarot.error.draw_failed"
 
 private fun com.agc.bwitch.domain.shared.ApiError.isEconomyRestriction(): Boolean {
     val normalizedMessage = message.orEmpty().lowercase()
-    return this is com.agc.bwitch.domain.shared.ApiError.ResourceExhausted ||
-        this is com.agc.bwitch.domain.shared.ApiError.FailedPrecondition ||
-        "insufficient_moons" in normalizedMessage ||
+    return "insufficient_moons" in normalizedMessage ||
         "not_enough_moons" in normalizedMessage ||
         "not enough moons" in normalizedMessage ||
         "insufficient moons" in normalizedMessage ||
