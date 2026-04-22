@@ -3,6 +3,13 @@ import {buildRouter} from '../../llm/buildRouter';
 import {ENV} from '../../config/env';
 import {addLlmTokens, reserveLlmCallOrThrow, type DailyCaps} from '../../firestore/usageDaily';
 import {createLlmClientFromRouter} from '../../oracle/shared/routerLlmClient';
+import {
+  completeBirthEssenceEconomyRequest,
+  dateIsoMadrid,
+  isBirthEssenceEconomyV2Enabled,
+  refundBirthEssenceEconomyRequest,
+  reserveBirthEssenceEconomyAccess,
+} from '../../economy';
 import type {Lang} from '../../config/env';
 
 type BirthEssenceGenerateData = {
@@ -12,6 +19,7 @@ type BirthEssenceGenerateData = {
   languageCode?: unknown;
   lang?: unknown;
   archetype?: unknown;
+  requestId?: unknown;
 };
 
 const SUPPORTED_OUTPUT_LANGS: readonly Lang[] = ['es', 'en', 'pt', 'ru', 'fr', 'it', 'de'];
@@ -185,6 +193,16 @@ export const birthEssenceGenerate = onCall(
       const languageCode = parseLanguageCode(data);
       const language = languageMeta(languageCode);
       const archetypeHint = asArchetypeHint(data.archetype);
+      const economyV2Enabled = await isBirthEssenceEconomyV2Enabled();
+      const dateIso = dateIsoMadrid();
+
+      const requestId = economyV2Enabled ?
+        (typeof data.requestId === 'string' ? data.requestId.trim() : '') :
+        '';
+
+      if (economyV2Enabled && !requestId) {
+        throw new HttpsError('invalid-argument', 'requestId is required');
+      }
 
       console.info('BIRTH_ESSENCE_LANGUAGE_REQUEST', {
         uid,
@@ -193,60 +211,138 @@ export const birthEssenceGenerate = onCall(
         normalizedLanguageCode: languageCode,
       });
 
-      const {dateIso} = await reserveLlmCallOrThrow('unknown', caps());
+      const reservation = economyV2Enabled ?
+        await reserveBirthEssenceEconomyAccess({
+          uid,
+          requestId,
+          dateIso,
+          lang: languageCode,
+        }) :
+        {type: 'reserved' as const};
+
+      const economyDecisionSource = economyV2Enabled &&
+        reservation.type === 'reserved' &&
+        'source' in reservation ?
+        reservation.source :
+        undefined;
+      const economyMoonCost = economyV2Enabled &&
+        reservation.type === 'reserved' &&
+        'moonCost' in reservation ?
+        reservation.moonCost :
+        undefined;
+
+      if (reservation.type === 'completed') {
+        return reservation.payload;
+      }
+
+      if (reservation.type === 'in-progress') {
+        return {requestId, status: 'IN_PROGRESS'};
+      }
 
       const router = buildRouter();
+
+      let usageDateIso: string;
+      try {
+        const {dateIso: reservedDateIso} = await reserveLlmCallOrThrow('unknown', caps());
+        usageDateIso = reservedDateIso;
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+
+        if (economyV2Enabled && requestId && errorMessage.includes('DAILY_LLM_CAP_EXCEEDED')) {
+          await refundBirthEssenceEconomyRequest({
+            uid,
+            requestId,
+            dateIso,
+            errorMessage: 'DAILY_LLM_CAP_EXCEEDED',
+          });
+        }
+
+        throw error;
+      }
+
       const llm = createLlmClientFromRouter(router, 'unknown', {
-        usageDailyDateIso: dateIso,
+        usageDailyDateIso: usageDateIso,
         skipUsageReservation: true,
       });
 
-      const response = await llm.generate({
-        systemPrompt: [
-          'Eres BWitch, una guía mística moderna.',
-          'Escribe una interpretación breve y poderosa basada en Sol, Luna y Ascendente.',
-          'Reglas:',
-          '- 2 o 3 frases máximo',
-          '- tono íntimo, místico y empoderador',
-          '- habla en segunda persona (tú)',
-          '- no expliques astrología',
-          '- no uses etiquetas, encabezados ni formato',
-          '- no menciones arquetipos',
-          `Return ONLY the final interpretation in ${language.name}.`,
-          `Language hard rule: the whole output must be in ${language.name}.`,
-          language.toneHint,
-        ].join('\n'),
-        userPrompt: [
-          `Output language required: ${language.name}.`,
-          `Return ONLY the final interpretation in ${language.name}.`,
-          `Write in second person (${language.secondPerson}) and keep BWitch mystical empowering tone.`,
-          `Sol=${signLabel(sunSign)}, Luna=${signLabel(moonSign)}, Ascendente=${signLabel(risingSign)}.`,
-          archetypeHint ? `Energía base: ${archetypeHint}.` : null,
-        ].filter(Boolean).join('\n'),
-        temperature: 0.5,
-        maxOutputTokens: 180,
-      });
+      try {
+        const response = await llm.generate({
+          systemPrompt: [
+            'Eres BWitch, una guía mística moderna.',
+            'Escribe una interpretación breve y poderosa basada en Sol, Luna y Ascendente.',
+            'Reglas:',
+            '- 2 o 3 frases máximo',
+            '- tono íntimo, místico y empoderador',
+            '- habla en segunda persona (tú)',
+            '- no expliques astrología',
+            '- no uses etiquetas, encabezados ni formato',
+            '- no menciones arquetipos',
+            `Return ONLY the final interpretation in ${language.name}.`,
+            `Language hard rule: the whole output must be in ${language.name}.`,
+            language.toneHint,
+          ].join('\n'),
+          userPrompt: [
+            `Output language required: ${language.name}.`,
+            `Return ONLY the final interpretation in ${language.name}.`,
+            `Write in second person (${language.secondPerson}) and keep BWitch mystical empowering tone.`,
+            `Sol=${signLabel(sunSign)}, Luna=${signLabel(moonSign)}, Ascendente=${signLabel(risingSign)}.`,
+            archetypeHint ? `Energía base: ${archetypeHint}.` : null,
+          ].filter(Boolean).join('\n'),
+          temperature: 0.5,
+          maxOutputTokens: 180,
+        });
 
-      await addLlmTokens('unknown', dateIso, response.inputTokens ?? 0, response.outputTokens ?? 0);
+        await addLlmTokens('unknown', usageDateIso, response.inputTokens ?? 0, response.outputTokens ?? 0);
 
-      const parsed = parseModelOutput(response.text);
-      const possibleSpanishMismatch = languageCode !== 'es' && looksSpanish(parsed.interpretation);
+        const parsed = parseModelOutput(response.text);
+        const possibleSpanishMismatch = languageCode !== 'es' && looksSpanish(parsed.interpretation);
 
-      console.info('BIRTH_ESSENCE_LANGUAGE_RESULT', {
-        uid,
-        languageCode,
-        possibleSpanishMismatch,
-      });
+        console.info('BIRTH_ESSENCE_LANGUAGE_RESULT', {
+          uid,
+          languageCode,
+          possibleSpanishMismatch,
+        });
 
-      // Manual validation checklist:
-      // 1) languageCode=en with ARIES/CANCER/LEO should return fully English interpretation.
-      // 2) languageCode=pt-BR should normalize to pt and return Portuguese interpretation.
-      // 3) languageCode=fr with archetype hint should keep French output and BWitch tone.
-      // 4) languageCode=xx should fallback to es.
+        // Manual validation checklist:
+        // 1) languageCode=en with ARIES/CANCER/LEO should return fully English interpretation.
+        // 2) languageCode=pt-BR should normalize to pt and return Portuguese interpretation.
+        // 3) languageCode=fr with archetype hint should keep French output and BWitch tone.
+        // 4) languageCode=xx should fallback to es.
 
-      return {
-        ...parsed,
-        languageCode,
-      };
+        const responsePayload = {
+          ...parsed,
+          languageCode,
+          requestId: economyV2Enabled ? requestId : undefined,
+          economy: economyV2Enabled ? {
+            source: economyDecisionSource,
+            moonCost: economyMoonCost,
+          } : undefined,
+        };
+
+        if (economyV2Enabled && requestId) {
+          await completeBirthEssenceEconomyRequest({
+            uid,
+            requestId,
+            responsePayload,
+            llmMeta: {
+              provider: router.name,
+              inputTokens: response.inputTokens,
+              outputTokens: response.outputTokens,
+            },
+          });
+        }
+
+        return responsePayload;
+      } catch (error) {
+        if (economyV2Enabled && requestId) {
+          await refundBirthEssenceEconomyRequest({
+            uid,
+            requestId,
+            dateIso,
+            errorMessage: error instanceof Error ? error.message : String(error),
+          });
+        }
+        throw error;
+      }
     }
 );

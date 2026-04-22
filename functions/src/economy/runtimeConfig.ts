@@ -3,11 +3,13 @@ import {getFirestore} from 'firebase-admin/firestore';
 export type EconomyRuntimeConfig = {
   tarotEconomyV2Enabled: boolean;
   oracleEconomyV2Enabled: boolean;
+  birthEssenceEconomyV2Enabled: boolean;
 };
 
 const DEFAULT_CONFIG: EconomyRuntimeConfig = {
   tarotEconomyV2Enabled: false,
   oracleEconomyV2Enabled: false,
+  birthEssenceEconomyV2Enabled: false,
 };
 
 const CONFIG_DOC_PATH = 'config/economy/current';
@@ -40,6 +42,10 @@ export async function getEconomyRuntimeConfig(): Promise<EconomyRuntimeConfig> {
         raw.oracleEconomyV2Enabled,
         DEFAULT_CONFIG.oracleEconomyV2Enabled
     ),
+    birthEssenceEconomyV2Enabled: normalizeBoolean(
+        raw.birthEssenceEconomyV2Enabled,
+        DEFAULT_CONFIG.birthEssenceEconomyV2Enabled
+    ),
   };
 
   cachedConfig = parsed;
@@ -55,10 +61,19 @@ export async function isOracleEconomyV2Enabled(): Promise<boolean> {
   return isEconomyV2Enabled('oracle');
 }
 
+export async function isBirthEssenceEconomyV2Enabled(): Promise<boolean> {
+  return isEconomyV2Enabled('birth-essence');
+}
 
-export async function isEconomyV2Enabled(module: 'tarot' | 'oracle'): Promise<boolean> {
+export async function isEconomyV2Enabled(module: 'tarot' | 'oracle' | 'birth-essence'): Promise<boolean> {
   const config = await getEconomyRuntimeConfig();
-  return module === 'tarot' ?
-    config.tarotEconomyV2Enabled :
-    config.oracleEconomyV2Enabled;
+
+  switch (module) {
+    case 'tarot':
+      return config.tarotEconomyV2Enabled;
+    case 'oracle':
+      return config.oracleEconomyV2Enabled;
+    case 'birth-essence':
+      return config.birthEssenceEconomyV2Enabled;
+  }
 }

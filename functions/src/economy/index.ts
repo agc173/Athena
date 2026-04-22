@@ -10,3 +10,4 @@ export * from './callables/claimRewardedAd';
 export * from './runtimeConfig';
 export * from './tarotEconomy';
 export * from './oracleEconomy';
+export * from './birthEssenceEconomy';
