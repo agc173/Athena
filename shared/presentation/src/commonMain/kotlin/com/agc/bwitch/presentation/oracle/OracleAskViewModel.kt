@@ -6,6 +6,7 @@ import com.agc.bwitch.domain.oracle.OracleAskResult
 import com.agc.bwitch.domain.oracle.OracleQuotaSnapshot
 import com.agc.bwitch.domain.oracle.OracleRepository
 import com.agc.bwitch.domain.oracle.OracleTopic
+import com.agc.bwitch.domain.economy.EconomyRepository
 import com.agc.bwitch.domain.localization.AppLanguage
 import com.agc.bwitch.domain.localization.ObserveCurrentLanguageUseCase
 import com.agc.bwitch.domain.localization.ResolveCurrentLanguageUseCase
@@ -34,6 +35,7 @@ data class OracleAskUiState(
     val result: OracleAskResult? = null,
     val answer: OracleAnswer? = null,
     val quotaSnapshot: OracleQuotaSnapshot? = null,
+    val economyBalance: Int? = null,
     val inProgress: Boolean = false,
     val error: OracleAskMessage? = null,
 )
@@ -63,6 +65,7 @@ class OracleAskViewModel(
     private val oracleRepository: OracleRepository,
     private val resolveCurrentLanguageUseCase: ResolveCurrentLanguageUseCase,
     private val observeCurrentLanguageUseCase: ObserveCurrentLanguageUseCase,
+    private val economyRepository: EconomyRepository,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
@@ -152,9 +155,11 @@ class OracleAskViewModel(
                             error = null,
                         )
                     }
+                    refreshEconomySnapshot()
                 }
 
                 is ApiResult.Err -> {
+                    val mappedError = result.error.toUserMessage()
                     _uiState.update {
                         it.copy(
                             isLoading = false,
@@ -162,8 +167,11 @@ class OracleAskViewModel(
                             answer = null,
                             quotaSnapshot = null,
                             inProgress = false,
-                            error = result.error.toUserMessage(),
+                            error = mappedError.message,
                         )
+                    }
+                    if (mappedError.refreshEconomyAfterError) {
+                        refreshEconomySnapshot()
                     }
                 }
             }
@@ -181,47 +189,102 @@ class OracleAskViewModel(
     @OptIn(ExperimentalUuidApi::class)
     private fun generateRequestId(): String = Uuid.random().toString()
 
-    private fun ApiError.toUserMessage(): OracleAskMessage {
+    private fun ApiError.toUserMessage(): OracleAskMappedError {
         val backendMessage = message.orEmpty()
         return when (this) {
-            is ApiError.Unauthenticated -> OracleAskMessage(id = OracleAskMessageId.Unauthenticated)
-            is ApiError.PermissionDenied -> OracleAskMessage(id = OracleAskMessageId.PermissionDenied)
+            is ApiError.Unauthenticated -> OracleAskMappedError(
+                message = OracleAskMessage(id = OracleAskMessageId.Unauthenticated),
+            )
+            is ApiError.PermissionDenied -> OracleAskMappedError(
+                message = OracleAskMessage(id = OracleAskMessageId.PermissionDenied),
+            )
             is ApiError.ResourceExhausted -> when {
-                backendMessage.hasAdUnlockHint() -> OracleAskMessage(id = OracleAskMessageId.ResourceExhaustedWithAdUnlock)
-                else -> OracleAskMessage(id = OracleAskMessageId.ResourceExhaustedGeneric)
+                backendMessage.requiresLegacyAdUnlockFallback() -> OracleAskMappedError(
+                    message = OracleAskMessage(id = OracleAskMessageId.ResourceExhaustedWithAdUnlock),
+                )
+                backendMessage.isEconomyRestrictionHint() -> OracleAskMappedError(
+                    message = OracleAskMessage(id = OracleAskMessageId.ResourceExhaustedGeneric),
+                    refreshEconomyAfterError = true,
+                )
+                else -> OracleAskMappedError(
+                    message = OracleAskMessage(id = OracleAskMessageId.ResourceExhaustedGeneric),
+                )
             }
             is ApiError.FailedPrecondition -> when {
-                backendMessage.hasAdUnlockHint() -> OracleAskMessage(id = OracleAskMessageId.FailedPreconditionWithAdUnlock)
-                backendMessage.isTemporaryUnavailabilityHint() -> OracleAskMessage(id = OracleAskMessageId.FailedPreconditionTemporaryUnavailable)
-                else -> OracleAskMessage(id = OracleAskMessageId.FailedPreconditionGeneric)
+                backendMessage.requiresLegacyAdUnlockFallback() -> OracleAskMappedError(
+                    message = OracleAskMessage(id = OracleAskMessageId.FailedPreconditionWithAdUnlock),
+                )
+                backendMessage.isTemporaryUnavailabilityHint() -> OracleAskMappedError(
+                    message = OracleAskMessage(id = OracleAskMessageId.FailedPreconditionTemporaryUnavailable),
+                )
+                backendMessage.isEconomyRestrictionHint() -> OracleAskMappedError(
+                    message = OracleAskMessage(id = OracleAskMessageId.FailedPreconditionGeneric),
+                    refreshEconomyAfterError = true,
+                )
+                else -> OracleAskMappedError(
+                    message = OracleAskMessage(id = OracleAskMessageId.FailedPreconditionGeneric),
+                )
             }
             is ApiError.InvalidArgument -> {
                 if (message.isNullOrBlank()) {
-                    OracleAskMessage(id = OracleAskMessageId.InvalidArgumentFallback)
+                    OracleAskMappedError(
+                        message = OracleAskMessage(id = OracleAskMessageId.InvalidArgumentFallback),
+                    )
                 } else {
-                    OracleAskMessage(id = OracleAskMessageId.RawBackendMessage, rawMessage = message)
+                    OracleAskMappedError(
+                        message = OracleAskMessage(id = OracleAskMessageId.RawBackendMessage, rawMessage = message),
+                    )
                 }
             }
             is ApiError.Internal -> when {
-                backendMessage.isTemporaryUnavailabilityHint() -> OracleAskMessage(id = OracleAskMessageId.InternalTemporaryUnavailable)
-                else -> OracleAskMessage(id = OracleAskMessageId.InternalGeneric)
+                backendMessage.isTemporaryUnavailabilityHint() -> OracleAskMappedError(
+                    message = OracleAskMessage(id = OracleAskMessageId.InternalTemporaryUnavailable),
+                )
+                else -> OracleAskMappedError(
+                    message = OracleAskMessage(id = OracleAskMessageId.InternalGeneric),
+                )
             }
             is ApiError.Unknown -> {
                 if (message.isNullOrBlank()) {
-                    OracleAskMessage(id = OracleAskMessageId.UnknownFallback)
+                    OracleAskMappedError(
+                        message = OracleAskMessage(id = OracleAskMessageId.UnknownFallback),
+                    )
                 } else {
-                    OracleAskMessage(id = OracleAskMessageId.RawBackendMessage, rawMessage = message)
+                    OracleAskMappedError(
+                        message = OracleAskMessage(id = OracleAskMessageId.RawBackendMessage, rawMessage = message),
+                    )
                 }
             }
         }
     }
 
-    private fun String.hasAdUnlockHint(): Boolean {
+    private suspend fun refreshEconomySnapshot() {
+        val backendBalance = runCatching { economyRepository.getStatus().balance }
+            .recoverCatching { economyRepository.getBalance().balance }
+            .getOrNull()
+            ?: return
+
+        _uiState.update { current ->
+            current.copy(economyBalance = backendBalance)
+        }
+    }
+
+    private fun String.requiresLegacyAdUnlockFallback(): Boolean {
         val normalized = lowercase()
         return normalized.contains("rewardedproof") ||
+            normalized.contains("rewarded proof") ||
             normalized.contains("ad unlock") ||
-            normalized.contains("unlock by ad") ||
-            normalized.contains("rewarded")
+            normalized.contains("ad_unlock") ||
+            normalized.contains("unlock by ad")
+    }
+
+    private fun String.isEconomyRestrictionHint(): Boolean {
+        val normalized = lowercase()
+        return normalized.contains("insufficient_moons") ||
+            normalized.contains("not_enough_moons") ||
+            normalized.contains("not enough moons") ||
+            normalized.contains("insufficient moons") ||
+            normalized.contains("moon_balance")
     }
 
     private fun String.isTemporaryUnavailabilityHint(): Boolean {
@@ -233,3 +296,8 @@ class OracleAskViewModel(
             normalized.contains("try again later")
     }
 }
+
+private data class OracleAskMappedError(
+    val message: OracleAskMessage,
+    val refreshEconomyAfterError: Boolean = false,
+)
