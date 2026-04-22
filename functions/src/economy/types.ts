@@ -29,15 +29,24 @@ export type EconomyBalanceDoc = {
 };
 
 export type EconomyLedgerEntryDoc = {
-  type: 'DAILY_LOGIN_CLAIM' | 'TAROT_1_MOON_SPEND' | 'TAROT_3_MOON_SPEND' | 'ORACLE_1Q_MOON_SPEND' | 'REFUND';
+  type:
+  | 'DAILY_LOGIN_CLAIM'
+  | 'REWARDED_AD_CLAIM'
+  | 'TAROT_1_MOON_SPEND'
+  | 'TAROT_3_MOON_SPEND'
+  | 'ORACLE_1Q_MOON_SPEND'
+  | 'BIRTH_ESSENCE_MOON_SPEND'
+  | 'REFUND';
   amount: number;
   createdAt: Timestamp;
   requestId: string;
   dateIso: string;
+  placement?: string;
 };
 
 export type EconomyRequestResult =
   | 'CLAIMED'
+  | 'DAILY_LIMIT_REACHED'
   | 'ALREADY_CLAIMED'
   | 'RESERVED'
   | 'COMPLETED_SUCCESS'
@@ -46,19 +55,23 @@ export type EconomyRequestResult =
 
 export type EconomyRequestDoc = {
   requestId: string;
-  type: 'CLAIM_DAILY_LOGIN' | 'TAROT_1' | 'TAROT_3' | 'ORACLE_1Q';
+  type: 'CLAIM_DAILY_LOGIN' | 'CLAIM_REWARDED_AD' | 'TAROT_1' | 'TAROT_3' | 'ORACLE_1Q' | 'BIRTH_ESSENCE';
   result: EconomyRequestResult;
-  response?: ClaimDailyLoginResponse;
+  response?: ClaimDailyLoginResponse | ClaimRewardedAdResponse;
   responsePayload?: unknown;
   status?: 'PROCESSING' | 'FAILED' | 'COMPLETED_SUCCESS';
   decisionSource?: EconomyDecisionSource;
   moonCostCharged?: number;
   usageApplied?: {
     dailyCounter?: string;
+    dailyCounters?: string[];
     weeklyCounter?: string;
+    monthlyCounter?: string;
+    lifetimeFlag?: string;
   };
   dateIso?: string;
   weekKey?: string;
+  monthKey?: string;
   lang?: string;
   question?: string;
   llmMeta?: unknown;
@@ -88,6 +101,7 @@ export type EconomyDailyUsageDoc = {
   birthEssenceMoonUsed?: number;
   birthEssencePremiumIncludedUsed?: number;
   birthEssencePremiumExtraMoonUsed?: number;
+  birthEssenceTotalUsed?: number;
 
   synastryFreeUsed?: number;
   synastryMoonPacksUsed?: number;
@@ -165,6 +179,20 @@ export type ClaimDailyLoginData = {
 
 export type ClaimDailyLoginResponse = {
   result: EconomyRequestResult;
+  balance: number;
+  dailyLoginClaimed: boolean;
+  rewardedAdsClaimed: number;
+  rewardedAdsRemaining: number;
+};
+
+export type ClaimRewardedAdData = {
+  requestId?: unknown;
+  adProof?: unknown;
+  placement?: unknown;
+};
+
+export type ClaimRewardedAdResponse = {
+  result: 'CLAIMED' | 'DAILY_LIMIT_REACHED';
   balance: number;
   dailyLoginClaimed: boolean;
   rewardedAdsClaimed: number;
