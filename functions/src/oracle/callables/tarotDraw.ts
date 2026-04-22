@@ -3,6 +3,12 @@ import {HttpsError, onCall} from 'firebase-functions/v2/https';
 import {buildRouter} from '../../llm/buildRouter';
 import {reserveLlmCallOrThrow, addLlmTokens, type DailyCaps} from '../../firestore/usageDaily';
 import {ENV} from '../../config/env';
+import {
+  completeTarotEconomyRequest,
+  isTarotEconomyV2Enabled,
+  refundTarotEconomyRequest,
+  reserveTarotEconomyAccess,
+} from '../../economy';
 import {generateTarotReading} from '../tarot/tarotService';
 import {ConsumeIntent, RequestType, type TarotDrawData} from '../types';
 import {createLlmClientFromRouter} from '../shared/routerLlmClient';
@@ -209,6 +215,7 @@ export const tarotDraw = onCall(
       const question = normalizeQuestion(data.question);
       const dateIso = dateIsoMadrid();
 
+      const economyV2Enabled = await isTarotEconomyV2Enabled();
       const [systemMode, subscriber] = await Promise.all([
         getSystemMode(),
         isSubscriber(uid),
@@ -225,111 +232,141 @@ export const tarotDraw = onCall(
       const requestRef = oracleRef('oracleRequests', requestId);
       const userDailyRef = oracleSubRef('oracleUserDaily', dateIso, 'users', uid);
 
-      const reservation = await db.runTransaction(async (tx) => {
-        const [requestSnap, userDailySnap] = await Promise.all([
-          tx.get(requestRef),
-          tx.get(userDailyRef),
-        ]);
+      const reservation = economyV2Enabled ?
+        await reserveTarotEconomyAccess({
+          uid,
+          requestId,
+          requestType: data.requestType,
+          dateIso,
+          lang,
+          question,
+        }) :
+        await db.runTransaction(async (tx) => {
+          const [requestSnap, userDailySnap] = await Promise.all([
+            tx.get(requestRef),
+            tx.get(userDailyRef),
+          ]);
 
-        if (requestSnap.exists) {
-          const existing = requestSnap.data() as RequestDoc;
-          if (existing.uid !== uid) {
-            throw new HttpsError('permission-denied', 'requestId already exists for a different user');
+          if (requestSnap.exists) {
+            const existing = requestSnap.data() as RequestDoc;
+            if (existing.uid !== uid) {
+              throw new HttpsError('permission-denied', 'requestId already exists for a different user');
+            }
+
+            if (existing.status === 'COMPLETED_SUCCESS' && existing.responsePayload) {
+              return {type: 'completed' as const, payload: existing.responsePayload};
+            }
+
+            if (existing.status === 'FAILED') {
+              throw new HttpsError('aborted', 'requestId already failed; retry with a new requestId');
+            }
+
+            return {type: 'in-progress' as const};
           }
 
-          if (existing.status === 'COMPLETED_SUCCESS' && existing.responsePayload) {
-            return {type: 'completed' as const, payload: existing.responsePayload};
+          const now = Timestamp.now();
+          const currentDaily = (userDailySnap.data() as UserDailyDoc | undefined) ?? {
+            ...DEFAULT_DAILY_QUOTA,
+            createdAt: now,
+          };
+
+          const nextDaily: UserDailyDoc = {
+            freeTarot1Remaining: currentDaily.freeTarot1Remaining,
+            adUnlockRemaining: currentDaily.adUnlockRemaining,
+            maxRequestsRemaining: currentDaily.maxRequestsRemaining,
+            tarot3Remaining: currentDaily.tarot3Remaining,
+            createdAt: currentDaily.createdAt ?? now,
+            updatedAt: now,
+          };
+
+          if (nextDaily.maxRequestsRemaining <= 0) {
+            throw new HttpsError('resource-exhausted', 'Daily max requests exhausted');
           }
 
-          if (existing.status === 'FAILED') {
-            throw new HttpsError('aborted', 'requestId already failed; retry with a new requestId');
+          if (data.requestType === RequestType.TAROT_3 && nextDaily.tarot3Remaining <= 0) {
+            throw new HttpsError('resource-exhausted', 'Daily TAROT_3 quota exhausted');
           }
 
-          return {type: 'in-progress' as const};
-        }
+          let intent: ConsumeIntent;
 
-        const now = Timestamp.now();
-        const currentDaily = (userDailySnap.data() as UserDailyDoc | undefined) ?? {
-          ...DEFAULT_DAILY_QUOTA,
-          createdAt: now,
-        };
+          if (subscriber) {
+            intent = ConsumeIntent.SUBSCRIPTION;
+          } else if (data.requestType === RequestType.TAROT_1 && nextDaily.freeTarot1Remaining > 0) {
+            intent = ConsumeIntent.FREE_DAILY;
+            nextDaily.freeTarot1Remaining -= 1;
+          } else {
+            if (!data.adUnlock?.rewardedProof || data.adUnlock.rewardedProof.trim().length === 0) {
+              throw new HttpsError('failed-precondition', 'rewardedProof is required for AD_UNLOCK');
+            }
 
-        const nextDaily: UserDailyDoc = {
-          freeTarot1Remaining: currentDaily.freeTarot1Remaining,
-          adUnlockRemaining: currentDaily.adUnlockRemaining,
-          maxRequestsRemaining: currentDaily.maxRequestsRemaining,
-          tarot3Remaining: currentDaily.tarot3Remaining,
-          createdAt: currentDaily.createdAt ?? now,
-          updatedAt: now,
-        };
+            const effectiveAdUnlockRemaining = systemMode === 'DEGRADED' ?
+              Math.min(nextDaily.adUnlockRemaining, 1) :
+              nextDaily.adUnlockRemaining;
 
-        if (nextDaily.maxRequestsRemaining <= 0) {
-          throw new HttpsError('resource-exhausted', 'Daily max requests exhausted');
-        }
+            if (effectiveAdUnlockRemaining <= 0) {
+              throw new HttpsError('resource-exhausted', 'Daily ad unlock quota exhausted');
+            }
 
-        if (data.requestType === RequestType.TAROT_3 && nextDaily.tarot3Remaining <= 0) {
-          throw new HttpsError('resource-exhausted', 'Daily TAROT_3 quota exhausted');
-        }
-
-        let intent: ConsumeIntent;
-
-        if (subscriber) {
-          intent = ConsumeIntent.SUBSCRIPTION;
-        } else if (data.requestType === RequestType.TAROT_1 && nextDaily.freeTarot1Remaining > 0) {
-          intent = ConsumeIntent.FREE_DAILY;
-          nextDaily.freeTarot1Remaining -= 1;
-        } else {
-          if (!data.adUnlock?.rewardedProof || data.adUnlock.rewardedProof.trim().length === 0) {
-            throw new HttpsError('failed-precondition', 'rewardedProof is required for AD_UNLOCK');
+            intent = ConsumeIntent.AD_UNLOCK;
+            nextDaily.adUnlockRemaining -= 1;
           }
 
-          const effectiveAdUnlockRemaining = systemMode === 'DEGRADED' ?
-            Math.min(nextDaily.adUnlockRemaining, 1) :
-            nextDaily.adUnlockRemaining;
-
-          if (effectiveAdUnlockRemaining <= 0) {
-            throw new HttpsError('resource-exhausted', 'Daily ad unlock quota exhausted');
+          nextDaily.maxRequestsRemaining -= 1;
+          if (data.requestType === RequestType.TAROT_3) {
+            nextDaily.tarot3Remaining -= 1;
           }
 
-          intent = ConsumeIntent.AD_UNLOCK;
-          nextDaily.adUnlockRemaining -= 1;
-        }
+          tx.set(userDailyRef, nextDaily, {merge: true});
+          tx.create(
+              requestRef,
+              stripUndefined({
+                uid,
+                requestId,
+                requestType: data.requestType,
+                lang,
+                topic: data.topic,
+                question,
+                dateIso,
+                intent,
+                status: 'PROCESSING',
+                systemMode,
+                createdAt: now,
+                updatedAt: now,
+              } satisfies RequestDoc)
+          );
 
-        nextDaily.maxRequestsRemaining -= 1;
-        if (data.requestType === RequestType.TAROT_3) {
-          nextDaily.tarot3Remaining -= 1;
-        }
+          return {
+            type: 'reserved' as const,
+            intent,
+            quotaSnapshot: {
+              freeTarot1Remaining: nextDaily.freeTarot1Remaining,
+              adUnlockRemaining: nextDaily.adUnlockRemaining,
+              maxRequestsRemaining: nextDaily.maxRequestsRemaining,
+              tarot3Remaining: nextDaily.tarot3Remaining,
+            },
+          };
+        });
 
-        tx.set(userDailyRef, nextDaily, {merge: true});
-        tx.create(
-            requestRef,
-            stripUndefined({
-              uid,
-              requestId,
-              requestType: data.requestType,
-              lang,
-              topic: data.topic,
-              question,
-              dateIso,
-              intent,
-              status: 'PROCESSING',
-              systemMode,
-              createdAt: now,
-              updatedAt: now,
-            } satisfies RequestDoc)
-        );
-
-        return {
-          type: 'reserved' as const,
-          intent,
-          quotaSnapshot: {
-            freeTarot1Remaining: nextDaily.freeTarot1Remaining,
-            adUnlockRemaining: nextDaily.adUnlockRemaining,
-            maxRequestsRemaining: nextDaily.maxRequestsRemaining,
-            tarot3Remaining: nextDaily.tarot3Remaining,
-          },
-        };
-      });
+      const legacyIntent = !economyV2Enabled &&
+        reservation.type === 'reserved' &&
+        'intent' in reservation ?
+        reservation.intent :
+        undefined;
+      const legacyQuotaSnapshot = !economyV2Enabled &&
+        reservation.type === 'reserved' &&
+        'quotaSnapshot' in reservation ?
+        reservation.quotaSnapshot :
+        undefined;
+      const economyDecisionSource = economyV2Enabled &&
+        reservation.type === 'reserved' &&
+        'source' in reservation ?
+        reservation.source :
+        undefined;
+      const economyMoonCost = economyV2Enabled &&
+        reservation.type === 'reserved' &&
+        'moonCost' in reservation ?
+        reservation.moonCost :
+        undefined;
 
       if (reservation.type === 'completed') {
         return reservation.payload;
@@ -350,13 +387,22 @@ export const tarotDraw = onCall(
         const errorMessage = error instanceof Error ? error.message : String(error);
 
         if (errorMessage.includes('DAILY_LLM_CAP_EXCEEDED')) {
-          await failRequestAndCompensateQuota({
-            requestRef,
-            userDailyRef,
-            requestType: data.requestType,
-            intent: reservation.intent,
-            errorMessage: 'DAILY_LLM_CAP_EXCEEDED',
-          });
+          if (economyV2Enabled) {
+            await refundTarotEconomyRequest({
+              uid,
+              requestId,
+              dateIso,
+              errorMessage: 'DAILY_LLM_CAP_EXCEEDED',
+            });
+          } else {
+            await failRequestAndCompensateQuota({
+              requestRef,
+              userDailyRef,
+              requestType: data.requestType,
+              intent: legacyIntent ?? ConsumeIntent.AD_UNLOCK,
+              errorMessage: 'DAILY_LLM_CAP_EXCEEDED',
+            });
+          }
           throw new HttpsError('resource-exhausted', 'DAILY_LLM_CAP_EXCEEDED');
         }
 
@@ -386,8 +432,12 @@ export const tarotDraw = onCall(
           status: 'COMPLETED_SUCCESS',
           reading: generated.reading,
           draw: generated.draw,
-          quotaSnapshot: reservation.quotaSnapshot,
+          quotaSnapshot: economyV2Enabled ? undefined : legacyQuotaSnapshot,
           systemMode,
+          economy: economyV2Enabled ? {
+            source: economyDecisionSource,
+            moonCost: economyMoonCost,
+          } : undefined,
         };
 
         const drawForHistory = generated.draw.type === RequestType.TAROT_1 ?
@@ -404,13 +454,15 @@ export const tarotDraw = onCall(
 
         const readingRef = oracleSubRef('tarotReadings', uid, 'items', readingId);
         await db.runTransaction(async (tx) => {
-          tx.set(requestRef, {
-            status: 'COMPLETED_SUCCESS',
-            readingId,
-            responsePayload,
-            llmMeta, // ✅ use sanitized meta
-            updatedAt: FieldValue.serverTimestamp(),
-          }, {merge: true});
+          if (!economyV2Enabled) {
+            tx.set(requestRef, {
+              status: 'COMPLETED_SUCCESS',
+              readingId,
+              responsePayload,
+              llmMeta,
+              updatedAt: FieldValue.serverTimestamp(),
+            }, {merge: true});
+          }
 
           tx.set(readingRef, stripUndefinedDeep({
             requestId,
@@ -420,9 +472,18 @@ export const tarotDraw = onCall(
             draw: drawForHistory,
             reading: generated.reading,
             createdAt: FieldValue.serverTimestamp(),
-            llmMeta, // ✅ use sanitized meta
+            llmMeta,
           }), {merge: true});
         });
+
+        if (economyV2Enabled) {
+          await completeTarotEconomyRequest({
+            uid,
+            requestId,
+            responsePayload,
+            llmMeta,
+          });
+        }
 
         await addLlmTokens(
             'tarot',
@@ -441,18 +502,27 @@ export const tarotDraw = onCall(
           durationMs: generated.llmMeta.durationMs,
         });
 
-        return responsePayload;
+        return stripUndefinedDeep(responsePayload);
       } catch (error) {
         console.error('tarotDraw error:', error);
         const errorMessage = error instanceof Error ? error.message : String(error);
 
-        await requestRef.set({
-          status: 'FAILED',
-          error: {
-            message: errorMessage,
-          },
-          updatedAt: FieldValue.serverTimestamp(),
-        }, {merge: true});
+        if (economyV2Enabled) {
+          await refundTarotEconomyRequest({
+            uid,
+            requestId,
+            dateIso,
+            errorMessage,
+          });
+        } else {
+          await requestRef.set({
+            status: 'FAILED',
+            error: {
+              message: errorMessage,
+            },
+            updatedAt: FieldValue.serverTimestamp(),
+          }, {merge: true});
+        }
 
         await updateProviderUsage({
           dateIso,

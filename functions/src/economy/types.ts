@@ -29,20 +29,41 @@ export type EconomyBalanceDoc = {
 };
 
 export type EconomyLedgerEntryDoc = {
-  type: 'DAILY_LOGIN_CLAIM';
+  type: 'DAILY_LOGIN_CLAIM' | 'TAROT_1_MOON_SPEND' | 'TAROT_3_MOON_SPEND' | 'REFUND';
   amount: number;
   createdAt: Timestamp;
   requestId: string;
   dateIso: string;
 };
 
-export type EconomyRequestResult = 'CLAIMED' | 'ALREADY_CLAIMED';
+export type EconomyRequestResult =
+  | 'CLAIMED'
+  | 'ALREADY_CLAIMED'
+  | 'RESERVED'
+  | 'COMPLETED_SUCCESS'
+  | 'REFUNDED'
+  | 'FAILED';
 
 export type EconomyRequestDoc = {
   requestId: string;
-  type: 'CLAIM_DAILY_LOGIN';
+  type: 'CLAIM_DAILY_LOGIN' | 'TAROT_1' | 'TAROT_3';
   result: EconomyRequestResult;
-  response: ClaimDailyLoginResponse;
+  response?: ClaimDailyLoginResponse;
+  responsePayload?: unknown;
+  status?: 'PROCESSING' | 'FAILED' | 'COMPLETED_SUCCESS';
+  decisionSource?: EconomyDecisionSource;
+  moonCostCharged?: number;
+  usageApplied?: {
+    dailyCounter?: string;
+    weeklyCounter?: string;
+  };
+  dateIso?: string;
+  weekKey?: string;
+  lang?: string;
+  question?: string;
+  llmMeta?: unknown;
+  error?: unknown;
+  refundedAt?: Timestamp;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 };

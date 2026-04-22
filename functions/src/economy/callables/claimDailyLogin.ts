@@ -69,6 +69,9 @@ export const claimDailyLogin = onCall(
 
         if (requestSnap.exists) {
           const existing = requestSnap.data() as EconomyRequestDoc;
+          if (!existing.response) {
+            throw new HttpsError('internal', 'Stored economy request is missing response payload');
+          }
           return existing.response;
         }
 
