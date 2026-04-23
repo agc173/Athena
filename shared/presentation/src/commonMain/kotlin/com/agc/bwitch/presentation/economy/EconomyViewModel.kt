@@ -72,7 +72,7 @@ class EconomyViewModel(
 
                 state.copy(
                     isLoading = false,
-                    balance = status?.balance ?: balance?.balance ?: state.balance,
+                    balance = balance?.balance ?: status?.balance ?: state.balance,
                     isPremium = status?.isPremium ?: state.isPremium,
                     dailyLoginClaimed = balance?.dailyLoginClaimed ?: state.dailyLoginClaimed,
                     rewardedAdsRemaining = balance?.rewardedAdsRemaining ?: state.rewardedAdsRemaining,
@@ -182,7 +182,7 @@ class EconomyViewModel(
 
         _uiState.update { state ->
             state.copy(
-                balance = status?.balance ?: balance?.balance ?: state.balance,
+                balance = balance?.balance ?: status?.balance ?: state.balance,
                 isPremium = status?.isPremium ?: state.isPremium,
                 dailyLoginClaimed = balance?.dailyLoginClaimed ?: state.dailyLoginClaimed,
                 rewardedAdsRemaining = balance?.rewardedAdsRemaining ?: state.rewardedAdsRemaining,
