@@ -24,7 +24,10 @@ data class EconomyUiState(
     val isClaimingRewardedAd: Boolean = false,
     val lastClaimResult: EconomyClaimUiResult? = null,
     val error: String? = null,
-)
+) {
+    val hasStorePendingClaim: Boolean
+        get() = !dailyLoginClaimed || rewardedAdsRemaining > 0
+}
 
 data class EconomyClaimUiResult(
     val action: EconomyClaimAction,

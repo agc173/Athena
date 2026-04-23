@@ -33,15 +33,8 @@ fun MoonStoreScreen(
     val strings = appStrings.profile
     val state by viewModel.uiState.collectAsState()
     val economyState by economyViewModel.uiState.collectAsState()
-    val safeDailyClaimLabel = "+1 ${strings.moonCreditsTitle}"
-    val safeRewardedClaimLabel = "+1 ${strings.moonCreditsTitle}"
-    val showRewardedClaimButton = economyState.rewardedAdsRemaining > 0 || economyState.isClaimingRewardedAd
-
-    val visibleBalance = if (economyState.hasUsableSnapshot) {
-        economyState.balance
-    } else {
-        state.balance
-    }
+    val dailyClaimLabel = "Reclamar 1 Luna"
+    val rewardedClaimLabel = "Ver anuncio y obtener 1 Luna"
 
     LaunchedEffect(economyState.isLoading, economyState.error, economyState.balance) {
         if (!economyState.isLoading) {
@@ -56,17 +49,29 @@ fun MoonStoreScreen(
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text(
-            text = strings.moonCreditsValueFormat.replaceFirst("%d", "$visibleBalance"),
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary,
-        )
+        if (economyState.hasUsableSnapshot) {
+            Text(
+                text = strings.moonCreditsValueFormat.replaceFirst("%d", "${economyState.balance}"),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        } else {
+            Text(
+                text = "Sincronizando saldo de Lunas…",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
 
         Card(modifier = Modifier.fillMaxWidth()) {
             Column(
                 modifier = Modifier.padding(12.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
+                Text(
+                    text = "Claim diario",
+                    style = MaterialTheme.typography.titleSmall,
+                )
                 if (!economyState.dailyLoginClaimed) {
                     Button(
                         onClick = {
@@ -79,30 +84,39 @@ fun MoonStoreScreen(
                         if (economyState.isClaimingDailyLogin) {
                             CircularProgressIndicator()
                         } else {
-                            Text(safeDailyClaimLabel)
+                            Text(dailyClaimLabel)
                         }
                     }
+                } else {
+                    Text(
+                        text = "Claim diario ya reclamado hoy.",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
 
-                if (showRewardedClaimButton) {
-                    Button(
-                        onClick = {
-                            println("[MoonStoreScreen] CTA rewarded ad tapped")
-                            economyViewModel.claimRewardedAd()
-                        },
-                        enabled = !economyState.isClaimingRewardedAd && !economyState.isLoading,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        if (economyState.isClaimingRewardedAd) {
-                            CircularProgressIndicator()
-                        } else {
-                            Text(safeRewardedClaimLabel)
-                        }
+                Text(
+                    text = "Lunas por anuncios",
+                    style = MaterialTheme.typography.titleSmall,
+                )
+                Button(
+                    onClick = {
+                        println("[MoonStoreScreen] CTA rewarded ad tapped")
+                        economyViewModel.claimRewardedAd()
+                    },
+                    enabled = economyState.rewardedAdsRemaining > 0 &&
+                        !economyState.isClaimingRewardedAd &&
+                        !economyState.isLoading,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    if (economyState.isClaimingRewardedAd) {
+                        CircularProgressIndicator()
+                    } else {
+                        Text(rewardedClaimLabel)
                     }
                 }
 
                 Text(
-                    text = "${appStrings.oracle.adUnlockRemainingLabel}: ${economyState.rewardedAdsRemaining}",
+                    text = "Anuncios disponibles hoy: ${economyState.rewardedAdsRemaining}",
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
