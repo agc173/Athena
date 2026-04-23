@@ -31,12 +31,29 @@ class BackendFirstMoonRepositoryTest {
     @Test
     fun `getBalance falls back to local when backend fails`() = runBlocking {
         val local = FakeMoonRepository(initialBalance = 4)
-        val economy = FakeEconomyRepository(statusError = IllegalStateException("down"))
+        val economy = FakeEconomyRepository(
+            statusError = IllegalStateException("status down"),
+            balanceError = IllegalStateException("balance down"),
+        )
         val repository = BackendFirstMoonRepository(localRepository = local, economyRepository = economy)
 
         val result = repository.getBalance()
 
         assertEquals(4, result.amount)
+    }
+
+    @Test
+    fun `getBalance uses backend getBalance when status fails`() = runBlocking {
+        val local = FakeMoonRepository(initialBalance = 4)
+        val economy = FakeEconomyRepository(
+            statusError = IllegalStateException("status down"),
+            balanceValue = 7,
+        )
+        val repository = BackendFirstMoonRepository(localRepository = local, economyRepository = economy)
+
+        val result = repository.getBalance()
+
+        assertEquals(7, result.amount)
     }
 
     @Test
@@ -79,14 +96,19 @@ class BackendFirstMoonRepositoryTest {
 
     private class FakeEconomyRepository(
         private val statusBalance: Int? = null,
+        private val balanceValue: Int? = null,
         private val statusError: Throwable? = null,
+        private val balanceError: Throwable? = null,
     ) : EconomyRepository {
-        override suspend fun getBalance(): EconomyBalance = EconomyBalance(
-            balance = statusBalance ?: 0,
-            dailyLoginClaimed = false,
-            rewardedAdsClaimed = 0,
-            rewardedAdsRemaining = 0,
-        )
+        override suspend fun getBalance(): EconomyBalance {
+            balanceError?.let { throw it }
+            return EconomyBalance(
+                balance = balanceValue ?: statusBalance ?: 0,
+                dailyLoginClaimed = false,
+                rewardedAdsClaimed = 0,
+                rewardedAdsRemaining = 0,
+            )
+        }
 
         override suspend fun getStatus(): EconomyStatus {
             statusError?.let { throw it }
