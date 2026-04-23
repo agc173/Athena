@@ -25,11 +25,15 @@ class GitLiveFunctionsClient(
                 .invoke(requestSerializer, data)
 
             val payload = result.data(responseSerializer)
+            println("[GitLiveFunctionsClient] callable=$name success")
 
             ApiResult.Ok(payload)
         } catch (e: FirebaseFunctionsException) {
-            ApiResult.Err(e.toApiError())
+            val mapped = e.toApiError()
+            println("[GitLiveFunctionsClient] callable=$name FirebaseFunctionsException code=${e.code} mapped=$mapped message=${e.message}")
+            ApiResult.Err(mapped)
         } catch (e: Throwable) {
+            println("[GitLiveFunctionsClient] callable=$name Throwable=${e::class.simpleName} message=${e.message}")
             ApiResult.Err(ApiError.Unknown(e.message))
         }
     }
