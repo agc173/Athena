@@ -33,8 +33,9 @@ fun MoonStoreScreen(
     val strings = appStrings.profile
     val state by viewModel.uiState.collectAsState()
     val economyState by economyViewModel.uiState.collectAsState()
-    val safeDailyClaimLabel = "${strings.storeOpen} +1 ${strings.moonCreditsTitle}"
-    val safeRewardedClaimLabel = "${appStrings.oracle.retryCta} +1 ${strings.moonCreditsTitle}"
+    val safeDailyClaimLabel = "+1 ${strings.moonCreditsTitle}"
+    val safeRewardedClaimLabel = "+1 ${strings.moonCreditsTitle}"
+    val showRewardedClaimButton = economyState.rewardedAdsRemaining > 0 || economyState.isClaimingRewardedAd
 
     val visibleBalance = if (!economyState.isLoading && economyState.error == null) {
         economyState.balance
@@ -80,17 +81,17 @@ fun MoonStoreScreen(
                     }
                 }
 
-                Button(
-                    onClick = economyViewModel::claimRewardedAd,
-                    enabled = !economyState.isClaimingRewardedAd &&
-                        !economyState.isLoading &&
-                        economyState.rewardedAdsRemaining > 0,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    if (economyState.isClaimingRewardedAd) {
-                        CircularProgressIndicator()
-                    } else {
-                        Text(safeRewardedClaimLabel)
+                if (showRewardedClaimButton) {
+                    Button(
+                        onClick = economyViewModel::claimRewardedAd,
+                        enabled = !economyState.isClaimingRewardedAd && !economyState.isLoading,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        if (economyState.isClaimingRewardedAd) {
+                            CircularProgressIndicator()
+                        } else {
+                            Text(safeRewardedClaimLabel)
+                        }
                     }
                 }
 
