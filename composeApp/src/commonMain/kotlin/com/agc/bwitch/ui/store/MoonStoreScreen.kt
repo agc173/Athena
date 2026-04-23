@@ -33,8 +33,7 @@ fun MoonStoreScreen(
     val strings = appStrings.profile
     val state by viewModel.uiState.collectAsState()
     val economyState by economyViewModel.uiState.collectAsState()
-    val dailyClaimLabel = "Reclamar 1 Luna"
-    val rewardedClaimLabel = "Ver anuncio y obtener 1 Luna"
+    // TODO(store): esta pantalla ya funciona como hub general de Store; renombrar archivo/composable en una pasada posterior.
 
     LaunchedEffect(economyState.isLoading, economyState.error, economyState.balance) {
         if (!economyState.isLoading) {
@@ -54,14 +53,13 @@ fun MoonStoreScreen(
             style = MaterialTheme.typography.headlineSmall,
         )
 
-        // Saldo actual
         Card(modifier = Modifier.fillMaxWidth()) {
             Column(
                 modifier = Modifier.padding(12.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Text(
-                    text = "Saldo actual",
+                    text = strings.storeCurrentBalanceTitle,
                     style = MaterialTheme.typography.titleSmall,
                 )
                 if (economyState.hasUsableSnapshot) {
@@ -72,7 +70,7 @@ fun MoonStoreScreen(
                     )
                 } else {
                     Text(
-                        text = "Sincronizando saldo de Lunas…",
+                        text = strings.storeSyncingBalance,
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -80,14 +78,13 @@ fun MoonStoreScreen(
             }
         }
 
-        // Recompensas gratis de hoy
         Card(modifier = Modifier.fillMaxWidth()) {
             Column(
                 modifier = Modifier.padding(12.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Text(
-                    text = "Recompensas gratis de hoy",
+                    text = strings.storeFreeRewardsTodayTitle,
                     style = MaterialTheme.typography.titleSmall,
                 )
                 if (!economyState.dailyLoginClaimed) {
@@ -102,12 +99,12 @@ fun MoonStoreScreen(
                         if (economyState.isClaimingDailyLogin) {
                             CircularProgressIndicator()
                         } else {
-                            Text(dailyClaimLabel)
+                            Text(strings.storeClaimOneMoonCta)
                         }
                     }
                 } else {
                     Text(
-                        text = "Claim diario ya reclamado hoy.",
+                        text = strings.storeDailyClaimAlreadyDone,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
@@ -125,20 +122,19 @@ fun MoonStoreScreen(
                     if (economyState.isClaimingRewardedAd) {
                         CircularProgressIndicator()
                     } else {
-                        Text(rewardedClaimLabel)
+                        Text(strings.storeWatchAdRewardCta)
                     }
                 }
 
                 Text(
-                    text = "Anuncios disponibles hoy: ${economyState.rewardedAdsRemaining}",
+                    text = strings.storeAdsAvailableTodayFormat.replaceFirst("%d", "${economyState.rewardedAdsRemaining}"),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
 
-        // Compras / monetización
         Text(
-            text = "Compras y monetización",
+            text = strings.storePurchasesMonetizationTitle,
             style = MaterialTheme.typography.titleSmall,
         )
         state.packs.forEach { pack ->
@@ -160,9 +156,8 @@ fun MoonStoreScreen(
             }
         }
 
-        // Futuros contenidos (placeholder)
         Text(
-            text = "Futuros contenidos",
+            text = strings.storeFutureContentTitle,
             style = MaterialTheme.typography.titleSmall,
         )
         Card(modifier = Modifier.fillMaxWidth()) {
@@ -171,11 +166,11 @@ fun MoonStoreScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Text(
-                    text = "Suscripción",
+                    text = strings.storeSubscriptionTitle,
                     style = MaterialTheme.typography.titleSmall,
                 )
                 Text(
-                    text = "Beneficios premium y ventajas recurrentes.",
+                    text = strings.storeSubscriptionPlaceholderDescription,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Text(
@@ -191,11 +186,11 @@ fun MoonStoreScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Text(
-                    text = "Mazos y cartas de tarot",
+                    text = strings.storeTarotDecksTitle,
                     style = MaterialTheme.typography.titleSmall,
                 )
                 Text(
-                    text = "Nuevos mazos, colecciones y contenido desbloqueable.",
+                    text = strings.storeTarotDecksPlaceholderDescription,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Text(
