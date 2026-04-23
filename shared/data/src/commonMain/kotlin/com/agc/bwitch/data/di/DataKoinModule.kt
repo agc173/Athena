@@ -10,6 +10,7 @@ import com.agc.bwitch.data.oracle.OracleRepositoryImpl
 import com.agc.bwitch.data.remote.economy.EconomyRemoteDataSource
 import com.agc.bwitch.data.localization.SettingsAppLanguageRepository
 import com.agc.bwitch.data.localization.SystemLanguageCodeProvider
+import com.agc.bwitch.data.moons.BackendFirstMoonRepository
 import com.agc.bwitch.data.moons.MockMoonPackRepository
 import com.agc.bwitch.data.moons.SettingsMoonRepository
 import com.agc.bwitch.data.rituals.LocalRitualCatalogRepository
@@ -67,7 +68,8 @@ val dataKoinModule: Module = module {
     single<NotificationSettingsRepository> { SettingsNotificationSettingsRepository(get()) }
     single<SubscriptionBillingDataSource> { UnsupportedSubscriptionBillingDataSource }
     single<SubscriptionRepository> { BillingBackedSubscriptionRepository(get(), get()) }
-    single<MoonRepository> { SettingsMoonRepository(get()) }
+    single { SettingsMoonRepository(get()) }
+    single<MoonRepository> { BackendFirstMoonRepository(localRepository = get<SettingsMoonRepository>(), economyRepository = get()) }
     single<MoonPackRepository> { MockMoonPackRepository() }
 
     /**
