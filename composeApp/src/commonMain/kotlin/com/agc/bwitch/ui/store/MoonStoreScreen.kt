@@ -37,7 +37,7 @@ fun MoonStoreScreen(
     val safeRewardedClaimLabel = "+1 ${strings.moonCreditsTitle}"
     val showRewardedClaimButton = economyState.rewardedAdsRemaining > 0 || economyState.isClaimingRewardedAd
 
-    val visibleBalance = if (!economyState.isLoading && economyState.error == null) {
+    val visibleBalance = if (economyState.hasUsableSnapshot) {
         economyState.balance
     } else {
         state.balance
