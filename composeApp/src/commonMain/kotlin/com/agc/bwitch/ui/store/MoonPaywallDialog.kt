@@ -1,0 +1,73 @@
+package com.agc.bwitch.ui.store
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import com.agc.bwitch.localization.appStrings
+import com.agc.bwitch.presentation.economy.EconomyUiState
+
+@Composable
+fun MoonPaywallDialog(
+    economyState: EconomyUiState,
+    requiredMoons: Int,
+    onDismiss: () -> Unit,
+    onClaimDaily: () -> Unit,
+    onClaimRewardedAd: () -> Unit,
+    onOpenStore: () -> Unit,
+) {
+    val strings = appStrings
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(text = strings.profile.moonPaywallTitle)
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    text = strings.profile.moonCreditsValueFormat.replaceFirst("%d", "${economyState.balance}"),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                Text(
+                    text = strings.profile.moonPaywallNeedFormat.replaceFirst("%d", "$requiredMoons"),
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                OutlinedButton(
+                    onClick = onClaimDaily,
+                    enabled = !economyState.dailyLoginClaimed && !economyState.isClaimingDailyLogin,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(strings.profile.moonPaywallClaimDailyCta)
+                }
+                OutlinedButton(
+                    onClick = onClaimRewardedAd,
+                    enabled = economyState.rewardedAdsRemaining > 0 && !economyState.isClaimingRewardedAd,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(strings.profile.moonPaywallWatchAdCta)
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onOpenStore) {
+                Text(strings.profile.moonPaywallOpenStoreCta)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(strings.profile.moonPaywallDismissCta)
+            }
+        },
+        modifier = Modifier.padding(8.dp),
+    )
+}

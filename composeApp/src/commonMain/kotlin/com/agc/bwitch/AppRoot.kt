@@ -51,6 +51,7 @@ import com.agc.bwitch.domain.userprofile.hasMinimumProfileCompleted
 import com.agc.bwitch.localization.NavigationStrings
 import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.presentation.auth.SessionViewModel
+import com.agc.bwitch.presentation.economy.EconomyViewModel
 import com.agc.bwitch.presentation.navigation.Destination
 import com.agc.bwitch.presentation.navigation.Navigator
 import com.agc.bwitch.ui.astrology.AstrologyScreen
@@ -71,6 +72,7 @@ import com.agc.bwitch.ui.rituals.RitualsCategoryScreen
 import com.agc.bwitch.ui.rituals.RitualsListScreen
 import com.agc.bwitch.ui.rituals.RitualsPlaceholderScreen
 import com.agc.bwitch.ui.store.MoonStoreScreen
+import com.agc.bwitch.ui.store.MoonPaywallDialog
 import com.agc.bwitch.ui.tarot.TarotHomeScreen
 import com.agc.bwitch.ui.tarot.TarotScreen
 import com.agc.bwitch.ui.userprofile.ProfileScreen
@@ -85,6 +87,9 @@ fun AppRoot() {
 
     val sessionVm: SessionViewModel = koinInject()
     val session by sessionVm.uiState.collectAsState()
+    val economyVm: EconomyViewModel = koinInject()
+    val economyState by economyVm.uiState.collectAsState()
+    val moonPaywallRequest by economyVm.moonPaywallRequest.collectAsState()
 
     val birthChartRepository: BirthChartRepository = koinInject()
     val getUserProfile: GetUserProfileUseCase = koinInject()
@@ -266,8 +271,28 @@ fun AppRoot() {
 
             Destination.Habits -> HabitsScreen(contentPadding = padding)
         }
+
+        moonPaywallRequest?.let { paywall ->
+            MoonPaywallDialog(
+                economyState = economyState,
+                requiredMoons = paywall.requiredMoons,
+                onDismiss = economyVm::dismissMoonPaywall,
+                onClaimDaily = economyVm::claimDailyLogin,
+                onClaimRewardedAd = {
+                    economyVm.claimRewardedAd(
+                        placement = paywall.source ?: REWARDED_AD_PAYWALL_PLACEMENT,
+                    )
+                },
+                onOpenStore = {
+                    economyVm.dismissMoonPaywall()
+                    navigator.navigate(Destination.MoonStore)
+                },
+            )
+        }
     }
 }
+
+private const val REWARDED_AD_PAYWALL_PLACEMENT = "contextual_paywall"
 
 private fun destinationTitle(
     destination: Destination,

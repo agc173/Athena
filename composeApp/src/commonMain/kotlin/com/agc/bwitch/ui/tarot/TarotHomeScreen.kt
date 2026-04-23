@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.agc.bwitch.domain.tarot.TarotRequestType
 import com.agc.bwitch.localization.appStrings
+import com.agc.bwitch.presentation.economy.EconomyViewModel
 import com.agc.bwitch.presentation.tarot.TarotViewModel
 import org.koin.compose.koinInject
 
@@ -22,6 +23,7 @@ fun TarotHomeScreen(
     contentPadding: PaddingValues,
     onSelectRequestType: (TarotRequestType) -> Unit,
     viewModel: TarotViewModel = koinInject(),
+    economyViewModel: EconomyViewModel = koinInject(),
 ) {
     val strings = appStrings.tarot
     val state by viewModel.uiState.collectAsState()
@@ -47,7 +49,14 @@ fun TarotHomeScreen(
         TarotOptionCard(
             title = strings.homeThreeCardTitle,
             subtitle = "${strings.homeThreeCardSubtitle} · ${state.extraReadingCost} ${appStrings.profile.moonCreditsTitle}",
-            onClick = { onSelectRequestType(TarotRequestType.TAROT_3) },
+            onClick = {
+                economyViewModel.requireLunas(
+                    cost = state.extraReadingCost,
+                    source = "tarot_extra_reading",
+                ) {
+                    onSelectRequestType(TarotRequestType.TAROT_3)
+                }
+            },
         )
 
         Text(
