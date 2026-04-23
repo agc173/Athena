@@ -47,6 +47,7 @@ import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
 import com.agc.bwitch.domain.rituals.completedHabitBadgesForCycles
 import com.agc.bwitch.localization.AppStrings
 import com.agc.bwitch.localization.appStrings
+import com.agc.bwitch.presentation.economy.EconomyViewModel
 import com.agc.bwitch.presentation.userprofile.UserProfileViewModel
 import com.agc.bwitch.ui.common.toVisualResource
 import com.agc.bwitch.ui.rituals.components.habitBadgeResourceFor
@@ -67,7 +68,9 @@ fun ProfileScreen(
     val strings = appStrings
     val profileStrings = strings.profile
     val vm: UserProfileViewModel = koinInject()
+    val economyVm: EconomyViewModel = koinInject()
     val state by vm.uiState.collectAsState()
+    val economyState by economyVm.uiState.collectAsState()
     val savedEssence = state.savedBirthEssence
     var showBirthEssenceDialog by remember { mutableStateOf(false) }
 
@@ -177,6 +180,7 @@ fun ProfileScreen(
                 subLabel = if (onOpenStore == null) profileStrings.storeSoon else profileStrings.storeOpen,
                 onClick = { onOpenStore?.invoke() },
                 enabled = onOpenStore != null,
+                showBadge = economyState.hasStorePendingClaim,
                 modifier = Modifier.weight(0.8f),
             )
         }
@@ -370,6 +374,7 @@ private fun MiniAction(
     subLabel: String,
     onClick: () -> Unit,
     enabled: Boolean,
+    showBadge: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val dimens = BWitchThemeTokens.dimens
@@ -382,24 +387,37 @@ private fun MiniAction(
         color = if (enabled) extras.surfaceElevated else extras.surfaceMuted,
         shape = MaterialTheme.shapes.small,
     ) {
-        Column(
-            modifier = Modifier.padding(
-                horizontal = dimens.spacingSm,
-                vertical = dimens.spacingSm,
-            ),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(2.dp),
-        ) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            Text(
-                text = subLabel,
-                style = MaterialTheme.typography.bodySmall,
-                color = extras.textSecondary,
-            )
+        Box {
+            Column(
+                modifier = Modifier.padding(
+                    horizontal = dimens.spacingSm,
+                    vertical = dimens.spacingSm,
+                ),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Text(
+                    text = subLabel,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = extras.textSecondary,
+                )
+            }
+
+            if (showBadge) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(top = 6.dp, end = 6.dp)
+                        .size(8.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.error),
+                )
+            }
         }
     }
 }
