@@ -1,7 +1,6 @@
 package com.agc.bwitch.data.remote.economy
 
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonObject
 
 @Serializable
 data class EconomyBalanceDto(
@@ -11,12 +10,15 @@ data class EconomyBalanceDto(
     val rewardedAdsRemaining: Int = 0,
 )
 
+/**
+ * Mantener este DTO con tipos primitivos/objetos serializables básicos para compatibilidad
+ * con GitLive FirebaseDecoder (no JsonObject/JsonElement).
+ */
 @Serializable
 data class EconomyStatusDto(
     val balance: Int = 0,
     val premium: PremiumDto = PremiumDto(),
     val todayDateIso: String = "",
-    val rules: JsonObject? = null,
 )
 
 @Serializable
