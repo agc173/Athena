@@ -387,12 +387,16 @@ private fun MiniAction(
         color = if (enabled) extras.surfaceElevated else extras.surfaceMuted,
         shape = MaterialTheme.shapes.small,
     ) {
-        Box {
+        Box(
+            modifier = Modifier.fillMaxWidth(),
+        ) {
             Column(
-                modifier = Modifier.padding(
-                    horizontal = dimens.spacingSm,
-                    vertical = dimens.spacingSm,
-                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        horizontal = dimens.spacingSm,
+                        vertical = dimens.spacingSm,
+                    ),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
