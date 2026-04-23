@@ -10,6 +10,9 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -52,9 +55,82 @@ class EconomyViewModel(
 
     private val _uiState = MutableStateFlow(EconomyUiState())
     val uiState: StateFlow<EconomyUiState> = _uiState.asStateFlow()
+    private val _moonPaywallRequest = MutableStateFlow<MoonPaywallRequest?>(null)
+    val moonPaywallRequest: StateFlow<MoonPaywallRequest?> = _moonPaywallRequest.asStateFlow()
+    private var pendingMoonAction: PendingMoonAction? = null
 
     init {
+        scope.launch {
+            uiState
+                .map { it.hasUsableSnapshot to it.balance }
+                .distinctUntilChanged()
+                .collectLatest { (hasUsableSnapshot, balance) ->
+                    evaluatePendingMoonAction(
+                        hasUsableSnapshot = hasUsableSnapshot,
+                        balance = balance,
+                    )
+
+                    val request = _moonPaywallRequest.value ?: return@collectLatest
+                    if (hasUsableSnapshot && balance >= request.requiredMoons) {
+                        _moonPaywallRequest.value = null
+                    }
+                }
+        }
         loadEconomy()
+    }
+
+    fun requireLunas(
+        cost: Int,
+        source: String? = null,
+        onSuccess: () -> Unit,
+    ): Boolean {
+        val currentState = _uiState.value
+        if (currentState.hasUsableSnapshot && currentState.balance >= cost) {
+            onSuccess()
+            return true
+        }
+
+        pendingMoonAction = PendingMoonAction(
+            requiredMoons = cost,
+            source = source,
+            onSuccess = onSuccess,
+        )
+        if (currentState.hasUsableSnapshot) {
+            _moonPaywallRequest.value = MoonPaywallRequest(
+                requiredMoons = cost,
+                source = source,
+            )
+        } else if (!currentState.isLoading) {
+            loadEconomy()
+        }
+        return false
+    }
+
+    fun dismissMoonPaywall() {
+        _moonPaywallRequest.value = null
+        pendingMoonAction = null
+    }
+
+    private fun evaluatePendingMoonAction(
+        hasUsableSnapshot: Boolean,
+        balance: Int,
+    ) {
+        val action = pendingMoonAction ?: return
+        if (!hasUsableSnapshot) return
+
+        if (balance >= action.requiredMoons) {
+            pendingMoonAction = null
+            _moonPaywallRequest.value = null
+            action.onSuccess()
+            return
+        }
+
+        if (_moonPaywallRequest.value == null) {
+            _moonPaywallRequest.value = MoonPaywallRequest(
+                requiredMoons = action.requiredMoons,
+                source = action.source,
+            )
+        }
     }
 
     fun loadEconomy() {
@@ -225,6 +301,17 @@ class EconomyViewModel(
         }
     }
 }
+
+data class MoonPaywallRequest(
+    val requiredMoons: Int,
+    val source: String? = null,
+)
+
+private data class PendingMoonAction(
+    val requiredMoons: Int,
+    val source: String?,
+    val onSuccess: () -> Unit,
+)
 
 const val ECONOMY_LOAD_ERROR_KEY = "economy.load.error"
 const val ECONOMY_CLAIM_ERROR_KEY = "economy.claim.error"
