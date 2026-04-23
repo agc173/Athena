@@ -15,6 +15,7 @@ import kotlinx.coroutines.launch
 
 data class EconomyUiState(
     val isLoading: Boolean = true,
+    val hasUsableSnapshot: Boolean = false,
     val balance: Int = 0,
     val isPremium: Boolean = false,
     val dailyLoginClaimed: Boolean = false,
@@ -69,9 +70,11 @@ class EconomyViewModel(
             _uiState.update { state ->
                 val status = statusResult.getOrNull()
                 val balance = balanceResult.getOrNull()
+                val hasUsableSnapshot = state.hasUsableSnapshot || status != null || balance != null
 
                 state.copy(
                     isLoading = false,
+                    hasUsableSnapshot = hasUsableSnapshot,
                     balance = balance?.balance ?: status?.balance ?: state.balance,
                     isPremium = status?.isPremium ?: state.isPremium,
                     dailyLoginClaimed = balance?.dailyLoginClaimed ?: state.dailyLoginClaimed,
@@ -104,6 +107,7 @@ class EconomyViewModel(
                 _uiState.update {
                     it.copy(
                         isClaimingDailyLogin = false,
+                        hasUsableSnapshot = true,
                         balance = result.balance,
                         dailyLoginClaimed = result.dailyLoginClaimed,
                         rewardedAdsRemaining = result.rewardedAdsRemaining,
@@ -150,6 +154,7 @@ class EconomyViewModel(
                 _uiState.update {
                     it.copy(
                         isClaimingRewardedAd = false,
+                        hasUsableSnapshot = true,
                         balance = result.balance,
                         dailyLoginClaimed = result.dailyLoginClaimed,
                         rewardedAdsRemaining = result.rewardedAdsRemaining,
@@ -181,7 +186,9 @@ class EconomyViewModel(
         val balance = runCatching { economyRepository.getBalance() }.getOrNull()
 
         _uiState.update { state ->
+            val hasUsableSnapshot = state.hasUsableSnapshot || status != null || balance != null
             state.copy(
+                hasUsableSnapshot = hasUsableSnapshot,
                 balance = balance?.balance ?: status?.balance ?: state.balance,
                 isPremium = status?.isPremium ?: state.isPremium,
                 dailyLoginClaimed = balance?.dailyLoginClaimed ?: state.dailyLoginClaimed,
