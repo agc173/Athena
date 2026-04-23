@@ -1,11 +1,11 @@
 package com.agc.bwitch.presentation.tarot
 
 import com.agc.bwitch.domain.shared.ApiResult
-import com.agc.bwitch.domain.economy.EconomyRepository
 import com.agc.bwitch.domain.localization.AppLanguage
 import com.agc.bwitch.domain.localization.ObserveCurrentLanguageUseCase
 import com.agc.bwitch.domain.localization.ResolveCurrentLanguageUseCase
 import com.agc.bwitch.domain.moons.AddMoonsUseCase
+import com.agc.bwitch.domain.moons.GetMoonBalanceUseCase
 import com.agc.bwitch.domain.moons.MoonUnlockCostCatalog
 import com.agc.bwitch.domain.moons.MoonUnlockFeature
 import com.agc.bwitch.domain.moons.ObserveMoonBalanceUseCase
@@ -63,9 +63,9 @@ class TarotViewModel(
     private val resolveCurrentLanguageUseCase: ResolveCurrentLanguageUseCase,
     private val observeCurrentLanguageUseCase: ObserveCurrentLanguageUseCase,
     private val observeMoonBalanceUseCase: ObserveMoonBalanceUseCase,
+    private val getMoonBalanceUseCase: GetMoonBalanceUseCase,
     private val addMoonsUseCase: AddMoonsUseCase,
     private val spendMoonsUseCase: SpendMoonsUseCase,
-    private val economyRepository: EconomyRepository,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var shuffleDelayJob: Job? = null
@@ -403,23 +403,10 @@ class TarotViewModel(
     }
 
     private suspend fun refreshMoonBalanceFromBackend() {
-        val backendBalance = runCatching { economyRepository.getStatus().balance }
-            .recoverCatching { economyRepository.getBalance().balance }
+        val syncedBalance = runCatching { getMoonBalanceUseCase().amount }
             .getOrNull()
             ?: return
-
-        val localBalance = _uiState.value.moonBalance
-        val delta = backendBalance - localBalance
-
-        when {
-            delta > 0 -> addMoonsUseCase(delta)
-            delta < 0 -> {
-                // TODO(economy-migration): sustituir ajuste por delta por sincronización de saldo absoluto.
-                spendMoonsUseCase(-delta)
-            }
-        }
-
-        _uiState.update { it.copy(moonBalance = backendBalance) }
+        _uiState.update { it.copy(moonBalance = syncedBalance) }
     }
 
     @OptIn(ExperimentalUuidApi::class)
