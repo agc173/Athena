@@ -49,27 +49,45 @@ fun MoonStoreScreen(
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        if (economyState.hasUsableSnapshot) {
-            Text(
-                text = strings.moonCreditsValueFormat.replaceFirst("%d", "${economyState.balance}"),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary,
-            )
-        } else {
-            Text(
-                text = "Sincronizando saldo de Lunas…",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+        Text(
+            text = strings.storeLabel,
+            style = MaterialTheme.typography.headlineSmall,
+        )
 
+        // Saldo actual
         Card(modifier = Modifier.fillMaxWidth()) {
             Column(
                 modifier = Modifier.padding(12.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Text(
-                    text = "Claim diario",
+                    text = "Saldo actual",
+                    style = MaterialTheme.typography.titleSmall,
+                )
+                if (economyState.hasUsableSnapshot) {
+                    Text(
+                        text = strings.moonCreditsValueFormat.replaceFirst("%d", "${economyState.balance}"),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                } else {
+                    Text(
+                        text = "Sincronizando saldo de Lunas…",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        }
+
+        // Recompensas gratis de hoy
+        Card(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier.padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Text(
+                    text = "Recompensas gratis de hoy",
                     style = MaterialTheme.typography.titleSmall,
                 )
                 if (!economyState.dailyLoginClaimed) {
@@ -94,10 +112,6 @@ fun MoonStoreScreen(
                     )
                 }
 
-                Text(
-                    text = "Lunas por anuncios",
-                    style = MaterialTheme.typography.titleSmall,
-                )
                 Button(
                     onClick = {
                         println("[MoonStoreScreen] CTA rewarded ad tapped")
@@ -122,6 +136,11 @@ fun MoonStoreScreen(
             }
         }
 
+        // Compras / monetización
+        Text(
+            text = "Compras y monetización",
+            style = MaterialTheme.typography.titleSmall,
+        )
         state.packs.forEach { pack ->
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(
@@ -138,6 +157,51 @@ fun MoonStoreScreen(
                         Text(strings.storeSoon)
                     }
                 }
+            }
+        }
+
+        // Futuros contenidos (placeholder)
+        Text(
+            text = "Futuros contenidos",
+            style = MaterialTheme.typography.titleSmall,
+        )
+        Card(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier.padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Text(
+                    text = "Suscripción",
+                    style = MaterialTheme.typography.titleSmall,
+                )
+                Text(
+                    text = "Beneficios premium y ventajas recurrentes.",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    text = strings.storeSoon,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
+        }
+
+        Card(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier.padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Text(
+                    text = "Mazos y cartas de tarot",
+                    style = MaterialTheme.typography.titleSmall,
+                )
+                Text(
+                    text = "Nuevos mazos, colecciones y contenido desbloqueable.",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    text = strings.storeSoon,
+                    color = MaterialTheme.colorScheme.primary,
+                )
             }
         }
 
