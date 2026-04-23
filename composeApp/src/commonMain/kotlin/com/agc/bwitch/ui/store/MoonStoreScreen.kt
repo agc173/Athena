@@ -69,7 +69,10 @@ fun MoonStoreScreen(
             ) {
                 if (!economyState.dailyLoginClaimed) {
                     Button(
-                        onClick = economyViewModel::claimDailyLogin,
+                        onClick = {
+                            println("[MoonStoreScreen] CTA daily login tapped")
+                            economyViewModel.claimDailyLogin()
+                        },
                         enabled = !economyState.isClaimingDailyLogin && !economyState.isLoading,
                         modifier = Modifier.fillMaxWidth(),
                     ) {
@@ -83,7 +86,10 @@ fun MoonStoreScreen(
 
                 if (showRewardedClaimButton) {
                     Button(
-                        onClick = economyViewModel::claimRewardedAd,
+                        onClick = {
+                            println("[MoonStoreScreen] CTA rewarded ad tapped")
+                            economyViewModel.claimRewardedAd()
+                        },
                         enabled = !economyState.isClaimingRewardedAd && !economyState.isLoading,
                         modifier = Modifier.fillMaxWidth(),
                     ) {

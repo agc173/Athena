@@ -94,6 +94,8 @@ class EconomyViewModel(
         if (currentState.isClaimingDailyLogin || currentState.isLoading) return
 
         scope.launch {
+            val requestId = generateRequestId()
+            println("[EconomyViewModel] claimDailyLogin start requestId=$requestId")
             _uiState.update {
                 it.copy(
                     isClaimingDailyLogin = true,
@@ -102,8 +104,12 @@ class EconomyViewModel(
             }
 
             runCatching {
-                economyRepository.claimDailyLogin(requestId = generateRequestId())
+                economyRepository.claimDailyLogin(requestId = requestId)
             }.onSuccess { result ->
+                println(
+                    "[EconomyViewModel] claimDailyLogin success requestId=$requestId " +
+                        "result=${result.result} balance=${result.balance}"
+                )
                 _uiState.update {
                     it.copy(
                         isClaimingDailyLogin = false,
@@ -120,7 +126,7 @@ class EconomyViewModel(
                 }
                 refreshEconomySnapshot()
             }.onFailure { error ->
-                println("[EconomyViewModel] claimDailyLogin failed: ${error.message}")
+                println("[EconomyViewModel] claimDailyLogin failed requestId=$requestId: ${error.message}")
                 _uiState.update {
                     it.copy(
                         isClaimingDailyLogin = false,
@@ -137,6 +143,8 @@ class EconomyViewModel(
         if (currentState.rewardedAdsRemaining <= 0) return
 
         scope.launch {
+            val requestId = generateRequestId()
+            println("[EconomyViewModel] claimRewardedAd start requestId=$requestId placement=$placement")
             _uiState.update {
                 it.copy(
                     isClaimingRewardedAd = true,
@@ -146,11 +154,15 @@ class EconomyViewModel(
 
             runCatching {
                 economyRepository.claimRewardedAd(
-                    requestId = generateRequestId(),
+                    requestId = requestId,
                     adProof = REWARDED_AD_PLACEHOLDER_PROOF,
                     placement = placement,
                 )
             }.onSuccess { result ->
+                println(
+                    "[EconomyViewModel] claimRewardedAd success requestId=$requestId " +
+                        "result=${result.result} balance=${result.balance}"
+                )
                 _uiState.update {
                     it.copy(
                         isClaimingRewardedAd = false,
@@ -167,7 +179,7 @@ class EconomyViewModel(
                 }
                 refreshEconomySnapshot()
             }.onFailure { error ->
-                println("[EconomyViewModel] claimRewardedAd failed: ${error.message}")
+                println("[EconomyViewModel] claimRewardedAd failed requestId=$requestId: ${error.message}")
                 _uiState.update {
                     it.copy(
                         isClaimingRewardedAd = false,
@@ -182,8 +194,21 @@ class EconomyViewModel(
     private fun generateRequestId(): String = Uuid.random().toString()
 
     private suspend fun refreshEconomySnapshot() {
-        val status = runCatching { economyRepository.getStatus() }.getOrNull()
-        val balance = runCatching { economyRepository.getBalance() }.getOrNull()
+        val statusResult = runCatching { economyRepository.getStatus() }
+        val balanceResult = runCatching { economyRepository.getBalance() }
+
+        statusResult.exceptionOrNull()?.let { println("[EconomyViewModel] refresh getStatus failed: ${it.message}") }
+        balanceResult.exceptionOrNull()?.let { println("[EconomyViewModel] refresh getBalance failed: ${it.message}") }
+
+        val status = statusResult.getOrNull()
+        val balance = balanceResult.getOrNull()
+
+        if (status != null || balance != null) {
+            println(
+                "[EconomyViewModel] refresh snapshot " +
+                    "statusBalance=${status?.balance} balanceBalance=${balance?.balance}"
+            )
+        }
 
         _uiState.update { state ->
             val hasUsableSnapshot = state.hasUsableSnapshot || status != null || balance != null
