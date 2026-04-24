@@ -2,11 +2,16 @@ package com.agc.bwitch.presentation.astrology.horoscope
 
 import com.agc.bwitch.domain.astrology.horoscope.DailyHoroscope
 import com.agc.bwitch.domain.astrology.horoscope.GetDailyHoroscopeUseCase
+import com.agc.bwitch.domain.astrology.horoscope.GetHoroscopeFutureDayCostUseCase
 import com.agc.bwitch.domain.astrology.horoscope.HoroscopeDailySyncController
 import com.agc.bwitch.domain.astrology.horoscope.HoroscopePullMarker
 import com.agc.bwitch.domain.astrology.horoscope.HoroscopeRepository
+import com.agc.bwitch.domain.astrology.horoscope.HoroscopeUnlockRepository
+import com.agc.bwitch.domain.astrology.horoscope.HoroscopeUnlockResult
+import com.agc.bwitch.domain.astrology.horoscope.IsHoroscopeDayUnlockedUseCase
 import com.agc.bwitch.domain.astrology.horoscope.ObserveDailyHoroscopeUseCase
 import com.agc.bwitch.domain.astrology.horoscope.PullDailyHoroscopeUseCase
+import com.agc.bwitch.domain.astrology.horoscope.UnlockHoroscopeFutureDayUseCase
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
 import com.agc.bwitch.domain.localization.AppLanguage
 import com.agc.bwitch.domain.localization.AppLanguageRepository
@@ -43,6 +48,10 @@ class HoroscopeViewModelTest {
         val resolveLanguageUseCase = ResolveCurrentLanguageUseCase(languageRepository)
         val observeLanguageUseCase = ObserveCurrentLanguageUseCase(languageRepository)
         val observeUserProfileUseCase = ObserveUserProfileUseCase(FakeUserProfileRepo())
+        val unlockRepository = FakeUnlockRepository()
+        val getHoroscopeFutureDayCostUseCase = GetHoroscopeFutureDayCostUseCase(unlockRepository)
+        val isHoroscopeDayUnlockedUseCase = IsHoroscopeDayUnlockedUseCase(unlockRepository)
+        val unlockHoroscopeFutureDayUseCase = UnlockHoroscopeFutureDayUseCase(unlockRepository)
 
         val pullMarker = FakePullMarker(lastPulledDateIso = null) // fuerza pull (pero FakeSync no falla)
 
@@ -67,13 +76,18 @@ class HoroscopeViewModelTest {
             resolveCurrentLanguageUseCase = resolveLanguageUseCase,
             observeCurrentLanguageUseCase = observeLanguageUseCase,
             observeUserProfileUseCase = observeUserProfileUseCase,
+            getHoroscopeFutureDayCostUseCase = getHoroscopeFutureDayCostUseCase,
+            isHoroscopeDayUnlockedUseCase = isHoroscopeDayUnlockedUseCase,
+            unlockHoroscopeFutureDayUseCase = unlockHoroscopeFutureDayUseCase,
             dispatcher = dispatcher,
         )
 
         advanceUntilIdle()
+        viewModel.onOpenSign(ZodiacSign.aries)
+        advanceUntilIdle()
 
         val state = viewModel.uiState.value
-        assertNotNull(state.horoscope)
+        assertNotNull(state.overlay?.horoscope)
         assertNull(state.errorMessage)
         assertEquals(false, state.isLoading)
     }
@@ -90,6 +104,10 @@ class HoroscopeViewModelTest {
         val resolveLanguageUseCase = ResolveCurrentLanguageUseCase(languageRepository)
         val observeLanguageUseCase = ObserveCurrentLanguageUseCase(languageRepository)
         val observeUserProfileUseCase = ObserveUserProfileUseCase(FakeUserProfileRepo())
+        val unlockRepository = FakeUnlockRepository()
+        val getHoroscopeFutureDayCostUseCase = GetHoroscopeFutureDayCostUseCase(unlockRepository)
+        val isHoroscopeDayUnlockedUseCase = IsHoroscopeDayUnlockedUseCase(unlockRepository)
+        val unlockHoroscopeFutureDayUseCase = UnlockHoroscopeFutureDayUseCase(unlockRepository)
 
         val pullMarker = FakePullMarker(lastPulledDateIso = null)
 
@@ -114,6 +132,9 @@ class HoroscopeViewModelTest {
             resolveCurrentLanguageUseCase = resolveLanguageUseCase,
             observeCurrentLanguageUseCase = observeLanguageUseCase,
             observeUserProfileUseCase = observeUserProfileUseCase,
+            getHoroscopeFutureDayCostUseCase = getHoroscopeFutureDayCostUseCase,
+            isHoroscopeDayUnlockedUseCase = isHoroscopeDayUnlockedUseCase,
+            unlockHoroscopeFutureDayUseCase = unlockHoroscopeFutureDayUseCase,
             dispatcher = dispatcher,
         )
 
@@ -134,10 +155,12 @@ class HoroscopeViewModelTest {
         )
 
         advanceUntilIdle()
+        viewModel.onOpenSign(ZodiacSign.leo)
+        advanceUntilIdle()
 
         val state = viewModel.uiState.value
         assertEquals(ZodiacSign.leo, state.selectedSign)
-        assertEquals(ZodiacSign.leo, state.horoscope?.sign)
+        assertEquals(ZodiacSign.leo, state.overlay?.horoscope?.sign)
         assertNull(state.errorMessage)
     }
 
@@ -152,6 +175,10 @@ class HoroscopeViewModelTest {
         val resolveLanguageUseCase = ResolveCurrentLanguageUseCase(languageRepository)
         val observeLanguageUseCase = ObserveCurrentLanguageUseCase(languageRepository)
         val observeUserProfileUseCase = ObserveUserProfileUseCase(FakeUserProfileRepo())
+        val unlockRepository = FakeUnlockRepository()
+        val getHoroscopeFutureDayCostUseCase = GetHoroscopeFutureDayCostUseCase(unlockRepository)
+        val isHoroscopeDayUnlockedUseCase = IsHoroscopeDayUnlockedUseCase(unlockRepository)
+        val unlockHoroscopeFutureDayUseCase = UnlockHoroscopeFutureDayUseCase(unlockRepository)
 
         // Este sync fallaría si se llamase pull()
         val pullUseCase = PullDailyHoroscopeUseCase(FailingSync())
@@ -175,6 +202,9 @@ class HoroscopeViewModelTest {
             resolveCurrentLanguageUseCase = resolveLanguageUseCase,
             observeCurrentLanguageUseCase = observeLanguageUseCase,
             observeUserProfileUseCase = observeUserProfileUseCase,
+            getHoroscopeFutureDayCostUseCase = getHoroscopeFutureDayCostUseCase,
+            isHoroscopeDayUnlockedUseCase = isHoroscopeDayUnlockedUseCase,
+            unlockHoroscopeFutureDayUseCase = unlockHoroscopeFutureDayUseCase,
             dispatcher = dispatcher,
         )
 
@@ -183,6 +213,52 @@ class HoroscopeViewModelTest {
         val state = viewModel.uiState.value
         // Si no se llamó pull(), no debe haber error aunque el sync sea failing
         assertNull(state.errorMessage)
+    }
+
+    @Test
+    fun rebuildDays_marksTodayUnlocked_andFutureDayLockedWhenRepositoryReturnsFalse() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+
+        val repo = FakeRepo()
+        val observeUseCase = ObserveDailyHoroscopeUseCase(repo)
+        val getUseCase = GetDailyHoroscopeUseCase(repo)
+        val pullUseCase = PullDailyHoroscopeUseCase(FakeSync())
+        val languageRepository = FakeAppLanguageRepository()
+        val resolveLanguageUseCase = ResolveCurrentLanguageUseCase(languageRepository)
+        val observeLanguageUseCase = ObserveCurrentLanguageUseCase(languageRepository)
+        val observeUserProfileUseCase = ObserveUserProfileUseCase(FakeUserProfileRepo())
+        val unlockRepository = FakeUnlockRepository(unlockedDates = emptySet())
+        val getHoroscopeFutureDayCostUseCase = GetHoroscopeFutureDayCostUseCase(unlockRepository)
+        val isHoroscopeDayUnlockedUseCase = IsHoroscopeDayUnlockedUseCase(unlockRepository)
+        val unlockHoroscopeFutureDayUseCase = UnlockHoroscopeFutureDayUseCase(unlockRepository)
+
+        val pullMarker = FakePullMarker(lastPulledDateIso = null)
+
+        val viewModel = HoroscopeViewModel(
+            observeDailyHoroscopeUseCase = observeUseCase,
+            getDailyHoroscopeUseCase = getUseCase,
+            pullDailyHoroscopeUseCase = pullUseCase,
+            pullMarker = pullMarker,
+            resolveCurrentLanguageUseCase = resolveLanguageUseCase,
+            observeCurrentLanguageUseCase = observeLanguageUseCase,
+            observeUserProfileUseCase = observeUserProfileUseCase,
+            getHoroscopeFutureDayCostUseCase = getHoroscopeFutureDayCostUseCase,
+            isHoroscopeDayUnlockedUseCase = isHoroscopeDayUnlockedUseCase,
+            unlockHoroscopeFutureDayUseCase = unlockHoroscopeFutureDayUseCase,
+            dispatcher = dispatcher,
+        )
+
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        val today = state.days.firstOrNull()
+        val futureDay = state.days.getOrNull(1)
+
+        assertNotNull(today)
+        assertNotNull(futureDay)
+        assertEquals(true, today.isUnlocked)
+        assertEquals(false, futureDay.isUnlocked)
+        assertEquals(true, futureDay.isLocked)
     }
 
     private class FakeRepo : HoroscopeRepository {
@@ -238,6 +314,28 @@ class HoroscopeViewModelTest {
         override suspend fun getUserProfile(): UserProfile? = null
 
         override suspend fun saveUserProfile(profile: UserProfile) = Unit
+    }
+
+    private class FakeUnlockRepository(
+        private val futureDayCost: Int = 1,
+        unlockedDates: Set<String> = emptySet(),
+    ) : HoroscopeUnlockRepository {
+        private val unlocked = unlockedDates.toMutableSet()
+
+        override suspend fun getFutureDayCost(): Int = futureDayCost
+
+        override suspend fun isUnlocked(dateIso: String): Boolean = unlocked.contains(dateIso)
+
+        override suspend fun unlockFutureDay(dateIso: String, requestId: String, sign: ZodiacSign): HoroscopeUnlockResult {
+            val alreadyUnlocked = unlocked.contains(dateIso)
+            unlocked.add(dateIso)
+            return HoroscopeUnlockResult(
+                unlocked = true,
+                alreadyUnlocked = alreadyUnlocked,
+                balanceAfter = 0,
+                costCharged = if (alreadyUnlocked) 0 else futureDayCost,
+            )
+        }
     }
 }
 
