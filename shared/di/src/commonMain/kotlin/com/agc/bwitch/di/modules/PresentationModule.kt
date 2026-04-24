@@ -41,7 +41,7 @@ val presentationModule: Module = module {
     /**
      * Horoscope
      */
-    factory { HoroscopeViewModel(get(), get(), get(), get(), get(), get(), get()) }
+    factory { HoroscopeViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
 
     /**
      * BirthChart

@@ -1,29 +1,45 @@
 package com.agc.bwitch.ui.astrology
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
 import com.agc.bwitch.localization.AppStrings
 import com.agc.bwitch.localization.appStrings
+import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeDayItemUi
 import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeFeedbackMessage
+import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeTab
 import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeUiState
 import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeViewModel
+import com.agc.bwitch.presentation.economy.EconomyViewModel
 import com.agc.bwitch.ui.common.designsystem.BWitchPrimaryButton
 import com.agc.bwitch.ui.common.designsystem.BWitchSecondaryButton
-import com.agc.bwitch.ui.theme.BWitchThemeTokens
 import org.koin.compose.koinInject
 
 @Composable
@@ -31,145 +47,170 @@ fun HoroscopeScreen(
     contentPadding: PaddingValues,
     preselectedSign: ZodiacSign? = null,
     modifier: Modifier = Modifier,
-    viewModel: HoroscopeViewModel = koinInject()
+    viewModel: HoroscopeViewModel = koinInject(),
+    economyViewModel: EconomyViewModel = koinInject(),
 ) {
-    val colors = MaterialTheme.colorScheme
     val strings = appStrings
     val state by viewModel.uiState.collectAsState()
-
     val snackbarHostState = remember { SnackbarHostState() }
 
-    LaunchedEffect(preselectedSign) {
-        preselectedSign?.let { sign ->
-            viewModel.onSelectSign(sign)
+    LaunchedEffect(preselectedSign) { preselectedSign?.let(viewModel::onSelectSign) }
+    LaunchedEffect(state.infoMessage) {
+        state.infoMessage?.let {
+            snackbarHostState.showSnackbar(it.toLocalizedMessage(strings))
+            viewModel.onInfoShown()
         }
     }
-
-    // Info snackbar
-    LaunchedEffect(state.infoMessage) {
-        val msg = state.infoMessage?.toLocalizedMessage(strings) ?: return@LaunchedEffect
-        snackbarHostState.showSnackbar(message = msg)
-        viewModel.onInfoShown()
-    }
-
-    // Error snackbar
     LaunchedEffect(state.errorMessage) {
-        val msg = state.errorMessage?.toLocalizedMessage(strings) ?: return@LaunchedEffect
-        snackbarHostState.showSnackbar(message = msg)
+        val message = state.errorMessage ?: return@LaunchedEffect
+        snackbarHostState.showSnackbar(message.toLocalizedMessage(strings))
         viewModel.onErrorShown()
     }
 
     Scaffold(
         modifier = modifier,
-        containerColor = colors.background,
-        snackbarHost = {
-            SnackbarHost(
-                snackbarHostState,
-                snackbar = { data ->
-                    Snackbar(
-                        snackbarData = data,
-                        containerColor = colors.surfaceVariant,
-                        contentColor = colors.onSurface
-                    )
-                }
-            )
-        }
+        snackbarHost = { SnackbarHost(snackbarHostState) { Snackbar(it) } },
     ) { innerPadding ->
         HoroscopeScreenContent(
             modifier = Modifier.padding(contentPadding).padding(innerPadding),
             state = state,
             strings = strings,
-            onSelectSign = viewModel::onSelectSign,
-            onRefresh = viewModel::onRefresh
+            onSelectTab = viewModel::onSelectTab,
+            onSelectDate = viewModel::onSelectDate,
+            onOpenSign = viewModel::onOpenSign,
+            onRefresh = viewModel::onRefresh,
+            onUnlock = {
+                economyViewModel.requireLunas(
+                    cost = state.futureDayCost,
+                    source = "horoscope_daily_unlock",
+                ) { viewModel.onUnlockSelectedDay() }
+            },
+            onCloseOverlay = viewModel::onCloseOverlay,
         )
     }
 }
 
-
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun HoroscopeScreenContent(
-    modifier: Modifier = Modifier,
+    modifier: Modifier,
     state: HoroscopeUiState,
     strings: AppStrings,
-    onSelectSign: (ZodiacSign) -> Unit,
-    onRefresh: () -> Unit
+    onSelectTab: (HoroscopeTab) -> Unit,
+    onSelectDate: (String) -> Unit,
+    onOpenSign: (ZodiacSign) -> Unit,
+    onRefresh: () -> Unit,
+    onUnlock: () -> Unit,
+    onCloseOverlay: () -> Unit,
 ) {
-    val dimens = BWitchThemeTokens.dimens
-    val colors = MaterialTheme.colorScheme
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(dimens.spacingMd),
-        verticalArrangement = Arrangement.spacedBy(dimens.spacingSm + dimens.spacingXs)
+        modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        SignSelector(
-            selected = state.selectedSign,
-            strings = strings,
-            onSelected = onSelectSign
-        )
-
-        BWitchPrimaryButton(
-            onClick = onRefresh,
-            enabled = !state.isRefreshing,
-        ) {
-            Text(
-                when {
-                    state.isRefreshing -> strings.horoscope.refreshLoading
-                    state.isLoading -> strings.horoscope.loading
-                    else -> strings.horoscope.refreshCta
-                }
-            )
+        val tabs = HoroscopeTab.values()
+        TabRow(selectedTabIndex = tabs.indexOf(state.selectedTab).coerceAtLeast(0)) {
+            tabs.forEach { tab ->
+                val isDaily = tab == HoroscopeTab.Daily
+                Tab(
+                    selected = state.selectedTab == tab,
+                    onClick = { onSelectTab(tab) },
+                    text = {
+                        Text(
+                            when (tab) {
+                                HoroscopeTab.Daily -> strings.horoscope.dailyTab
+                                HoroscopeTab.Weekly -> strings.horoscope.weeklyTab
+                                HoroscopeTab.Monthly -> strings.horoscope.monthlyTab
+                            }
+                        )
+                    },
+                    enabled = isDaily,
+                )
+            }
         }
 
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            items(state.days, key = { it.dateIso }) { day ->
+                DayChip(day = day, strings = strings, onClick = { onSelectDate(day.dateIso) })
+            }
+        }
 
-        state.horoscope?.let { h ->
-            Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = colors.surfaceVariant,
-                    contentColor = colors.onSurface
-                )
-            ) {
-                Column(
-                    modifier = Modifier.padding(dimens.spacingMd),
-                    verticalArrangement = Arrangement.spacedBy(dimens.spacingSm)
-                ) {
-                    Text("${strings.horoscope.dateLabel}: ${h.dateIso}", style = MaterialTheme.typography.labelLarge)
-                    Text(h.text, style = MaterialTheme.typography.bodyLarge)
-                    Text("${strings.horoscope.moodLabel}: ${h.mood}", color = colors.onSurfaceVariant)
-                    Text("${strings.horoscope.luckyNumberLabel}: ${h.luckyNumber}", color = colors.onSurfaceVariant)
-                    Text("${strings.horoscope.luckyColorLabel}: ${h.luckyColor}", color = colors.onSurfaceVariant)
+        BWitchSecondaryButton(onClick = onRefresh, enabled = !state.isRefreshing) {
+            Text(if (state.isRefreshing) strings.horoscope.refreshLoading else strings.horoscope.refreshCta)
+        }
+
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            ZodiacSign.values().forEach { sign ->
+                val isProfile = state.highlightedSign == sign
+                BWitchSecondaryButton(onClick = { onOpenSign(sign) }, modifier = Modifier.widthIn(min = 100.dp)) {
+                    Text("${sign.symbol()} ${sign.localizedLabel(strings)}${if (isProfile) " · ${strings.horoscope.yourSignBadge}" else ""}")
                 }
             }
+        }
+    }
+
+    val overlay = state.overlay
+    if (overlay != null) {
+        if (overlay.isLocked) {
+            AlertDialog(
+                onDismissRequest = onCloseOverlay,
+                title = { Text(strings.horoscope.lockedTitle) },
+                text = {
+                    Text("${overlay.sign.symbol()} ${overlay.sign.localizedLabel(strings)} · ${overlay.dateIso}\n${strings.horoscope.unlockMessage}")
+                },
+                confirmButton = {
+                    BWitchPrimaryButton(onClick = onUnlock, enabled = !state.isUnlocking) {
+                        Text(strings.horoscope.unlockForMoonFormat.replaceFirst("%d", "${state.futureDayCost}"))
+                    }
+                },
+                dismissButton = { BWitchSecondaryButton(onClick = onCloseOverlay) { Text(strings.horoscope.closeCta) } },
+            )
+        } else {
+            AlertDialog(
+                onDismissRequest = onCloseOverlay,
+                title = { Text("${overlay.sign.symbol()} ${overlay.sign.localizedLabel(strings)} · ${overlay.dateIso}") },
+                text = {
+                    val horoscope = overlay.horoscope
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        if (overlay.isLoading) {
+                            Text(strings.horoscope.loading)
+                        } else {
+                            Text("${strings.horoscope.moodLabel}: ${horoscope?.mood ?: "-"}", style = MaterialTheme.typography.titleSmall)
+                            Text("${strings.horoscope.luckyNumberLabel}: ${horoscope?.luckyNumber ?: "-"}", style = MaterialTheme.typography.titleSmall)
+                            Text("${strings.horoscope.luckyColorLabel}: ${horoscope?.luckyColor ?: "-"}", style = MaterialTheme.typography.titleSmall)
+                            Text(horoscope?.text ?: strings.horoscope.noContentYet, style = MaterialTheme.typography.bodyMedium)
+                        }
+                    }
+                },
+                confirmButton = { BWitchSecondaryButton(onClick = {}, enabled = false) { Text(strings.horoscope.shareCta) } },
+                dismissButton = { BWitchPrimaryButton(onClick = onCloseOverlay) { Text(strings.horoscope.closeCta) } },
+            )
         }
     }
 }
 
 @Composable
-private fun SignSelector(
-    selected: ZodiacSign,
-    strings: AppStrings,
-    onSelected: (ZodiacSign) -> Unit
-) {
-    var expanded by remember { mutableStateOf(false) }
-    val options = remember { ZodiacSign.values().toList() }
-
-    Box {
-        BWitchSecondaryButton(onClick = { expanded = true }) {
-            Text(selected.localizedLabel(strings))
-        }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            options.forEach { sign ->
-                DropdownMenuItem(
-                    text = { Text(sign.localizedLabel(strings)) },
-                    onClick = {
-                        expanded = false
-                        onSelected(sign)
-                    }
-                )
-            }
-        }
+private fun DayChip(day: HoroscopeDayItemUi, strings: AppStrings, onClick: () -> Unit) {
+    BWitchSecondaryButton(onClick = onClick) {
+        Text(
+            "${if (day.isToday) strings.horoscope.todayLabel else day.shortLabel}${if (day.isLocked) " 🔒" else ""}",
+            fontWeight = if (day.isSelected) FontWeight.Bold else FontWeight.Normal,
+        )
     }
+}
+
+private fun ZodiacSign.symbol(): String = when (this) {
+    ZodiacSign.aries -> "♈"
+    ZodiacSign.taurus -> "♉"
+    ZodiacSign.gemini -> "♊"
+    ZodiacSign.cancer -> "♋"
+    ZodiacSign.leo -> "♌"
+    ZodiacSign.virgo -> "♍"
+    ZodiacSign.libra -> "♎"
+    ZodiacSign.scorpio -> "♏"
+    ZodiacSign.sagittarius -> "♐"
+    ZodiacSign.capricorn -> "♑"
+    ZodiacSign.aquarius -> "♒"
+    ZodiacSign.pisces -> "♓"
 }
 
 private fun ZodiacSign.localizedLabel(strings: AppStrings): String = when (this) {
@@ -191,4 +232,8 @@ private fun HoroscopeFeedbackMessage.toLocalizedMessage(strings: AppStrings): St
     HoroscopeFeedbackMessage.AlreadyUpdated -> strings.horoscope.alreadyUpdatedMessage
     HoroscopeFeedbackMessage.Updated -> strings.horoscope.updatedMessage
     HoroscopeFeedbackMessage.RefreshFailed -> strings.horoscope.refreshErrorMessage
+    HoroscopeFeedbackMessage.ComingSoon -> strings.horoscope.comingSoon
+    HoroscopeFeedbackMessage.UnlockFailed -> strings.horoscope.unlockError
+    HoroscopeFeedbackMessage.UnlockInsufficientMoons -> strings.horoscope.unlockInsufficient
+    HoroscopeFeedbackMessage.UnlockSuccess -> strings.horoscope.unlockSuccess
 }

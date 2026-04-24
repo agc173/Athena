@@ -19,6 +19,7 @@ data class EconomyStatusDto(
     val balance: Int = 0,
     val premium: PremiumDto = PremiumDto(),
     val todayDateIso: String = "",
+    val rules: EconomyRulesDto? = null,
 )
 
 @Serializable
@@ -45,4 +46,35 @@ data class EconomyClaimResultDto(
     val dailyLoginClaimed: Boolean = false,
     val rewardedAdsClaimed: Int = 0,
     val rewardedAdsRemaining: Int = 0,
+)
+
+@Serializable
+data class EconomyRulesDto(
+    val horoscope: HoroscopeRulesDto? = null,
+)
+
+@Serializable
+data class HoroscopeRulesDto(
+    val costs: HoroscopeCostsDto? = null,
+)
+
+@Serializable
+data class HoroscopeCostsDto(
+    val futureDay: Int? = null,
+)
+
+@Serializable
+data class UnlockHoroscopeDayRequestDto(
+    val requestId: String,
+    val dateIso: String,
+    val sign: String,
+)
+
+@Serializable
+data class UnlockHoroscopeDayResponseDto(
+    val result: String = "",
+    val unlocked: Boolean = false,
+    val alreadyUnlocked: Boolean = false,
+    val balance: Int = 0,
+    val costCharged: Int = 0,
 )
