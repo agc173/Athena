@@ -72,7 +72,7 @@ export const claimDailyLogin = onCall(
           if (!existing.response) {
             throw new HttpsError('internal', 'Stored economy request is missing response payload');
           }
-          return existing.response;
+          return existing.response as ClaimDailyLoginResponse;
         }
 
         const balanceData = (balanceSnap.data() as EconomyBalanceDoc | undefined) ?? {};

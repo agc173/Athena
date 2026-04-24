@@ -1,9 +1,12 @@
 package com.agc.bwitch.presentation.astrology.horoscope
 
 import com.agc.bwitch.domain.astrology.horoscope.GetDailyHoroscopeUseCase
+import com.agc.bwitch.domain.astrology.horoscope.GetHoroscopeFutureDayCostUseCase
 import com.agc.bwitch.domain.astrology.horoscope.HoroscopePullMarker
+import com.agc.bwitch.domain.astrology.horoscope.IsHoroscopeDayUnlockedUseCase
 import com.agc.bwitch.domain.astrology.horoscope.ObserveDailyHoroscopeUseCase
 import com.agc.bwitch.domain.astrology.horoscope.PullDailyHoroscopeUseCase
+import com.agc.bwitch.domain.astrology.horoscope.UnlockHoroscopeFutureDayUseCase
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSignResolver
 import com.agc.bwitch.domain.localization.AppLanguage
@@ -15,18 +18,19 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
+import kotlinx.datetime.DatePeriod
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 
 class HoroscopeViewModel(
@@ -37,6 +41,9 @@ class HoroscopeViewModel(
     private val resolveCurrentLanguageUseCase: ResolveCurrentLanguageUseCase,
     private val observeCurrentLanguageUseCase: ObserveCurrentLanguageUseCase,
     private val observeUserProfileUseCase: ObserveUserProfileUseCase,
+    private val getHoroscopeFutureDayCostUseCase: GetHoroscopeFutureDayCostUseCase,
+    private val isHoroscopeDayUnlockedUseCase: IsHoroscopeDayUnlockedUseCase,
+    private val unlockHoroscopeFutureDayUseCase: UnlockHoroscopeFutureDayUseCase,
     private val dispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + dispatcher)
@@ -49,8 +56,10 @@ class HoroscopeViewModel(
     private var userHasManuallySelectedSign = false
 
     init {
+        scope.launch { runCatching { resolveCurrentLanguageUseCase() } }
         scope.launch {
-            runCatching { resolveCurrentLanguageUseCase() }
+            val cost = runCatching { getHoroscopeFutureDayCostUseCase() }.getOrDefault(1)
+            _uiState.update { it.copy(futureDayCost = cost) }
         }
 
         scope.launch {
@@ -58,101 +67,217 @@ class HoroscopeViewModel(
                 .map { it.code }
                 .distinctUntilChanged()
                 .collectLatest { languageCode ->
-                    val hadPreviousLanguage = currentLanguageCode.value != languageCode
                     currentLanguageCode.value = languageCode
-                    if (hadPreviousLanguage) {
-                        _uiState.update { it.copy(horoscope = null, isLoading = true, errorMessage = null) }
-                    }
-                    start(sign = _uiState.value.selectedSign, languageCode = languageCode)
-                    pullTodayIfNeeded(languageCode = languageCode)
+                    reloadForCurrentSelection()
+                    pullTodayIfNeeded(languageCode)
                 }
         }
 
         scope.launch {
             observeUserProfileUseCase()
-                .map { profile ->
-                    profile?.zodiacSign ?: profile?.birthDate?.let(ZodiacSignResolver::fromBirthDate)
-                }
-                .filterNotNull()
+                .map { profile -> profile?.zodiacSign ?: profile?.birthDate?.let(ZodiacSignResolver::fromBirthDate) }
                 .collectLatest { profileSign ->
-                    if (userHasManuallySelectedSign) return@collectLatest
-                    if (_uiState.value.selectedSign == profileSign) return@collectLatest
+                    _uiState.update { it.copy(highlightedSign = profileSign) }
+                    if (profileSign == null || userHasManuallySelectedSign || _uiState.value.selectedSign == profileSign) return@collectLatest
                     onSelectSign(profileSign, fromUserInteraction = false)
                 }
         }
+
+        reloadForCurrentSelection()
     }
 
-    fun onSelectSign(sign: ZodiacSign) {
-        onSelectSign(sign, fromUserInteraction = true)
+    fun onSelectSign(sign: ZodiacSign) = onSelectSign(sign, fromUserInteraction = true)
+
+    fun onSelectDate(dateIso: String) {
+        _uiState.update { it.copy(selectedDateIso = dateIso, errorMessage = null, overlay = null) }
+        rebuildDays()
+        observeSelectedHoroscope()
     }
 
     fun onRefresh() {
         scope.launch {
-            val today = currentDateIso()
-            val languageCode = currentLanguageCode.value
-            val lastPulled = pullMarker.getLastPulledDateIso(languageCode = languageCode)
-
-            _uiState.update { it.copy(errorMessage = null, infoMessage = null) }
-
-            val hasCached = _uiState.value.horoscope != null
-
-            if (lastPulled == today && hasCached) {
-                _uiState.update { it.copy(infoMessage = HoroscopeFeedbackMessage.AlreadyUpdated) }
-                return@launch
-            }
-
-            safePull(today, languageCode)
-
+            val selectedDateIso = _uiState.value.selectedDateIso.ifBlank { todayIso() }
+            safePull(selectedDateIso, currentLanguageCode.value)
             if (_uiState.value.errorMessage == null) {
-                pullMarker.setLastPulledDateIso(today, languageCode = languageCode)
                 _uiState.update { it.copy(infoMessage = HoroscopeFeedbackMessage.Updated) }
             }
         }
     }
 
-    fun onInfoShown() {
-        _uiState.update { it.copy(infoMessage = null) }
+    fun onOpenSign(sign: ZodiacSign) {
+        onSelectSign(sign)
+        val state = _uiState.value
+        val selectedDateIso = state.selectedDateIso.ifBlank { todayIso() }
+        val isLocked = state.days.firstOrNull { it.dateIso == selectedDateIso }?.isLocked == true
+
+        _uiState.update {
+            it.copy(
+                overlay = HoroscopeOverlayUi(
+                    sign = sign,
+                    dateIso = selectedDateIso,
+                    isLocked = isLocked,
+                    isLoading = !isLocked,
+                    horoscope = null,
+                ),
+            )
+        }
+
+        if (isLocked) return
+
+        loadOverlayHoroscope(sign = sign, dateIso = selectedDateIso)
     }
 
-    fun onErrorShown() {
-        _uiState.update { it.copy(errorMessage = null) }
+    fun onCloseOverlay() {
+        _uiState.update { it.copy(overlay = null) }
+    }
+
+    fun onUnlockSelectedDay() {
+        val state = _uiState.value
+        val overlay = state.overlay ?: return
+        val dateIso = state.selectedDateIso.ifBlank { todayIso() }
+        if (overlay.isLocked.not()) return
+
+        scope.launch {
+            _uiState.update { it.copy(isUnlocking = true, errorMessage = null) }
+            runCatching {
+                unlockHoroscopeFutureDayUseCase(
+                    dateIso = dateIso,
+                    requestId = buildRequestId(dateIso),
+                    sign = overlay.sign,
+                )
+            }.onSuccess {
+                _uiState.update { current ->
+                    val updatedDays = current.days.map { day ->
+                        if (day.dateIso == dateIso) day.copy(isLocked = false, isUnlocked = true) else day
+                    }
+                    current.copy(
+                        infoMessage = HoroscopeFeedbackMessage.UnlockSuccess,
+                        days = updatedDays,
+                        overlay = current.overlay?.copy(isLocked = false, isLoading = true, horoscope = null),
+                    )
+                }
+                loadOverlayHoroscope(sign = overlay.sign, dateIso = dateIso)
+                rebuildDays()
+            }.onFailure { error ->
+                val isInsufficient = error.message.orEmpty().lowercase().contains("insufficient") ||
+                    error.message.orEmpty().lowercase().contains("moon")
+                _uiState.update {
+                    it.copy(errorMessage = if (isInsufficient) HoroscopeFeedbackMessage.UnlockInsufficientMoons else HoroscopeFeedbackMessage.UnlockFailed)
+                }
+            }
+            _uiState.update { it.copy(isUnlocking = false) }
+        }
+    }
+
+    fun onInfoShown() = _uiState.update { it.copy(infoMessage = null) }
+    fun onErrorShown() = _uiState.update { it.copy(errorMessage = null) }
+
+    fun onSelectTab(tab: HoroscopeTab) {
+        if (tab == HoroscopeTab.Daily) {
+            _uiState.update { it.copy(selectedTab = HoroscopeTab.Daily) }
+            return
+        }
+        _uiState.update { it.copy(infoMessage = HoroscopeFeedbackMessage.ComingSoon) }
     }
 
     private fun onSelectSign(sign: ZodiacSign, fromUserInteraction: Boolean) {
-        if (fromUserInteraction) {
-            userHasManuallySelectedSign = true
-        }
-        _uiState.update { it.copy(selectedSign = sign, errorMessage = null, isLoading = true) }
-        start(sign, languageCode = currentLanguageCode.value)
+        if (fromUserInteraction) userHasManuallySelectedSign = true
+        _uiState.update { it.copy(selectedSign = sign) }
+        rebuildDays()
+        observeSelectedHoroscope()
     }
 
-    private fun start(sign: ZodiacSign, languageCode: String) {
-        val dateIso = todayIso()
+    private fun reloadForCurrentSelection() {
+        val today = todayDate()
+        _uiState.update {
+            it.copy(
+                selectedDateIso = it.selectedDateIso.ifBlank { today.toString() },
+                isLoading = true,
+                overlay = null,
+            )
+        }
+        rebuildDays()
+        observeSelectedHoroscope()
+    }
+
+    private fun observeSelectedHoroscope() {
+        val state = _uiState.value
+        val dateIso = state.selectedDateIso.ifBlank { todayIso() }
+        val sign = state.selectedSign
+        val languageCode = currentLanguageCode.value
 
         observeJob?.cancel()
         observeJob = scope.launch {
-            observeDailyHoroscopeUseCase(dateIso = dateIso, sign = sign, languageCode = languageCode).collect { cached ->
-                _uiState.update {
-                    it.copy(
+            observeDailyHoroscopeUseCase(dateIso, sign, languageCode).collectLatest { cached ->
+                _uiState.update { current ->
+                    val overlay = current.overlay
+                    val updatedOverlay = if (overlay != null && overlay.sign == sign && overlay.dateIso == dateIso && !overlay.isLocked) {
+                        overlay.copy(horoscope = cached, isLoading = false)
+                    } else {
+                        overlay
+                    }
+                    current.copy(
                         isLoading = false,
-                        horoscope = cached,
-                        errorMessage = null,
+                        overlay = updatedOverlay,
                     )
                 }
             }
         }
 
-        scope.launch { getDailyHoroscopeUseCase(dateIso = dateIso, sign = sign, languageCode = languageCode) }
+        scope.launch {
+            getDailyHoroscopeUseCase(dateIso, sign, languageCode)
+            if (dateIso == todayIso()) pullTodayIfNeeded(languageCode)
+        }
+    }
+
+    private fun loadOverlayHoroscope(sign: ZodiacSign, dateIso: String) {
+        scope.launch {
+            val languageCode = currentLanguageCode.value
+            val loaded = runCatching { getDailyHoroscopeUseCase(dateIso, sign, languageCode) }.getOrNull()
+            _uiState.update { current ->
+                val overlay = current.overlay ?: return@update current
+                if (overlay.sign != sign || overlay.dateIso != dateIso) return@update current
+                current.copy(overlay = overlay.copy(isLoading = false, horoscope = loaded))
+            }
+        }
+    }
+
+    private fun rebuildDays() {
+        scope.launch {
+            val state = _uiState.value
+            val selectedIso = state.selectedDateIso.ifBlank { todayIso() }
+            val today = todayDate()
+            val cost = state.futureDayCost
+
+            val items = (0..6).map { offset ->
+                val date = today.plus(DatePeriod(days = offset))
+                val dateIso = date.toString()
+                val unlocked = offset == 0 || runCatching { isHoroscopeDayUnlockedUseCase(dateIso) }.getOrDefault(false)
+                HoroscopeDayItemUi(
+                    dateIso = dateIso,
+                    shortLabel = shortDateLabel(date),
+                    isToday = offset == 0,
+                    isSelected = dateIso == selectedIso,
+                    isLocked = offset > 0 && !unlocked,
+                    isUnlocked = unlocked,
+                    cost = if (offset > 0) cost else 0,
+                )
+            }
+
+            _uiState.update {
+                it.copy(
+                    days = items,
+                    selectedDateIso = items.firstOrNull { day -> day.isSelected }?.dateIso ?: today.toString(),
+                )
+            }
+        }
     }
 
     private suspend fun pullTodayIfNeeded(languageCode: String) {
         val today = todayIso()
         val lastPulled = pullMarker.getLastPulledDateIso(languageCode = languageCode)
-
         if (lastPulled == today) return
-
         safePull(today, languageCode)
-
         if (_uiState.value.errorMessage == null) {
             pullMarker.setLastPulledDateIso(today, languageCode = languageCode)
         }
@@ -162,19 +287,18 @@ class HoroscopeViewModel(
         _uiState.update { it.copy(isRefreshing = true, errorMessage = null) }
         try {
             pullDailyHoroscopeUseCase(dateIso, languageCode)
-        } catch (t: Throwable) {
-            println("🔥 Horoscope pull failed: ${t.message}")
-            t.printStackTrace()
+        } catch (_: Throwable) {
             _uiState.update { it.copy(errorMessage = HoroscopeFeedbackMessage.RefreshFailed) }
         } finally {
             _uiState.update { it.copy(isRefreshing = false) }
         }
     }
 
-    private fun todayIso(): String {
-        val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
-        return now.date.toString()
-    }
+    private fun todayDate(): LocalDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+    private fun todayIso(): String = todayDate().toString()
+    private fun shortDateLabel(date: LocalDate): String = "${date.dayOfMonth}/${date.monthNumber}"
 
-    private fun currentDateIso(): String = todayIso()
+    private fun buildRequestId(dateIso: String): String {
+        return "horoscope-unlock-${Clock.System.now().toEpochMilliseconds()}-$dateIso"
+    }
 }

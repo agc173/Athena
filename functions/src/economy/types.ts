@@ -36,12 +36,17 @@ export type EconomyLedgerEntryDoc = {
   | 'TAROT_3_MOON_SPEND'
   | 'ORACLE_1Q_MOON_SPEND'
   | 'BIRTH_ESSENCE_MOON_SPEND'
-  | 'REFUND';
+  | 'REFUND'
+  | 'HOROSCOPE_FUTURE_DAY_MOON_SPEND';
   amount: number;
   createdAt: Timestamp;
   requestId: string;
   dateIso: string;
   placement?: string;
+  targetDateIso?: string;
+  unlockKey?: string;
+  module?: EconomyModule | string;
+  source?: string;
 };
 
 export type EconomyRequestResult =
@@ -59,13 +64,14 @@ export type EconomyRequestType =
   | 'TAROT_1'
   | 'TAROT_3'
   | 'ORACLE_1Q'
-  | 'BIRTH_ESSENCE';
+  | 'BIRTH_ESSENCE'
+  | 'HOROSCOPE_UNLOCK_DAY';
 
 export type EconomyRequestDoc = {
   requestId: string;
   type: EconomyRequestType;
   result: EconomyRequestResult;
-  response?: ClaimDailyLoginResponse | ClaimRewardedAdResponse;
+  response?: ClaimDailyLoginResponse | ClaimRewardedAdResponse | UnlockHoroscopeDayResponse;
   responsePayload?: unknown;
   status?: 'PROCESSING' | 'FAILED' | 'COMPLETED_SUCCESS';
   decisionSource?: EconomyDecisionSource;
@@ -118,6 +124,8 @@ export type EconomyDailyUsageDoc = {
   pendulumFreeUsed?: number;
   pendulumMoonPacksUsed?: number;
   pendulumPremiumUsed?: number;
+
+  horoscopeFutureDayMoonUsed?: number;
 
   updatedAt?: Timestamp;
 };
@@ -205,4 +213,19 @@ export type ClaimRewardedAdResponse = {
   dailyLoginClaimed: boolean;
   rewardedAdsClaimed: number;
   rewardedAdsRemaining: number;
+};
+
+
+export type UnlockHoroscopeDayData = {
+  requestId?: unknown;
+  dateIso?: unknown;
+  sign?: unknown;
+};
+
+export type UnlockHoroscopeDayResponse = {
+  result: EconomyRequestResult;
+  unlocked: boolean;
+  alreadyUnlocked: boolean;
+  balance: number;
+  costCharged: number;
 };

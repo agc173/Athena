@@ -9,6 +9,9 @@ import com.agc.bwitch.domain.astrology.horoscope.DeriveZodiacSignUseCase
 import com.agc.bwitch.domain.astrology.horoscope.GetDailyHoroscopeUseCase
 import com.agc.bwitch.domain.astrology.horoscope.ObserveDailyHoroscopeUseCase
 import com.agc.bwitch.domain.astrology.horoscope.PullDailyHoroscopeUseCase
+import com.agc.bwitch.domain.astrology.horoscope.UnlockHoroscopeFutureDayUseCase
+import com.agc.bwitch.domain.astrology.horoscope.IsHoroscopeDayUnlockedUseCase
+import com.agc.bwitch.domain.astrology.horoscope.GetHoroscopeFutureDayCostUseCase
 import com.agc.bwitch.domain.astrology.synastry.SynastryReadingGenerator
 import com.agc.bwitch.domain.localization.ObserveCurrentLanguageUseCase
 import com.agc.bwitch.domain.localization.ResolveCurrentLanguageUseCase
@@ -42,6 +45,9 @@ val domainModule: Module = module {
     factory { ObserveDailyHoroscopeUseCase(get()) }
     factory { PullDailyHoroscopeUseCase(get()) }
     factory { DeriveZodiacSignUseCase() }
+    factory { GetHoroscopeFutureDayCostUseCase(get()) }
+    factory { IsHoroscopeDayUnlockedUseCase(get()) }
+    factory { UnlockHoroscopeFutureDayUseCase(get()) }
 
     // Birth Essence
     factory { GetBirthEssenceUseCase(get()) }

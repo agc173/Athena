@@ -30,6 +30,7 @@ import com.agc.bwitch.data.userprofile.SettingsUserProfileRepository
 import com.agc.bwitch.data.userprofile.SyncUserProfileRepository
 import com.agc.bwitch.domain.astrology.birthchart.BirthChartRepository
 import com.agc.bwitch.domain.astrology.horoscope.HoroscopeRepository
+import com.agc.bwitch.domain.astrology.horoscope.HoroscopeUnlockRepository
 import com.agc.bwitch.domain.auth.AuthRepository
 import com.agc.bwitch.domain.economy.EconomyRepository
 import com.agc.bwitch.domain.oracle.OracleRepository
@@ -51,6 +52,7 @@ import com.agc.bwitch.domain.astrology.birthchart.BirthChartSyncController
 import com.agc.bwitch.domain.userprofile.UserProfileSyncController
 import com.agc.bwitch.data.astrology.horoscope.SettingsHoroscopeDailyRepository
 import com.agc.bwitch.data.astrology.horoscope.SyncHoroscopeDailyRepository
+import com.agc.bwitch.data.astrology.horoscope.SyncHoroscopeUnlockRepository
 import com.agc.bwitch.domain.astrology.horoscope.HoroscopeDailySyncController
 import com.agc.bwitch.data.astrology.horoscope.SettingsHoroscopePullMarkerRepository
 import com.agc.bwitch.domain.astrology.horoscope.HoroscopePullMarker
@@ -95,6 +97,7 @@ val dataKoinModule: Module = module {
     single<HoroscopeDailySyncController> { get<SyncHoroscopeDailyRepository>() }
 
     single<HoroscopePullMarker> { SettingsHoroscopePullMarkerRepository(get()) }
+    single<HoroscopeUnlockRepository> { SyncHoroscopeUnlockRepository(get(), get()) }
 
     /**
      * BirthChart - LOCAL

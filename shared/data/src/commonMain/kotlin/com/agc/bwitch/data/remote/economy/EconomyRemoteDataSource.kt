@@ -71,11 +71,36 @@ class EconomyRemoteDataSource(
         }
     }
 
+
+
+    suspend fun unlockHoroscopeDay(
+        requestId: String,
+        dateIso: String,
+        sign: String,
+    ): UnlockHoroscopeDayResponseDto {
+        return when (
+            val result = functionsClient.call(
+                name = UNLOCK_HOROSCOPE_DAY_CALLABLE,
+                data = UnlockHoroscopeDayRequestDto(
+                    requestId = requestId,
+                    dateIso = dateIso,
+                    sign = sign,
+                ),
+                requestSerializer = UnlockHoroscopeDayRequestDto.serializer(),
+                responseSerializer = UnlockHoroscopeDayResponseDto.serializer(),
+            )
+        ) {
+            is ApiResult.Ok -> result.value
+            is ApiResult.Err -> throw result.error.toException()
+        }
+    }
+
     private companion object {
         const val GET_ECONOMY_BALANCE_CALLABLE = "getEconomyBalance"
         const val GET_ECONOMY_STATUS_CALLABLE = "getEconomyStatus"
         const val CLAIM_DAILY_LOGIN_CALLABLE = "claimDailyLogin"
         const val CLAIM_REWARDED_AD_CALLABLE = "claimRewardedAd"
+        const val UNLOCK_HOROSCOPE_DAY_CALLABLE = "unlockHoroscopeDay"
     }
 }
 
