@@ -608,12 +608,12 @@ class HoroscopeViewModel(
 
     private fun currentMonthKey(): String {
         val todayMadrid = madridTodayDate()
-        return "%04d-%02d".format(todayMadrid.year, todayMadrid.monthNumber)
+        return monthKey(todayMadrid.year, todayMadrid.monthNumber)
     }
 
     private fun nextMonthKey(): String {
         val todayMadrid = madridTodayDate().plus(DatePeriod(months = 1))
-        return "%04d-%02d".format(todayMadrid.year, todayMadrid.monthNumber)
+        return monthKey(todayMadrid.year, todayMadrid.monthNumber)
     }
 
     // ISO week helper kept local for commonMain compatibility.
@@ -622,9 +622,10 @@ class HoroscopeViewModel(
     private fun nextWeekKey(): String = toIsoWeekKey(madridTodayDate().plus(DatePeriod(days = 7)))
 
     private fun toIsoWeekKey(date: LocalDate): String {
-        val dayOfWeek = date.dayOfWeek.isoDayNumber
+        val dayOfWeek = isoDayNumber(date)
         val dayOfYear = dayOfYear(date)
-        var week = (dayOfYear - dayOfWeek + 10) / 7
+        val rawWeek = dayOfYear - dayOfWeek + 10
+        var week: Int = rawWeek / 7
         var weekYear = date.year
         if (week < 1) {
             weekYear -= 1
@@ -636,13 +637,39 @@ class HoroscopeViewModel(
                 week = 1
             }
         }
-        return "%04d-W%02d".format(weekYear, week)
+        return weekKey(weekYear, week)
     }
 
     private fun weeksInYear(year: Int): Int {
-        val jan1 = LocalDate(year, 1, 1).dayOfWeek.isoDayNumber
-        val dec31 = LocalDate(year, 12, 31).dayOfWeek.isoDayNumber
+        val jan1 = isoDayNumber(LocalDate(year, 1, 1))
+        val dec31 = isoDayNumber(LocalDate(year, 12, 31))
         return if (jan1 == 4 || dec31 == 4 || (jan1 == 3 && isLeapYear(year))) 53 else 52
+    }
+
+    private fun twoDigits(value: Int): String = if (value in 0..9) "0$value" else value.toString()
+
+    private fun fourDigits(value: Int): String = when {
+        value in 0..9 -> "000$value"
+        value in 10..99 -> "00$value"
+        value in 100..999 -> "0$value"
+        else -> value.toString()
+    }
+
+    private fun monthKey(year: Int, month: Int): String = "${fourDigits(year)}-${twoDigits(month)}"
+
+    private fun weekKey(year: Int, week: Int): String = "${fourDigits(year)}-W${twoDigits(week)}"
+
+    private fun isoDayNumber(date: LocalDate): Int {
+        return when (date.dayOfWeek.name) {
+            "MONDAY" -> 1
+            "TUESDAY" -> 2
+            "WEDNESDAY" -> 3
+            "THURSDAY" -> 4
+            "FRIDAY" -> 5
+            "SATURDAY" -> 6
+            "SUNDAY" -> 7
+            else -> 1
+        }
     }
 
     private fun isLeapYear(year: Int): Boolean {
