@@ -419,6 +419,8 @@ class HoroscopeViewModel(
                     HoroscopeMonthPeriod.ThisMonth -> currentMonthKey()
                     HoroscopeMonthPeriod.NextMonth -> nextMonthKey()
                 },
+                currentMonthKey = currentMonthKey(),
+                nextMonthKey = nextMonthKey(),
             )
         }
         rebuildDays()
@@ -444,6 +446,8 @@ class HoroscopeViewModel(
                     HoroscopeMonthPeriod.ThisMonth -> currentMonthKey()
                     HoroscopeMonthPeriod.NextMonth -> nextMonthKey()
                 },
+                currentMonthKey = currentMonthKey(),
+                nextMonthKey = nextMonthKey(),
             )
         }
         refreshWeeklyMonthlyLocks()
@@ -482,6 +486,8 @@ class HoroscopeViewModel(
                 it.copy(
                     selectedWeekKey = selectedWeekKey,
                     selectedMonthKey = selectedMonthKey,
+                    currentMonthKey = currentMonth,
+                    nextMonthKey = nextMonth,
                     isWeekLocked = !it.hasPremiumAccess && !isWeekUnlocked,
                     isMonthLocked = !it.hasPremiumAccess && !isMonthUnlocked,
                 )

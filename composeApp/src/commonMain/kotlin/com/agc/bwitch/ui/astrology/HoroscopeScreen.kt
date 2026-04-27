@@ -9,10 +9,9 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -28,6 +27,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -35,6 +35,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
@@ -45,7 +46,6 @@ import androidx.compose.ui.unit.dp
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
 import com.agc.bwitch.localization.AppStrings
 import com.agc.bwitch.localization.appStrings
-import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeDayItemUi
 import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeFeedbackMessage
 import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeMonthPeriod
 import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeTab
@@ -99,6 +99,8 @@ fun HoroscopeScreen(
             onSelectMonth = viewModel::onSelectMonth,
             onOpenSign = viewModel::onOpenSign,
             onRefresh = viewModel::onRefresh,
+            canEarnMoonsWithRewardedAd = economyState.rewardedAdsRemaining > 0,
+            onEarnMoonsWithRewardedAd = { economyViewModel.claimRewardedAd("horoscope_period_lock_overlay") },
             onUnlock = {
                 val hasEnoughBalance = economyState.hasUsableSnapshot && economyState.balance >= state.futureDayCost
                 if (hasEnoughBalance) {
@@ -152,6 +154,8 @@ private fun HoroscopeScreenContent(
     onSelectMonth: (HoroscopeMonthPeriod) -> Unit,
     onOpenSign: (ZodiacSign) -> Unit,
     onRefresh: () -> Unit,
+    canEarnMoonsWithRewardedAd: Boolean,
+    onEarnMoonsWithRewardedAd: () -> Unit,
     onUnlock: () -> Unit,
     onUnlockWeek: () -> Unit,
     onUnlockMonth: () -> Unit,
@@ -159,7 +163,7 @@ private fun HoroscopeScreenContent(
 ) {
     Column(
         modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         val tabs = HoroscopeTab.values()
         TabRow(selectedTabIndex = tabs.indexOf(state.selectedTab).coerceAtLeast(0)) {
@@ -182,37 +186,54 @@ private fun HoroscopeScreenContent(
         }
 
         when (state.selectedTab) {
-            HoroscopeTab.Daily -> LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(state.days, key = { it.dateIso }) { day ->
-                    DayChip(day = day, strings = strings, onClick = { onSelectDate(day.dateIso) })
-                }
-            }
+            HoroscopeTab.Daily -> PeriodTabSelector(
+                options = state.days.map { day ->
+                    SelectorOption(
+                        id = day.dateIso,
+                        label = if (day.isToday) strings.horoscope.todayLabel else day.shortLabel,
+                    )
+                },
+                selectedId = state.selectedDateIso,
+                onSelect = onSelectDate,
+            )
 
             HoroscopeTab.Weekly -> {
-                RowSelector(
-                    left = strings.horoscope.thisWeek,
-                    right = strings.horoscope.nextWeek,
-                    selected = if (state.selectedWeek == HoroscopeWeekPeriod.ThisWeek) 0 else 1,
+                PeriodTabSelector(
+                    options = listOf(
+                        SelectorOption(HoroscopeWeekPeriod.ThisWeek.name, strings.horoscope.thisWeek),
+                        SelectorOption(HoroscopeWeekPeriod.NextWeek.name, strings.horoscope.nextWeek),
+                    ),
+                    selectedId = state.selectedWeek.name,
                     onSelect = { selected ->
-                        onSelectWeek(if (selected == 0) HoroscopeWeekPeriod.ThisWeek else HoroscopeWeekPeriod.NextWeek)
+                        onSelectWeek(
+                            if (selected == HoroscopeWeekPeriod.ThisWeek.name) {
+                                HoroscopeWeekPeriod.ThisWeek
+                            } else {
+                                HoroscopeWeekPeriod.NextWeek
+                            }
+                        )
                     },
                 )
             }
 
             HoroscopeTab.Monthly -> {
-                RowSelector(
-                    left = strings.horoscope.thisMonth,
-                    right = strings.horoscope.nextMonth,
-                    selected = if (state.selectedMonth == HoroscopeMonthPeriod.ThisMonth) 0 else 1,
+                PeriodTabSelector(
+                    options = listOf(
+                        SelectorOption(HoroscopeMonthPeriod.ThisMonth.name, monthNameFromKey(state.currentMonthKey, appStrings.tarot.languageCode)),
+                        SelectorOption(HoroscopeMonthPeriod.NextMonth.name, monthNameFromKey(state.nextMonthKey, appStrings.tarot.languageCode)),
+                    ),
+                    selectedId = state.selectedMonth.name,
                     onSelect = { selected ->
-                        onSelectMonth(if (selected == 0) HoroscopeMonthPeriod.ThisMonth else HoroscopeMonthPeriod.NextMonth)
+                        onSelectMonth(
+                            if (selected == HoroscopeMonthPeriod.ThisMonth.name) {
+                                HoroscopeMonthPeriod.ThisMonth
+                            } else {
+                                HoroscopeMonthPeriod.NextMonth
+                            }
+                        )
                     },
                 )
             }
-        }
-
-        BWitchSecondaryButton(onClick = onRefresh, enabled = !state.isRefreshing) {
-            Text(if (state.isRefreshing) strings.horoscope.refreshLoading else strings.horoscope.refreshCta)
         }
 
         val dailyLocked = state.selectedTab == HoroscopeTab.Daily &&
@@ -221,39 +242,51 @@ private fun HoroscopeScreenContent(
         val monthlyLocked = state.selectedTab == HoroscopeTab.Monthly && state.isMonthLocked
         val periodLocked = dailyLocked || weeklyLocked || monthlyLocked
 
-        if (periodLocked) {
-            PeriodLockCard(
-                strings = strings,
-                tab = state.selectedTab,
-                cost = when (state.selectedTab) {
-                    HoroscopeTab.Daily -> state.futureDayCost
-                    HoroscopeTab.Weekly -> state.weeklyCost
-                    HoroscopeTab.Monthly -> state.monthlyCost
-                },
-                onUnlock = when (state.selectedTab) {
-                    HoroscopeTab.Daily -> onUnlock
-                    HoroscopeTab.Weekly -> onUnlockWeek
-                    HoroscopeTab.Monthly -> onUnlockMonth
-                },
-                isLoading = state.isUnlocking,
-                errorMessage = state.lockCardMessage?.toLocalizedMessage(strings),
-            )
-        }
-
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-            maxItemsInEachRow = 3,
+        Box(
+            modifier = Modifier.fillMaxWidth(),
         ) {
-            ZodiacSign.values().forEach { sign ->
-                ZodiacSignCard(
-                    sign = sign,
-                    isProfileSign = state.highlightedSign == sign,
+            FlowRow(
+                modifier = Modifier.alpha(if (periodLocked) 0.35f else 1f),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+                maxItemsInEachRow = 3,
+            ) {
+                ZodiacSign.values().forEach { sign ->
+                    ZodiacSignCard(
+                        sign = sign,
+                        isProfileSign = state.highlightedSign == sign,
+                        strings = strings,
+                        enabled = !periodLocked,
+                        onClick = { if (!periodLocked) onOpenSign(sign) },
+                    )
+                }
+            }
+
+            if (periodLocked) {
+                PeriodLockOverlayCard(
+                    modifier = Modifier.align(Alignment.Center),
                     strings = strings,
-                    enabled = !periodLocked,
-                    onClick = { if (!periodLocked) onOpenSign(sign) },
+                    tab = state.selectedTab,
+                    cost = when (state.selectedTab) {
+                        HoroscopeTab.Daily -> state.futureDayCost
+                        HoroscopeTab.Weekly -> state.weeklyCost
+                        HoroscopeTab.Monthly -> state.monthlyCost
+                    },
+                    onUnlock = when (state.selectedTab) {
+                        HoroscopeTab.Daily -> onUnlock
+                        HoroscopeTab.Weekly -> onUnlockWeek
+                        HoroscopeTab.Monthly -> onUnlockMonth
+                    },
+                    canEarnMoonsWithRewardedAd = canEarnMoonsWithRewardedAd,
+                    onEarnMoonsWithRewardedAd = onEarnMoonsWithRewardedAd,
+                    isLoading = state.isUnlocking,
+                    errorMessage = state.lockCardMessage?.toLocalizedMessage(strings),
                 )
             }
+        }
+
+        TextButton(onClick = onRefresh, enabled = !state.isRefreshing) {
+            Text(if (state.isRefreshing) strings.horoscope.refreshLoading else strings.horoscope.refreshCta)
         }
     }
 
@@ -304,16 +337,6 @@ private fun HoroscopeScreenContent(
                 dismissButton = { BWitchPrimaryButton(onClick = onCloseOverlay) { Text(strings.horoscope.closeCta) } },
             )
         }
-    }
-}
-
-@Composable
-private fun DayChip(day: HoroscopeDayItemUi, strings: AppStrings, onClick: () -> Unit) {
-    BWitchSecondaryButton(onClick = onClick) {
-        Text(
-            "${if (day.isToday) strings.horoscope.todayLabel else day.shortLabel}${if (day.isLocked) " 🔒" else ""}",
-            fontWeight = if (day.isSelected) FontWeight.Bold else FontWeight.Normal,
-        )
     }
 }
 
@@ -369,27 +392,25 @@ private fun ZodiacSignCard(
 }
 
 @Composable
-private fun PeriodLockCard(
+private fun PeriodLockOverlayCard(
+    modifier: Modifier = Modifier,
     strings: AppStrings,
     tab: HoroscopeTab,
     cost: Int,
     onUnlock: () -> Unit,
+    canEarnMoonsWithRewardedAd: Boolean,
+    onEarnMoonsWithRewardedAd: () -> Unit,
     isLoading: Boolean,
     errorMessage: String?,
 ) {
-    val title = when (tab) {
-        HoroscopeTab.Daily -> strings.horoscope.unlockDayTitle
-        HoroscopeTab.Weekly -> strings.horoscope.unlockWeekTitle
-        HoroscopeTab.Monthly -> strings.horoscope.unlockMonthTitle
-    }
     val cta = when (tab) {
         HoroscopeTab.Daily -> strings.horoscope.unlockDayForMoonFormat
         HoroscopeTab.Weekly -> strings.horoscope.unlockWeekForMoonFormat
         HoroscopeTab.Monthly -> strings.horoscope.unlockMonthForMoonFormat
     }
-    Card {
+    Card(modifier = modifier.fillMaxWidth(0.9f)) {
         Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(title, fontWeight = FontWeight.SemiBold)
+            Text(strings.horoscope.unlockForMoonFormat.replaceFirst("%d", "$cost"), fontWeight = FontWeight.SemiBold)
             Text(strings.horoscope.unlockPeriodScopeHint, style = MaterialTheme.typography.bodySmall)
             errorMessage?.let {
                 Text(
@@ -402,21 +423,156 @@ private fun PeriodLockCard(
             BWitchPrimaryButton(onClick = onUnlock, enabled = !isLoading) {
                 Text(cta.replaceFirst("%d", "$cost"))
             }
+            if (canEarnMoonsWithRewardedAd) {
+                BWitchSecondaryButton(onClick = onEarnMoonsWithRewardedAd, enabled = !isLoading) {
+                    Text(strings.profile.moonPaywallWatchAdCta)
+                }
+            }
         }
     }
 }
 
 @Composable
-private fun RowSelector(
-    left: String,
-    right: String,
-    selected: Int,
-    onSelect: (Int) -> Unit,
+private fun PeriodTabSelector(
+    options: List<SelectorOption>,
+    selectedId: String,
+    onSelect: (String) -> Unit,
 ) {
-    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        item { BWitchSecondaryButton(onClick = { onSelect(0) }) { Text(if (selected == 0) "• $left" else left) } }
-        item { BWitchSecondaryButton(onClick = { onSelect(1) }) { Text(if (selected == 1) "• $right" else right) } }
+    TabRow(selectedTabIndex = options.indexOfFirst { it.id == selectedId }.coerceAtLeast(0)) {
+        options.forEach { option ->
+            Tab(
+                selected = option.id == selectedId,
+                onClick = { onSelect(option.id) },
+                text = { Text(option.label, maxLines = 1) },
+            )
+        }
     }
+}
+
+private data class SelectorOption(
+    val id: String,
+    val label: String,
+)
+
+private fun String.toMonthNumberOrNull(): Int =
+    split("-").getOrNull(1)?.toIntOrNull()?.takeIf { it in 1..12 }
+
+private fun monthNameFromKey(monthKey: String, languageCode: String): String {
+    val month = monthKey.toMonthNumberOrNull() ?: return monthKey
+    return when (languageCode) {
+        "es" -> monthNameSpanish(month)
+        "pt" -> monthNamePortuguese(month)
+        "ru" -> monthNameRussian(month)
+        "fr" -> monthNameFrench(month)
+        "it" -> monthNameItalian(month)
+        "de" -> monthNameGerman(month)
+        else -> monthNameEnglish(month)
+    }
+}
+
+private fun monthNameEnglish(month: Int): String = when (month) {
+    1 -> "January"
+    2 -> "February"
+    3 -> "March"
+    4 -> "April"
+    5 -> "May"
+    6 -> "June"
+    7 -> "July"
+    8 -> "August"
+    9 -> "September"
+    10 -> "October"
+    11 -> "November"
+    else -> "December"
+}
+
+private fun monthNameSpanish(month: Int): String = when (month) {
+    1 -> "Enero"
+    2 -> "Febrero"
+    3 -> "Marzo"
+    4 -> "Abril"
+    5 -> "Mayo"
+    6 -> "Junio"
+    7 -> "Julio"
+    8 -> "Agosto"
+    9 -> "Septiembre"
+    10 -> "Octubre"
+    11 -> "Noviembre"
+    else -> "Diciembre"
+}
+
+private fun monthNamePortuguese(month: Int): String = when (month) {
+    1 -> "Janeiro"
+    2 -> "Fevereiro"
+    3 -> "Março"
+    4 -> "Abril"
+    5 -> "Maio"
+    6 -> "Junho"
+    7 -> "Julho"
+    8 -> "Agosto"
+    9 -> "Setembro"
+    10 -> "Outubro"
+    11 -> "Novembro"
+    else -> "Dezembro"
+}
+
+private fun monthNameRussian(month: Int): String = when (month) {
+    1 -> "Январь"
+    2 -> "Февраль"
+    3 -> "Март"
+    4 -> "Апрель"
+    5 -> "Май"
+    6 -> "Июнь"
+    7 -> "Июль"
+    8 -> "Август"
+    9 -> "Сентябрь"
+    10 -> "Октябрь"
+    11 -> "Ноябрь"
+    else -> "Декабрь"
+}
+
+private fun monthNameFrench(month: Int): String = when (month) {
+    1 -> "Janvier"
+    2 -> "Février"
+    3 -> "Mars"
+    4 -> "Avril"
+    5 -> "Mai"
+    6 -> "Juin"
+    7 -> "Juillet"
+    8 -> "Août"
+    9 -> "Septembre"
+    10 -> "Octobre"
+    11 -> "Novembre"
+    else -> "Décembre"
+}
+
+private fun monthNameItalian(month: Int): String = when (month) {
+    1 -> "Gennaio"
+    2 -> "Febbraio"
+    3 -> "Marzo"
+    4 -> "Aprile"
+    5 -> "Maggio"
+    6 -> "Giugno"
+    7 -> "Luglio"
+    8 -> "Agosto"
+    9 -> "Settembre"
+    10 -> "Ottobre"
+    11 -> "Novembre"
+    else -> "Dicembre"
+}
+
+private fun monthNameGerman(month: Int): String = when (month) {
+    1 -> "Januar"
+    2 -> "Februar"
+    3 -> "März"
+    4 -> "April"
+    5 -> "Mai"
+    6 -> "Juni"
+    7 -> "Juli"
+    8 -> "August"
+    9 -> "September"
+    10 -> "Oktober"
+    11 -> "November"
+    else -> "Dezember"
 }
 
 private fun ZodiacSign.symbol(): String = when (this) {

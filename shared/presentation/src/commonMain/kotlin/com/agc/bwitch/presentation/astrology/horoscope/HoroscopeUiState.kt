@@ -18,6 +18,8 @@ data class HoroscopeUiState(
     val selectedMonth: HoroscopeMonthPeriod = HoroscopeMonthPeriod.ThisMonth,
     val selectedWeekKey: String = "",
     val selectedMonthKey: String = "",
+    val currentMonthKey: String = "",
+    val nextMonthKey: String = "",
     val isWeekLocked: Boolean = true,
     val isMonthLocked: Boolean = true,
     val lockCardMessage: HoroscopeFeedbackMessage? = null,
