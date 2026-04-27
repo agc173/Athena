@@ -26,6 +26,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -477,7 +478,7 @@ class HoroscopeViewModelTest {
     }
 
     private fun createViewModel(
-        dispatcher: StandardTestDispatcher,
+        dispatcher: CoroutineDispatcher,
         unlockRepository: HoroscopeUnlockRepository,
     ): HoroscopeViewModel {
         val repo = FakeRepo()
