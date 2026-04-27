@@ -3,15 +3,21 @@ package com.agc.bwitch.presentation.astrology.horoscope
 import com.agc.bwitch.domain.astrology.horoscope.DailyHoroscope
 import com.agc.bwitch.domain.astrology.horoscope.GetDailyHoroscopeUseCase
 import com.agc.bwitch.domain.astrology.horoscope.GetHoroscopeFutureDayCostUseCase
+import com.agc.bwitch.domain.astrology.horoscope.GetMonthlyHoroscopeUseCase
+import com.agc.bwitch.domain.astrology.horoscope.GetWeeklyHoroscopeUseCase
 import com.agc.bwitch.domain.astrology.horoscope.HoroscopeDailySyncController
+import com.agc.bwitch.domain.astrology.horoscope.MonthlyHoroscope
 import com.agc.bwitch.domain.astrology.horoscope.HoroscopePullMarker
 import com.agc.bwitch.domain.astrology.horoscope.HoroscopeRepository
 import com.agc.bwitch.domain.astrology.horoscope.HoroscopeUnlockRepository
 import com.agc.bwitch.domain.astrology.horoscope.HoroscopeUnlockResult
 import com.agc.bwitch.domain.astrology.horoscope.IsHoroscopeDayUnlockedUseCase
+import com.agc.bwitch.domain.astrology.horoscope.ObserveMonthlyHoroscopeUseCase
+import com.agc.bwitch.domain.astrology.horoscope.ObserveWeeklyHoroscopeUseCase
 import com.agc.bwitch.domain.astrology.horoscope.ObserveDailyHoroscopeUseCase
 import com.agc.bwitch.domain.astrology.horoscope.PullDailyHoroscopeUseCase
 import com.agc.bwitch.domain.astrology.horoscope.UnlockHoroscopeFutureDayUseCase
+import com.agc.bwitch.domain.astrology.horoscope.WeeklyHoroscope
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
 import com.agc.bwitch.domain.localization.AppLanguage
 import com.agc.bwitch.domain.localization.AppLanguageRepository
@@ -48,6 +54,10 @@ class HoroscopeViewModelTest {
         val observeUseCase = ObserveDailyHoroscopeUseCase(repo)
         val getUseCase = GetDailyHoroscopeUseCase(repo)
         val pullUseCase = PullDailyHoroscopeUseCase(FakeSync())
+        val observeWeeklyUseCase = ObserveWeeklyHoroscopeUseCase(repo)
+        val getWeeklyUseCase = GetWeeklyHoroscopeUseCase(repo)
+        val observeMonthlyUseCase = ObserveMonthlyHoroscopeUseCase(repo)
+        val getMonthlyUseCase = GetMonthlyHoroscopeUseCase(repo)
         val languageRepository = FakeAppLanguageRepository()
         val resolveLanguageUseCase = ResolveCurrentLanguageUseCase(languageRepository)
         val observeLanguageUseCase = ObserveCurrentLanguageUseCase(languageRepository)
@@ -75,6 +85,10 @@ class HoroscopeViewModelTest {
         val viewModel = HoroscopeViewModel(
             observeDailyHoroscopeUseCase = observeUseCase,
             getDailyHoroscopeUseCase = getUseCase,
+            observeWeeklyHoroscopeUseCase = observeWeeklyUseCase,
+            getWeeklyHoroscopeUseCase = getWeeklyUseCase,
+            observeMonthlyHoroscopeUseCase = observeMonthlyUseCase,
+            getMonthlyHoroscopeUseCase = getMonthlyUseCase,
             pullDailyHoroscopeUseCase = pullUseCase,
             pullMarker = pullMarker,
             resolveCurrentLanguageUseCase = resolveLanguageUseCase,
@@ -92,7 +106,7 @@ class HoroscopeViewModelTest {
         advanceUntilIdle()
 
         val state = viewModel.uiState.value
-        assertNotNull(state.overlay?.horoscope)
+        assertNotNull((state.overlay as? HoroscopeOverlayUi.DailyOverlay)?.horoscope)
         assertNull(state.errorMessage)
         assertEquals(false, state.isLoading)
     }
@@ -158,6 +172,88 @@ class HoroscopeViewModelTest {
     }
 
     @Test
+    fun weekly_unlockedWithContent_opensWeeklyOverlay() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val unlockRepository = FakeUnlockRepository(unlockQueriedWeeks = true)
+        val repo = FakeRepo().apply {
+            emitWeekly(
+                WeeklyHoroscope(
+                    sign = ZodiacSign.aries,
+                    weekKey = "2026-W10",
+                    languageCode = "es",
+                    title = "Semana Aries",
+                    overview = "Resumen",
+                    loveAndRelationships = "Amor",
+                    workAndMoney = "Trabajo",
+                    spiritualEnergy = "Energía",
+                    weeklyAdvice = "Consejo",
+                    mantra = "Mantra",
+                )
+            )
+        }
+        val viewModel = createViewModel(dispatcher, unlockRepository, repo)
+        advanceUntilIdle()
+
+        viewModel.onSelectTab(HoroscopeTab.Weekly)
+        advanceUntilIdle()
+        viewModel.onOpenSign(ZodiacSign.aries)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.overlay is HoroscopeOverlayUi.WeeklyOverlay)
+    }
+
+    @Test
+    fun monthly_unlockedWithContent_opensMonthlyOverlay() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val unlockRepository = FakeUnlockRepository(unlockQueriedMonths = true)
+        val repo = FakeRepo().apply {
+            emitMonthly(
+                MonthlyHoroscope(
+                    sign = ZodiacSign.aries,
+                    monthKey = "2026-03",
+                    languageCode = "es",
+                    title = "Mes Aries",
+                    monthTheme = "Tema",
+                    loveAndRelationships = "Amor",
+                    workAndMoney = "Trabajo",
+                    personalGrowth = "Crecimiento",
+                    ritualSuggestion = "Ritual",
+                    mantra = "Mantra",
+                )
+            )
+        }
+        val viewModel = createViewModel(dispatcher, unlockRepository, repo)
+        advanceUntilIdle()
+
+        viewModel.onSelectTab(HoroscopeTab.Monthly)
+        advanceUntilIdle()
+        viewModel.onOpenSign(ZodiacSign.aries)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.overlay is HoroscopeOverlayUi.MonthlyOverlay)
+    }
+
+    @Test
+    fun weeklyAndMonthly_locked_doNotOpenOverlay() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val unlockRepository = FakeUnlockRepository()
+        val viewModel = createViewModel(dispatcher, unlockRepository)
+        advanceUntilIdle()
+
+        viewModel.onSelectTab(HoroscopeTab.Weekly)
+        advanceUntilIdle()
+        viewModel.onOpenSign(ZodiacSign.aries)
+        advanceUntilIdle()
+        assertNull(viewModel.uiState.value.overlay)
+
+        viewModel.onSelectTab(HoroscopeTab.Monthly)
+        advanceUntilIdle()
+        viewModel.onOpenSign(ZodiacSign.aries)
+        advanceUntilIdle()
+        assertNull(viewModel.uiState.value.overlay)
+    }
+
+    @Test
     fun onSelectSignUpdatesSelectedSignAndHoroscope() = runTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
 
@@ -165,6 +261,10 @@ class HoroscopeViewModelTest {
         val observeUseCase = ObserveDailyHoroscopeUseCase(repo)
         val getUseCase = GetDailyHoroscopeUseCase(repo)
         val pullUseCase = PullDailyHoroscopeUseCase(FakeSync())
+        val observeWeeklyUseCase = ObserveWeeklyHoroscopeUseCase(repo)
+        val getWeeklyUseCase = GetWeeklyHoroscopeUseCase(repo)
+        val observeMonthlyUseCase = ObserveMonthlyHoroscopeUseCase(repo)
+        val getMonthlyUseCase = GetMonthlyHoroscopeUseCase(repo)
         val languageRepository = FakeAppLanguageRepository()
         val resolveLanguageUseCase = ResolveCurrentLanguageUseCase(languageRepository)
         val observeLanguageUseCase = ObserveCurrentLanguageUseCase(languageRepository)
@@ -192,6 +292,10 @@ class HoroscopeViewModelTest {
         val viewModel = HoroscopeViewModel(
             observeDailyHoroscopeUseCase = observeUseCase,
             getDailyHoroscopeUseCase = getUseCase,
+            observeWeeklyHoroscopeUseCase = observeWeeklyUseCase,
+            getWeeklyHoroscopeUseCase = getWeeklyUseCase,
+            observeMonthlyHoroscopeUseCase = observeMonthlyUseCase,
+            getMonthlyHoroscopeUseCase = getMonthlyUseCase,
             pullDailyHoroscopeUseCase = pullUseCase,
             pullMarker = pullMarker,
             resolveCurrentLanguageUseCase = resolveLanguageUseCase,
@@ -226,7 +330,7 @@ class HoroscopeViewModelTest {
 
         val state = viewModel.uiState.value
         assertEquals(ZodiacSign.leo, state.selectedSign)
-        assertEquals(ZodiacSign.leo, state.overlay?.horoscope?.sign)
+        assertEquals(ZodiacSign.leo, (state.overlay as? HoroscopeOverlayUi.DailyOverlay)?.horoscope?.sign)
         assertNull(state.errorMessage)
     }
 
@@ -237,6 +341,10 @@ class HoroscopeViewModelTest {
         val repo = FakeRepo()
         val observeUseCase = ObserveDailyHoroscopeUseCase(repo)
         val getUseCase = GetDailyHoroscopeUseCase(repo)
+        val observeWeeklyUseCase = ObserveWeeklyHoroscopeUseCase(repo)
+        val getWeeklyUseCase = GetWeeklyHoroscopeUseCase(repo)
+        val observeMonthlyUseCase = ObserveMonthlyHoroscopeUseCase(repo)
+        val getMonthlyUseCase = GetMonthlyHoroscopeUseCase(repo)
         val languageRepository = FakeAppLanguageRepository()
         val resolveLanguageUseCase = ResolveCurrentLanguageUseCase(languageRepository)
         val observeLanguageUseCase = ObserveCurrentLanguageUseCase(languageRepository)
@@ -263,6 +371,10 @@ class HoroscopeViewModelTest {
         val viewModel = HoroscopeViewModel(
             observeDailyHoroscopeUseCase = observeUseCase,
             getDailyHoroscopeUseCase = getUseCase,
+            observeWeeklyHoroscopeUseCase = observeWeeklyUseCase,
+            getWeeklyHoroscopeUseCase = getWeeklyUseCase,
+            observeMonthlyHoroscopeUseCase = observeMonthlyUseCase,
+            getMonthlyHoroscopeUseCase = getMonthlyUseCase,
             pullDailyHoroscopeUseCase = pullUseCase,
             pullMarker = pullMarker,
             resolveCurrentLanguageUseCase = resolveLanguageUseCase,
@@ -290,6 +402,10 @@ class HoroscopeViewModelTest {
         val repo = FakeRepo()
         val observeUseCase = ObserveDailyHoroscopeUseCase(repo)
         val getUseCase = GetDailyHoroscopeUseCase(repo)
+        val observeWeeklyUseCase = ObserveWeeklyHoroscopeUseCase(repo)
+        val getWeeklyUseCase = GetWeeklyHoroscopeUseCase(repo)
+        val observeMonthlyUseCase = ObserveMonthlyHoroscopeUseCase(repo)
+        val getMonthlyUseCase = GetMonthlyHoroscopeUseCase(repo)
         val pullUseCase = PullDailyHoroscopeUseCase(FakeSync())
         val languageRepository = FakeAppLanguageRepository()
         val resolveLanguageUseCase = ResolveCurrentLanguageUseCase(languageRepository)
@@ -303,6 +419,10 @@ class HoroscopeViewModelTest {
         val viewModel = HoroscopeViewModel(
             observeDailyHoroscopeUseCase = observeUseCase,
             getDailyHoroscopeUseCase = getUseCase,
+            observeWeeklyHoroscopeUseCase = observeWeeklyUseCase,
+            getWeeklyHoroscopeUseCase = getWeeklyUseCase,
+            observeMonthlyHoroscopeUseCase = observeMonthlyUseCase,
+            getMonthlyHoroscopeUseCase = getMonthlyUseCase,
             pullDailyHoroscopeUseCase = pullUseCase,
             pullMarker = FakePullMarker(lastPulledDateIso = currentSystemTodayIsoForTests()),
             resolveCurrentLanguageUseCase = resolveLanguageUseCase,
@@ -336,6 +456,10 @@ class HoroscopeViewModelTest {
         val repo = FakeRepo()
         val observeUseCase = ObserveDailyHoroscopeUseCase(repo)
         val getUseCase = GetDailyHoroscopeUseCase(repo)
+        val observeWeeklyUseCase = ObserveWeeklyHoroscopeUseCase(repo)
+        val getWeeklyUseCase = GetWeeklyHoroscopeUseCase(repo)
+        val observeMonthlyUseCase = ObserveMonthlyHoroscopeUseCase(repo)
+        val getMonthlyUseCase = GetMonthlyHoroscopeUseCase(repo)
         val sync = PopulateOnPullSync(repo)
         val pullUseCase = PullDailyHoroscopeUseCase(sync)
         val languageRepository = FakeAppLanguageRepository()
@@ -350,6 +474,10 @@ class HoroscopeViewModelTest {
         val viewModel = HoroscopeViewModel(
             observeDailyHoroscopeUseCase = observeUseCase,
             getDailyHoroscopeUseCase = getUseCase,
+            observeWeeklyHoroscopeUseCase = observeWeeklyUseCase,
+            getWeeklyHoroscopeUseCase = getWeeklyUseCase,
+            observeMonthlyHoroscopeUseCase = observeMonthlyUseCase,
+            getMonthlyHoroscopeUseCase = getMonthlyUseCase,
             pullDailyHoroscopeUseCase = pullUseCase,
             pullMarker = FakePullMarker(lastPulledDateIso = currentSystemTodayIsoForTests()),
             resolveCurrentLanguageUseCase = resolveLanguageUseCase,
@@ -369,7 +497,7 @@ class HoroscopeViewModelTest {
         viewModel.onOpenSign(ZodiacSign.aries)
         advanceUntilIdle()
 
-        assertNotNull(viewModel.uiState.value.overlay?.horoscope)
+        assertNotNull((viewModel.uiState.value.overlay as? HoroscopeOverlayUi.DailyOverlay)?.horoscope)
         assertNull(viewModel.uiState.value.errorMessage)
         assertEquals(1, sync.pullCalls)
     }
@@ -381,6 +509,10 @@ class HoroscopeViewModelTest {
         val repo = FakeRepo()
         val observeUseCase = ObserveDailyHoroscopeUseCase(repo)
         val getUseCase = GetDailyHoroscopeUseCase(repo)
+        val observeWeeklyUseCase = ObserveWeeklyHoroscopeUseCase(repo)
+        val getWeeklyUseCase = GetWeeklyHoroscopeUseCase(repo)
+        val observeMonthlyUseCase = ObserveMonthlyHoroscopeUseCase(repo)
+        val getMonthlyUseCase = GetMonthlyHoroscopeUseCase(repo)
         val pullUseCase = PullDailyHoroscopeUseCase(FakeSync())
         val languageRepository = FakeAppLanguageRepository()
         val resolveLanguageUseCase = ResolveCurrentLanguageUseCase(languageRepository)
@@ -396,6 +528,10 @@ class HoroscopeViewModelTest {
         val viewModel = HoroscopeViewModel(
             observeDailyHoroscopeUseCase = observeUseCase,
             getDailyHoroscopeUseCase = getUseCase,
+            observeWeeklyHoroscopeUseCase = observeWeeklyUseCase,
+            getWeeklyHoroscopeUseCase = getWeeklyUseCase,
+            observeMonthlyHoroscopeUseCase = observeMonthlyUseCase,
+            getMonthlyHoroscopeUseCase = getMonthlyUseCase,
             pullDailyHoroscopeUseCase = pullUseCase,
             pullMarker = pullMarker,
             resolveCurrentLanguageUseCase = resolveLanguageUseCase,
@@ -428,6 +564,10 @@ class HoroscopeViewModelTest {
         val repo = FakeRepo()
         val observeUseCase = ObserveDailyHoroscopeUseCase(repo)
         val getUseCase = GetDailyHoroscopeUseCase(repo)
+        val observeWeeklyUseCase = ObserveWeeklyHoroscopeUseCase(repo)
+        val getWeeklyUseCase = GetWeeklyHoroscopeUseCase(repo)
+        val observeMonthlyUseCase = ObserveMonthlyHoroscopeUseCase(repo)
+        val getMonthlyUseCase = GetMonthlyHoroscopeUseCase(repo)
         val pullUseCase = PullDailyHoroscopeUseCase(FakeSync())
         val languageRepository = FakeAppLanguageRepository()
         val resolveLanguageUseCase = ResolveCurrentLanguageUseCase(languageRepository)
@@ -441,6 +581,10 @@ class HoroscopeViewModelTest {
         val viewModel = HoroscopeViewModel(
             observeDailyHoroscopeUseCase = observeUseCase,
             getDailyHoroscopeUseCase = getUseCase,
+            observeWeeklyHoroscopeUseCase = observeWeeklyUseCase,
+            getWeeklyHoroscopeUseCase = getWeeklyUseCase,
+            observeMonthlyHoroscopeUseCase = observeMonthlyUseCase,
+            getMonthlyHoroscopeUseCase = getMonthlyUseCase,
             pullDailyHoroscopeUseCase = pullUseCase,
             pullMarker = FakePullMarker(lastPulledDateIso = currentSystemTodayIsoForTests()),
             resolveCurrentLanguageUseCase = resolveLanguageUseCase,
@@ -462,9 +606,19 @@ class HoroscopeViewModelTest {
 
     private class FakeRepo : HoroscopeRepository {
         private val state = MutableStateFlow<DailyHoroscope?>(null)
+        private val weeklyState = MutableStateFlow<WeeklyHoroscope?>(null)
+        private val monthlyState = MutableStateFlow<MonthlyHoroscope?>(null)
 
         fun emit(value: DailyHoroscope?) {
             state.value = value
+        }
+
+        fun emitWeekly(value: WeeklyHoroscope?) {
+            weeklyState.value = value
+        }
+
+        fun emitMonthly(value: MonthlyHoroscope?) {
+            monthlyState.value = value
         }
 
         override fun observeDaily(dateIso: String, sign: ZodiacSign, languageCode: String): Flow<DailyHoroscope?> {
@@ -475,15 +629,35 @@ class HoroscopeViewModelTest {
         override suspend fun getDaily(dateIso: String, sign: ZodiacSign, languageCode: String): DailyHoroscope? {
             return state.value
         }
+
+        override fun observeWeekly(weekKey: String, sign: ZodiacSign, languageCode: String): Flow<WeeklyHoroscope?> {
+            return weeklyState.asStateFlow()
+        }
+
+        override suspend fun getWeekly(weekKey: String, sign: ZodiacSign, languageCode: String): WeeklyHoroscope? {
+            return weeklyState.value
+        }
+
+        override fun observeMonthly(monthKey: String, sign: ZodiacSign, languageCode: String): Flow<MonthlyHoroscope?> {
+            return monthlyState.asStateFlow()
+        }
+
+        override suspend fun getMonthly(monthKey: String, sign: ZodiacSign, languageCode: String): MonthlyHoroscope? {
+            return monthlyState.value
+        }
     }
 
     private fun createViewModel(
         dispatcher: CoroutineDispatcher,
         unlockRepository: HoroscopeUnlockRepository,
+        repo: FakeRepo = FakeRepo(),
     ): HoroscopeViewModel {
-        val repo = FakeRepo()
         val observeUseCase = ObserveDailyHoroscopeUseCase(repo)
         val getUseCase = GetDailyHoroscopeUseCase(repo)
+        val observeWeeklyUseCase = ObserveWeeklyHoroscopeUseCase(repo)
+        val getWeeklyUseCase = GetWeeklyHoroscopeUseCase(repo)
+        val observeMonthlyUseCase = ObserveMonthlyHoroscopeUseCase(repo)
+        val getMonthlyUseCase = GetMonthlyHoroscopeUseCase(repo)
         val pullUseCase = PullDailyHoroscopeUseCase(FakeSync())
         val languageRepository = FakeAppLanguageRepository()
         val resolveLanguageUseCase = ResolveCurrentLanguageUseCase(languageRepository)
@@ -496,6 +670,10 @@ class HoroscopeViewModelTest {
         return HoroscopeViewModel(
             observeDailyHoroscopeUseCase = observeUseCase,
             getDailyHoroscopeUseCase = getUseCase,
+            observeWeeklyHoroscopeUseCase = observeWeeklyUseCase,
+            getWeeklyHoroscopeUseCase = getWeeklyUseCase,
+            observeMonthlyHoroscopeUseCase = observeMonthlyUseCase,
+            getMonthlyHoroscopeUseCase = getMonthlyUseCase,
             pullDailyHoroscopeUseCase = pullUseCase,
             pullMarker = pullMarker,
             resolveCurrentLanguageUseCase = resolveLanguageUseCase,

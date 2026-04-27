@@ -2,7 +2,9 @@ package com.agc.bwitch.data.astrology.horoscope
 
 import com.agc.bwitch.domain.astrology.horoscope.DailyHoroscope
 import com.agc.bwitch.domain.astrology.horoscope.HoroscopeDailySyncController
+import com.agc.bwitch.domain.astrology.horoscope.MonthlyHoroscope
 import com.agc.bwitch.domain.astrology.horoscope.HoroscopeRepository
+import com.agc.bwitch.domain.astrology.horoscope.WeeklyHoroscope
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
 import com.agc.bwitch.domain.auth.AuthRepository
 import dev.gitlive.firebase.Firebase
@@ -10,6 +12,7 @@ import dev.gitlive.firebase.firestore.firestore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.Serializable
 
@@ -26,6 +29,20 @@ class SyncHoroscopeDailyRepository(
     override suspend fun getDaily(dateIso: String, sign: ZodiacSign, languageCode: String): DailyHoroscope? =
         local.getDaily(dateIso, sign, languageCode)
 
+    override fun observeWeekly(weekKey: String, sign: ZodiacSign, languageCode: String): Flow<WeeklyHoroscope?> =
+        flow { emit(getWeekly(weekKey, sign, languageCode)) }
+
+    override suspend fun getWeekly(weekKey: String, sign: ZodiacSign, languageCode: String): WeeklyHoroscope? {
+        return fetchWeeklyRemote(weekKey = weekKey, sign = sign, languageCode = languageCode)
+    }
+
+    override fun observeMonthly(monthKey: String, sign: ZodiacSign, languageCode: String): Flow<MonthlyHoroscope?> =
+        flow { emit(getMonthly(monthKey, sign, languageCode)) }
+
+    override suspend fun getMonthly(monthKey: String, sign: ZodiacSign, languageCode: String): MonthlyHoroscope? {
+        return fetchMonthlyRemote(monthKey = monthKey, sign = sign, languageCode = languageCode)
+    }
+
     override suspend fun pull(dateIso: String, languageCode: String) {
         // ✅ Firestore rules requieren auth: request.auth != null
         val uid = currentUidOrNull()
@@ -33,19 +50,14 @@ class SyncHoroscopeDailyRepository(
             throw IllegalStateException("Not authenticated (uid=null). Firestore requires auth.")
         }
 
-        var found = 0
-        var saved = 0
-
         ZodiacSign.entries.forEach { sign ->
             val remote = fetchRemote(dateIso = dateIso, sign = sign, languageCode = languageCode) ?: return@forEach
-            found++
 
             val localValue = local.getDaily(dateIso = dateIso, sign = sign, languageCode = languageCode)
             val localUpdated = localValue?.updatedAtEpochMillis ?: 0L
 
             if (remote.updatedAtEpochMillis > localUpdated) {
                 local.saveDaily(remote)
-                saved++
             }
         }
 
@@ -98,6 +110,48 @@ class SyncHoroscopeDailyRepository(
             requestedLanguageCode = languageCode,
             source = HoroscopeRemoteSource.LegacyFallback,
         )
+    }
+
+    private fun weeklySignDoc(weekKey: String, sign: ZodiacSign) =
+        firestore.collection("horoscopeWeekly")
+            .document(weekKey)
+            .collection("signs")
+            .document(signDocId(sign))
+
+    private fun weeklyLanguageDoc(weekKey: String, sign: ZodiacSign, languageCode: String) =
+        weeklySignDoc(weekKey, sign).collection("langs").document(languageCode.lowercase())
+
+    private suspend fun fetchWeeklyRemote(weekKey: String, sign: ZodiacSign, languageCode: String): WeeklyHoroscope? {
+        val langSnap = weeklyLanguageDoc(weekKey, sign, languageCode).get()
+        if (langSnap.exists) {
+            val dto = langSnap.data(HoroscopeWeeklyRemoteDto.serializer())
+            return dto.toDomain(sign = sign, weekKey = weekKey, requestedLanguageCode = languageCode)
+        }
+        val canonicalSnap = weeklySignDoc(weekKey, sign).get()
+        if (!canonicalSnap.exists) return null
+        val dto = canonicalSnap.data(HoroscopeWeeklyRemoteDto.serializer())
+        return dto.toDomain(sign = sign, weekKey = weekKey, requestedLanguageCode = languageCode)
+    }
+
+    private fun monthlySignDoc(monthKey: String, sign: ZodiacSign) =
+        firestore.collection("horoscopeMonthly")
+            .document(monthKey)
+            .collection("signs")
+            .document(signDocId(sign))
+
+    private fun monthlyLanguageDoc(monthKey: String, sign: ZodiacSign, languageCode: String) =
+        monthlySignDoc(monthKey, sign).collection("langs").document(languageCode.lowercase())
+
+    private suspend fun fetchMonthlyRemote(monthKey: String, sign: ZodiacSign, languageCode: String): MonthlyHoroscope? {
+        val langSnap = monthlyLanguageDoc(monthKey, sign, languageCode).get()
+        if (langSnap.exists) {
+            val dto = langSnap.data(HoroscopeMonthlyRemoteDto.serializer())
+            return dto.toDomain(sign = sign, monthKey = monthKey, requestedLanguageCode = languageCode)
+        }
+        val canonicalSnap = monthlySignDoc(monthKey, sign).get()
+        if (!canonicalSnap.exists) return null
+        val dto = canonicalSnap.data(HoroscopeMonthlyRemoteDto.serializer())
+        return dto.toDomain(sign = sign, monthKey = monthKey, requestedLanguageCode = languageCode)
     }
 }
 

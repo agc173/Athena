@@ -8,6 +8,10 @@ import com.agc.bwitch.domain.astrology.birthchart.SaveBirthEssenceUseCase
 import com.agc.bwitch.domain.astrology.horoscope.DeriveZodiacSignUseCase
 import com.agc.bwitch.domain.astrology.horoscope.GetDailyHoroscopeUseCase
 import com.agc.bwitch.domain.astrology.horoscope.ObserveDailyHoroscopeUseCase
+import com.agc.bwitch.domain.astrology.horoscope.GetMonthlyHoroscopeUseCase
+import com.agc.bwitch.domain.astrology.horoscope.GetWeeklyHoroscopeUseCase
+import com.agc.bwitch.domain.astrology.horoscope.ObserveMonthlyHoroscopeUseCase
+import com.agc.bwitch.domain.astrology.horoscope.ObserveWeeklyHoroscopeUseCase
 import com.agc.bwitch.domain.astrology.horoscope.PullDailyHoroscopeUseCase
 import com.agc.bwitch.domain.astrology.horoscope.UnlockHoroscopeFutureDayUseCase
 import com.agc.bwitch.domain.astrology.horoscope.IsHoroscopeDayUnlockedUseCase
@@ -43,6 +47,10 @@ val domainModule: Module = module {
     // Horoscope
     factory { GetDailyHoroscopeUseCase(get()) }
     factory { ObserveDailyHoroscopeUseCase(get()) }
+    factory { GetWeeklyHoroscopeUseCase(get()) }
+    factory { ObserveWeeklyHoroscopeUseCase(get()) }
+    factory { GetMonthlyHoroscopeUseCase(get()) }
+    factory { ObserveMonthlyHoroscopeUseCase(get()) }
     factory { PullDailyHoroscopeUseCase(get()) }
     factory { DeriveZodiacSignUseCase() }
     factory { GetHoroscopeFutureDayCostUseCase(get()) }

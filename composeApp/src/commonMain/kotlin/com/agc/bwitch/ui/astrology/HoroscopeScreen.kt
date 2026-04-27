@@ -47,6 +47,7 @@ import com.agc.bwitch.localization.AppStrings
 import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeFeedbackMessage
 import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeMonthPeriod
+import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeOverlayUi
 import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeTab
 import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeUiState
 import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeViewModel
@@ -279,7 +280,7 @@ private fun HoroscopeScreenContent(
 
     val overlay = state.overlay
     if (overlay != null) {
-        if (overlay.isLocked) {
+        if (overlay is HoroscopeOverlayUi.DailyOverlay && overlay.isLocked) {
             AlertDialog(
                 onDismissRequest = onCloseOverlay,
                 title = { Text(strings.horoscope.lockedTitle) },
@@ -326,14 +327,13 @@ private fun HoroscopeScreenContent(
                             )
                         }
                         Text(
-                            text = overlay.dateIso,
+                            text = overlay.periodLabel,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 },
                 text = {
-                    val horoscope = overlay.horoscope
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -344,28 +344,52 @@ private fun HoroscopeScreenContent(
                         if (overlay.isLoading) {
                             Text(strings.horoscope.loading)
                         } else {
-                            FlowRow(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp),
-                            ) {
-                                HoroscopeMetaChip(
-                                    label = strings.horoscope.moodLabel,
-                                    value = horoscope?.mood ?: "-",
-                                )
-                                HoroscopeMetaChip(
-                                    label = strings.horoscope.luckyNumberLabel,
-                                    value = horoscope?.luckyNumber?.toString() ?: "-",
-                                )
-                                HoroscopeMetaChip(
-                                    label = strings.horoscope.luckyColorLabel,
-                                    value = horoscope?.luckyColor ?: "-",
-                                )
+                            when (overlay) {
+                                is HoroscopeOverlayUi.DailyOverlay -> {
+                                    val horoscope = overlay.horoscope
+                                    FlowRow(
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                                    ) {
+                                        HoroscopeMetaChip(label = strings.horoscope.moodLabel, value = horoscope?.mood ?: "-")
+                                        HoroscopeMetaChip(label = strings.horoscope.luckyNumberLabel, value = horoscope?.luckyNumber?.toString() ?: "-")
+                                        HoroscopeMetaChip(label = strings.horoscope.luckyColorLabel, value = horoscope?.luckyColor ?: "-")
+                                    }
+                                    Text(
+                                        text = horoscope?.text ?: strings.horoscope.noContentYet,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        lineHeight = MaterialTheme.typography.bodyLarge.lineHeight * 1.2f,
+                                    )
+                                }
+                                is HoroscopeOverlayUi.WeeklyOverlay -> {
+                                    val horoscope = overlay.horoscope
+                                    Text(
+                                        text = horoscope?.title ?: strings.horoscope.noContentYet,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                    )
+                                    OverlaySection(strings.horoscope.weekOverviewTitle, horoscope?.overview)
+                                    OverlaySection(strings.horoscope.loveAndRelationshipsTitle, horoscope?.loveAndRelationships)
+                                    OverlaySection(strings.horoscope.workAndMoneyTitle, horoscope?.workAndMoney)
+                                    OverlaySection(strings.horoscope.spiritualEnergyTitle, horoscope?.spiritualEnergy)
+                                    OverlaySection(strings.horoscope.weeklyAdviceTitle, horoscope?.weeklyAdvice)
+                                    OverlaySection(strings.horoscope.mantraTitle, horoscope?.mantra)
+                                }
+                                is HoroscopeOverlayUi.MonthlyOverlay -> {
+                                    val horoscope = overlay.horoscope
+                                    Text(
+                                        text = horoscope?.title ?: strings.horoscope.noContentYet,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                    )
+                                    OverlaySection(strings.horoscope.monthThemeTitle, horoscope?.monthTheme)
+                                    OverlaySection(strings.horoscope.loveAndRelationshipsTitle, horoscope?.loveAndRelationships)
+                                    OverlaySection(strings.horoscope.workAndMoneyTitle, horoscope?.workAndMoney)
+                                    OverlaySection(strings.horoscope.personalGrowthTitle, horoscope?.personalGrowth)
+                                    OverlaySection(strings.horoscope.ritualSuggestionTitle, horoscope?.ritualSuggestion)
+                                    OverlaySection(strings.horoscope.mantraTitle, horoscope?.mantra)
+                                }
                             }
-                            Text(
-                                text = horoscope?.text ?: strings.horoscope.noContentYet,
-                                style = MaterialTheme.typography.bodyLarge,
-                                lineHeight = MaterialTheme.typography.bodyLarge.lineHeight * 1.2f,
-                            )
                         }
                     }
                 },
@@ -373,6 +397,24 @@ private fun HoroscopeScreenContent(
                 dismissButton = { BWitchPrimaryButton(onClick = onCloseOverlay) { Text(strings.horoscope.closeCta) } },
             )
         }
+    }
+}
+
+@Composable
+private fun OverlaySection(
+    label: String,
+    content: String?,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold,
+        )
+        Text(
+            text = content ?: "-",
+            style = MaterialTheme.typography.bodyMedium,
+        )
     }
 }
 
