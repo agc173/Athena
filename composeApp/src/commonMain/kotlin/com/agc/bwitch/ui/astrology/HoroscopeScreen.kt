@@ -33,8 +33,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
@@ -47,9 +47,11 @@ import com.agc.bwitch.localization.AppStrings
 import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeDayItemUi
 import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeFeedbackMessage
+import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeMonthPeriod
 import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeTab
 import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeUiState
 import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeViewModel
+import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeWeekPeriod
 import com.agc.bwitch.presentation.economy.EconomyViewModel
 import com.agc.bwitch.ui.common.designsystem.BWitchPrimaryButton
 import com.agc.bwitch.ui.common.designsystem.BWitchSecondaryButton
@@ -69,6 +71,7 @@ fun HoroscopeScreen(
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(preselectedSign) { preselectedSign?.let(viewModel::onSelectSign) }
+    LaunchedEffect(economyState.isPremium) { viewModel.onPremiumAccessChanged(economyState.isPremium) }
     LaunchedEffect(state.infoMessage) {
         state.infoMessage?.let {
             snackbarHostState.showSnackbar(it.toLocalizedMessage(strings))
@@ -92,6 +95,8 @@ fun HoroscopeScreen(
             strings = strings,
             onSelectTab = viewModel::onSelectTab,
             onSelectDate = viewModel::onSelectDate,
+            onSelectWeek = viewModel::onSelectWeek,
+            onSelectMonth = viewModel::onSelectMonth,
             onOpenSign = viewModel::onOpenSign,
             onRefresh = viewModel::onRefresh,
             onUnlock = {
@@ -104,6 +109,30 @@ fun HoroscopeScreen(
                         cost = state.futureDayCost,
                         source = "horoscope_daily_unlock",
                     ) { viewModel.onUnlockSelectedDay() }
+                }
+            },
+            onUnlockWeek = {
+                val hasEnoughBalance = economyState.hasUsableSnapshot && economyState.balance >= state.weeklyCost
+                if (hasEnoughBalance) {
+                    viewModel.onUnlockSelectedWeek()
+                } else {
+                    viewModel.onUnlockWeekDeferredToPaywall()
+                    economyViewModel.requireLunas(
+                        cost = state.weeklyCost,
+                        source = "horoscope_weekly_unlock",
+                    ) { viewModel.onUnlockSelectedWeek() }
+                }
+            },
+            onUnlockMonth = {
+                val hasEnoughBalance = economyState.hasUsableSnapshot && economyState.balance >= state.monthlyCost
+                if (hasEnoughBalance) {
+                    viewModel.onUnlockSelectedMonth()
+                } else {
+                    viewModel.onUnlockMonthDeferredToPaywall()
+                    economyViewModel.requireLunas(
+                        cost = state.monthlyCost,
+                        source = "horoscope_monthly_unlock",
+                    ) { viewModel.onUnlockSelectedMonth() }
                 }
             },
             onCloseOverlay = viewModel::onCloseOverlay,
@@ -119,9 +148,13 @@ private fun HoroscopeScreenContent(
     strings: AppStrings,
     onSelectTab: (HoroscopeTab) -> Unit,
     onSelectDate: (String) -> Unit,
+    onSelectWeek: (HoroscopeWeekPeriod) -> Unit,
+    onSelectMonth: (HoroscopeMonthPeriod) -> Unit,
     onOpenSign: (ZodiacSign) -> Unit,
     onRefresh: () -> Unit,
     onUnlock: () -> Unit,
+    onUnlockWeek: () -> Unit,
+    onUnlockMonth: () -> Unit,
     onCloseOverlay: () -> Unit,
 ) {
     Column(
@@ -131,7 +164,6 @@ private fun HoroscopeScreenContent(
         val tabs = HoroscopeTab.values()
         TabRow(selectedTabIndex = tabs.indexOf(state.selectedTab).coerceAtLeast(0)) {
             tabs.forEach { tab ->
-                val isDaily = tab == HoroscopeTab.Daily
                 Tab(
                     selected = state.selectedTab == tab,
                     onClick = { onSelectTab(tab) },
@@ -144,19 +176,68 @@ private fun HoroscopeScreenContent(
                             }
                         )
                     },
-                    enabled = isDaily,
+                    enabled = true,
                 )
             }
         }
 
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(state.days, key = { it.dateIso }) { day ->
-                DayChip(day = day, strings = strings, onClick = { onSelectDate(day.dateIso) })
+        when (state.selectedTab) {
+            HoroscopeTab.Daily -> LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                items(state.days, key = { it.dateIso }) { day ->
+                    DayChip(day = day, strings = strings, onClick = { onSelectDate(day.dateIso) })
+                }
+            }
+
+            HoroscopeTab.Weekly -> {
+                RowSelector(
+                    left = strings.horoscope.thisWeek,
+                    right = strings.horoscope.nextWeek,
+                    selected = if (state.selectedWeek == HoroscopeWeekPeriod.ThisWeek) 0 else 1,
+                    onSelect = { selected ->
+                        onSelectWeek(if (selected == 0) HoroscopeWeekPeriod.ThisWeek else HoroscopeWeekPeriod.NextWeek)
+                    },
+                )
+            }
+
+            HoroscopeTab.Monthly -> {
+                RowSelector(
+                    left = strings.horoscope.thisMonth,
+                    right = strings.horoscope.nextMonth,
+                    selected = if (state.selectedMonth == HoroscopeMonthPeriod.ThisMonth) 0 else 1,
+                    onSelect = { selected ->
+                        onSelectMonth(if (selected == 0) HoroscopeMonthPeriod.ThisMonth else HoroscopeMonthPeriod.NextMonth)
+                    },
+                )
             }
         }
 
         BWitchSecondaryButton(onClick = onRefresh, enabled = !state.isRefreshing) {
             Text(if (state.isRefreshing) strings.horoscope.refreshLoading else strings.horoscope.refreshCta)
+        }
+
+        val dailyLocked = state.selectedTab == HoroscopeTab.Daily &&
+            state.days.firstOrNull { it.dateIso == state.selectedDateIso }?.isLocked == true
+        val weeklyLocked = state.selectedTab == HoroscopeTab.Weekly && state.isWeekLocked
+        val monthlyLocked = state.selectedTab == HoroscopeTab.Monthly && state.isMonthLocked
+        val periodLocked = dailyLocked || weeklyLocked || monthlyLocked
+
+        if (periodLocked) {
+            PeriodLockCard(
+                strings = strings,
+                tab = state.selectedTab,
+                cost = when (state.selectedTab) {
+                    HoroscopeTab.Daily -> state.futureDayCost
+                    HoroscopeTab.Weekly -> state.weeklyCost
+                    HoroscopeTab.Monthly -> state.monthlyCost
+                },
+                onUnlock = when (state.selectedTab) {
+                    HoroscopeTab.Daily -> onUnlock
+                    HoroscopeTab.Weekly -> onUnlockWeek
+                    HoroscopeTab.Monthly -> onUnlockMonth
+                },
+                isLoading = state.isUnlocking,
+                errorMessage = state.lockCardMessage?.toLocalizedMessage(strings),
+            )
         }
 
         FlowRow(
@@ -169,7 +250,8 @@ private fun HoroscopeScreenContent(
                     sign = sign,
                     isProfileSign = state.highlightedSign == sign,
                     strings = strings,
-                    onClick = { onOpenSign(sign) },
+                    enabled = !periodLocked,
+                    onClick = { if (!periodLocked) onOpenSign(sign) },
                 )
             }
         }
@@ -240,6 +322,7 @@ private fun ZodiacSignCard(
     sign: ZodiacSign,
     isProfileSign: Boolean,
     strings: AppStrings,
+    enabled: Boolean,
     onClick: () -> Unit,
 ) {
     val colors = MaterialTheme.colorScheme
@@ -252,7 +335,7 @@ private fun ZodiacSignCard(
                 role = Role.Button
                 contentDescription = sign.localizedLabel(strings)
             },
-        colors = CardDefaults.cardColors(containerColor = colors.surfaceVariant.copy(alpha = 0.55f)),
+        colors = CardDefaults.cardColors(containerColor = colors.surfaceVariant.copy(alpha = if (enabled) 0.55f else 0.22f)),
         border = BorderStroke(1.dp, if (isProfileSign) colors.primary else colors.outlineVariant),
     ) {
         Box(modifier = Modifier.fillMaxSize().padding(10.dp)) {
@@ -282,6 +365,57 @@ private fun ZodiacSignCard(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun PeriodLockCard(
+    strings: AppStrings,
+    tab: HoroscopeTab,
+    cost: Int,
+    onUnlock: () -> Unit,
+    isLoading: Boolean,
+    errorMessage: String?,
+) {
+    val title = when (tab) {
+        HoroscopeTab.Daily -> strings.horoscope.unlockDayTitle
+        HoroscopeTab.Weekly -> strings.horoscope.unlockWeekTitle
+        HoroscopeTab.Monthly -> strings.horoscope.unlockMonthTitle
+    }
+    val cta = when (tab) {
+        HoroscopeTab.Daily -> strings.horoscope.unlockDayForMoonFormat
+        HoroscopeTab.Weekly -> strings.horoscope.unlockWeekForMoonFormat
+        HoroscopeTab.Monthly -> strings.horoscope.unlockMonthForMoonFormat
+    }
+    Card {
+        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(title, fontWeight = FontWeight.SemiBold)
+            Text(strings.horoscope.unlockPeriodScopeHint, style = MaterialTheme.typography.bodySmall)
+            errorMessage?.let {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+            BWitchPrimaryButton(onClick = onUnlock, enabled = !isLoading) {
+                Text(cta.replaceFirst("%d", "$cost"))
+            }
+        }
+    }
+}
+
+@Composable
+private fun RowSelector(
+    left: String,
+    right: String,
+    selected: Int,
+    onSelect: (Int) -> Unit,
+) {
+    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        item { BWitchSecondaryButton(onClick = { onSelect(0) }) { Text(if (selected == 0) "• $left" else left) } }
+        item { BWitchSecondaryButton(onClick = { onSelect(1) }) { Text(if (selected == 1) "• $right" else right) } }
     }
 }
 
@@ -323,4 +457,6 @@ private fun HoroscopeFeedbackMessage.toLocalizedMessage(strings: AppStrings): St
     HoroscopeFeedbackMessage.UnlockFailed -> strings.horoscope.unlockError
     HoroscopeFeedbackMessage.UnlockInsufficientMoons -> strings.horoscope.unlockInsufficient
     HoroscopeFeedbackMessage.UnlockSuccess -> strings.horoscope.unlockSuccess
+    HoroscopeFeedbackMessage.UnlockWeekFailed -> strings.horoscope.unlockError
+    HoroscopeFeedbackMessage.UnlockMonthFailed -> strings.horoscope.unlockError
 }

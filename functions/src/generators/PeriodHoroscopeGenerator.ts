@@ -31,11 +31,10 @@ export type WeeklyHoroscopeDoc = {
   languageCode: Lang;
   title: string;
   overview: string;
-  love: string;
-  work: string;
-  money: string;
-  spiritualAdvice: string;
-  keyDays: string[];
+  loveAndRelationships: string;
+  workAndMoney: string;
+  spiritualEnergy: string;
+  weeklyAdvice: string;
   mantra: string;
   shareText: string;
   createdAtEpochMillis: number;
@@ -49,13 +48,11 @@ export type MonthlyHoroscopeDoc = {
   monthKey: string;
   languageCode: Lang;
   title: string;
-  overview: string;
-  love: string;
-  work: string;
-  money: string;
+  monthTheme: string;
+  loveAndRelationships: string;
+  workAndMoney: string;
   personalGrowth: string;
   ritualSuggestion: string;
-  keyDates: string[];
   mantra: string;
   shareText: string;
   createdAtEpochMillis: number;
@@ -88,16 +85,6 @@ function asNonEmptyString(source: Record<string, unknown>, key: string) {
   return value;
 }
 
-function asStringArray(source: Record<string, unknown>, key: string, min: number, max: number) {
-  const raw = source[key];
-  if (!Array.isArray(raw)) throw new StructureValidationError(`Invalid: ${key} must be array`);
-  const values = raw.map((item) => String(item ?? '').trim()).filter(Boolean);
-  if (values.length < min || values.length > max) {
-    throw new StructureValidationError(`Invalid: ${key} length`);
-  }
-  return values;
-}
-
 function normalizeWeekly(doc: unknown): Omit<WeeklyHoroscopeDoc,
   'createdAtEpochMillis' | 'updatedAtEpochMillis' | 'generatorVersion' | 'llmProvider'> {
   const source = (doc ?? {}) as Record<string, unknown>;
@@ -107,11 +94,10 @@ function normalizeWeekly(doc: unknown): Omit<WeeklyHoroscopeDoc,
     languageCode: asNonEmptyString(source, 'languageCode') as Lang,
     title: asNonEmptyString(source, 'title'),
     overview: asNonEmptyString(source, 'overview'),
-    love: asNonEmptyString(source, 'love'),
-    work: asNonEmptyString(source, 'work'),
-    money: asNonEmptyString(source, 'money'),
-    spiritualAdvice: asNonEmptyString(source, 'spiritualAdvice'),
-    keyDays: asStringArray(source, 'keyDays', 2, 4),
+    loveAndRelationships: asNonEmptyString(source, 'loveAndRelationships'),
+    workAndMoney: asNonEmptyString(source, 'workAndMoney'),
+    spiritualEnergy: asNonEmptyString(source, 'spiritualEnergy'),
+    weeklyAdvice: asNonEmptyString(source, 'weeklyAdvice'),
     mantra: asNonEmptyString(source, 'mantra'),
     shareText: asNonEmptyString(source, 'shareText'),
   };
@@ -125,13 +111,11 @@ function normalizeMonthly(doc: unknown): Omit<MonthlyHoroscopeDoc,
     monthKey: asNonEmptyString(source, 'monthKey'),
     languageCode: asNonEmptyString(source, 'languageCode') as Lang,
     title: asNonEmptyString(source, 'title'),
-    overview: asNonEmptyString(source, 'overview'),
-    love: asNonEmptyString(source, 'love'),
-    work: asNonEmptyString(source, 'work'),
-    money: asNonEmptyString(source, 'money'),
+    monthTheme: asNonEmptyString(source, 'monthTheme'),
+    loveAndRelationships: asNonEmptyString(source, 'loveAndRelationships'),
+    workAndMoney: asNonEmptyString(source, 'workAndMoney'),
     personalGrowth: asNonEmptyString(source, 'personalGrowth'),
     ritualSuggestion: asNonEmptyString(source, 'ritualSuggestion'),
-    keyDates: asStringArray(source, 'keyDates', 3, 5),
     mantra: asNonEmptyString(source, 'mantra'),
     shareText: asNonEmptyString(source, 'shareText'),
   };

@@ -61,6 +61,8 @@ data class HoroscopeRulesDto(
 @Serializable
 data class HoroscopeCostsDto(
     val futureDay: Int? = null,
+    val weekly: Int? = null,
+    val monthly: Int? = null,
 )
 
 @Serializable
@@ -87,4 +89,38 @@ data class GetHoroscopeDailyUnlocksRequestDto(
 @Serializable
 data class GetHoroscopeDailyUnlocksResponseDto(
     val unlockedDateIsoList: List<String> = emptyList(),
+)
+
+@Serializable
+data class UnlockHoroscopeWeeklyRequestDto(
+    val requestId: String,
+    val weekKey: String,
+    val sign: String,
+)
+
+@Serializable
+data class GetHoroscopeWeeklyUnlocksRequestDto(
+    val weekKeyList: List<String>,
+)
+
+@Serializable
+data class GetHoroscopeWeeklyUnlocksResponseDto(
+    val unlockedWeekKeyList: List<String> = emptyList(),
+)
+
+@Serializable
+data class UnlockHoroscopeMonthlyRequestDto(
+    val requestId: String,
+    val monthKey: String,
+    val sign: String,
+)
+
+@Serializable
+data class GetHoroscopeMonthlyUnlocksRequestDto(
+    val monthKeyList: List<String>,
+)
+
+@Serializable
+data class GetHoroscopeMonthlyUnlocksResponseDto(
+    val unlockedMonthKeyList: List<String> = emptyList(),
 )

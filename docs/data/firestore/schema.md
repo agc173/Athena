@@ -50,11 +50,10 @@ Campos:
 - languageCode: string (`es`, obligatorio)
 - title: string
 - overview: string
-- love: string
-- work: string
-- money: string
-- spiritualAdvice: string
-- keyDays: array<string> (2-4 entradas `YYYY-MM-DD: nota`)
+- loveAndRelationships: string
+- workAndMoney: string
+- spiritualEnergy: string
+- weeklyAdvice: string
 - mantra: string
 - shareText: string
 - createdAtEpochMillis: number
@@ -75,11 +74,10 @@ Campos:
 - languageCode: string (ISO corto `es|en|pt|ru|fr|it|de`)
 - title: string
 - overview: string
-- love: string
-- work: string
-- money: string
-- spiritualAdvice: string
-- keyDays: array<string>
+- loveAndRelationships: string
+- workAndMoney: string
+- spiritualEnergy: string
+- weeklyAdvice: string
 - mantra: string
 - shareText: string
 - createdAtEpochMillis: number
@@ -95,13 +93,11 @@ Campos:
 - monthKey: string (`YYYY-MM`, obligatorio)
 - languageCode: string (`es`, obligatorio)
 - title: string
-- overview: string
-- love: string
-- work: string
-- money: string
+- monthTheme: string
+- loveAndRelationships: string
+- workAndMoney: string
 - personalGrowth: string
 - ritualSuggestion: string
-- keyDates: array<string> (3-5 entradas `YYYY-MM-DD: nota`)
 - mantra: string
 - shareText: string
 - createdAtEpochMillis: number
@@ -121,13 +117,11 @@ Campos:
 - monthKey: string (`YYYY-MM`, obligatorio)
 - languageCode: string (ISO corto `es|en|pt|ru|fr|it|de`)
 - title: string
-- overview: string
-- love: string
-- work: string
-- money: string
+- monthTheme: string
+- loveAndRelationships: string
+- workAndMoney: string
 - personalGrowth: string
 - ritualSuggestion: string
-- keyDates: array<string>
 - mantra: string
 - shareText: string
 - createdAtEpochMillis: number
