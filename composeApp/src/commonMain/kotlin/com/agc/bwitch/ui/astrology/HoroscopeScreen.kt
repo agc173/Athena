@@ -18,6 +18,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Scaffold
@@ -218,12 +219,15 @@ private fun HoroscopeScreenContent(
         val weeklyLocked = state.selectedTab == HoroscopeTab.Weekly && state.isWeekLocked
         val monthlyLocked = state.selectedTab == HoroscopeTab.Monthly && state.isMonthLocked
         val periodLocked = dailyLocked || weeklyLocked || monthlyLocked
+        val unlockedButMissingContent = state.selectedTab != HoroscopeTab.Daily &&
+            !periodLocked &&
+            !state.isContentAvailable
 
         Box(
             modifier = Modifier.fillMaxWidth(),
         ) {
             FlowRow(
-                modifier = Modifier.alpha(if (periodLocked) 0.35f else 1f),
+                modifier = Modifier.alpha(if (periodLocked || unlockedButMissingContent) 0.35f else 1f),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
                 maxItemsInEachRow = 3,
@@ -232,8 +236,8 @@ private fun HoroscopeScreenContent(
                     ZodiacSignCard(
                         sign = sign,
                         strings = strings,
-                        enabled = !periodLocked,
-                        onClick = { if (!periodLocked) onOpenSign(sign) },
+                        enabled = !periodLocked && !unlockedButMissingContent,
+                        onClick = { if (!periodLocked && !unlockedButMissingContent) onOpenSign(sign) },
                     )
                 }
             }
@@ -256,7 +260,14 @@ private fun HoroscopeScreenContent(
                     canEarnMoonsWithRewardedAd = canEarnMoonsWithRewardedAd,
                     onEarnMoonsWithRewardedAd = onEarnMoonsWithRewardedAd,
                     isLoading = state.isUnlocking,
+                    canUnlock = state.selectedTab == HoroscopeTab.Daily || state.isContentAvailable,
                     errorMessage = state.lockCardMessage?.toLocalizedMessage(strings),
+                )
+            } else if (unlockedButMissingContent) {
+                PreparingContentCard(
+                    modifier = Modifier.align(Alignment.Center),
+                    strings = strings,
+                    isLoading = state.isCheckingContentAvailability,
                 )
             }
         }
@@ -314,6 +325,30 @@ private fun HoroscopeScreenContent(
 }
 
 @Composable
+private fun PreparingContentCard(
+    modifier: Modifier = Modifier,
+    strings: AppStrings,
+    isLoading: Boolean,
+) {
+    Card(modifier = modifier.fillMaxWidth(0.9f)) {
+        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text(
+                text = strings.horoscope.loading,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                text = strings.horoscope.noContentYet,
+                style = MaterialTheme.typography.bodySmall,
+            )
+            if (isLoading) {
+                CircularProgressIndicator(modifier = Modifier.width(20.dp))
+            }
+        }
+    }
+}
+
+@Composable
 private fun ZodiacSignCard(
     sign: ZodiacSign,
     strings: AppStrings,
@@ -365,6 +400,7 @@ private fun PeriodLockOverlayCard(
     canEarnMoonsWithRewardedAd: Boolean,
     onEarnMoonsWithRewardedAd: () -> Unit,
     isLoading: Boolean,
+    canUnlock: Boolean,
     errorMessage: String?,
 ) {
     val cta = when (tab) {
@@ -384,7 +420,7 @@ private fun PeriodLockOverlayCard(
                     fontWeight = FontWeight.SemiBold,
                 )
             }
-            BWitchPrimaryButton(onClick = onUnlock, enabled = !isLoading) {
+            BWitchPrimaryButton(onClick = onUnlock, enabled = !isLoading && canUnlock) {
                 Text(cta.replaceFirst("%d", "$cost"))
             }
             if (canEarnMoonsWithRewardedAd) {
@@ -589,4 +625,5 @@ private fun HoroscopeFeedbackMessage.toLocalizedMessage(strings: AppStrings): St
     HoroscopeFeedbackMessage.UnlockSuccess -> strings.horoscope.unlockSuccess
     HoroscopeFeedbackMessage.UnlockWeekFailed -> strings.horoscope.unlockError
     HoroscopeFeedbackMessage.UnlockMonthFailed -> strings.horoscope.unlockError
+    HoroscopeFeedbackMessage.ContentInPreparation -> strings.horoscope.loading
 }
