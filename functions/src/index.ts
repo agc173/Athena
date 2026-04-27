@@ -7,6 +7,7 @@ import {withRetry} from './utils/retry';
 export {oracleGetStatus, tarotDraw, oracleAsk} from './oracle';
 export {saveUserProfile} from './userprofile';
 export {birthEssenceGenerate} from './birthessence';
+export {backfillPeriodHoroscopes} from './admin/callables/backfillPeriodHoroscopes';
 export {
   getEconomyBalance,
   getEconomyStatus,
@@ -35,6 +36,8 @@ type SchedulerEnv = {
   REQUIRE_DEEPSEEK: boolean;
   LLM_CONCURRENCY: number;
   LLM_MAX_RETRIES: number;
+  WEEKLY_WINDOW_SIZE: number;
+  MONTHLY_WINDOW_SIZE: number;
 };
 
 type SchedulerGenerateResult = {result: string; path: string; provider: string};
@@ -62,6 +65,10 @@ function monthKeyMadrid(monthOffset: number, env: SchedulerEnv): string {
       .startOf('month')
       .plus({months: monthOffset})
       .toFormat('yyyy-MM');
+}
+
+function rangeOffsets(windowSize: number): number[] {
+  return Array.from({length: Math.max(2, windowSize)}, (_, i) => i);
 }
 
 async function runWithConcurrency<T>(
@@ -280,11 +287,13 @@ export const generateWeeklyHoroscopesWindow = onSchedule(
       let failed = 0;
       let stoppedByCap = false;
       let capError: string | undefined;
+      let blockedByCanonicalFailure = 0;
 
       const canonicalTasks: Array<() => Promise<void>> = [];
       const translationTasks: Array<() => Promise<void>> = [];
+      const failedCanonicalPairs = new Set<string>();
 
-      for (let weekOffset = 0; weekOffset <= 2; weekOffset++) {
+      for (const weekOffset of rangeOffsets(ENV.WEEKLY_WINDOW_SIZE)) {
         const weekKey = weekKeyMadrid(weekOffset, ENV);
 
         for (const sign of ZODIAC_SIGNS) {
@@ -313,6 +322,7 @@ export const generateWeeklyHoroscopesWindow = onSchedule(
                 return;
               }
               failed++;
+              failedCanonicalPairs.add(`${weekKey}|${sign}`);
               logger.error('generateWeeklyHoroscopesWindow item failed', {
                 phase: 'canonical',
                 weekKey,
@@ -327,6 +337,17 @@ export const generateWeeklyHoroscopesWindow = onSchedule(
           for (const lang of ENV.ACTIVE_LANGS.filter((item) => item !== 'es')) {
             translationTasks.push(async () => {
               if (stoppedByCap) return;
+              if (failedCanonicalPairs.has(`${weekKey}|${sign}`)) {
+                blockedByCanonicalFailure++;
+                logger.warn('generateWeeklyHoroscopesWindow translation blocked', {
+                  phase: 'translation',
+                  reason: 'canonical_failed',
+                  weekKey,
+                  sign,
+                  lang,
+                });
+                return;
+              }
 
               try {
                 const {result} = await withRetry<SchedulerGenerateResult>(
@@ -373,6 +394,7 @@ export const generateWeeklyHoroscopesWindow = onSchedule(
         created,
         skipped,
         failed,
+        blockedByCanonicalFailure,
         stoppedByCap,
         capError,
       });
@@ -408,11 +430,13 @@ export const generateMonthlyHoroscopesWindow = onSchedule(
       let failed = 0;
       let stoppedByCap = false;
       let capError: string | undefined;
+      let blockedByCanonicalFailure = 0;
 
       const canonicalTasks: Array<() => Promise<void>> = [];
       const translationTasks: Array<() => Promise<void>> = [];
+      const failedCanonicalPairs = new Set<string>();
 
-      for (let monthOffset = 0; monthOffset <= 2; monthOffset++) {
+      for (const monthOffset of rangeOffsets(ENV.MONTHLY_WINDOW_SIZE)) {
         const monthKey = monthKeyMadrid(monthOffset, ENV);
 
         for (const sign of ZODIAC_SIGNS) {
@@ -441,6 +465,7 @@ export const generateMonthlyHoroscopesWindow = onSchedule(
                 return;
               }
               failed++;
+              failedCanonicalPairs.add(`${monthKey}|${sign}`);
               logger.error('generateMonthlyHoroscopesWindow item failed', {
                 phase: 'canonical',
                 monthKey,
@@ -455,6 +480,17 @@ export const generateMonthlyHoroscopesWindow = onSchedule(
           for (const lang of ENV.ACTIVE_LANGS.filter((item) => item !== 'es')) {
             translationTasks.push(async () => {
               if (stoppedByCap) return;
+              if (failedCanonicalPairs.has(`${monthKey}|${sign}`)) {
+                blockedByCanonicalFailure++;
+                logger.warn('generateMonthlyHoroscopesWindow translation blocked', {
+                  phase: 'translation',
+                  reason: 'canonical_failed',
+                  monthKey,
+                  sign,
+                  lang,
+                });
+                return;
+              }
 
               try {
                 const {result} = await withRetry<SchedulerGenerateResult>(
@@ -501,6 +537,7 @@ export const generateMonthlyHoroscopesWindow = onSchedule(
         created,
         skipped,
         failed,
+        blockedByCanonicalFailure,
         stoppedByCap,
         capError,
       });
