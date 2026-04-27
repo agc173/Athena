@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -246,8 +246,7 @@ private fun ZodiacSignCard(
     Card(
         onClick = onClick,
         modifier = Modifier
-            .weight(1f)
-            .widthIn(min = 96.dp)
+            .width(108.dp)
             .aspectRatio(1f)
             .semantics {
                 role = Role.Button
