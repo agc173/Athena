@@ -351,15 +351,21 @@ class HoroscopeViewModel(
             val selectedIso = state.selectedDateIso.ifBlank { todayIso() }
             val today = todayDate()
             val cost = state.futureDayCost
+            val dateIsoList = (0..6).map { offset ->
+                today.plus(DatePeriod(days = offset)).toString()
+            }
+            val remoteUnlockedDates = runCatching {
+                isHoroscopeDayUnlockedUseCase.getUnlockedDays(dateIsoList)
+            }.onSuccess {
+                println("[HoroscopeViewModel] getUnlockedDays(input=$dateIsoList) result=$it")
+            }.onFailure {
+                println("[HoroscopeViewModel] getUnlockedDays(input=$dateIsoList) failed: ${it.message}")
+            }.getOrDefault(emptySet())
 
             val items = (0..6).map { offset ->
                 val date = today.plus(DatePeriod(days = offset))
                 val dateIso = date.toString()
-                val remoteUnlocked = runCatching { isHoroscopeDayUnlockedUseCase(dateIso) }
-                    .onSuccess { println("[HoroscopeViewModel] isUnlocked(dateIso=$dateIso) result=$it") }
-                    .onFailure { println("[HoroscopeViewModel] isUnlocked(dateIso=$dateIso) failed: ${it.message}") }
-                    .getOrDefault(false)
-                val unlocked = offset == 0 || unlockedDatesSession.contains(dateIso) || remoteUnlocked
+                val unlocked = offset == 0 || unlockedDatesSession.contains(dateIso) || remoteUnlockedDates.contains(dateIso)
                 HoroscopeDayItemUi(
                     dateIso = dateIso,
                     shortLabel = shortDateLabel(date),

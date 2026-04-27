@@ -352,6 +352,44 @@ class HoroscopeViewModelTest {
         assertEquals(true, futureDay.isLocked)
     }
 
+    @Test
+    fun rebuildDays_marksTomorrowUnlocked_whenRepositoryReturnsRemoteUnlock() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+
+        val repo = FakeRepo()
+        val observeUseCase = ObserveDailyHoroscopeUseCase(repo)
+        val getUseCase = GetDailyHoroscopeUseCase(repo)
+        val pullUseCase = PullDailyHoroscopeUseCase(FakeSync())
+        val languageRepository = FakeAppLanguageRepository()
+        val resolveLanguageUseCase = ResolveCurrentLanguageUseCase(languageRepository)
+        val observeLanguageUseCase = ObserveCurrentLanguageUseCase(languageRepository)
+        val observeUserProfileUseCase = ObserveUserProfileUseCase(FakeUserProfileRepo())
+        val unlockRepository = FakeUnlockRepository(unlockedDates = setOf(currentSystemTomorrowIsoForTests()))
+        val getHoroscopeFutureDayCostUseCase = GetHoroscopeFutureDayCostUseCase(unlockRepository)
+        val isHoroscopeDayUnlockedUseCase = IsHoroscopeDayUnlockedUseCase(unlockRepository)
+        val unlockHoroscopeFutureDayUseCase = UnlockHoroscopeFutureDayUseCase(unlockRepository)
+
+        val viewModel = HoroscopeViewModel(
+            observeDailyHoroscopeUseCase = observeUseCase,
+            getDailyHoroscopeUseCase = getUseCase,
+            pullDailyHoroscopeUseCase = pullUseCase,
+            pullMarker = FakePullMarker(lastPulledDateIso = currentSystemTodayIsoForTests()),
+            resolveCurrentLanguageUseCase = resolveLanguageUseCase,
+            observeCurrentLanguageUseCase = observeLanguageUseCase,
+            observeUserProfileUseCase = observeUserProfileUseCase,
+            getHoroscopeFutureDayCostUseCase = getHoroscopeFutureDayCostUseCase,
+            isHoroscopeDayUnlockedUseCase = isHoroscopeDayUnlockedUseCase,
+            unlockHoroscopeFutureDayUseCase = unlockHoroscopeFutureDayUseCase,
+            dispatcher = dispatcher,
+        )
+
+        advanceUntilIdle()
+
+        val tomorrow = viewModel.uiState.value.days[1]
+        assertEquals(true, tomorrow.isUnlocked)
+        assertEquals(false, tomorrow.isLocked)
+    }
+
     private class FakeRepo : HoroscopeRepository {
         private val state = MutableStateFlow<DailyHoroscope?>(null)
 
@@ -415,6 +453,8 @@ class HoroscopeViewModelTest {
 
         override suspend fun isUnlocked(dateIso: String): Boolean = false
 
+        override suspend fun getUnlockedDays(dateIsoList: List<String>): Set<String> = emptySet()
+
         override suspend fun unlockFutureDay(dateIso: String, requestId: String, sign: ZodiacSign): HoroscopeUnlockResult {
             unlockCalls += 1
             return HoroscopeUnlockResult(
@@ -455,6 +495,9 @@ class HoroscopeViewModelTest {
         override suspend fun getFutureDayCost(): Int = futureDayCost
 
         override suspend fun isUnlocked(dateIso: String): Boolean = unlocked.contains(dateIso)
+
+        override suspend fun getUnlockedDays(dateIsoList: List<String>): Set<String> =
+            dateIsoList.filterTo(mutableSetOf()) { unlocked.contains(it) }
 
         override suspend fun unlockFutureDay(dateIso: String, requestId: String, sign: ZodiacSign): HoroscopeUnlockResult {
             val alreadyUnlocked = unlocked.contains(dateIso)

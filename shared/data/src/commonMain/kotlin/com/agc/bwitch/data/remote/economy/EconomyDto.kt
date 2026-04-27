@@ -78,3 +78,13 @@ data class UnlockHoroscopeDayResponseDto(
     val balance: Int = 0,
     val costCharged: Int = 0,
 )
+
+@Serializable
+data class GetHoroscopeDailyUnlocksRequestDto(
+    val dateIsoList: List<String>,
+)
+
+@Serializable
+data class GetHoroscopeDailyUnlocksResponseDto(
+    val unlockedDateIsoList: List<String> = emptyList(),
+)

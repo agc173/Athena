@@ -229,3 +229,11 @@ export type UnlockHoroscopeDayResponse = {
   balance: number;
   costCharged: number;
 };
+
+export type GetHoroscopeDailyUnlocksData = {
+  dateIsoList?: unknown;
+};
+
+export type GetHoroscopeDailyUnlocksResponse = {
+  unlockedDateIsoList: string[];
+};

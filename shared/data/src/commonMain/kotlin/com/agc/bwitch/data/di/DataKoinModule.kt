@@ -97,7 +97,7 @@ val dataKoinModule: Module = module {
     single<HoroscopeDailySyncController> { get<SyncHoroscopeDailyRepository>() }
 
     single<HoroscopePullMarker> { SettingsHoroscopePullMarkerRepository(get()) }
-    single<HoroscopeUnlockRepository> { SyncHoroscopeUnlockRepository(get(), get()) }
+    single<HoroscopeUnlockRepository> { SyncHoroscopeUnlockRepository(get()) }
 
     /**
      * BirthChart - LOCAL
