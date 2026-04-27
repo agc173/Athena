@@ -13,6 +13,8 @@ import com.agc.bwitch.domain.localization.AppLanguage
 import com.agc.bwitch.domain.localization.ObserveCurrentLanguageUseCase
 import com.agc.bwitch.domain.localization.ResolveCurrentLanguageUseCase
 import com.agc.bwitch.domain.userprofile.ObserveUserProfileUseCase
+import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeUnlockErrorType.Backend
+import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeUnlockErrorType.InsufficientMoons
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -46,6 +48,11 @@ class HoroscopeViewModel(
     private val unlockHoroscopeFutureDayUseCase: UnlockHoroscopeFutureDayUseCase,
     private val dispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {
+    private data class PendingUnlockTarget(
+        val dateIso: String,
+        val sign: ZodiacSign,
+    )
+
     private val scope = CoroutineScope(SupervisorJob() + dispatcher)
 
     private val _uiState = MutableStateFlow(HoroscopeUiState(isLoading = true))
@@ -54,6 +61,7 @@ class HoroscopeViewModel(
 
     private var observeJob: Job? = null
     private var userHasManuallySelectedSign = false
+    private var pendingUnlockTarget: PendingUnlockTarget? = null
 
     init {
         scope.launch { runCatching { resolveCurrentLanguageUseCase() } }
@@ -89,6 +97,7 @@ class HoroscopeViewModel(
     fun onSelectSign(sign: ZodiacSign) = onSelectSign(sign, fromUserInteraction = true)
 
     fun onSelectDate(dateIso: String) {
+        pendingUnlockTarget = null
         _uiState.update { it.copy(selectedDateIso = dateIso, errorMessage = null, overlay = null) }
         rebuildDays()
         observeSelectedHoroscope()
@@ -118,9 +127,12 @@ class HoroscopeViewModel(
                     isLocked = isLocked,
                     isLoading = !isLocked,
                     horoscope = null,
+                    unlockErrorMessage = null,
+                    unlockErrorType = null,
                 ),
             )
         }
+        pendingUnlockTarget = if (isLocked) PendingUnlockTarget(selectedDateIso, sign) else null
 
         if (isLocked) return
 
@@ -128,41 +140,103 @@ class HoroscopeViewModel(
     }
 
     fun onCloseOverlay() {
+        pendingUnlockTarget = null
+        _uiState.update { it.copy(overlay = null) }
+    }
+
+    fun onUnlockDeferredToPaywall() {
+        val state = _uiState.value
+        val overlay = state.overlay
+        if (overlay != null && overlay.isLocked) {
+            pendingUnlockTarget = PendingUnlockTarget(
+                dateIso = state.selectedDateIso.ifBlank { todayIso() },
+                sign = overlay.sign,
+            )
+        }
+        _uiState.update { current ->
+            current.copy(
+                overlay = current.overlay?.copy(
+                    unlockErrorMessage = null,
+                    unlockErrorType = null,
+                ),
+            )
+        }
         _uiState.update { it.copy(overlay = null) }
     }
 
     fun onUnlockSelectedDay() {
         val state = _uiState.value
-        val overlay = state.overlay ?: return
-        val dateIso = state.selectedDateIso.ifBlank { todayIso() }
-        if (overlay.isLocked.not()) return
+        val overlay = state.overlay
+        val target = when {
+            overlay != null && overlay.isLocked -> PendingUnlockTarget(
+                dateIso = state.selectedDateIso.ifBlank { todayIso() },
+                sign = overlay.sign,
+            )
+            else -> pendingUnlockTarget
+        } ?: return
+        pendingUnlockTarget = target
 
         scope.launch {
-            _uiState.update { it.copy(isUnlocking = true, errorMessage = null) }
+            _uiState.update {
+                it.copy(
+                    isUnlocking = true,
+                    overlay = it.overlay?.copy(
+                        unlockErrorMessage = null,
+                        unlockErrorType = null,
+                    ),
+                )
+            }
             runCatching {
                 unlockHoroscopeFutureDayUseCase(
-                    dateIso = dateIso,
-                    requestId = buildRequestId(dateIso),
-                    sign = overlay.sign,
+                    dateIso = target.dateIso,
+                    requestId = buildRequestId(target.dateIso),
+                    sign = target.sign,
                 )
             }.onSuccess {
+                pendingUnlockTarget = null
                 _uiState.update { current ->
                     val updatedDays = current.days.map { day ->
-                        if (day.dateIso == dateIso) day.copy(isLocked = false, isUnlocked = true) else day
+                        if (day.dateIso == target.dateIso) day.copy(isLocked = false, isUnlocked = true) else day
                     }
+                    val updatedOverlay = current.overlay?.takeIf {
+                        it.dateIso == target.dateIso && it.sign == target.sign
+                    }?.copy(
+                        isLocked = false,
+                        isLoading = true,
+                        horoscope = null,
+                        unlockErrorMessage = null,
+                        unlockErrorType = null,
+                    )
                     current.copy(
                         infoMessage = HoroscopeFeedbackMessage.UnlockSuccess,
                         days = updatedDays,
-                        overlay = current.overlay?.copy(isLocked = false, isLoading = true, horoscope = null),
+                        overlay = updatedOverlay ?: current.overlay,
                     )
                 }
-                loadOverlayHoroscope(sign = overlay.sign, dateIso = dateIso)
+                if (overlay != null && overlay.dateIso == target.dateIso && overlay.sign == target.sign) {
+                    loadOverlayHoroscope(sign = target.sign, dateIso = target.dateIso)
+                }
                 rebuildDays()
             }.onFailure { error ->
                 val isInsufficient = error.message.orEmpty().lowercase().contains("insufficient") ||
                     error.message.orEmpty().lowercase().contains("moon")
                 _uiState.update {
-                    it.copy(errorMessage = if (isInsufficient) HoroscopeFeedbackMessage.UnlockInsufficientMoons else HoroscopeFeedbackMessage.UnlockFailed)
+                    val unlockErrorMessage = if (isInsufficient) {
+                        HoroscopeFeedbackMessage.UnlockInsufficientMoons
+                    } else {
+                        HoroscopeFeedbackMessage.UnlockFailed
+                    }
+                    val overlayMatchesTarget = it.overlay?.dateIso == target.dateIso && it.overlay?.sign == target.sign
+                    if (overlayMatchesTarget) {
+                        it.copy(
+                            overlay = it.overlay?.copy(
+                                unlockErrorMessage = unlockErrorMessage,
+                                unlockErrorType = if (isInsufficient) InsufficientMoons else Backend,
+                            ),
+                        )
+                    } else {
+                        it.copy(errorMessage = unlockErrorMessage)
+                    }
                 }
             }
             _uiState.update { it.copy(isUnlocking = false) }
@@ -182,6 +256,7 @@ class HoroscopeViewModel(
 
     private fun onSelectSign(sign: ZodiacSign, fromUserInteraction: Boolean) {
         if (fromUserInteraction) userHasManuallySelectedSign = true
+        pendingUnlockTarget = null
         _uiState.update { it.copy(selectedSign = sign) }
         rebuildDays()
         observeSelectedHoroscope()
