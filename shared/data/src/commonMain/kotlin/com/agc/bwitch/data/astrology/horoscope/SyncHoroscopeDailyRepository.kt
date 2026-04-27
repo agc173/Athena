@@ -122,15 +122,32 @@ class SyncHoroscopeDailyRepository(
         weeklySignDoc(weekKey, sign).collection("langs").document(languageCode.lowercase())
 
     private suspend fun fetchWeeklyRemote(weekKey: String, sign: ZodiacSign, languageCode: String): WeeklyHoroscope? {
-        val langSnap = weeklyLanguageDoc(weekKey, sign, languageCode).get()
-        if (langSnap.exists) {
-            val dto = langSnap.data(HoroscopeWeeklyRemoteDto.serializer())
-            return dto.toDomain(sign = sign, weekKey = weekKey, requestedLanguageCode = languageCode)
+        return runCatching {
+            val langSnap = weeklyLanguageDoc(weekKey, sign, languageCode).get()
+            if (langSnap.exists) {
+                val dto = langSnap.data(HoroscopeWeeklyRemoteDto.serializer())
+                return@runCatching dto.toDomain(sign = sign, weekKey = weekKey, requestedLanguageCode = languageCode)
+            }
+            val canonicalSnap = weeklySignDoc(weekKey, sign).get()
+            if (!canonicalSnap.exists) return@runCatching null
+            val dto = canonicalSnap.data(HoroscopeWeeklyRemoteDto.serializer())
+            dto.toDomain(sign = sign, weekKey = weekKey, requestedLanguageCode = languageCode)
+        }.getOrNull()
+    }
+
+    private suspend fun fetchMonthlyRemote(monthKey: String, sign: ZodiacSign, languageCode: String): MonthlyHoroscope? {
+        return runCatching {
+            val langSnap = monthlyLanguageDoc(monthKey, sign, languageCode).get()
+            if (langSnap.exists) {
+                val dto = langSnap.data(HoroscopeMonthlyRemoteDto.serializer())
+                return@runCatching dto.toDomain(sign = sign, monthKey = monthKey, requestedLanguageCode = languageCode)
+            }
+            val canonicalSnap = monthlySignDoc(monthKey, sign).get()
+            if (!canonicalSnap.exists) return@runCatching null
+            val dto = canonicalSnap.data(HoroscopeMonthlyRemoteDto.serializer())
+            dto.toDomain(sign = sign, monthKey = monthKey, requestedLanguageCode = languageCode)
         }
-        val canonicalSnap = weeklySignDoc(weekKey, sign).get()
-        if (!canonicalSnap.exists) return null
-        val dto = canonicalSnap.data(HoroscopeWeeklyRemoteDto.serializer())
-        return dto.toDomain(sign = sign, weekKey = weekKey, requestedLanguageCode = languageCode)
+            .getOrNull()
     }
 
     private fun monthlySignDoc(monthKey: String, sign: ZodiacSign) =
@@ -142,17 +159,6 @@ class SyncHoroscopeDailyRepository(
     private fun monthlyLanguageDoc(monthKey: String, sign: ZodiacSign, languageCode: String) =
         monthlySignDoc(monthKey, sign).collection("langs").document(languageCode.lowercase())
 
-    private suspend fun fetchMonthlyRemote(monthKey: String, sign: ZodiacSign, languageCode: String): MonthlyHoroscope? {
-        val langSnap = monthlyLanguageDoc(monthKey, sign, languageCode).get()
-        if (langSnap.exists) {
-            val dto = langSnap.data(HoroscopeMonthlyRemoteDto.serializer())
-            return dto.toDomain(sign = sign, monthKey = monthKey, requestedLanguageCode = languageCode)
-        }
-        val canonicalSnap = monthlySignDoc(monthKey, sign).get()
-        if (!canonicalSnap.exists) return null
-        val dto = canonicalSnap.data(HoroscopeMonthlyRemoteDto.serializer())
-        return dto.toDomain(sign = sign, monthKey = monthKey, requestedLanguageCode = languageCode)
-    }
 }
 
 internal enum class HoroscopeRemoteSource {
