@@ -12,20 +12,19 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -254,7 +253,6 @@ private fun HoroscopeScreenContent(
                 ZodiacSign.values().forEach { sign ->
                     ZodiacSignCard(
                         sign = sign,
-                        isProfileSign = state.highlightedSign == sign,
                         strings = strings,
                         enabled = !periodLocked,
                         onClick = { if (!periodLocked) onOpenSign(sign) },
@@ -343,7 +341,6 @@ private fun HoroscopeScreenContent(
 @Composable
 private fun ZodiacSignCard(
     sign: ZodiacSign,
-    isProfileSign: Boolean,
     strings: AppStrings,
     enabled: Boolean,
     onClick: () -> Unit,
@@ -359,17 +356,9 @@ private fun ZodiacSignCard(
                 contentDescription = sign.localizedLabel(strings)
             },
         colors = CardDefaults.cardColors(containerColor = colors.surfaceVariant.copy(alpha = if (enabled) 0.55f else 0.22f)),
-        border = BorderStroke(1.dp, if (isProfileSign) colors.primary else colors.outlineVariant),
+        border = BorderStroke(1.dp, colors.outlineVariant),
     ) {
         Box(modifier = Modifier.fillMaxSize().padding(10.dp)) {
-            if (isProfileSign) {
-                AssistChip(
-                    onClick = onClick,
-                    label = { Text(strings.horoscope.yourSignBadge) },
-                    modifier = Modifier.align(Alignment.TopEnd),
-                    colors = AssistChipDefaults.assistChipColors(containerColor = colors.primaryContainer),
-                )
-            }
             Column(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.Center,
@@ -438,12 +427,16 @@ private fun PeriodTabSelector(
     selectedId: String,
     onSelect: (String) -> Unit,
 ) {
-    TabRow(selectedTabIndex = options.indexOfFirst { it.id == selectedId }.coerceAtLeast(0)) {
+    ScrollableTabRow(
+        selectedTabIndex = options.indexOfFirst { it.id == selectedId }.coerceAtLeast(0),
+        edgePadding = 0.dp,
+    ) {
         options.forEach { option ->
             Tab(
                 selected = option.id == selectedId,
                 onClick = { onSelect(option.id) },
-                text = { Text(option.label, maxLines = 1) },
+                modifier = Modifier.widthIn(min = 72.dp),
+                text = { Text(option.label) },
             )
         }
     }
