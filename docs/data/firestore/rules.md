@@ -1,54 +1,17 @@
-# Firestore Security Rules (starter)
+# Firestore Security Rules
 
-Objetivo:
-- Usuarios solo pueden modificar su perfil (/users/{uid})
-- Posts/comentarios: crear si autenticado, editar/borrar solo autor (o moderación)
-- Reacciones: 1 por usuario por post
+Archivo fuente de reglas: `firestore.rules`.
 
-NOTA: Estas reglas son un borrador; deben revisarse antes de producción.
+## Objetivo actual
+- Permitir **read** únicamente a usuarios autenticados (`request.auth != null`) para horóscopos:
+  - `/horoscopeDaily/{dateIso}/signs/{sign}`
+  - `/horoscopeDaily/{dateIso}/signs/{sign}/langs/{lang}`
+  - `/horoscopeWeekly/{weekKey}/signs/{sign}`
+  - `/horoscopeWeekly/{weekKey}/signs/{sign}/langs/{lang}`
+  - `/horoscopeMonthly/{monthKey}/signs/{sign}`
+  - `/horoscopeMonthly/{monthKey}/signs/{sign}/langs/{lang}`
+- Denegar **todas** las escrituras desde cliente en esas rutas.
+- Mantener `deny by default` para el resto de documentos (incluyendo users/economy), evitando aperturas globales.
 
-## Reglas (pseudo)
-- /users/{uid}
-    - read: authenticated
-    - write: request.auth.uid == uid
-
-- /posts/{postId}
-    - read: true (o authenticated si quieres)
-    - create: authenticated
-    - update/delete: authenticated && request.auth.uid == resource.data.authorId
-    - validar tamaño de texto y campos permitidos
-
-- /posts/{postId}/comments/{commentId}
-    - read: true
-    - create: authenticated
-    - update/delete: authenticated && request.auth.uid == resource.data.authorId
-
-- /posts/{postId}/reactions/{uid}
-    - read: true
-    - create/delete: authenticated && request.auth.uid == uid
-    - update: false
-
-
-- /users/{uid}/birthEssence/current
-    - read: authenticated && request.auth.uid == uid
-    - write: authenticated && request.auth.uid == uid
-    - validar tamaño de interpretation y signos permitidos
-
-
-- /ritualCategories/{categoryId}
-    - read: true
-    - write: false (solo backend/admin)
-
-- /rituals/{ritualId}
-    - read: true
-    - write: false (solo backend/admin)
-
-- /users/{uid}/dailyRitual/current
-    - read: authenticated && request.auth.uid == uid
-    - write: authenticated && request.auth.uid == uid
-    - validar tipos de campos y `updatedAtEpochMillis` numérico
-
-- /users/{uid}/habits/current
-    - read: authenticated && request.auth.uid == uid
-    - write: authenticated && request.auth.uid == uid
-    - validar tipos de campos y `updatedAtEpochMillis` numérico
+## Nota backend/admin
+- Cloud Functions con Admin SDK **bypassean** Firestore Rules, por lo que la denegación de `write` al cliente no bloquea los procesos backend.

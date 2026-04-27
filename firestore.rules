@@ -1,0 +1,46 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Daily (se mantiene patrón existente: lectura autenticada).
+    match /horoscopeDaily/{dateIso}/signs/{sign} {
+      allow read: if isAuthenticated();
+      allow write: if false;
+
+      match /langs/{lang} {
+        allow read: if isAuthenticated();
+        allow write: if false;
+      }
+    }
+
+    // Weekly: permitir lectura autenticada de doc canónico y variantes por idioma.
+    match /horoscopeWeekly/{weekKey}/signs/{sign} {
+      allow read: if isAuthenticated();
+      allow write: if false;
+
+      match /langs/{lang} {
+        allow read: if isAuthenticated();
+        allow write: if false;
+      }
+    }
+
+    // Monthly: permitir lectura autenticada de doc canónico y variantes por idioma.
+    match /horoscopeMonthly/{monthKey}/signs/{sign} {
+      allow read: if isAuthenticated();
+      allow write: if false;
+
+      match /langs/{lang} {
+        allow read: if isAuthenticated();
+        allow write: if false;
+      }
+    }
+
+    // Default deny para evitar aperturas accidentales de otras colecciones (users/economy/etc).
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
