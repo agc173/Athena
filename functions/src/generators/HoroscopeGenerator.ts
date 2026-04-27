@@ -15,7 +15,7 @@ import {horoscopeLangDocPath, horoscopeSignDocPath} from '../firestore/paths';
 import {getFirestore} from 'firebase-admin/firestore';
 import {logger} from '../utils/logger';
 
-const DAILY_GENERATOR_VERSION = 2;
+const DAILY_GENERATOR_VERSION = 3;
 const DAILY_ANGLES = [
   'focus-and-priorities',
   'relationships-and-dialogue',
@@ -24,6 +24,15 @@ const DAILY_ANGLES = [
   'money-and-prudence',
   'rest-and-recovery',
   'courage-and-decision',
+];
+const DAILY_TONE_STYLES = [
+  'soft-reflective',
+  'direct-action',
+  'observational',
+  'practical-grounded',
+  'introspective',
+  'poetic-contained',
+  'concise-warning',
 ];
 
 export type HoroscopeDoc = {
@@ -107,8 +116,13 @@ function fnv1a32(input: string) {
 }
 
 function deriveDailyAngle(dateIso: string, sign: ZodiacSign) {
-  const idx = fnv1a32(`${sign}|${dateIso}|daily-v2`) % DAILY_ANGLES.length;
+  const idx = fnv1a32(`${sign}|${dateIso}|daily-v3`) % DAILY_ANGLES.length;
   return DAILY_ANGLES[idx];
+}
+
+function deriveDailyToneStyle(dateIso: string, sign: ZodiacSign) {
+  const idx = fnv1a32(`${sign}|${dateIso}|daily-v3|tone-style`) % DAILY_TONE_STYLES.length;
+  return DAILY_TONE_STYLES[idx];
 }
 
 function normalizeForComparison(text: string) {
@@ -198,8 +212,9 @@ export class HoroscopeGenerator {
       return {result: 'skipped', path, provider: 'none'};
     }
 
-    const seed = `${sign}|${dateIso}|daily-v2`;
+    const seed = `${sign}|${dateIso}|daily-v3`;
     const dailyAngle = deriveDailyAngle(dateIso, sign);
+    const toneStyle = deriveDailyToneStyle(dateIso, sign);
     const previous = await this.loadPreviousDailyCompact(dateIso, sign);
     const now = Date.now();
     const res = await this.llm.generate({
@@ -213,6 +228,7 @@ export class HoroscopeGenerator {
               sign,
               seed,
               dailyAngle,
+              toneStyle,
               previous.map((item) => ({
                 dateIso: item.dateIso,
                 mood: item.mood,
