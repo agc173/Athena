@@ -42,6 +42,24 @@ function dateIsoMadrid(dayOffset: number, env: SchedulerEnv): string {
       .toISODate()!;
 }
 
+function weekKeyMadrid(weekOffset: number, env: SchedulerEnv): string {
+  const base = DateTime.now()
+      .setZone('Europe/Madrid')
+      .plus({days: env.DATE_OFFSET_DAYS})
+      .startOf('week')
+      .plus({weeks: weekOffset});
+  return base.toFormat('kkkk-\'W\'WW');
+}
+
+function monthKeyMadrid(monthOffset: number, env: SchedulerEnv): string {
+  return DateTime.now()
+      .setZone('Europe/Madrid')
+      .plus({days: env.DATE_OFFSET_DAYS})
+      .startOf('month')
+      .plus({months: monthOffset})
+      .toFormat('yyyy-MM');
+}
+
 async function runWithConcurrency<T>(
     tasks: Array<() => Promise<T>>,
     concurrency: number
@@ -218,6 +236,262 @@ export const generateHoroscopesWindow = onSchedule(
       await runWithConcurrency(translationTasks, ENV.LLM_CONCURRENCY);
 
       logger.info('generateHoroscopesWindow done', {
+        provider: router.name,
+        activeLangs: ENV.ACTIVE_LANGS,
+        created,
+        skipped,
+        failed,
+        stoppedByCap,
+        capError,
+      });
+    }
+);
+
+export const generateWeeklyHoroscopesWindow = onSchedule(
+    {
+      schedule: '20 2 * * 1',
+      timeZone: 'Europe/Madrid',
+      region: 'europe-west1',
+      retryCount: 0,
+      timeoutSeconds: 600,
+      secrets: ['DEEPSEEK_API_KEY'],
+    },
+    async () => {
+      const [
+        {ENV, assertEnvForLLM},
+        {buildRouter},
+        {PeriodHoroscopeGenerator},
+      ] = await Promise.all([
+        import('./config/env.js'),
+        import('./llm/buildRouter.js'),
+        import('./generators/PeriodHoroscopeGenerator.js'),
+      ]);
+
+      assertEnvForLLM();
+      const router = buildRouter();
+      const generator = new PeriodHoroscopeGenerator(router);
+
+      let created = 0;
+      let skipped = 0;
+      let failed = 0;
+      let stoppedByCap = false;
+      let capError: string | undefined;
+
+      const canonicalTasks: Array<() => Promise<void>> = [];
+      const translationTasks: Array<() => Promise<void>> = [];
+
+      for (let weekOffset = 0; weekOffset <= 1; weekOffset++) {
+        const weekKey = weekKeyMadrid(weekOffset, ENV);
+
+        for (const sign of ZODIAC_SIGNS) {
+          canonicalTasks.push(async () => {
+            if (stoppedByCap) return;
+
+            try {
+              const {result} = await withRetry<SchedulerGenerateResult>(
+                  () => generator.generateWeeklyCanonical(weekKey, sign),
+                  ENV.LLM_MAX_RETRIES
+              );
+
+              if (result === 'created') created++;
+              else skipped++;
+            } catch (e) {
+              const msg = (e as Error)?.message ?? String(e);
+              if (msg.includes('DAILY_LLM_CAP_EXCEEDED')) {
+                stoppedByCap = true;
+                capError = msg;
+                logger.warn('generateWeeklyHoroscopesWindow stopped by daily cap', {
+                  phase: 'canonical',
+                  weekKey,
+                  sign,
+                  error: msg,
+                });
+                return;
+              }
+              failed++;
+              logger.error('generateWeeklyHoroscopesWindow item failed', {
+                phase: 'canonical',
+                weekKey,
+                sign,
+                error: msg,
+              });
+            }
+          });
+        }
+
+        for (const sign of ZODIAC_SIGNS) {
+          for (const lang of ENV.ACTIVE_LANGS.filter((item) => item !== 'es')) {
+            translationTasks.push(async () => {
+              if (stoppedByCap) return;
+
+              try {
+                const {result} = await withRetry<SchedulerGenerateResult>(
+                    () => generator.generateWeeklyTranslation(weekKey, sign, lang),
+                    ENV.LLM_MAX_RETRIES
+                );
+
+                if (result === 'created') created++;
+                else skipped++;
+              } catch (e) {
+                const msg = (e as Error)?.message ?? String(e);
+                if (msg.includes('DAILY_LLM_CAP_EXCEEDED')) {
+                  stoppedByCap = true;
+                  capError = msg;
+                  logger.warn('generateWeeklyHoroscopesWindow stopped by daily cap', {
+                    phase: 'translation',
+                    weekKey,
+                    sign,
+                    lang,
+                    error: msg,
+                  });
+                  return;
+                }
+                failed++;
+                logger.error('generateWeeklyHoroscopesWindow item failed', {
+                  phase: 'translation',
+                  weekKey,
+                  sign,
+                  lang,
+                  error: msg,
+                });
+              }
+            });
+          }
+        }
+      }
+
+      await runWithConcurrency(canonicalTasks, ENV.LLM_CONCURRENCY);
+      await runWithConcurrency(translationTasks, ENV.LLM_CONCURRENCY);
+
+      logger.info('generateWeeklyHoroscopesWindow done', {
+        provider: router.name,
+        activeLangs: ENV.ACTIVE_LANGS,
+        created,
+        skipped,
+        failed,
+        stoppedByCap,
+        capError,
+      });
+    }
+);
+
+export const generateMonthlyHoroscopesWindow = onSchedule(
+    {
+      schedule: '5 3 1 * *',
+      timeZone: 'Europe/Madrid',
+      region: 'europe-west1',
+      retryCount: 0,
+      timeoutSeconds: 600,
+      secrets: ['DEEPSEEK_API_KEY'],
+    },
+    async () => {
+      const [
+        {ENV, assertEnvForLLM},
+        {buildRouter},
+        {PeriodHoroscopeGenerator},
+      ] = await Promise.all([
+        import('./config/env.js'),
+        import('./llm/buildRouter.js'),
+        import('./generators/PeriodHoroscopeGenerator.js'),
+      ]);
+
+      assertEnvForLLM();
+      const router = buildRouter();
+      const generator = new PeriodHoroscopeGenerator(router);
+
+      let created = 0;
+      let skipped = 0;
+      let failed = 0;
+      let stoppedByCap = false;
+      let capError: string | undefined;
+
+      const canonicalTasks: Array<() => Promise<void>> = [];
+      const translationTasks: Array<() => Promise<void>> = [];
+
+      for (let monthOffset = 0; monthOffset <= 1; monthOffset++) {
+        const monthKey = monthKeyMadrid(monthOffset, ENV);
+
+        for (const sign of ZODIAC_SIGNS) {
+          canonicalTasks.push(async () => {
+            if (stoppedByCap) return;
+
+            try {
+              const {result} = await withRetry<SchedulerGenerateResult>(
+                  () => generator.generateMonthlyCanonical(monthKey, sign),
+                  ENV.LLM_MAX_RETRIES
+              );
+
+              if (result === 'created') created++;
+              else skipped++;
+            } catch (e) {
+              const msg = (e as Error)?.message ?? String(e);
+              if (msg.includes('DAILY_LLM_CAP_EXCEEDED')) {
+                stoppedByCap = true;
+                capError = msg;
+                logger.warn('generateMonthlyHoroscopesWindow stopped by daily cap', {
+                  phase: 'canonical',
+                  monthKey,
+                  sign,
+                  error: msg,
+                });
+                return;
+              }
+              failed++;
+              logger.error('generateMonthlyHoroscopesWindow item failed', {
+                phase: 'canonical',
+                monthKey,
+                sign,
+                error: msg,
+              });
+            }
+          });
+        }
+
+        for (const sign of ZODIAC_SIGNS) {
+          for (const lang of ENV.ACTIVE_LANGS.filter((item) => item !== 'es')) {
+            translationTasks.push(async () => {
+              if (stoppedByCap) return;
+
+              try {
+                const {result} = await withRetry<SchedulerGenerateResult>(
+                    () => generator.generateMonthlyTranslation(monthKey, sign, lang),
+                    ENV.LLM_MAX_RETRIES
+                );
+
+                if (result === 'created') created++;
+                else skipped++;
+              } catch (e) {
+                const msg = (e as Error)?.message ?? String(e);
+                if (msg.includes('DAILY_LLM_CAP_EXCEEDED')) {
+                  stoppedByCap = true;
+                  capError = msg;
+                  logger.warn('generateMonthlyHoroscopesWindow stopped by daily cap', {
+                    phase: 'translation',
+                    monthKey,
+                    sign,
+                    lang,
+                    error: msg,
+                  });
+                  return;
+                }
+                failed++;
+                logger.error('generateMonthlyHoroscopesWindow item failed', {
+                  phase: 'translation',
+                  monthKey,
+                  sign,
+                  lang,
+                  error: msg,
+                });
+              }
+            });
+          }
+        }
+      }
+
+      await runWithConcurrency(canonicalTasks, ENV.LLM_CONCURRENCY);
+      await runWithConcurrency(translationTasks, ENV.LLM_CONCURRENCY);
+
+      logger.info('generateMonthlyHoroscopesWindow done', {
         provider: router.name,
         activeLangs: ENV.ACTIVE_LANGS,
         created,

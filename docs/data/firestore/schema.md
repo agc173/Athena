@@ -41,6 +41,100 @@ Notas:
 - El cliente debe priorizar esta ruta por idioma.
 - Solo si no existe documento en `langs/{lang}`, puede hacer fallback controlado al doc legacy sin idioma.
 
+### /horoscopeWeekly/{weekKey}/signs/{sign}
+Documento canónico semanal por signo en español.
+
+Campos:
+- sign: string (enum `ZodiacSign`, obligatorio)
+- weekKey: string (ISO week `YYYY-Www`, obligatorio)
+- languageCode: string (`es`, obligatorio)
+- title: string
+- overview: string
+- love: string
+- work: string
+- money: string
+- spiritualAdvice: string
+- keyDays: array<string> (2-4 entradas `YYYY-MM-DD: nota`)
+- mantra: string
+- shareText: string
+- createdAtEpochMillis: number
+- updatedAtEpochMillis: number
+- generatorVersion: number
+- llmProvider: string
+
+Notas:
+- Escritura backend write-once (scheduler semanal).
+- Fuente para traducciones en subcolección `langs`.
+
+### /horoscopeWeekly/{weekKey}/signs/{sign}/langs/{lang}
+Documento semanal traducido por idioma.
+
+Campos:
+- sign: string (enum `ZodiacSign`, obligatorio)
+- weekKey: string (ISO week `YYYY-Www`, obligatorio)
+- languageCode: string (ISO corto `es|en|pt|ru|fr|it|de`)
+- title: string
+- overview: string
+- love: string
+- work: string
+- money: string
+- spiritualAdvice: string
+- keyDays: array<string>
+- mantra: string
+- shareText: string
+- createdAtEpochMillis: number
+- updatedAtEpochMillis: number
+- generatorVersion: number
+- llmProvider: string
+
+### /horoscopeMonthly/{monthKey}/signs/{sign}
+Documento canónico mensual por signo en español.
+
+Campos:
+- sign: string (enum `ZodiacSign`, obligatorio)
+- monthKey: string (`YYYY-MM`, obligatorio)
+- languageCode: string (`es`, obligatorio)
+- title: string
+- overview: string
+- love: string
+- work: string
+- money: string
+- personalGrowth: string
+- ritualSuggestion: string
+- keyDates: array<string> (3-5 entradas `YYYY-MM-DD: nota`)
+- mantra: string
+- shareText: string
+- createdAtEpochMillis: number
+- updatedAtEpochMillis: number
+- generatorVersion: number
+- llmProvider: string
+
+Notas:
+- Escritura backend write-once (scheduler mensual).
+- Fuente para traducciones en subcolección `langs`.
+
+### /horoscopeMonthly/{monthKey}/signs/{sign}/langs/{lang}
+Documento mensual traducido por idioma.
+
+Campos:
+- sign: string (enum `ZodiacSign`, obligatorio)
+- monthKey: string (`YYYY-MM`, obligatorio)
+- languageCode: string (ISO corto `es|en|pt|ru|fr|it|de`)
+- title: string
+- overview: string
+- love: string
+- work: string
+- money: string
+- personalGrowth: string
+- ritualSuggestion: string
+- keyDates: array<string>
+- mantra: string
+- shareText: string
+- createdAtEpochMillis: number
+- updatedAtEpochMillis: number
+- generatorVersion: number
+- llmProvider: string
+
 ---
 
 ### /users/{userId}
