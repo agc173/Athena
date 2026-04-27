@@ -2,6 +2,7 @@ import {ENV, type Lang} from '../config/env';
 import type {ZodiacSign} from '../firestore/paths';
 import {createDocIfAbsent} from '../firestore/writeOnce';
 import type {LLMRouter} from '../llm/LLMRouter';
+import {DateTime} from 'luxon';
 import {
   horoscopeCanonicalSystemPrompt,
   horoscopeCanonicalUserPrompt,
@@ -12,6 +13,18 @@ import {
 } from '../llm/prompts/horoscopePrompt';
 import {horoscopeLangDocPath, horoscopeSignDocPath} from '../firestore/paths';
 import {getFirestore} from 'firebase-admin/firestore';
+import {logger} from '../utils/logger';
+
+const DAILY_GENERATOR_VERSION = 2;
+const DAILY_ANGLES = [
+  'focus-and-priorities',
+  'relationships-and-dialogue',
+  'boundaries-and-clarity',
+  'creativity-and-expression',
+  'money-and-prudence',
+  'rest-and-recovery',
+  'courage-and-decision',
+];
 
 export type HoroscopeDoc = {
   languageCode: Lang;
@@ -76,6 +89,60 @@ function normalizeTranslation(
   return out;
 }
 
+type PreviousDailyCompact = {
+  dateIso: string;
+  text: string;
+  shareText: string;
+  mood: string;
+  luckyColor: string;
+};
+
+function fnv1a32(input: string) {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < input.length; i++) {
+    hash ^= input.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return hash >>> 0;
+}
+
+function deriveDailyAngle(dateIso: string, sign: ZodiacSign) {
+  const idx = fnv1a32(`${sign}|${dateIso}|daily-v2`) % DAILY_ANGLES.length;
+  return DAILY_ANGLES[idx];
+}
+
+function normalizeForComparison(text: string) {
+  return text
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+}
+
+function tokenJaccardSimilarity(a: string, b: string) {
+  const tokensA = new Set(normalizeForComparison(a).split(' ').filter(Boolean));
+  const tokensB = new Set(normalizeForComparison(b).split(' ').filter(Boolean));
+  if (!tokensA.size || !tokensB.size) return 0;
+  let intersection = 0;
+  for (const token of tokensA) {
+    if (tokensB.has(token)) intersection++;
+  }
+  const union = tokensA.size + tokensB.size - intersection;
+  return union > 0 ? intersection / union : 0;
+}
+
+function getSimilaritySignals(current: Pick<HoroscopeDoc, 'text' | 'shareText'>, previous: PreviousDailyCompact[]) {
+  if (!previous.length) return {shareTextRepeated: false, textTooSimilar: false, similarityScore: 0};
+  const previousItem = previous[0];
+  const shareTextRepeated = normalizeForComparison(current.shareText) !== '' &&
+    normalizeForComparison(current.shareText) === normalizeForComparison(previousItem.shareText);
+  const similarityScore = tokenJaccardSimilarity(current.text, previousItem.text);
+  const textTooSimilar = similarityScore >= 0.82;
+  return {shareTextRepeated, textTooSimilar, similarityScore};
+}
+
 export class HoroscopeGenerator {
   private readonly db = getFirestore();
 
@@ -131,12 +198,29 @@ export class HoroscopeGenerator {
       return {result: 'skipped', path, provider: 'none'};
     }
 
+    const seed = `${sign}|${dateIso}|daily-v2`;
+    const dailyAngle = deriveDailyAngle(dateIso, sign);
+    const previous = await this.loadPreviousDailyCompact(dateIso, sign);
     const now = Date.now();
     const res = await this.llm.generate({
       scope: 'horoscope',
       messages: [
         {role: 'system', content: horoscopeCanonicalSystemPrompt()},
-        {role: 'user', content: horoscopeCanonicalUserPrompt(dateIso, sign)},
+        {
+          role: 'user',
+          content: horoscopeCanonicalUserPrompt(
+              dateIso,
+              sign,
+              seed,
+              dailyAngle,
+              previous.map((item) => ({
+                dateIso: item.dateIso,
+                mood: item.mood,
+                luckyColor: item.luckyColor,
+                shareText: item.shareText,
+              }))
+          ),
+        },
       ],
       temperature: ENV.LLM_TEMPERATURE,
       maxTokens: ENV.LLM_MAX_TOKENS,
@@ -148,9 +232,24 @@ export class HoroscopeGenerator {
       ...parsed,
       createdAtEpochMillis: now,
       updatedAtEpochMillis: now,
-      generatorVersion: ENV.GENERATOR_VERSION,
+      generatorVersion: DAILY_GENERATOR_VERSION,
       llmProvider: res.provider,
     };
+
+    const similarity = getSimilaritySignals(
+        {text: doc.text, shareText: doc.shareText},
+        previous
+    );
+    if (similarity.shareTextRepeated || similarity.textTooSimilar) {
+      logger.warn('Daily horoscope anti-repetition warning (log-only)', {
+        dateIso,
+        sign,
+        previousDateIso: previous[0]?.dateIso ?? null,
+        shareTextRepeated: similarity.shareTextRepeated,
+        textTooSimilar: similarity.textTooSimilar,
+        similarityScore: Number(similarity.similarityScore.toFixed(3)),
+      });
+    }
 
     const result = await createDocIfAbsent(path, doc);
     return {result, path, provider: res.provider};
@@ -217,11 +316,26 @@ export class HoroscopeGenerator {
       luckyColor: parsed.luckyColor,
       createdAtEpochMillis: now,
       updatedAtEpochMillis: now,
-      generatorVersion: ENV.GENERATOR_VERSION,
+      generatorVersion: DAILY_GENERATOR_VERSION,
       llmProvider: res.provider,
     };
 
     const result = await createDocIfAbsent(path, doc);
     return {result, path, provider: res.provider};
+  }
+
+  private async loadPreviousDailyCompact(dateIso: string, sign: ZodiacSign): Promise<PreviousDailyCompact[]> {
+    const previousDate = DateTime.fromISO(dateIso, {zone: 'Europe/Madrid'}).minus({days: 1}).toISODate();
+    if (!previousDate) return [];
+    const previousPath = horoscopeSignDocPath(previousDate, sign);
+    const previousSnap = await this.db.doc(previousPath).get();
+    if (!previousSnap.exists) return [];
+    const data = (previousSnap.data() ?? {}) as Record<string, unknown>;
+    const text = String(data.text ?? '').trim();
+    const shareText = String(data.shareText ?? '').trim();
+    const mood = String(data.mood ?? '').trim();
+    const luckyColor = String(data.luckyColor ?? '').trim();
+    if (!text || !shareText || !mood || !luckyColor) return [];
+    return [{dateIso: previousDate, text, shareText, mood, luckyColor}];
   }
 }
