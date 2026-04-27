@@ -39,15 +39,39 @@ export function horoscopeCanonicalSystemPrompt() {
     '- luckyNumber: integer 1-99',
     '- luckyColor: 1-2 words',
     '- shareText: <= 140 characters, catchy',
+    'Avoid cliches and generic filler phrases.',
+    'Do NOT use these Spanish phrases: "confía en tu intuición", "se abren nuevas puertas", "sal de tu zona de confort", "todo fluirá", "energías del universo", "el destino te sonríe", "escucha a tu corazón", "vienen cambios importantes".',
     'No emojis unless natural (max 1).',
   ].join('\n');
 }
 
-export function horoscopeCanonicalUserPrompt(dateIso: string, sign: ZodiacSign) {
+type PreviousDailyCompact = {
+  dateIso: string;
+  mood: string;
+  luckyColor: string;
+  shareText: string;
+};
+
+function compactPreviousDaily(previous: PreviousDailyCompact[]) {
+  if (!previous.length) return '[]';
+  return JSON.stringify(previous.slice(0, 1));
+}
+
+export function horoscopeCanonicalUserPrompt(
+    dateIso: string,
+    sign: ZodiacSign,
+    seed: string,
+    dailyAngle: string,
+    previousCompact: PreviousDailyCompact[]
+) {
   return [
     'Generate the canonical daily horoscope in Spanish for:',
     `date: ${dateIso}`,
     `sign: ${sign}`,
+    `seed: ${seed}`,
+    `dailyAngle: ${dailyAngle}`,
+    `previousHoroscopesCompact: ${compactPreviousDaily(previousCompact)}`,
+    'Keep novelty against previousHoroscopesCompact while preserving quality and coherence.',
     'Output JSON with all required fields.',
   ].join('\n');
 }
