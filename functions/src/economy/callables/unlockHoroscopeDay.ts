@@ -1,5 +1,6 @@
 import {Timestamp, getFirestore} from 'firebase-admin/firestore';
 import {HttpsError, onCall} from 'firebase-functions/v2/https';
+import {logger} from 'firebase-functions';
 import {DateTime} from 'luxon';
 import {ENV} from '../../config/env';
 import {type ZodiacSign} from '../../firestore/paths';
@@ -96,6 +97,7 @@ export const unlockHoroscopeDay = onCall(
         const currentBalance = asCount((balanceSnap.data() as EconomyBalanceDoc | undefined)?.balance);
 
         if (unlockSnap.exists) {
+          logger.info("unlockHoroscopeDay already unlocked", {uid, unlockKey, dateIso, costCharged: 0});
           const stableResponse: UnlockHoroscopeDayResponse = {
             result: 'COMPLETED_SUCCESS',
             unlocked: true,
@@ -156,6 +158,8 @@ export const unlockHoroscopeDay = onCall(
             createdAt: now,
           } as EconomyLedgerEntryDoc, {merge: true});
         }
+
+        logger.info("unlockHoroscopeDay charged", {uid, unlockKey, dateIso, costCharged});
 
         const response: UnlockHoroscopeDayResponse = {
           result: 'COMPLETED_SUCCESS',

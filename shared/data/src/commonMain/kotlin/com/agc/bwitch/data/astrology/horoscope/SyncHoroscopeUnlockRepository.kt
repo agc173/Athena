@@ -24,13 +24,20 @@ class SyncHoroscopeUnlockRepository(
     }
 
     override suspend fun isUnlocked(dateIso: String): Boolean {
-        val uid = currentUidOrNull() ?: return false
-        return firestore.collection("economyUnlocks")
+        val uid = currentUidOrNull()
+        if (uid == null) {
+            println("[SyncHoroscopeUnlockRepository] isUnlocked(dateIso=$dateIso) uid=null -> false")
+            return false
+        }
+        val unlockKey = unlockKey(dateIso)
+        val exists = firestore.collection("economyUnlocks")
             .document(uid)
             .collection("horoscope")
-            .document(unlockKey(dateIso))
+            .document(unlockKey)
             .get()
             .exists
+        println("[SyncHoroscopeUnlockRepository] isUnlocked(dateIso=$dateIso uid=$uid unlockKey=$unlockKey path=${economyHoroscopeUnlockPath(uid, unlockKey)}) result=$exists")
+        return exists
     }
 
     override suspend fun unlockFutureDay(dateIso: String, requestId: String, sign: ZodiacSign): HoroscopeUnlockResult {
@@ -49,7 +56,7 @@ class SyncHoroscopeUnlockRepository(
     }
 
     private suspend fun currentUidOrNull(): String? =
-        withTimeoutOrNull(2_000) {
+        withTimeoutOrNull(5_000) {
             authRepository.authState
                 .filterNotNull()
                 .first()
@@ -57,4 +64,7 @@ class SyncHoroscopeUnlockRepository(
         }
 
     private fun unlockKey(dateIso: String): String = "daily:$dateIso"
+
+    private fun economyHoroscopeUnlockPath(uid: String, unlockKey: String): String =
+        "economyUnlocks/$uid/horoscope/$unlockKey"
 }
