@@ -36,7 +36,14 @@ data class HoroscopeOverlayUi(
     val isLocked: Boolean,
     val isLoading: Boolean,
     val horoscope: DailyHoroscope?,
+    val unlockErrorMessage: HoroscopeFeedbackMessage? = null,
+    val unlockErrorType: HoroscopeUnlockErrorType? = null,
 )
+
+enum class HoroscopeUnlockErrorType {
+    InsufficientMoons,
+    Backend,
+}
 
 enum class HoroscopeFeedbackMessage {
     AlreadyUpdated,
