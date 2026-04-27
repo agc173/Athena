@@ -37,13 +37,17 @@ export type EconomyLedgerEntryDoc = {
   | 'ORACLE_1Q_MOON_SPEND'
   | 'BIRTH_ESSENCE_MOON_SPEND'
   | 'REFUND'
-  | 'HOROSCOPE_FUTURE_DAY_MOON_SPEND';
+  | 'HOROSCOPE_FUTURE_DAY_MOON_SPEND'
+  | 'HOROSCOPE_WEEKLY_MOON_SPEND'
+  | 'HOROSCOPE_MONTHLY_MOON_SPEND';
   amount: number;
   createdAt: Timestamp;
   requestId: string;
   dateIso: string;
   placement?: string;
   targetDateIso?: string;
+  weekKey?: string;
+  monthKey?: string;
   unlockKey?: string;
   module?: EconomyModule | string;
   source?: string;
@@ -65,13 +69,20 @@ export type EconomyRequestType =
   | 'TAROT_3'
   | 'ORACLE_1Q'
   | 'BIRTH_ESSENCE'
-  | 'HOROSCOPE_UNLOCK_DAY';
+  | 'HOROSCOPE_UNLOCK_DAY'
+  | 'HOROSCOPE_UNLOCK_WEEKLY'
+  | 'HOROSCOPE_UNLOCK_MONTHLY';
 
 export type EconomyRequestDoc = {
   requestId: string;
   type: EconomyRequestType;
   result: EconomyRequestResult;
-  response?: ClaimDailyLoginResponse | ClaimRewardedAdResponse | UnlockHoroscopeDayResponse;
+  response?:
+  | ClaimDailyLoginResponse
+  | ClaimRewardedAdResponse
+  | UnlockHoroscopeDayResponse
+  | UnlockHoroscopeWeeklyResponse
+  | UnlockHoroscopeMonthlyResponse;
   responsePayload?: unknown;
   status?: 'PROCESSING' | 'FAILED' | 'COMPLETED_SUCCESS';
   decisionSource?: EconomyDecisionSource;
@@ -126,6 +137,8 @@ export type EconomyDailyUsageDoc = {
   pendulumPremiumUsed?: number;
 
   horoscopeFutureDayMoonUsed?: number;
+  horoscopeWeeklyMoonUsed?: number;
+  horoscopeMonthlyMoonUsed?: number;
 
   updatedAt?: Timestamp;
 };
@@ -236,4 +249,48 @@ export type GetHoroscopeDailyUnlocksData = {
 
 export type GetHoroscopeDailyUnlocksResponse = {
   unlockedDateIsoList: string[];
+};
+
+export type UnlockHoroscopeWeeklyData = {
+  requestId?: unknown;
+  weekKey?: unknown;
+  sign?: unknown;
+};
+
+export type UnlockHoroscopeWeeklyResponse = {
+  result: EconomyRequestResult;
+  unlocked: boolean;
+  alreadyUnlocked: boolean;
+  balance: number;
+  costCharged: number;
+};
+
+export type UnlockHoroscopeMonthlyData = {
+  requestId?: unknown;
+  monthKey?: unknown;
+  sign?: unknown;
+};
+
+export type UnlockHoroscopeMonthlyResponse = {
+  result: EconomyRequestResult;
+  unlocked: boolean;
+  alreadyUnlocked: boolean;
+  balance: number;
+  costCharged: number;
+};
+
+export type GetHoroscopeWeeklyUnlocksData = {
+  weekKeyList?: unknown;
+};
+
+export type GetHoroscopeWeeklyUnlocksResponse = {
+  unlockedWeekKeyList: string[];
+};
+
+export type GetHoroscopeMonthlyUnlocksData = {
+  monthKeyList?: unknown;
+};
+
+export type GetHoroscopeMonthlyUnlocksResponse = {
+  unlockedMonthKeyList: string[];
 };

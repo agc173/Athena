@@ -14,6 +14,10 @@ export {
   claimRewardedAd,
   unlockHoroscopeDay,
   getHoroscopeDailyUnlocks,
+  unlockHoroscopeWeekly,
+  unlockHoroscopeMonthly,
+  getHoroscopeWeeklyUnlocks,
+  getHoroscopeMonthlyUnlocks,
 } from './economy';
 
 initializeApp();
