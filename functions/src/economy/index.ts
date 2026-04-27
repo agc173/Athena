@@ -6,6 +6,7 @@ export * from './callables/getEconomyBalance';
 export * from './callables/getEconomyStatus';
 export * from './callables/claimDailyLogin';
 export * from './callables/claimRewardedAd';
+export * from './callables/getHoroscopeDailyUnlocks';
 
 export * from './runtimeConfig';
 export * from './tarotEconomy';

@@ -95,12 +95,28 @@ class EconomyRemoteDataSource(
         }
     }
 
+    suspend fun getHoroscopeDailyUnlocks(dateIsoList: List<String>): Set<String> {
+        if (dateIsoList.isEmpty()) return emptySet()
+        return when (
+            val result = functionsClient.call(
+                name = GET_HOROSCOPE_DAILY_UNLOCKS_CALLABLE,
+                data = GetHoroscopeDailyUnlocksRequestDto(dateIsoList = dateIsoList),
+                requestSerializer = GetHoroscopeDailyUnlocksRequestDto.serializer(),
+                responseSerializer = GetHoroscopeDailyUnlocksResponseDto.serializer(),
+            )
+        ) {
+            is ApiResult.Ok -> result.value.unlockedDateIsoList.toSet()
+            is ApiResult.Err -> throw result.error.toException()
+        }
+    }
+
     private companion object {
         const val GET_ECONOMY_BALANCE_CALLABLE = "getEconomyBalance"
         const val GET_ECONOMY_STATUS_CALLABLE = "getEconomyStatus"
         const val CLAIM_DAILY_LOGIN_CALLABLE = "claimDailyLogin"
         const val CLAIM_REWARDED_AD_CALLABLE = "claimRewardedAd"
         const val UNLOCK_HOROSCOPE_DAY_CALLABLE = "unlockHoroscopeDay"
+        const val GET_HOROSCOPE_DAILY_UNLOCKS_CALLABLE = "getHoroscopeDailyUnlocks"
     }
 }
 
