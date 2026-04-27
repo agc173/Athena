@@ -1,11 +1,8 @@
 import {onSchedule} from 'firebase-functions/v2/scheduler';
 import {initializeApp} from 'firebase-admin/app';
 import {DateTime} from 'luxon';
-import {ENV, assertEnvForLLM} from './config/env';
 import type {ZodiacSign} from './firestore/paths';
-import {HoroscopeGenerator} from './generators/HoroscopeGenerator';
 import {logger} from './utils/logger';
-import {buildRouter} from './llm/buildRouter';
 import {withRetry} from './utils/retry';
 export {oracleGetStatus, tarotDraw, oracleAsk} from './oracle';
 export {saveUserProfile} from './userprofile';
@@ -13,17 +10,28 @@ export {birthEssenceGenerate} from './birthessence';
 export {getEconomyBalance, getEconomyStatus, claimDailyLogin, claimRewardedAd, unlockHoroscopeDay} from './economy';
 
 initializeApp();
-assertEnvForLLM();
 
 const ZODIAC_SIGNS: ZodiacSign[] = [
   'aries', 'taurus', 'gemini', 'cancer', 'leo', 'virgo',
   'libra', 'scorpio', 'sagittarius', 'capricorn', 'aquarius', 'pisces',
 ];
 
-function dateIsoMadrid(dayOffset: number): string {
+type SchedulerEnv = {
+  DATE_OFFSET_DAYS: number;
+  ACTIVE_LANGS: string[];
+  USE_MOCK_LLM: boolean;
+  DEEPSEEK_API_KEY: string;
+  REQUIRE_DEEPSEEK: boolean;
+  LLM_CONCURRENCY: number;
+  LLM_MAX_RETRIES: number;
+};
+
+type SchedulerGenerateResult = {result: string; path: string; provider: string};
+
+function dateIsoMadrid(dayOffset: number, env: SchedulerEnv): string {
   return DateTime.now()
       .setZone('Europe/Madrid')
-      .plus({days: dayOffset + ENV.DATE_OFFSET_DAYS})
+      .plus({days: dayOffset + env.DATE_OFFSET_DAYS})
       .toISODate()!;
 }
 
@@ -63,6 +71,18 @@ export const generateHoroscopesWindow = onSchedule(
       secrets: ['DEEPSEEK_API_KEY'],
     },
     async () => {
+      const [
+        {ENV, assertEnvForLLM},
+        {buildRouter},
+        {HoroscopeGenerator},
+      ] = await Promise.all([
+        import('./config/env.js'),
+        import('./llm/buildRouter.js'),
+        import('./generators/HoroscopeGenerator.js'),
+      ]);
+
+      assertEnvForLLM();
+
       const router = buildRouter();
 
       logger.info('LLM configuration', {
@@ -97,7 +117,7 @@ export const generateHoroscopesWindow = onSchedule(
       const translationTasks: Array<() => Promise<void>> = [];
 
       for (let dayOffset = 0; dayOffset <= 13; dayOffset++) {
-        const dateIso = dateIsoMadrid(dayOffset);
+        const dateIso = dateIsoMadrid(dayOffset, ENV);
 
         // Fase A: generar canonical en español por signo.
         for (const sign of ZODIAC_SIGNS) {
@@ -106,7 +126,7 @@ export const generateHoroscopesWindow = onSchedule(
             if (stoppedByCap) return;
 
             try {
-              const {result} = await withRetry(
+              const {result} = await withRetry<SchedulerGenerateResult>(
                   () => generator.generateCanonical(dateIso, sign),
                   ENV.LLM_MAX_RETRIES
               );
@@ -148,7 +168,7 @@ export const generateHoroscopesWindow = onSchedule(
               if (stoppedByCap) return;
 
               try {
-                const {result} = await withRetry(
+                const {result} = await withRetry<SchedulerGenerateResult>(
                     () => generator.generateTranslation(dateIso, sign, lang),
                     ENV.LLM_MAX_RETRIES
                 );
