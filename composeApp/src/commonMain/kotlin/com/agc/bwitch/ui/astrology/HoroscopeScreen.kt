@@ -217,10 +217,11 @@ private fun HoroscopeScreenContent(
             }
 
             HoroscopeTab.Monthly -> {
+                val monthLanguageCode = DEFAULT_MONTH_LANGUAGE_CODE
                 PeriodTabSelector(
                     options = listOf(
-                        SelectorOption(HoroscopeMonthPeriod.ThisMonth.name, monthNameFromKey(state.currentMonthKey, appStrings.tarot.languageCode)),
-                        SelectorOption(HoroscopeMonthPeriod.NextMonth.name, monthNameFromKey(state.nextMonthKey, appStrings.tarot.languageCode)),
+                        SelectorOption(HoroscopeMonthPeriod.ThisMonth.name, monthNameFromKey(state.currentMonthKey, monthLanguageCode)),
+                        SelectorOption(HoroscopeMonthPeriod.NextMonth.name, monthNameFromKey(state.nextMonthKey, monthLanguageCode)),
                     ),
                     selectedId = state.selectedMonth.name,
                     onSelect = { selected ->
@@ -428,8 +429,12 @@ private fun PeriodTabSelector(
     selectedId: String,
     onSelect: (String) -> Unit,
 ) {
+    if (options.isEmpty()) return
+    val selectedIndex = options.indexOfFirst { it.id == selectedId }.let { index ->
+        if (index >= 0) index else 0
+    }
     ScrollableTabRow(
-        selectedTabIndex = options.indexOfFirst { it.id == selectedId }.coerceAtLeast(0),
+        selectedTabIndex = selectedIndex,
         edgePadding = 0.dp,
     ) {
         options.forEach { option ->
@@ -447,6 +452,8 @@ private data class SelectorOption(
     val id: String,
     val label: String,
 )
+
+private const val DEFAULT_MONTH_LANGUAGE_CODE = "es"
 
 private fun String.toMonthNumberOrNull(): Int? =
     split("-").getOrNull(1)?.toIntOrNull()?.takeIf { it in 1..12 }
