@@ -31,6 +31,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -215,6 +216,96 @@ class HoroscopeViewModelTest {
         assertNull(state.errorMessage)
     }
 
+
+    @Test
+    fun unlock_keepsFutureDayUnlockedInSession_whenRemoteReadReturnsFalse() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+
+        val repo = FakeRepo()
+        val observeUseCase = ObserveDailyHoroscopeUseCase(repo)
+        val getUseCase = GetDailyHoroscopeUseCase(repo)
+        val pullUseCase = PullDailyHoroscopeUseCase(FakeSync())
+        val languageRepository = FakeAppLanguageRepository()
+        val resolveLanguageUseCase = ResolveCurrentLanguageUseCase(languageRepository)
+        val observeLanguageUseCase = ObserveCurrentLanguageUseCase(languageRepository)
+        val observeUserProfileUseCase = ObserveUserProfileUseCase(FakeUserProfileRepo())
+        val unlockRepository = FakeNonPersistingUnlockRepository()
+        val getHoroscopeFutureDayCostUseCase = GetHoroscopeFutureDayCostUseCase(unlockRepository)
+        val isHoroscopeDayUnlockedUseCase = IsHoroscopeDayUnlockedUseCase(unlockRepository)
+        val unlockHoroscopeFutureDayUseCase = UnlockHoroscopeFutureDayUseCase(unlockRepository)
+
+        val viewModel = HoroscopeViewModel(
+            observeDailyHoroscopeUseCase = observeUseCase,
+            getDailyHoroscopeUseCase = getUseCase,
+            pullDailyHoroscopeUseCase = pullUseCase,
+            pullMarker = FakePullMarker(lastPulledDateIso = currentSystemTodayIsoForTests()),
+            resolveCurrentLanguageUseCase = resolveLanguageUseCase,
+            observeCurrentLanguageUseCase = observeLanguageUseCase,
+            observeUserProfileUseCase = observeUserProfileUseCase,
+            getHoroscopeFutureDayCostUseCase = getHoroscopeFutureDayCostUseCase,
+            isHoroscopeDayUnlockedUseCase = isHoroscopeDayUnlockedUseCase,
+            unlockHoroscopeFutureDayUseCase = unlockHoroscopeFutureDayUseCase,
+            dispatcher = dispatcher,
+        )
+
+        advanceUntilIdle()
+        val futureDate = viewModel.uiState.value.days[1].dateIso
+
+        viewModel.onSelectDate(futureDate)
+        viewModel.onOpenSign(ZodiacSign.aries)
+        viewModel.onUnlockSelectedDay()
+        advanceUntilIdle()
+
+        val dayAfterUnlock = viewModel.uiState.value.days.first { it.dateIso == futureDate }
+        assertEquals(true, dayAfterUnlock.isUnlocked)
+        assertEquals(false, dayAfterUnlock.isLocked)
+        assertEquals(1, unlockRepository.unlockCalls)
+    }
+
+    @Test
+    fun openUnlockedOverlay_pullsFutureContentSilently_whenCacheIsEmpty() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+
+        val repo = FakeRepo()
+        val observeUseCase = ObserveDailyHoroscopeUseCase(repo)
+        val getUseCase = GetDailyHoroscopeUseCase(repo)
+        val sync = PopulateOnPullSync(repo)
+        val pullUseCase = PullDailyHoroscopeUseCase(sync)
+        val languageRepository = FakeAppLanguageRepository()
+        val resolveLanguageUseCase = ResolveCurrentLanguageUseCase(languageRepository)
+        val observeLanguageUseCase = ObserveCurrentLanguageUseCase(languageRepository)
+        val observeUserProfileUseCase = ObserveUserProfileUseCase(FakeUserProfileRepo())
+        val unlockRepository = FakeUnlockRepository(unlockedDates = setOf(currentSystemTomorrowIsoForTests()))
+        val getHoroscopeFutureDayCostUseCase = GetHoroscopeFutureDayCostUseCase(unlockRepository)
+        val isHoroscopeDayUnlockedUseCase = IsHoroscopeDayUnlockedUseCase(unlockRepository)
+        val unlockHoroscopeFutureDayUseCase = UnlockHoroscopeFutureDayUseCase(unlockRepository)
+
+        val viewModel = HoroscopeViewModel(
+            observeDailyHoroscopeUseCase = observeUseCase,
+            getDailyHoroscopeUseCase = getUseCase,
+            pullDailyHoroscopeUseCase = pullUseCase,
+            pullMarker = FakePullMarker(lastPulledDateIso = currentSystemTodayIsoForTests()),
+            resolveCurrentLanguageUseCase = resolveLanguageUseCase,
+            observeCurrentLanguageUseCase = observeLanguageUseCase,
+            observeUserProfileUseCase = observeUserProfileUseCase,
+            getHoroscopeFutureDayCostUseCase = getHoroscopeFutureDayCostUseCase,
+            isHoroscopeDayUnlockedUseCase = isHoroscopeDayUnlockedUseCase,
+            unlockHoroscopeFutureDayUseCase = unlockHoroscopeFutureDayUseCase,
+            dispatcher = dispatcher,
+        )
+
+        advanceUntilIdle()
+        val futureDate = viewModel.uiState.value.days[1].dateIso
+
+        viewModel.onSelectDate(futureDate)
+        viewModel.onOpenSign(ZodiacSign.aries)
+        advanceUntilIdle()
+
+        assertNotNull(viewModel.uiState.value.overlay?.horoscope)
+        assertNull(viewModel.uiState.value.errorMessage)
+        assertEquals(1, sync.pullCalls)
+    }
+
     @Test
     fun rebuildDays_marksTodayUnlocked_andFutureDayLockedWhenRepositoryReturnsFalse() = runTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
@@ -316,6 +407,45 @@ class HoroscopeViewModelTest {
         override suspend fun saveUserProfile(profile: UserProfile) = Unit
     }
 
+
+    private class FakeNonPersistingUnlockRepository : HoroscopeUnlockRepository {
+        var unlockCalls: Int = 0
+
+        override suspend fun getFutureDayCost(): Int = 1
+
+        override suspend fun isUnlocked(dateIso: String): Boolean = false
+
+        override suspend fun unlockFutureDay(dateIso: String, requestId: String, sign: ZodiacSign): HoroscopeUnlockResult {
+            unlockCalls += 1
+            return HoroscopeUnlockResult(
+                unlocked = true,
+                alreadyUnlocked = false,
+                balanceAfter = 0,
+                costCharged = 1,
+            )
+        }
+    }
+
+    private class PopulateOnPullSync(
+        private val repo: FakeRepo,
+    ) : HoroscopeDailySyncController {
+        var pullCalls: Int = 0
+
+        override suspend fun pull(dateIso: String, languageCode: String) {
+            pullCalls += 1
+            repo.emit(
+                DailyHoroscope(
+                    sign = ZodiacSign.aries,
+                    dateIso = dateIso,
+                    languageCode = languageCode,
+                    text = "Texto futuro",
+                    mood = "Calmo",
+                    luckyNumber = 9,
+                    luckyColor = "Verde",
+                )
+            )
+        }
+    }
     private class FakeUnlockRepository(
         private val futureDayCost: Int = 1,
         unlockedDates: Set<String> = emptySet(),
@@ -347,4 +477,11 @@ private fun currentSystemTodayIsoForTests(): String {
     val now = kotlinx.datetime.Clock.System.now()
         .toLocalDateTime(kotlinx.datetime.TimeZone.currentSystemDefault())
     return now.date.toString()
+}
+
+private fun currentSystemTomorrowIsoForTests(): String {
+    val now = kotlinx.datetime.Clock.System.now()
+        .toLocalDateTime(kotlinx.datetime.TimeZone.currentSystemDefault())
+        .date
+    return now.plus(kotlinx.datetime.DatePeriod(days = 1)).toString()
 }

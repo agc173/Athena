@@ -62,6 +62,7 @@ class HoroscopeViewModel(
     private var observeJob: Job? = null
     private var userHasManuallySelectedSign = false
     private var pendingUnlockTarget: PendingUnlockTarget? = null
+    private val unlockedDatesSession = mutableSetOf<String>()
 
     init {
         scope.launch { runCatching { resolveCurrentLanguageUseCase() } }
@@ -186,13 +187,33 @@ class HoroscopeViewModel(
                     ),
                 )
             }
+            if (unlockedDatesSession.contains(target.dateIso)) {
+                println("[HoroscopeViewModel] skip unlock request; already unlocked in session dateIso=${target.dateIso}")
+                pendingUnlockTarget = null
+                _uiState.update { current ->
+                    val updatedDays = current.days.map { day ->
+                        if (day.dateIso == target.dateIso) day.copy(isLocked = false, isUnlocked = true) else day
+                    }
+                    current.copy(
+                        days = updatedDays,
+                        overlay = current.overlay?.copy(isLocked = false, unlockErrorMessage = null, unlockErrorType = null),
+                    )
+                }
+                loadOverlayHoroscope(sign = target.sign, dateIso = target.dateIso)
+                rebuildDays()
+                _uiState.update { it.copy(isUnlocking = false) }
+                return@launch
+            }
+
             runCatching {
                 unlockHoroscopeFutureDayUseCase(
                     dateIso = target.dateIso,
                     requestId = buildRequestId(target.dateIso),
                     sign = target.sign,
                 )
-            }.onSuccess {
+            }.onSuccess { unlockResult ->
+                println("[HoroscopeViewModel] unlock success dateIso=${target.dateIso} costCharged=${unlockResult.costCharged} alreadyUnlocked=${unlockResult.alreadyUnlocked}")
+                unlockedDatesSession += target.dateIso
                 pendingUnlockTarget = null
                 _uiState.update { current ->
                     val updatedDays = current.days.map { day ->
@@ -308,7 +329,14 @@ class HoroscopeViewModel(
     private fun loadOverlayHoroscope(sign: ZodiacSign, dateIso: String) {
         scope.launch {
             val languageCode = currentLanguageCode.value
-            val loaded = runCatching { getDailyHoroscopeUseCase(dateIso, sign, languageCode) }.getOrNull()
+            var loaded = runCatching { getDailyHoroscopeUseCase(dateIso, sign, languageCode) }.getOrNull()
+            val shouldPullFutureContent = loaded == null && isDateUnlocked(dateIso)
+            if (shouldPullFutureContent) {
+                println("[HoroscopeViewModel] overlay missing cached horoscope; pulling dateIso=$dateIso")
+                safePull(dateIso = dateIso, languageCode = languageCode, showGlobalError = false)
+                loaded = runCatching { getDailyHoroscopeUseCase(dateIso, sign, languageCode) }.getOrNull()
+                println("[HoroscopeViewModel] pull future content result dateIso=$dateIso found=${loaded != null}")
+            }
             _uiState.update { current ->
                 val overlay = current.overlay ?: return@update current
                 if (overlay.sign != sign || overlay.dateIso != dateIso) return@update current
@@ -327,7 +355,11 @@ class HoroscopeViewModel(
             val items = (0..6).map { offset ->
                 val date = today.plus(DatePeriod(days = offset))
                 val dateIso = date.toString()
-                val unlocked = offset == 0 || runCatching { isHoroscopeDayUnlockedUseCase(dateIso) }.getOrDefault(false)
+                val remoteUnlocked = runCatching { isHoroscopeDayUnlockedUseCase(dateIso) }
+                    .onSuccess { println("[HoroscopeViewModel] isUnlocked(dateIso=$dateIso) result=$it") }
+                    .onFailure { println("[HoroscopeViewModel] isUnlocked(dateIso=$dateIso) failed: ${it.message}") }
+                    .getOrDefault(false)
+                val unlocked = offset == 0 || unlockedDatesSession.contains(dateIso) || remoteUnlocked
                 HoroscopeDayItemUi(
                     dateIso = dateIso,
                     shortLabel = shortDateLabel(date),
@@ -358,15 +390,24 @@ class HoroscopeViewModel(
         }
     }
 
-    private suspend fun safePull(dateIso: String, languageCode: String) {
-        _uiState.update { it.copy(isRefreshing = true, errorMessage = null) }
+    private suspend fun safePull(dateIso: String, languageCode: String, showGlobalError: Boolean = true) {
+        _uiState.update { it.copy(isRefreshing = true, errorMessage = if (showGlobalError) null else it.errorMessage) }
         try {
             pullDailyHoroscopeUseCase(dateIso, languageCode)
-        } catch (_: Throwable) {
-            _uiState.update { it.copy(errorMessage = HoroscopeFeedbackMessage.RefreshFailed) }
+        } catch (error: Throwable) {
+            if (showGlobalError) {
+                _uiState.update { it.copy(errorMessage = HoroscopeFeedbackMessage.RefreshFailed) }
+            } else {
+                println("[HoroscopeViewModel] silent pull failed dateIso=$dateIso: ${error.message}")
+            }
         } finally {
             _uiState.update { it.copy(isRefreshing = false) }
         }
+    }
+
+    private fun isDateUnlocked(dateIso: String): Boolean {
+        val state = _uiState.value
+        return unlockedDatesSession.contains(dateIso) || state.days.firstOrNull { it.dateIso == dateIso }?.isUnlocked == true
     }
 
     private fun todayDate(): LocalDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
