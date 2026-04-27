@@ -97,7 +97,7 @@ export const unlockHoroscopeDay = onCall(
         const currentBalance = asCount((balanceSnap.data() as EconomyBalanceDoc | undefined)?.balance);
 
         if (unlockSnap.exists) {
-          logger.info("unlockHoroscopeDay already unlocked", {uid, unlockKey, dateIso, costCharged: 0});
+          logger.info('unlockHoroscopeDay already unlocked', {uid, unlockKey, dateIso, costCharged: 0});
           const stableResponse: UnlockHoroscopeDayResponse = {
             result: 'COMPLETED_SUCCESS',
             unlocked: true,
@@ -159,7 +159,7 @@ export const unlockHoroscopeDay = onCall(
           } as EconomyLedgerEntryDoc, {merge: true});
         }
 
-        logger.info("unlockHoroscopeDay charged", {uid, unlockKey, dateIso, costCharged});
+        logger.info('unlockHoroscopeDay charged', {uid, unlockKey, dateIso, costCharged});
 
         const response: UnlockHoroscopeDayResponse = {
           result: 'COMPLETED_SUCCESS',
