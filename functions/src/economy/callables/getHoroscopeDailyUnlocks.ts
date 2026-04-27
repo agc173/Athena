@@ -38,7 +38,7 @@ export const getHoroscopeDailyUnlocks = onCall(
 
       const data = (request.data ?? {}) as GetHoroscopeDailyUnlocksData;
       const dateIsoList = normalizeDateIsoList(data.dateIsoList);
-      if (dateIsoList.length == 0) {
+      if (dateIsoList.length === 0) {
         return {unlockedDateIsoList: []};
       }
 

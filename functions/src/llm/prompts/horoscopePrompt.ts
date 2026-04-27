@@ -84,3 +84,144 @@ export function horoscopeTranslationUserPrompt(
     'Output JSON with ONLY: text, shareText, mood, luckyColor.',
   ].join('\n');
 }
+
+type PreviousHoroscopeItem = {
+  periodKey: string;
+  title: string;
+  overview: string;
+};
+
+function compactPrevious(previous: PreviousHoroscopeItem[]) {
+  if (!previous.length) return '[]';
+  return JSON.stringify(previous.slice(0, 3));
+}
+
+export function weeklyCanonicalSystemPrompt() {
+  return [
+    'You are an expert horoscope writer for WEEKLY forecasts.',
+    'Return ONLY strict valid JSON. No markdown. No extra keys.',
+    'Language: es.',
+    'Forbidden fields/topics: mood, luckyNumber, luckyColor.',
+    'Output keys exactly:',
+    'sign, weekKey, languageCode, title, overview, love, work, money, spiritualAdvice, keyDays, mantra, shareText.',
+    'Constraints:',
+    '- sign lowercase zodiac slug',
+    '- weekKey format YYYY-Www',
+    '- languageCode must be "es"',
+    '- title 25-70 chars and non-generic',
+    '- overview/love/work/money/spiritualAdvice: 220-420 chars each',
+    '- keyDays: array of 2-4 items, each "YYYY-MM-DD: note breve"',
+    '- mantra: 8-24 words',
+    '- shareText: <= 170 chars',
+    '- high variability and concrete imagery, avoid repeated cliches.',
+  ].join('\n');
+}
+
+export function weeklyCanonicalUserPrompt(
+    weekKey: string,
+    sign: ZodiacSign,
+    seed: string,
+    seasonContext: string,
+    collectiveEnergy: string,
+    previous: PreviousHoroscopeItem[]
+) {
+  return [
+    'Generate canonical weekly horoscope in Spanish.',
+    `weekKey: ${weekKey}`,
+    `sign: ${sign}`,
+    `seed: ${seed}`,
+    `seasonContext: ${seasonContext}`,
+    `collectiveEnergy: ${collectiveEnergy}`,
+    `previousHoroscopesCompact: ${compactPrevious(previous)}`,
+    'Output strict JSON with the required keys only.',
+  ].join('\n');
+}
+
+export function weeklyTranslationSystemPrompt(lang: Lang) {
+  return [
+    'You are a precise translator for WEEKLY horoscope payloads.',
+    'Return ONLY strict valid JSON. No markdown.',
+    `Target language: ${lang}.`,
+    'Keep keys unchanged and preserve structure.',
+    'Do not invent or remove keyDays entries.',
+    'Translate text fields naturally, preserving tone and meaning.',
+  ].join('\n');
+}
+
+export function weeklyTranslationUserPrompt(
+    lang: Lang,
+    canonicalPayloadJson: string
+) {
+  return [
+    'Translate this canonical weekly horoscope JSON from Spanish.',
+    `targetLang: ${lang}`,
+    `canonicalJson: ${canonicalPayloadJson}`,
+    `Set languageCode to "${lang}" and keep all other non-text identity fields unchanged.`,
+    'Return strict JSON only.',
+  ].join('\n');
+}
+
+export function monthlyCanonicalSystemPrompt() {
+  return [
+    'You are an expert horoscope writer for MONTHLY forecasts.',
+    'Return ONLY strict valid JSON. No markdown. No extra keys.',
+    'Language: es.',
+    'Forbidden fields/topics: mood, luckyNumber, luckyColor.',
+    'Output keys exactly:',
+    'sign, monthKey, languageCode, title, overview, love, work, money, personalGrowth, ritualSuggestion, keyDates, mantra, shareText.',
+    'Constraints:',
+    '- sign lowercase zodiac slug',
+    '- monthKey format YYYY-MM',
+    '- languageCode must be "es"',
+    '- title 25-70 chars and non-generic',
+    '- overview/love/work/money/personalGrowth/ritualSuggestion: 240-460 chars each',
+    '- keyDates: array of 3-5 items, each "YYYY-MM-DD: note breve"',
+    '- mantra: 8-24 words',
+    '- shareText: <= 170 chars',
+    '- high variability and concrete imagery, avoid repeated cliches.',
+  ].join('\n');
+}
+
+export function monthlyCanonicalUserPrompt(
+    monthKey: string,
+    sign: ZodiacSign,
+    seed: string,
+    seasonContext: string,
+    collectiveEnergy: string,
+    previous: PreviousHoroscopeItem[]
+) {
+  return [
+    'Generate canonical monthly horoscope in Spanish.',
+    `monthKey: ${monthKey}`,
+    `sign: ${sign}`,
+    `seed: ${seed}`,
+    `seasonContext: ${seasonContext}`,
+    `collectiveEnergy: ${collectiveEnergy}`,
+    `previousHoroscopesCompact: ${compactPrevious(previous)}`,
+    'Output strict JSON with the required keys only.',
+  ].join('\n');
+}
+
+export function monthlyTranslationSystemPrompt(lang: Lang) {
+  return [
+    'You are a precise translator for MONTHLY horoscope payloads.',
+    'Return ONLY strict valid JSON. No markdown.',
+    `Target language: ${lang}.`,
+    'Keep keys unchanged and preserve structure.',
+    'Do not invent or remove keyDates entries.',
+    'Translate text fields naturally, preserving tone and meaning.',
+  ].join('\n');
+}
+
+export function monthlyTranslationUserPrompt(
+    lang: Lang,
+    canonicalPayloadJson: string
+) {
+  return [
+    'Translate this canonical monthly horoscope JSON from Spanish.',
+    `targetLang: ${lang}`,
+    `canonicalJson: ${canonicalPayloadJson}`,
+    `Set languageCode to "${lang}" and keep all other non-text identity fields unchanged.`,
+    'Return strict JSON only.',
+  ].join('\n');
+}
