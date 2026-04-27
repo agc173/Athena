@@ -433,12 +433,18 @@ Campos:
 Libro mayor de movimientos de Lunas.
 
 Campos:
-- type: string (`DAILY_LOGIN_CLAIM` | `REWARDED_AD_CLAIM` | `TAROT_1_MOON_SPEND` | `TAROT_3_MOON_SPEND` | `ORACLE_1Q_MOON_SPEND` | `BIRTH_ESSENCE_MOON_SPEND` | `REFUND`)
+- type: string (`DAILY_LOGIN_CLAIM` | `REWARDED_AD_CLAIM` | `TAROT_1_MOON_SPEND` | `TAROT_3_MOON_SPEND` | `ORACLE_1Q_MOON_SPEND` | `BIRTH_ESSENCE_MOON_SPEND` | `HOROSCOPE_FUTURE_DAY_MOON_SPEND` | `HOROSCOPE_WEEKLY_MOON_SPEND` | `HOROSCOPE_MONTHLY_MOON_SPEND` | `REFUND`)
 - amount: number
 - requestId: string
 - dateIso: string (`YYYY-MM-DD` Europe/Madrid)
 - createdAt: timestamp
 - placement: string (opcional, rewarded ads)
+- targetDateIso: string opcional (daily unlock)
+- weekKey: string opcional (weekly unlock)
+- monthKey: string opcional (monthly unlock)
+- unlockKey: string opcional
+- module: string opcional
+- source: string opcional
 
 ### /economyUsageDaily/{dateIso}/users/{uid}
 Uso diario de economía por usuario.
@@ -455,6 +461,7 @@ Campos (fase 1):
   - birthEssencePremiumIncludedUsed (legacy/compat opcional)
   - synastryFreeUsed, synastryMoonPacksUsed, synastryPremiumUsed
   - pendulumFreeUsed, pendulumMoonPacksUsed, pendulumPremiumUsed
+  - horoscopeFutureDayMoonUsed, horoscopeWeeklyMoonUsed, horoscopeMonthlyMoonUsed
 - updatedAt: timestamp (opcional)
 
 ### /economyUsageWeekly/{weekKey}/users/{uid}
@@ -478,9 +485,9 @@ Campos (fase 1):
 ### /economyRequests/{uid}/requests/{requestId}
 Control de idempotencia para callables de economía.
 
-Campos (fase 5):
+Campos (fase 6):
 - requestId: string
-- type: string (`CLAIM_DAILY_LOGIN` | `CLAIM_REWARDED_AD` | `TAROT_1` | `TAROT_3` | `ORACLE_1Q` | `BIRTH_ESSENCE`)
+- type: string (`CLAIM_DAILY_LOGIN` | `CLAIM_REWARDED_AD` | `TAROT_1` | `TAROT_3` | `ORACLE_1Q` | `BIRTH_ESSENCE` | `HOROSCOPE_UNLOCK_DAY` | `HOROSCOPE_UNLOCK_WEEKLY` | `HOROSCOPE_UNLOCK_MONTHLY`)
 - result: string (`CLAIMED` | `DAILY_LIMIT_REACHED` | `ALREADY_CLAIMED` | `RESERVED` | `COMPLETED_SUCCESS` | `REFUNDED` | `FAILED`)
 - status: string opcional (`PROCESSING` | `FAILED` | `COMPLETED_SUCCESS`)
 - decisionSource: string opcional (`FREE` | `PREMIUM_INCLUDED` | `MOON` | `REJECT`)
@@ -492,6 +499,7 @@ Campos (fase 5):
 - usageApplied.lifetimeFlag: string opcional
 - dateIso: string opcional
 - weekKey: string opcional
+- monthKey: string opcional
 - lang: string opcional
 - question: string opcional (truncada)
 - response: map opcional (payload estable para `claimDailyLogin` / `claimRewardedAd`)
@@ -507,7 +515,21 @@ Notas:
 - La validación de `adProof` en esta fase es preparatoria (presencia + formato básico), sin verificación criptográfica/SSV real.
 
 ### /economyUnlocks/{uid}/horoscope/{unlockKey}
-Reservado para unlocks de horóscopo por fecha/período.
+Unlocks de horóscopo por fecha/período.
+
+`unlockKey` soportados:
+- `daily:{dateIso}`
+- `weekly:{weekKey}`
+- `monthly:{monthKey}`
 
 Campos:
-- TBD en fases siguientes.
+- unlockKey: string
+- type: string (`daily` | `weekly` | `monthly`)
+- dateIso: string opcional (`YYYY-MM-DD`) para daily
+- weekKey: string opcional (`YYYY-Www`) para weekly
+- monthKey: string opcional (`YYYY-MM`) para monthly
+- createdAt: timestamp
+- requestId: string
+- costCharged: number
+- premiumIncluded: boolean
+- contextSign: string opcional (auditoría; unlock sigue siendo por período)

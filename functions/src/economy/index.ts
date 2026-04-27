@@ -7,6 +7,8 @@ export * from './callables/getEconomyStatus';
 export * from './callables/claimDailyLogin';
 export * from './callables/claimRewardedAd';
 export * from './callables/getHoroscopeDailyUnlocks';
+export * from './callables/getHoroscopeWeeklyUnlocks';
+export * from './callables/getHoroscopeMonthlyUnlocks';
 
 export * from './runtimeConfig';
 export * from './tarotEconomy';
@@ -14,3 +16,5 @@ export * from './oracleEconomy';
 export * from './birthEssenceEconomy';
 
 export * from './callables/unlockHoroscopeDay';
+export * from './callables/unlockHoroscopeWeekly';
+export * from './callables/unlockHoroscopeMonthly';
