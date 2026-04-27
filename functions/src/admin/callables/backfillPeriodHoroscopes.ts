@@ -1,11 +1,7 @@
 import {DateTime} from 'luxon';
 import {HttpsError, onCall} from 'firebase-functions/v2/https';
-import {ENV, type Lang} from '../../config/env';
+import type {Lang} from '../../config/env';
 import type {ZodiacSign} from '../../firestore/paths';
-import {PeriodHoroscopeGenerator} from '../../generators/PeriodHoroscopeGenerator';
-import {buildRouter} from '../../llm/buildRouter';
-import {logger} from '../../utils/logger';
-import {withRetry} from '../../utils/retry';
 
 type BackfillPeriodType = 'weekly' | 'monthly';
 type BackfillInput = {
@@ -24,11 +20,18 @@ const ALL_SIGNS: ZodiacSign[] = [
 const MAX_WEEKLY_PERIODS = 8;
 const MAX_MONTHLY_PERIODS = 6;
 
-function assertAdminUid(uid: string | undefined) {
+function allowUnverifiedAppCheckInDev(): boolean {
+  const raw = process.env.ALLOW_UNVERIFIED_APPCHECK_IN_DEV;
+  if (raw == null || raw.trim() === '') return false;
+  const normalized = raw.trim().toLowerCase();
+  return normalized === '1' || normalized === 'true';
+}
+
+function assertAdminUid(uid: string | undefined, backfillAdminUids: string[]) {
   if (!uid) {
     throw new HttpsError('unauthenticated', 'Authentication is required');
   }
-  if (!ENV.BACKFILL_ADMIN_UIDS.includes(uid)) {
+  if (!backfillAdminUids.includes(uid)) {
     throw new HttpsError('permission-denied', 'Admin privileges required');
   }
 }
@@ -92,12 +95,12 @@ function sanitizeSigns(raw: unknown): ZodiacSign[] {
   return [...new Set(selected)];
 }
 
-function sanitizeLangs(raw: unknown): Lang[] {
+function sanitizeLangs(raw: unknown, activeLangs: Lang[]): Lang[] {
   if (!Array.isArray(raw) || raw.length === 0) {
-    return ENV.ACTIVE_LANGS.filter((lang) => lang !== 'es');
+    return activeLangs.filter((lang) => lang !== 'es');
   }
   const selected = raw
-      .filter((value): value is Lang => ENV.ACTIVE_LANGS.includes(value as Lang))
+      .filter((value): value is Lang => activeLangs.includes(value as Lang))
       .filter((lang) => lang !== 'es');
   return [...new Set(selected)];
 }
@@ -105,12 +108,26 @@ function sanitizeLangs(raw: unknown): Lang[] {
 export const backfillPeriodHoroscopes = onCall(
     {
       region: 'europe-west1',
-      enforceAppCheck: !ENV.ALLOW_UNVERIFIED_APPCHECK_IN_DEV,
+      enforceAppCheck: !allowUnverifiedAppCheckInDev(),
       timeoutSeconds: 600,
       secrets: ['DEEPSEEK_API_KEY'],
     },
     async (request) => {
-      assertAdminUid(request.auth?.uid);
+      const [
+        {ENV},
+        {buildRouter},
+        {PeriodHoroscopeGenerator},
+        {withRetry},
+        {logger},
+      ] = await Promise.all([
+        import('../../config/env.js'),
+        import('../../llm/buildRouter.js'),
+        import('../../generators/PeriodHoroscopeGenerator.js'),
+        import('../../utils/retry.js'),
+        import('../../utils/logger.js'),
+      ]);
+
+      assertAdminUid(request.auth?.uid, ENV.BACKFILL_ADMIN_UIDS);
 
       const input = (request.data ?? {}) as BackfillInput;
       if (input.periodType !== 'weekly' && input.periodType !== 'monthly') {
@@ -119,7 +136,7 @@ export const backfillPeriodHoroscopes = onCall(
 
       const periodKeys = buildPeriodKeys(input);
       const signs = sanitizeSigns(input.signs);
-      const langs = sanitizeLangs(input.langs);
+      const langs = sanitizeLangs(input.langs, ENV.ACTIVE_LANGS);
 
       const router = buildRouter();
       const generator = new PeriodHoroscopeGenerator(router);
