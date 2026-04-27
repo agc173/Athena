@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.calculateBottomPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -27,7 +28,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -87,10 +87,15 @@ fun HoroscopeScreen(
 
     Scaffold(
         modifier = modifier,
-        snackbarHost = { SnackbarHost(snackbarHostState) { Snackbar(it) } },
+        snackbarHost = {
+            SnackbarHost(
+                hostState = snackbarHostState,
+                modifier = Modifier.padding(bottom = contentPadding.calculateBottomPadding()),
+            ) { Snackbar(it) }
+        },
     ) { innerPadding ->
         HoroscopeScreenContent(
-            modifier = Modifier.padding(contentPadding).padding(innerPadding),
+            modifier = Modifier.padding(innerPadding).padding(contentPadding),
             state = state,
             strings = strings,
             onSelectTab = viewModel::onSelectTab,
@@ -98,7 +103,6 @@ fun HoroscopeScreen(
             onSelectWeek = viewModel::onSelectWeek,
             onSelectMonth = viewModel::onSelectMonth,
             onOpenSign = viewModel::onOpenSign,
-            onRefresh = viewModel::onRefresh,
             canEarnMoonsWithRewardedAd = economyState.rewardedAdsRemaining > 0,
             onEarnMoonsWithRewardedAd = { economyViewModel.claimRewardedAd("horoscope_period_lock_overlay") },
             onUnlock = {
@@ -153,7 +157,6 @@ private fun HoroscopeScreenContent(
     onSelectWeek: (HoroscopeWeekPeriod) -> Unit,
     onSelectMonth: (HoroscopeMonthPeriod) -> Unit,
     onOpenSign: (ZodiacSign) -> Unit,
-    onRefresh: () -> Unit,
     canEarnMoonsWithRewardedAd: Boolean,
     onEarnMoonsWithRewardedAd: () -> Unit,
     onUnlock: () -> Unit,
@@ -285,9 +288,6 @@ private fun HoroscopeScreenContent(
             }
         }
 
-        TextButton(onClick = onRefresh, enabled = !state.isRefreshing) {
-            Text(if (state.isRefreshing) strings.horoscope.refreshLoading else strings.horoscope.refreshCta)
-        }
     }
 
     val overlay = state.overlay

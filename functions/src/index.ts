@@ -284,7 +284,7 @@ export const generateWeeklyHoroscopesWindow = onSchedule(
       const canonicalTasks: Array<() => Promise<void>> = [];
       const translationTasks: Array<() => Promise<void>> = [];
 
-      for (let weekOffset = 0; weekOffset <= 1; weekOffset++) {
+      for (let weekOffset = 0; weekOffset <= 2; weekOffset++) {
         const weekKey = weekKeyMadrid(weekOffset, ENV);
 
         for (const sign of ZODIAC_SIGNS) {
@@ -412,7 +412,7 @@ export const generateMonthlyHoroscopesWindow = onSchedule(
       const canonicalTasks: Array<() => Promise<void>> = [];
       const translationTasks: Array<() => Promise<void>> = [];
 
-      for (let monthOffset = 0; monthOffset <= 1; monthOffset++) {
+      for (let monthOffset = 0; monthOffset <= 2; monthOffset++) {
         const monthKey = monthKeyMadrid(monthOffset, ENV);
 
         for (const sign of ZODIAC_SIGNS) {
