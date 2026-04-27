@@ -605,7 +605,7 @@ val fallbackAppStrings: AppStrings = AppStrings(
         habits = "Hábitos",
         tarot = "Tarot",
         pendulum = "El Péndulo",
-        horoscopeDaily = "Horóscopo diario",
+        horoscopeDaily = "Horóscopo",
     ),
     common = CommonStrings(
         languageSectionTitle = "Idioma de la app",
@@ -1061,7 +1061,7 @@ private val englishAppStrings = fallbackAppStrings.copy(
         dailyRitual = "Daily ritual",
         habits = "Habits",
         pendulum = "Pendulum",
-        horoscopeDaily = "Daily horoscope",
+        horoscopeDaily = "Horoscope",
     ),
     common = fallbackAppStrings.common.copy(
         languageSectionTitle = "App language",
@@ -1518,7 +1518,7 @@ private val portugueseAppStrings = fallbackAppStrings.copy(
         dailyRitual = "Ritual do dia",
         habits = "Hábitos",
         pendulum = "Pêndulo",
-        horoscopeDaily = "Horóscopo diário",
+        horoscopeDaily = "Horóscopo",
     ),
     common = fallbackAppStrings.common.copy(
         languageSectionTitle = "Idioma do app",
@@ -1962,7 +1962,7 @@ private val russianAppStrings = fallbackAppStrings.copy(
         dailyRitual = "Ритуал дня",
         habits = "Привычки",
         pendulum = "Маятник",
-        horoscopeDaily = "Ежедневный гороскоп",
+        horoscopeDaily = "Гороскоп",
     ),
     common = fallbackAppStrings.common.copy(
         languageSectionTitle = "Язык приложения",
@@ -2421,7 +2421,7 @@ private val frenchAppStrings = fallbackAppStrings.copy(
         dailyRitual = "Rituel du jour",
         habits = "Habitudes",
         pendulum = "Pendule",
-        horoscopeDaily = "Horoscope du jour",
+        horoscopeDaily = "Horoscope",
     ),
     common = fallbackAppStrings.common.copy(
         languageSectionTitle = "Langue de l'application",
@@ -2869,7 +2869,7 @@ private val italianAppStrings = fallbackAppStrings.copy(
         dailyRitual = "Rituale del giorno",
         habits = "Abitudini",
         pendulum = "Pendolo",
-        horoscopeDaily = "Oroscopo giornaliero",
+        horoscopeDaily = "Oroscopo",
     ),
     common = fallbackAppStrings.common.copy(
         languageSectionTitle = "Lingua dell'app",
@@ -3315,7 +3315,7 @@ private val germanAppStrings = fallbackAppStrings.copy(
         dailyRitual = "Tagesritual",
         habits = "Gewohnheiten",
         pendulum = "Pendel",
-        horoscopeDaily = "Tageshoroskop",
+        horoscopeDaily = "Horoskop",
     ),
     common = fallbackAppStrings.common.copy(
         languageSectionTitle = "App-Sprache",
