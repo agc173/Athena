@@ -2,9 +2,13 @@ package com.agc.bwitch.presentation.astrology.horoscope
 
 import com.agc.bwitch.domain.astrology.horoscope.GetDailyHoroscopeUseCase
 import com.agc.bwitch.domain.astrology.horoscope.GetHoroscopeFutureDayCostUseCase
+import com.agc.bwitch.domain.astrology.horoscope.GetMonthlyHoroscopeUseCase
+import com.agc.bwitch.domain.astrology.horoscope.GetWeeklyHoroscopeUseCase
 import com.agc.bwitch.domain.astrology.horoscope.HoroscopePullMarker
 import com.agc.bwitch.domain.astrology.horoscope.HoroscopeUnlockRepository
 import com.agc.bwitch.domain.astrology.horoscope.IsHoroscopeDayUnlockedUseCase
+import com.agc.bwitch.domain.astrology.horoscope.ObserveMonthlyHoroscopeUseCase
+import com.agc.bwitch.domain.astrology.horoscope.ObserveWeeklyHoroscopeUseCase
 import com.agc.bwitch.domain.astrology.horoscope.ObserveDailyHoroscopeUseCase
 import com.agc.bwitch.domain.astrology.horoscope.PullDailyHoroscopeUseCase
 import com.agc.bwitch.domain.astrology.horoscope.UnlockHoroscopeFutureDayUseCase
@@ -39,6 +43,10 @@ import kotlinx.datetime.toLocalDateTime
 class HoroscopeViewModel(
     private val observeDailyHoroscopeUseCase: ObserveDailyHoroscopeUseCase,
     private val getDailyHoroscopeUseCase: GetDailyHoroscopeUseCase,
+    private val observeWeeklyHoroscopeUseCase: ObserveWeeklyHoroscopeUseCase,
+    private val getWeeklyHoroscopeUseCase: GetWeeklyHoroscopeUseCase,
+    private val observeMonthlyHoroscopeUseCase: ObserveMonthlyHoroscopeUseCase,
+    private val getMonthlyHoroscopeUseCase: GetMonthlyHoroscopeUseCase,
     private val pullDailyHoroscopeUseCase: PullDailyHoroscopeUseCase,
     private val pullMarker: HoroscopePullMarker,
     private val resolveCurrentLanguageUseCase: ResolveCurrentLanguageUseCase,
@@ -62,6 +70,8 @@ class HoroscopeViewModel(
     private val currentLanguageCode = MutableStateFlow(AppLanguage.fallback.code)
 
     private var observeJob: Job? = null
+    private var observeWeeklyJob: Job? = null
+    private var observeMonthlyJob: Job? = null
     private var userHasManuallySelectedSign = false
     private var pendingUnlockTarget: PendingUnlockTarget? = null
     private val unlockedDatesSession = mutableSetOf<String>()
@@ -146,35 +156,11 @@ class HoroscopeViewModel(
     }
 
     fun onOpenSign(sign: ZodiacSign) {
-        if (_uiState.value.selectedTab != HoroscopeTab.Daily) {
-            onSelectSign(sign)
-            _uiState.update { it.copy(infoMessage = HoroscopeFeedbackMessage.ComingSoon) }
-            return
+        when (_uiState.value.selectedTab) {
+            HoroscopeTab.Daily -> openDailySign(sign)
+            HoroscopeTab.Weekly -> openWeeklySign(sign)
+            HoroscopeTab.Monthly -> openMonthlySign(sign)
         }
-
-        onSelectSign(sign)
-        val state = _uiState.value
-        val selectedDateIso = state.selectedDateIso.ifBlank { todayIso() }
-        val isLocked = state.days.firstOrNull { it.dateIso == selectedDateIso }?.isLocked == true
-
-        _uiState.update {
-            it.copy(
-                overlay = HoroscopeOverlayUi(
-                    sign = sign,
-                    dateIso = selectedDateIso,
-                    isLocked = isLocked,
-                    isLoading = !isLocked,
-                    horoscope = null,
-                    unlockErrorMessage = null,
-                    unlockErrorType = null,
-                ),
-            )
-        }
-        pendingUnlockTarget = if (isLocked) PendingUnlockTarget(selectedDateIso, sign) else null
-
-        if (isLocked) return
-
-        loadOverlayHoroscope(sign = sign, dateIso = selectedDateIso)
     }
 
     fun onCloseOverlay() {
@@ -185,7 +171,7 @@ class HoroscopeViewModel(
     fun onUnlockDeferredToPaywall() {
         val state = _uiState.value
         val overlay = state.overlay
-        if (overlay != null && overlay.isLocked) {
+        if (overlay is HoroscopeOverlayUi.DailyOverlay && overlay.isLocked) {
             pendingUnlockTarget = PendingUnlockTarget(
                 dateIso = state.selectedDateIso.ifBlank { todayIso() },
                 sign = overlay.sign,
@@ -194,7 +180,7 @@ class HoroscopeViewModel(
         _uiState.update { current ->
             current.copy(
                 lockCardMessage = null,
-                overlay = current.overlay?.copy(
+                overlay = (current.overlay as? HoroscopeOverlayUi.DailyOverlay)?.copy(
                     unlockErrorMessage = null,
                     unlockErrorType = null,
                 ),
@@ -213,7 +199,7 @@ class HoroscopeViewModel(
 
     fun onUnlockSelectedDay() {
         val state = _uiState.value
-        val overlay = state.overlay
+        val overlay = state.overlay as? HoroscopeOverlayUi.DailyOverlay
         val target = when {
             overlay != null && overlay.isLocked -> PendingUnlockTarget(
                 dateIso = state.selectedDateIso.ifBlank { todayIso() },
@@ -227,7 +213,7 @@ class HoroscopeViewModel(
             _uiState.update {
                 it.copy(
                     isUnlocking = true,
-                    overlay = it.overlay?.copy(
+                    overlay = (it.overlay as? HoroscopeOverlayUi.DailyOverlay)?.copy(
                         unlockErrorMessage = null,
                         unlockErrorType = null,
                     ),
@@ -241,7 +227,11 @@ class HoroscopeViewModel(
                     }
                     current.copy(
                         days = updatedDays,
-                        overlay = current.overlay?.copy(isLocked = false, unlockErrorMessage = null, unlockErrorType = null),
+                        overlay = (current.overlay as? HoroscopeOverlayUi.DailyOverlay)?.copy(
+                            isLocked = false,
+                            unlockErrorMessage = null,
+                            unlockErrorType = null,
+                        ),
                     )
                 }
                 loadOverlayHoroscope(sign = target.sign, dateIso = target.dateIso)
@@ -263,7 +253,7 @@ class HoroscopeViewModel(
                     val updatedDays = current.days.map { day ->
                         if (day.dateIso == target.dateIso) day.copy(isLocked = false, isUnlocked = true) else day
                     }
-                    val updatedOverlay = current.overlay?.takeIf {
+                    val updatedOverlay = (current.overlay as? HoroscopeOverlayUi.DailyOverlay)?.takeIf {
                         it.dateIso == target.dateIso && it.sign == target.sign
                     }?.copy(
                         isLocked = false,
@@ -290,10 +280,12 @@ class HoroscopeViewModel(
                     } else {
                         HoroscopeFeedbackMessage.UnlockFailed
                     }
-                    val overlayMatchesTarget = it.overlay?.dateIso == target.dateIso && it.overlay?.sign == target.sign
+                    val overlayMatchesTarget = (it.overlay as? HoroscopeOverlayUi.DailyOverlay)?.let { currentOverlay ->
+                        currentOverlay.dateIso == target.dateIso && currentOverlay.sign == target.sign
+                    } == true
                     if (overlayMatchesTarget) {
                         it.copy(
-                            overlay = it.overlay?.copy(
+                            overlay = (it.overlay as? HoroscopeOverlayUi.DailyOverlay)?.copy(
                                 unlockErrorMessage = unlockErrorMessage,
                                 unlockErrorType = if (isInsufficient) InsufficientMoons else Backend,
                             ),
@@ -501,8 +493,13 @@ class HoroscopeViewModel(
 
     private fun refreshSelectedPeriodContentAvailability() {
         scope.launch {
-            // TODO: Weekly/Monthly content availability must be resolved from their own repository/use-cases.
-            // Do NOT infer with DailyHoroscope as proxy.
+            val state = _uiState.value
+            if (state.selectedTab == HoroscopeTab.Daily) {
+                _uiState.update { it.copy(isContentAvailable = true, isCheckingContentAvailability = false) }
+                return@launch
+            }
+            // En Weekly/Monthly mantenemos política conservadora: no bloquear unlock por heurísticas parciales
+            // de disponibilidad (p.ej. signo/idioma concreto aún no backfilleado).
             _uiState.update { it.copy(isContentAvailable = true, isCheckingContentAvailability = false) }
         }
     }
@@ -514,11 +511,17 @@ class HoroscopeViewModel(
         val languageCode = currentLanguageCode.value
 
         observeJob?.cancel()
+        observeWeeklyJob?.cancel()
+        observeMonthlyJob?.cancel()
         observeJob = scope.launch {
             observeDailyHoroscopeUseCase(dateIso, sign, languageCode).collectLatest { cached ->
                 _uiState.update { current ->
                     val overlay = current.overlay
-                    val updatedOverlay = if (overlay != null && overlay.sign == sign && overlay.dateIso == dateIso && !overlay.isLocked) {
+                    val updatedOverlay = if (overlay is HoroscopeOverlayUi.DailyOverlay &&
+                        overlay.sign == sign &&
+                        overlay.dateIso == dateIso &&
+                        !overlay.isLocked
+                    ) {
                         overlay.copy(horoscope = cached, isLoading = false)
                     } else {
                         overlay
@@ -548,8 +551,77 @@ class HoroscopeViewModel(
             }
             _uiState.update { current ->
                 val overlay = current.overlay ?: return@update current
+                if (overlay !is HoroscopeOverlayUi.DailyOverlay) return@update current
                 if (overlay.sign != sign || overlay.dateIso != dateIso) return@update current
                 current.copy(overlay = overlay.copy(isLoading = false, horoscope = loaded))
+            }
+        }
+    }
+
+    private fun openDailySign(sign: ZodiacSign) {
+        onSelectSign(sign)
+        val state = _uiState.value
+        val selectedDateIso = state.selectedDateIso.ifBlank { todayIso() }
+        val isLocked = state.days.firstOrNull { it.dateIso == selectedDateIso }?.isLocked == true
+
+        _uiState.update {
+            it.copy(
+                overlay = HoroscopeOverlayUi.DailyOverlay(
+                    sign = sign,
+                    dateIso = selectedDateIso,
+                    isLocked = isLocked,
+                    isLoading = !isLocked,
+                    horoscope = null,
+                    unlockErrorMessage = null,
+                    unlockErrorType = null,
+                ),
+            )
+        }
+        pendingUnlockTarget = if (isLocked) PendingUnlockTarget(selectedDateIso, sign) else null
+        if (isLocked) return
+        loadOverlayHoroscope(sign = sign, dateIso = selectedDateIso)
+    }
+
+    private fun openWeeklySign(sign: ZodiacSign) {
+        val state = _uiState.value
+        if (state.isWeekLocked) return
+        val weekKey = state.selectedWeekKey.ifBlank { currentWeekKey() }
+        onSelectSign(sign)
+        _uiState.update { it.copy(overlay = HoroscopeOverlayUi.WeeklyOverlay(sign = sign, weekKey = weekKey, isLoading = true, horoscope = null)) }
+        observeWeeklyOverlay(sign = sign, weekKey = weekKey)
+    }
+
+    private fun openMonthlySign(sign: ZodiacSign) {
+        val state = _uiState.value
+        if (state.isMonthLocked) return
+        val monthKey = state.selectedMonthKey.ifBlank { currentMonthKey() }
+        onSelectSign(sign)
+        _uiState.update { it.copy(overlay = HoroscopeOverlayUi.MonthlyOverlay(sign = sign, monthKey = monthKey, isLoading = true, horoscope = null)) }
+        observeMonthlyOverlay(sign = sign, monthKey = monthKey)
+    }
+
+    private fun observeWeeklyOverlay(sign: ZodiacSign, weekKey: String) {
+        observeWeeklyJob?.cancel()
+        observeWeeklyJob = scope.launch {
+            observeWeeklyHoroscopeUseCase(weekKey, sign, currentLanguageCode.value).collectLatest { cached ->
+                _uiState.update { current ->
+                    val overlay = current.overlay as? HoroscopeOverlayUi.WeeklyOverlay ?: return@update current
+                    if (overlay.sign != sign || overlay.weekKey != weekKey) return@update current
+                    current.copy(overlay = overlay.copy(isLoading = false, horoscope = cached))
+                }
+            }
+        }
+    }
+
+    private fun observeMonthlyOverlay(sign: ZodiacSign, monthKey: String) {
+        observeMonthlyJob?.cancel()
+        observeMonthlyJob = scope.launch {
+            observeMonthlyHoroscopeUseCase(monthKey, sign, currentLanguageCode.value).collectLatest { cached ->
+                _uiState.update { current ->
+                    val overlay = current.overlay as? HoroscopeOverlayUi.MonthlyOverlay ?: return@update current
+                    if (overlay.sign != sign || overlay.monthKey != monthKey) return@update current
+                    current.copy(overlay = overlay.copy(isLoading = false, horoscope = cached))
+                }
             }
         }
     }

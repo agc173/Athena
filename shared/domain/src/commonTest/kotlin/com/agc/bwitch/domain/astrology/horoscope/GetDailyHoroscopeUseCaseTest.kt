@@ -58,5 +58,17 @@ class GetDailyHoroscopeUseCaseTest {
         override suspend fun getDaily(dateIso: String, sign: ZodiacSign, languageCode: String): DailyHoroscope? {
             return value
         }
+
+        override fun observeWeekly(weekKey: String, sign: ZodiacSign, languageCode: String): Flow<WeeklyHoroscope?> =
+            flowOf(null)
+
+        override suspend fun getWeekly(weekKey: String, sign: ZodiacSign, languageCode: String): WeeklyHoroscope? =
+            null
+
+        override fun observeMonthly(monthKey: String, sign: ZodiacSign, languageCode: String): Flow<MonthlyHoroscope?> =
+            flowOf(null)
+
+        override suspend fun getMonthly(monthKey: String, sign: ZodiacSign, languageCode: String): MonthlyHoroscope? =
+            null
     }
 }

@@ -1,6 +1,8 @@
 package com.agc.bwitch.presentation.astrology.horoscope
 
 import com.agc.bwitch.domain.astrology.horoscope.DailyHoroscope
+import com.agc.bwitch.domain.astrology.horoscope.MonthlyHoroscope
+import com.agc.bwitch.domain.astrology.horoscope.WeeklyHoroscope
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
 
 data class HoroscopeUiState(
@@ -47,15 +49,44 @@ data class HoroscopeDayItemUi(
     val cost: Int,
 )
 
-data class HoroscopeOverlayUi(
-    val sign: ZodiacSign,
-    val dateIso: String,
-    val isLocked: Boolean,
-    val isLoading: Boolean,
-    val horoscope: DailyHoroscope?,
-    val unlockErrorMessage: HoroscopeFeedbackMessage? = null,
-    val unlockErrorType: HoroscopeUnlockErrorType? = null,
-)
+sealed interface HoroscopeOverlayUi {
+    val sign: ZodiacSign
+    val periodLabel: String
+    val isLocked: Boolean
+    val isLoading: Boolean
+
+    data class DailyOverlay(
+        override val sign: ZodiacSign,
+        val dateIso: String,
+        override val isLocked: Boolean,
+        override val isLoading: Boolean,
+        val horoscope: DailyHoroscope?,
+        val unlockErrorMessage: HoroscopeFeedbackMessage? = null,
+        val unlockErrorType: HoroscopeUnlockErrorType? = null,
+    ) : HoroscopeOverlayUi {
+        override val periodLabel: String = dateIso
+    }
+
+    data class WeeklyOverlay(
+        override val sign: ZodiacSign,
+        val weekKey: String,
+        override val isLoading: Boolean,
+        val horoscope: WeeklyHoroscope?,
+    ) : HoroscopeOverlayUi {
+        override val isLocked: Boolean = false
+        override val periodLabel: String = weekKey
+    }
+
+    data class MonthlyOverlay(
+        override val sign: ZodiacSign,
+        val monthKey: String,
+        override val isLoading: Boolean,
+        val horoscope: MonthlyHoroscope?,
+    ) : HoroscopeOverlayUi {
+        override val isLocked: Boolean = false
+        override val periodLabel: String = monthKey
+    }
+}
 
 enum class HoroscopeUnlockErrorType {
     InsufficientMoons,
