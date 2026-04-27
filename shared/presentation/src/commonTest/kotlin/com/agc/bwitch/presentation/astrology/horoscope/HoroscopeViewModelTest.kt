@@ -37,6 +37,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -231,6 +232,48 @@ class HoroscopeViewModelTest {
         advanceUntilIdle()
 
         assertTrue(viewModel.uiState.value.overlay is HoroscopeOverlayUi.MonthlyOverlay)
+    }
+
+    @Test
+    fun weekly_unlockedWhenRepoFails_doesNotCrash_andStopsLoadingWithNullContent() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val unlockRepository = FakeUnlockRepository(unlockQueriedWeeks = true)
+        val repo = FakeRepo().apply {
+            throwOnObserveWeekly = true
+        }
+        val viewModel = createViewModel(dispatcher, unlockRepository, repo)
+        advanceUntilIdle()
+
+        viewModel.onSelectTab(HoroscopeTab.Weekly)
+        advanceUntilIdle()
+        viewModel.onOpenSign(ZodiacSign.aries)
+        advanceUntilIdle()
+
+        val overlay = viewModel.uiState.value.overlay as? HoroscopeOverlayUi.WeeklyOverlay
+        assertNotNull(overlay)
+        assertFalse(overlay.isLoading)
+        assertNull(overlay.horoscope)
+    }
+
+    @Test
+    fun monthly_unlockedWhenRepoFails_doesNotCrash_andStopsLoadingWithNullContent() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val unlockRepository = FakeUnlockRepository(unlockQueriedMonths = true)
+        val repo = FakeRepo().apply {
+            throwOnObserveMonthly = true
+        }
+        val viewModel = createViewModel(dispatcher, unlockRepository, repo)
+        advanceUntilIdle()
+
+        viewModel.onSelectTab(HoroscopeTab.Monthly)
+        advanceUntilIdle()
+        viewModel.onOpenSign(ZodiacSign.aries)
+        advanceUntilIdle()
+
+        val overlay = viewModel.uiState.value.overlay as? HoroscopeOverlayUi.MonthlyOverlay
+        assertNotNull(overlay)
+        assertFalse(overlay.isLoading)
+        assertNull(overlay.horoscope)
     }
 
     @Test
@@ -608,6 +651,8 @@ class HoroscopeViewModelTest {
         private val state = MutableStateFlow<DailyHoroscope?>(null)
         private val weeklyState = MutableStateFlow<WeeklyHoroscope?>(null)
         private val monthlyState = MutableStateFlow<MonthlyHoroscope?>(null)
+        var throwOnObserveWeekly: Boolean = false
+        var throwOnObserveMonthly: Boolean = false
 
         fun emit(value: DailyHoroscope?) {
             state.value = value
@@ -631,6 +676,7 @@ class HoroscopeViewModelTest {
         }
 
         override fun observeWeekly(weekKey: String, sign: ZodiacSign, languageCode: String): Flow<WeeklyHoroscope?> {
+            if (throwOnObserveWeekly) return flow { throw RuntimeException("weekly observe boom") }
             return weeklyState.asStateFlow()
         }
 
@@ -639,6 +685,7 @@ class HoroscopeViewModelTest {
         }
 
         override fun observeMonthly(monthKey: String, sign: ZodiacSign, languageCode: String): Flow<MonthlyHoroscope?> {
+            if (throwOnObserveMonthly) return flow { throw RuntimeException("monthly observe boom") }
             return monthlyState.asStateFlow()
         }
 

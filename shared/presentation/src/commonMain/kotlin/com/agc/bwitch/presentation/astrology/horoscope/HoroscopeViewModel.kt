@@ -28,6 +28,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -603,26 +604,42 @@ class HoroscopeViewModel(
     private fun observeWeeklyOverlay(sign: ZodiacSign, weekKey: String) {
         observeWeeklyJob?.cancel()
         observeWeeklyJob = scope.launch {
-            observeWeeklyHoroscopeUseCase(weekKey, sign, currentLanguageCode.value).collectLatest { cached ->
-                _uiState.update { current ->
-                    val overlay = current.overlay as? HoroscopeOverlayUi.WeeklyOverlay ?: return@update current
-                    if (overlay.sign != sign || overlay.weekKey != weekKey) return@update current
-                    current.copy(overlay = overlay.copy(isLoading = false, horoscope = cached))
+            observeWeeklyHoroscopeUseCase(weekKey, sign, currentLanguageCode.value)
+                .catch {
+                    _uiState.update { current ->
+                        val overlay = current.overlay as? HoroscopeOverlayUi.WeeklyOverlay ?: return@update current
+                        if (overlay.sign != sign || overlay.weekKey != weekKey) return@update current
+                        current.copy(overlay = overlay.copy(isLoading = false, horoscope = null))
+                    }
                 }
-            }
+                .collectLatest { cached ->
+                    _uiState.update { current ->
+                        val overlay = current.overlay as? HoroscopeOverlayUi.WeeklyOverlay ?: return@update current
+                        if (overlay.sign != sign || overlay.weekKey != weekKey) return@update current
+                        current.copy(overlay = overlay.copy(isLoading = false, horoscope = cached))
+                    }
+                }
         }
     }
 
     private fun observeMonthlyOverlay(sign: ZodiacSign, monthKey: String) {
         observeMonthlyJob?.cancel()
         observeMonthlyJob = scope.launch {
-            observeMonthlyHoroscopeUseCase(monthKey, sign, currentLanguageCode.value).collectLatest { cached ->
-                _uiState.update { current ->
-                    val overlay = current.overlay as? HoroscopeOverlayUi.MonthlyOverlay ?: return@update current
-                    if (overlay.sign != sign || overlay.monthKey != monthKey) return@update current
-                    current.copy(overlay = overlay.copy(isLoading = false, horoscope = cached))
+            observeMonthlyHoroscopeUseCase(monthKey, sign, currentLanguageCode.value)
+                .catch {
+                    _uiState.update { current ->
+                        val overlay = current.overlay as? HoroscopeOverlayUi.MonthlyOverlay ?: return@update current
+                        if (overlay.sign != sign || overlay.monthKey != monthKey) return@update current
+                        current.copy(overlay = overlay.copy(isLoading = false, horoscope = null))
+                    }
                 }
-            }
+                .collectLatest { cached ->
+                    _uiState.update { current ->
+                        val overlay = current.overlay as? HoroscopeOverlayUi.MonthlyOverlay ?: return@update current
+                        if (overlay.sign != sign || overlay.monthKey != monthKey) return@update current
+                        current.copy(overlay = overlay.copy(isLoading = false, horoscope = cached))
+                    }
+                }
         }
     }
 
