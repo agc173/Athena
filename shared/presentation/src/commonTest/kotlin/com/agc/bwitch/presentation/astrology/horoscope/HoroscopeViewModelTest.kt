@@ -22,8 +22,10 @@ import com.agc.bwitch.domain.userprofile.UserProfile
 import com.agc.bwitch.domain.userprofile.UserProfileRepository
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -80,6 +82,7 @@ class HoroscopeViewModelTest {
             getHoroscopeFutureDayCostUseCase = getHoroscopeFutureDayCostUseCase,
             isHoroscopeDayUnlockedUseCase = isHoroscopeDayUnlockedUseCase,
             unlockHoroscopeFutureDayUseCase = unlockHoroscopeFutureDayUseCase,
+            unlockRepository = unlockRepository,
             dispatcher = dispatcher,
         )
 
@@ -91,6 +94,66 @@ class HoroscopeViewModelTest {
         assertNotNull(state.overlay?.horoscope)
         assertNull(state.errorMessage)
         assertEquals(false, state.isLoading)
+    }
+
+    @Test
+    fun weekly_isLockedByDefault_whenNoUnlockExists() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val unlockRepository = FakeUnlockRepository()
+        val viewModel = createViewModel(dispatcher, unlockRepository)
+
+        advanceUntilIdle()
+        viewModel.onSelectTab(HoroscopeTab.Weekly)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.isWeekLocked)
+    }
+
+    @Test
+    fun weekly_isUnlocked_whenRemoteReturnsSelectedWeekKey() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val unlockRepository = FakeUnlockRepository(unlockQueriedWeeks = true)
+        val viewModel = createViewModel(dispatcher, unlockRepository)
+
+        advanceUntilIdle()
+        viewModel.onSelectTab(HoroscopeTab.Weekly)
+        advanceUntilIdle()
+
+        assertFalse(viewModel.uiState.value.isWeekLocked)
+    }
+
+    @Test
+    fun unlockWeek_keepsSessionUnlocked_whenRemoteBatchFailsLater() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val unlockRepository = FakeUnlockRepository()
+        val viewModel = createViewModel(dispatcher, unlockRepository)
+
+        advanceUntilIdle()
+        viewModel.onSelectTab(HoroscopeTab.Weekly)
+        advanceUntilIdle()
+        viewModel.onUnlockSelectedWeek()
+        advanceUntilIdle()
+
+        unlockRepository.failWeekBatchReads = true
+        viewModel.onSelectWeek(HoroscopeWeekPeriod.ThisWeek)
+        advanceUntilIdle()
+
+        assertFalse(viewModel.uiState.value.isWeekLocked)
+    }
+
+    @Test
+    fun unlockMonth_setsUnlockedState() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val unlockRepository = FakeUnlockRepository()
+        val viewModel = createViewModel(dispatcher, unlockRepository)
+
+        advanceUntilIdle()
+        viewModel.onSelectTab(HoroscopeTab.Monthly)
+        advanceUntilIdle()
+        viewModel.onUnlockSelectedMonth()
+        advanceUntilIdle()
+
+        assertFalse(viewModel.uiState.value.isMonthLocked)
     }
 
     @Test
@@ -136,6 +199,7 @@ class HoroscopeViewModelTest {
             getHoroscopeFutureDayCostUseCase = getHoroscopeFutureDayCostUseCase,
             isHoroscopeDayUnlockedUseCase = isHoroscopeDayUnlockedUseCase,
             unlockHoroscopeFutureDayUseCase = unlockHoroscopeFutureDayUseCase,
+            unlockRepository = unlockRepository,
             dispatcher = dispatcher,
         )
 
@@ -206,6 +270,7 @@ class HoroscopeViewModelTest {
             getHoroscopeFutureDayCostUseCase = getHoroscopeFutureDayCostUseCase,
             isHoroscopeDayUnlockedUseCase = isHoroscopeDayUnlockedUseCase,
             unlockHoroscopeFutureDayUseCase = unlockHoroscopeFutureDayUseCase,
+            unlockRepository = unlockRepository,
             dispatcher = dispatcher,
         )
 
@@ -245,6 +310,7 @@ class HoroscopeViewModelTest {
             getHoroscopeFutureDayCostUseCase = getHoroscopeFutureDayCostUseCase,
             isHoroscopeDayUnlockedUseCase = isHoroscopeDayUnlockedUseCase,
             unlockHoroscopeFutureDayUseCase = unlockHoroscopeFutureDayUseCase,
+            unlockRepository = unlockRepository,
             dispatcher = dispatcher,
         )
 
@@ -291,6 +357,7 @@ class HoroscopeViewModelTest {
             getHoroscopeFutureDayCostUseCase = getHoroscopeFutureDayCostUseCase,
             isHoroscopeDayUnlockedUseCase = isHoroscopeDayUnlockedUseCase,
             unlockHoroscopeFutureDayUseCase = unlockHoroscopeFutureDayUseCase,
+            unlockRepository = unlockRepository,
             dispatcher = dispatcher,
         )
 
@@ -336,6 +403,7 @@ class HoroscopeViewModelTest {
             getHoroscopeFutureDayCostUseCase = getHoroscopeFutureDayCostUseCase,
             isHoroscopeDayUnlockedUseCase = isHoroscopeDayUnlockedUseCase,
             unlockHoroscopeFutureDayUseCase = unlockHoroscopeFutureDayUseCase,
+            unlockRepository = unlockRepository,
             dispatcher = dispatcher,
         )
 
@@ -380,6 +448,7 @@ class HoroscopeViewModelTest {
             getHoroscopeFutureDayCostUseCase = getHoroscopeFutureDayCostUseCase,
             isHoroscopeDayUnlockedUseCase = isHoroscopeDayUnlockedUseCase,
             unlockHoroscopeFutureDayUseCase = unlockHoroscopeFutureDayUseCase,
+            unlockRepository = unlockRepository,
             dispatcher = dispatcher,
         )
 
@@ -405,6 +474,38 @@ class HoroscopeViewModelTest {
         override suspend fun getDaily(dateIso: String, sign: ZodiacSign, languageCode: String): DailyHoroscope? {
             return state.value
         }
+    }
+
+    private fun createViewModel(
+        dispatcher: StandardTestDispatcher,
+        unlockRepository: HoroscopeUnlockRepository,
+    ): HoroscopeViewModel {
+        val repo = FakeRepo()
+        val observeUseCase = ObserveDailyHoroscopeUseCase(repo)
+        val getUseCase = GetDailyHoroscopeUseCase(repo)
+        val pullUseCase = PullDailyHoroscopeUseCase(FakeSync())
+        val languageRepository = FakeAppLanguageRepository()
+        val resolveLanguageUseCase = ResolveCurrentLanguageUseCase(languageRepository)
+        val observeLanguageUseCase = ObserveCurrentLanguageUseCase(languageRepository)
+        val observeUserProfileUseCase = ObserveUserProfileUseCase(FakeUserProfileRepo())
+        val getHoroscopeFutureDayCostUseCase = GetHoroscopeFutureDayCostUseCase(unlockRepository)
+        val isHoroscopeDayUnlockedUseCase = IsHoroscopeDayUnlockedUseCase(unlockRepository)
+        val unlockHoroscopeFutureDayUseCase = UnlockHoroscopeFutureDayUseCase(unlockRepository)
+        val pullMarker = FakePullMarker(lastPulledDateIso = currentSystemTodayIsoForTests())
+        return HoroscopeViewModel(
+            observeDailyHoroscopeUseCase = observeUseCase,
+            getDailyHoroscopeUseCase = getUseCase,
+            pullDailyHoroscopeUseCase = pullUseCase,
+            pullMarker = pullMarker,
+            resolveCurrentLanguageUseCase = resolveLanguageUseCase,
+            observeCurrentLanguageUseCase = observeLanguageUseCase,
+            observeUserProfileUseCase = observeUserProfileUseCase,
+            getHoroscopeFutureDayCostUseCase = getHoroscopeFutureDayCostUseCase,
+            isHoroscopeDayUnlockedUseCase = isHoroscopeDayUnlockedUseCase,
+            unlockHoroscopeFutureDayUseCase = unlockHoroscopeFutureDayUseCase,
+            unlockRepository = unlockRepository,
+            dispatcher = dispatcher,
+        )
     }
 
     private class FakeSync : HoroscopeDailySyncController {
@@ -455,6 +556,9 @@ class HoroscopeViewModelTest {
 
         override suspend fun getUnlockedDays(dateIsoList: List<String>): Set<String> = emptySet()
 
+        override suspend fun getWeeklyCost(): Int = 2
+        override suspend fun getMonthlyCost(): Int = 3
+
         override suspend fun unlockFutureDay(dateIso: String, requestId: String, sign: ZodiacSign): HoroscopeUnlockResult {
             unlockCalls += 1
             return HoroscopeUnlockResult(
@@ -489,10 +593,20 @@ class HoroscopeViewModelTest {
     private class FakeUnlockRepository(
         private val futureDayCost: Int = 1,
         unlockedDates: Set<String> = emptySet(),
+        unlockedWeeks: Set<String> = emptySet(),
+        unlockedMonths: Set<String> = emptySet(),
+        private val unlockQueriedWeeks: Boolean = false,
+        private val unlockQueriedMonths: Boolean = false,
     ) : HoroscopeUnlockRepository {
         private val unlocked = unlockedDates.toMutableSet()
+        private val unlockedWeekKeys = unlockedWeeks.toMutableSet()
+        private val unlockedMonthKeys = unlockedMonths.toMutableSet()
+        var failWeekBatchReads: Boolean = false
+        var failMonthBatchReads: Boolean = false
 
         override suspend fun getFutureDayCost(): Int = futureDayCost
+        override suspend fun getWeeklyCost(): Int = 2
+        override suspend fun getMonthlyCost(): Int = 3
 
         override suspend fun isUnlocked(dateIso: String): Boolean = unlocked.contains(dateIso)
 
@@ -507,6 +621,40 @@ class HoroscopeViewModelTest {
                 alreadyUnlocked = alreadyUnlocked,
                 balanceAfter = 0,
                 costCharged = if (alreadyUnlocked) 0 else futureDayCost,
+            )
+        }
+
+        override suspend fun getUnlockedWeeks(weekKeyList: List<String>): Set<String> {
+            if (failWeekBatchReads) throw IllegalStateException("batch week read failed")
+            if (unlockQueriedWeeks) return weekKeyList.toSet()
+            return weekKeyList.filterTo(mutableSetOf()) { unlockedWeekKeys.contains(it) }
+        }
+
+        override suspend fun getUnlockedMonths(monthKeyList: List<String>): Set<String> {
+            if (failMonthBatchReads) throw IllegalStateException("batch month read failed")
+            if (unlockQueriedMonths) return monthKeyList.toSet()
+            return monthKeyList.filterTo(mutableSetOf()) { unlockedMonthKeys.contains(it) }
+        }
+
+        override suspend fun unlockWeek(weekKey: String, requestId: String, sign: ZodiacSign): HoroscopeUnlockResult {
+            val alreadyUnlocked = unlockedWeekKeys.contains(weekKey)
+            unlockedWeekKeys += weekKey
+            return HoroscopeUnlockResult(
+                unlocked = true,
+                alreadyUnlocked = alreadyUnlocked,
+                balanceAfter = 0,
+                costCharged = if (alreadyUnlocked) 0 else 2,
+            )
+        }
+
+        override suspend fun unlockMonth(monthKey: String, requestId: String, sign: ZodiacSign): HoroscopeUnlockResult {
+            val alreadyUnlocked = unlockedMonthKeys.contains(monthKey)
+            unlockedMonthKeys += monthKey
+            return HoroscopeUnlockResult(
+                unlocked = true,
+                alreadyUnlocked = alreadyUnlocked,
+                balanceAfter = 0,
+                costCharged = if (alreadyUnlocked) 0 else 3,
             )
         }
     }

@@ -3,6 +3,7 @@ package com.agc.bwitch.presentation.astrology.horoscope
 import com.agc.bwitch.domain.astrology.horoscope.GetDailyHoroscopeUseCase
 import com.agc.bwitch.domain.astrology.horoscope.GetHoroscopeFutureDayCostUseCase
 import com.agc.bwitch.domain.astrology.horoscope.HoroscopePullMarker
+import com.agc.bwitch.domain.astrology.horoscope.HoroscopeUnlockRepository
 import com.agc.bwitch.domain.astrology.horoscope.IsHoroscopeDayUnlockedUseCase
 import com.agc.bwitch.domain.astrology.horoscope.ObserveDailyHoroscopeUseCase
 import com.agc.bwitch.domain.astrology.horoscope.PullDailyHoroscopeUseCase
@@ -46,6 +47,7 @@ class HoroscopeViewModel(
     private val getHoroscopeFutureDayCostUseCase: GetHoroscopeFutureDayCostUseCase,
     private val isHoroscopeDayUnlockedUseCase: IsHoroscopeDayUnlockedUseCase,
     private val unlockHoroscopeFutureDayUseCase: UnlockHoroscopeFutureDayUseCase,
+    private val unlockRepository: HoroscopeUnlockRepository,
     private val dispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {
     private data class PendingUnlockTarget(
@@ -63,13 +65,12 @@ class HoroscopeViewModel(
     private var userHasManuallySelectedSign = false
     private var pendingUnlockTarget: PendingUnlockTarget? = null
     private val unlockedDatesSession = mutableSetOf<String>()
+    private val unlockedWeekKeysSession = mutableSetOf<String>()
+    private val unlockedMonthKeysSession = mutableSetOf<String>()
 
     init {
         scope.launch { runCatching { resolveCurrentLanguageUseCase() } }
-        scope.launch {
-            val cost = runCatching { getHoroscopeFutureDayCostUseCase() }.getOrDefault(1)
-            _uiState.update { it.copy(futureDayCost = cost) }
-        }
+        scope.launch { loadCostsAndPeriods() }
 
         scope.launch {
             observeCurrentLanguageUseCase()
@@ -104,6 +105,34 @@ class HoroscopeViewModel(
         observeSelectedHoroscope()
     }
 
+    fun onSelectWeek(period: HoroscopeWeekPeriod) {
+        _uiState.update {
+            it.copy(
+                selectedWeek = period,
+                selectedWeekKey = when (period) {
+                    HoroscopeWeekPeriod.ThisWeek -> currentWeekKey()
+                    HoroscopeWeekPeriod.NextWeek -> nextWeekKey()
+                },
+                lockCardMessage = null,
+            )
+        }
+        refreshWeeklyMonthlyLocks()
+    }
+
+    fun onSelectMonth(period: HoroscopeMonthPeriod) {
+        _uiState.update {
+            it.copy(
+                selectedMonth = period,
+                selectedMonthKey = when (period) {
+                    HoroscopeMonthPeriod.ThisMonth -> currentMonthKey()
+                    HoroscopeMonthPeriod.NextMonth -> nextMonthKey()
+                },
+                lockCardMessage = null,
+            )
+        }
+        refreshWeeklyMonthlyLocks()
+    }
+
     fun onRefresh() {
         scope.launch {
             val selectedDateIso = _uiState.value.selectedDateIso.ifBlank { todayIso() }
@@ -115,6 +144,12 @@ class HoroscopeViewModel(
     }
 
     fun onOpenSign(sign: ZodiacSign) {
+        if (_uiState.value.selectedTab != HoroscopeTab.Daily) {
+            onSelectSign(sign)
+            _uiState.update { it.copy(infoMessage = HoroscopeFeedbackMessage.ComingSoon) }
+            return
+        }
+
         onSelectSign(sign)
         val state = _uiState.value
         val selectedDateIso = state.selectedDateIso.ifBlank { todayIso() }
@@ -156,6 +191,7 @@ class HoroscopeViewModel(
         }
         _uiState.update { current ->
             current.copy(
+                lockCardMessage = null,
                 overlay = current.overlay?.copy(
                     unlockErrorMessage = null,
                     unlockErrorType = null,
@@ -163,6 +199,14 @@ class HoroscopeViewModel(
             )
         }
         _uiState.update { it.copy(overlay = null) }
+    }
+
+    fun onUnlockWeekDeferredToPaywall() {
+        _uiState.update { it.copy(lockCardMessage = null) }
+    }
+
+    fun onUnlockMonthDeferredToPaywall() {
+        _uiState.update { it.copy(lockCardMessage = null) }
     }
 
     fun onUnlockSelectedDay() {
@@ -207,7 +251,7 @@ class HoroscopeViewModel(
             runCatching {
                 unlockHoroscopeFutureDayUseCase(
                     dateIso = target.dateIso,
-                    requestId = buildRequestId(target.dateIso),
+                    requestId = buildDailyRequestId(target.dateIso),
                     sign = target.sign,
                 )
             }.onSuccess {
@@ -237,8 +281,7 @@ class HoroscopeViewModel(
                 }
                 rebuildDays()
             }.onFailure { error ->
-                val isInsufficient = error.message.orEmpty().lowercase().contains("insufficient") ||
-                    error.message.orEmpty().lowercase().contains("moon")
+                val isInsufficient = error.isInsufficientMoons()
                 _uiState.update {
                     val unlockErrorMessage = if (isInsufficient) {
                         HoroscopeFeedbackMessage.UnlockInsufficientMoons
@@ -262,15 +305,95 @@ class HoroscopeViewModel(
         }
     }
 
+    fun onUnlockSelectedWeek() {
+        val state = _uiState.value
+        val weekKey = state.selectedWeekKey
+        if (weekKey.isBlank()) return
+
+        scope.launch {
+            _uiState.update { it.copy(isUnlocking = true, lockCardMessage = null) }
+            runCatching {
+                unlockRepository.unlockWeek(
+                    weekKey = weekKey,
+                    requestId = buildWeeklyRequestId(weekKey),
+                    sign = state.selectedSign,
+                )
+            }.onSuccess {
+                unlockedWeekKeysSession += weekKey
+                _uiState.update {
+                    it.copy(
+                        isUnlocking = false,
+                        isWeekLocked = false,
+                        infoMessage = HoroscopeFeedbackMessage.UnlockSuccess,
+                        lockCardMessage = null,
+                    )
+                }
+            }.onFailure { error ->
+                _uiState.update {
+                    it.copy(
+                        isUnlocking = false,
+                        lockCardMessage = if (error.isInsufficientMoons()) {
+                            HoroscopeFeedbackMessage.UnlockInsufficientMoons
+                        } else {
+                            HoroscopeFeedbackMessage.UnlockWeekFailed
+                        },
+                    )
+                }
+            }
+        }
+    }
+
+    fun onUnlockSelectedMonth() {
+        val state = _uiState.value
+        val monthKey = state.selectedMonthKey
+        if (monthKey.isBlank()) return
+
+        scope.launch {
+            _uiState.update { it.copy(isUnlocking = true, lockCardMessage = null) }
+            runCatching {
+                unlockRepository.unlockMonth(
+                    monthKey = monthKey,
+                    requestId = buildMonthlyRequestId(monthKey),
+                    sign = state.selectedSign,
+                )
+            }.onSuccess {
+                unlockedMonthKeysSession += monthKey
+                _uiState.update {
+                    it.copy(
+                        isUnlocking = false,
+                        isMonthLocked = false,
+                        infoMessage = HoroscopeFeedbackMessage.UnlockSuccess,
+                        lockCardMessage = null,
+                    )
+                }
+            }.onFailure { error ->
+                _uiState.update {
+                    it.copy(
+                        isUnlocking = false,
+                        lockCardMessage = if (error.isInsufficientMoons()) {
+                            HoroscopeFeedbackMessage.UnlockInsufficientMoons
+                        } else {
+                            HoroscopeFeedbackMessage.UnlockMonthFailed
+                        },
+                    )
+                }
+            }
+        }
+    }
+
     fun onInfoShown() = _uiState.update { it.copy(infoMessage = null) }
     fun onErrorShown() = _uiState.update { it.copy(errorMessage = null) }
 
     fun onSelectTab(tab: HoroscopeTab) {
-        if (tab == HoroscopeTab.Daily) {
-            _uiState.update { it.copy(selectedTab = HoroscopeTab.Daily) }
-            return
+        _uiState.update { it.copy(selectedTab = tab, lockCardMessage = null) }
+        if (tab != HoroscopeTab.Daily) {
+            refreshWeeklyMonthlyLocks()
         }
-        _uiState.update { it.copy(infoMessage = HoroscopeFeedbackMessage.ComingSoon) }
+    }
+
+    fun onPremiumAccessChanged(hasPremiumAccess: Boolean) {
+        _uiState.update { it.copy(hasPremiumAccess = hasPremiumAccess) }
+        refreshWeeklyMonthlyLocks()
     }
 
     private fun onSelectSign(sign: ZodiacSign, fromUserInteraction: Boolean) {
@@ -288,10 +411,82 @@ class HoroscopeViewModel(
                 selectedDateIso = it.selectedDateIso.ifBlank { today.toString() },
                 isLoading = true,
                 overlay = null,
+                selectedWeekKey = when (it.selectedWeek) {
+                    HoroscopeWeekPeriod.ThisWeek -> currentWeekKey()
+                    HoroscopeWeekPeriod.NextWeek -> nextWeekKey()
+                },
+                selectedMonthKey = when (it.selectedMonth) {
+                    HoroscopeMonthPeriod.ThisMonth -> currentMonthKey()
+                    HoroscopeMonthPeriod.NextMonth -> nextMonthKey()
+                },
             )
         }
         rebuildDays()
+        refreshWeeklyMonthlyLocks()
         observeSelectedHoroscope()
+    }
+
+    private suspend fun loadCostsAndPeriods() {
+        val dailyCost = runCatching { getHoroscopeFutureDayCostUseCase() }.getOrDefault(1)
+        val weeklyCost = runCatching { unlockRepository.getWeeklyCost() }.getOrDefault(dailyCost)
+        val monthlyCost = runCatching { unlockRepository.getMonthlyCost() }.getOrDefault(dailyCost)
+
+        _uiState.update {
+            it.copy(
+                futureDayCost = dailyCost,
+                weeklyCost = weeklyCost,
+                monthlyCost = monthlyCost,
+                selectedWeekKey = when (it.selectedWeek) {
+                    HoroscopeWeekPeriod.ThisWeek -> currentWeekKey()
+                    HoroscopeWeekPeriod.NextWeek -> nextWeekKey()
+                },
+                selectedMonthKey = when (it.selectedMonth) {
+                    HoroscopeMonthPeriod.ThisMonth -> currentMonthKey()
+                    HoroscopeMonthPeriod.NextMonth -> nextMonthKey()
+                },
+            )
+        }
+        refreshWeeklyMonthlyLocks()
+    }
+
+    private fun refreshWeeklyMonthlyLocks() {
+        scope.launch {
+            val state = _uiState.value
+            val currentWeek = currentWeekKey()
+            val nextWeek = nextWeekKey()
+            val currentMonth = currentMonthKey()
+            val nextMonth = nextMonthKey()
+
+            val remoteWeekUnlocked = runCatching {
+                unlockRepository.getUnlockedWeeks(listOf(currentWeek, nextWeek))
+            }.getOrDefault(emptySet())
+
+            val remoteMonthUnlocked = runCatching {
+                unlockRepository.getUnlockedMonths(listOf(currentMonth, nextMonth))
+            }.getOrDefault(emptySet())
+
+            unlockedWeekKeysSession += remoteWeekUnlocked
+            unlockedMonthKeysSession += remoteMonthUnlocked
+
+            val selectedWeekKey = state.selectedWeekKey.ifBlank {
+                if (state.selectedWeek == HoroscopeWeekPeriod.ThisWeek) currentWeek else nextWeek
+            }
+            val selectedMonthKey = state.selectedMonthKey.ifBlank {
+                if (state.selectedMonth == HoroscopeMonthPeriod.ThisMonth) currentMonth else nextMonth
+            }
+
+            val isWeekUnlocked = unlockedWeekKeysSession.contains(selectedWeekKey) || remoteWeekUnlocked.contains(selectedWeekKey)
+            val isMonthUnlocked = unlockedMonthKeysSession.contains(selectedMonthKey) || remoteMonthUnlocked.contains(selectedMonthKey)
+
+            _uiState.update {
+                it.copy(
+                    selectedWeekKey = selectedWeekKey,
+                    selectedMonthKey = selectedMonthKey,
+                    isWeekLocked = !it.hasPremiumAccess && !isWeekUnlocked,
+                    isMonthLocked = !it.hasPremiumAccess && !isMonthUnlocked,
+                )
+            }
+        }
     }
 
     private fun observeSelectedHoroscope() {
@@ -407,10 +602,79 @@ class HoroscopeViewModel(
     }
 
     private fun todayDate(): LocalDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+    private fun madridTodayDate(): LocalDate = Clock.System.now().toLocalDateTime(TimeZone.of("Europe/Madrid")).date
     private fun todayIso(): String = todayDate().toString()
     private fun shortDateLabel(date: LocalDate): String = "${date.dayOfMonth}/${date.monthNumber}"
 
-    private fun buildRequestId(dateIso: String): String {
-        return "horoscope-unlock-${Clock.System.now().toEpochMilliseconds()}-$dateIso"
+    private fun currentMonthKey(): String {
+        val todayMadrid = madridTodayDate()
+        return "%04d-%02d".format(todayMadrid.year, todayMadrid.monthNumber)
     }
+
+    private fun nextMonthKey(): String {
+        val todayMadrid = madridTodayDate().plus(DatePeriod(months = 1))
+        return "%04d-%02d".format(todayMadrid.year, todayMadrid.monthNumber)
+    }
+
+    // ISO week helper kept local for commonMain compatibility.
+    private fun currentWeekKey(): String = toIsoWeekKey(madridTodayDate())
+
+    private fun nextWeekKey(): String = toIsoWeekKey(madridTodayDate().plus(DatePeriod(days = 7)))
+
+    private fun toIsoWeekKey(date: LocalDate): String {
+        val dayOfWeek = date.dayOfWeek.isoDayNumber
+        val dayOfYear = dayOfYear(date)
+        var week = (dayOfYear - dayOfWeek + 10) / 7
+        var weekYear = date.year
+        if (week < 1) {
+            weekYear -= 1
+            week = weeksInYear(weekYear)
+        } else {
+            val maxWeeks = weeksInYear(weekYear)
+            if (week > maxWeeks) {
+                weekYear += 1
+                week = 1
+            }
+        }
+        return "%04d-W%02d".format(weekYear, week)
+    }
+
+    private fun weeksInYear(year: Int): Int {
+        val jan1 = LocalDate(year, 1, 1).dayOfWeek.isoDayNumber
+        val dec31 = LocalDate(year, 12, 31).dayOfWeek.isoDayNumber
+        return if (jan1 == 4 || dec31 == 4 || (jan1 == 3 && isLeapYear(year))) 53 else 52
+    }
+
+    private fun isLeapYear(year: Int): Boolean {
+        return (year % 4 == 0 && year % 100 != 0) || year % 400 == 0
+    }
+
+    private fun dayOfYear(date: LocalDate): Int {
+        val monthLengths = intArrayOf(
+            31, if (isLeapYear(date.year)) 29 else 28, 31, 30, 31, 30,
+            31, 31, 30, 31, 30, 31,
+        )
+        var sum = 0
+        for (index in 0 until (date.monthNumber - 1)) {
+            sum += monthLengths[index]
+        }
+        return sum + date.dayOfMonth
+    }
+
+    private fun buildDailyRequestId(dateIso: String): String {
+        return "horoscope-daily-unlock-${Clock.System.now().toEpochMilliseconds()}-$dateIso"
+    }
+
+    private fun buildWeeklyRequestId(weekKey: String): String {
+        return "horoscope-weekly-unlock-${Clock.System.now().toEpochMilliseconds()}-$weekKey"
+    }
+
+    private fun buildMonthlyRequestId(monthKey: String): String {
+        return "horoscope-monthly-unlock-${Clock.System.now().toEpochMilliseconds()}-$monthKey"
+    }
+}
+
+private fun Throwable.isInsufficientMoons(): Boolean {
+    val message = message.orEmpty().lowercase()
+    return message.contains("insufficient") || message.contains("moon")
 }

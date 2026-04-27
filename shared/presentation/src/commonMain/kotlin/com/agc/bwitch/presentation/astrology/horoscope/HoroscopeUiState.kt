@@ -12,6 +12,16 @@ data class HoroscopeUiState(
     val isRefreshing: Boolean = false,
     val isUnlocking: Boolean = false,
     val futureDayCost: Int = 0,
+    val weeklyCost: Int = 0,
+    val monthlyCost: Int = 0,
+    val selectedWeek: HoroscopeWeekPeriod = HoroscopeWeekPeriod.ThisWeek,
+    val selectedMonth: HoroscopeMonthPeriod = HoroscopeMonthPeriod.ThisMonth,
+    val selectedWeekKey: String = "",
+    val selectedMonthKey: String = "",
+    val isWeekLocked: Boolean = true,
+    val isMonthLocked: Boolean = true,
+    val lockCardMessage: HoroscopeFeedbackMessage? = null,
+    val hasPremiumAccess: Boolean = false, // TODO wire reliable premium source in HoroscopeViewModel.
     val highlightedSign: ZodiacSign? = null,
     val overlay: HoroscopeOverlayUi? = null,
     val errorMessage: HoroscopeFeedbackMessage? = null,
@@ -19,6 +29,9 @@ data class HoroscopeUiState(
 )
 
 enum class HoroscopeTab { Daily, Weekly, Monthly }
+
+enum class HoroscopeWeekPeriod { ThisWeek, NextWeek }
+enum class HoroscopeMonthPeriod { ThisMonth, NextMonth }
 
 data class HoroscopeDayItemUi(
     val dateIso: String,
@@ -53,4 +66,6 @@ enum class HoroscopeFeedbackMessage {
     UnlockFailed,
     UnlockInsufficientMoons,
     UnlockSuccess,
+    UnlockWeekFailed,
+    UnlockMonthFailed,
 }
