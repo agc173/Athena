@@ -97,7 +97,6 @@ export const unlockHoroscopeDay = onCall(
         const currentBalance = asCount((balanceSnap.data() as EconomyBalanceDoc | undefined)?.balance);
 
         if (unlockSnap.exists) {
-          logger.info('unlockHoroscopeDay already unlocked', {uid, unlockKey, dateIso, costCharged: 0});
           const stableResponse: UnlockHoroscopeDayResponse = {
             result: 'COMPLETED_SUCCESS',
             unlocked: true,

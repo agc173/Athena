@@ -188,7 +188,6 @@ class HoroscopeViewModel(
                 )
             }
             if (unlockedDatesSession.contains(target.dateIso)) {
-                println("[HoroscopeViewModel] skip unlock request; already unlocked in session dateIso=${target.dateIso}")
                 pendingUnlockTarget = null
                 _uiState.update { current ->
                     val updatedDays = current.days.map { day ->
@@ -211,8 +210,7 @@ class HoroscopeViewModel(
                     requestId = buildRequestId(target.dateIso),
                     sign = target.sign,
                 )
-            }.onSuccess { unlockResult ->
-                println("[HoroscopeViewModel] unlock success dateIso=${target.dateIso} costCharged=${unlockResult.costCharged} alreadyUnlocked=${unlockResult.alreadyUnlocked}")
+            }.onSuccess {
                 unlockedDatesSession += target.dateIso
                 pendingUnlockTarget = null
                 _uiState.update { current ->
@@ -332,10 +330,8 @@ class HoroscopeViewModel(
             var loaded = runCatching { getDailyHoroscopeUseCase(dateIso, sign, languageCode) }.getOrNull()
             val shouldPullFutureContent = loaded == null && isDateUnlocked(dateIso)
             if (shouldPullFutureContent) {
-                println("[HoroscopeViewModel] overlay missing cached horoscope; pulling dateIso=$dateIso")
                 safePull(dateIso = dateIso, languageCode = languageCode, showGlobalError = false)
                 loaded = runCatching { getDailyHoroscopeUseCase(dateIso, sign, languageCode) }.getOrNull()
-                println("[HoroscopeViewModel] pull future content result dateIso=$dateIso found=${loaded != null}")
             }
             _uiState.update { current ->
                 val overlay = current.overlay ?: return@update current
@@ -356,10 +352,6 @@ class HoroscopeViewModel(
             }
             val remoteUnlockedDates = runCatching {
                 isHoroscopeDayUnlockedUseCase.getUnlockedDays(dateIsoList)
-            }.onSuccess {
-                println("[HoroscopeViewModel] getUnlockedDays(input=$dateIsoList) result=$it")
-            }.onFailure {
-                println("[HoroscopeViewModel] getUnlockedDays(input=$dateIsoList) failed: ${it.message}")
             }.getOrDefault(emptySet())
 
             val items = (0..6).map { offset ->
@@ -403,8 +395,6 @@ class HoroscopeViewModel(
         } catch (error: Throwable) {
             if (showGlobalError) {
                 _uiState.update { it.copy(errorMessage = HoroscopeFeedbackMessage.RefreshFailed) }
-            } else {
-                println("[HoroscopeViewModel] silent pull failed dateIso=$dateIso: ${error.message}")
             }
         } finally {
             _uiState.update { it.copy(isRefreshing = false) }

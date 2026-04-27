@@ -21,10 +21,6 @@ class SyncHoroscopeUnlockRepository(
     override suspend fun getUnlockedDays(dateIsoList: List<String>): Set<String> {
         return runCatching {
             remoteDataSource.getHoroscopeDailyUnlocks(dateIsoList)
-        }.onSuccess {
-            println("[SyncHoroscopeUnlockRepository] getUnlockedDays(input=$dateIsoList) unlocked=$it")
-        }.onFailure {
-            println("[SyncHoroscopeUnlockRepository] getUnlockedDays(input=$dateIsoList) failed: ${it.message}")
         }.getOrDefault(emptySet())
     }
 
