@@ -22,6 +22,8 @@ data class HoroscopeUiState(
     val nextMonthKey: String = "",
     val isWeekLocked: Boolean = true,
     val isMonthLocked: Boolean = true,
+    val isContentAvailable: Boolean = true,
+    val isCheckingContentAvailability: Boolean = false,
     val lockCardMessage: HoroscopeFeedbackMessage? = null,
     val hasPremiumAccess: Boolean = false, // TODO wire reliable premium source in HoroscopeViewModel.
     val highlightedSign: ZodiacSign? = null,
@@ -70,4 +72,5 @@ enum class HoroscopeFeedbackMessage {
     UnlockSuccess,
     UnlockWeekFailed,
     UnlockMonthFailed,
+    ContentInPreparation,
 }

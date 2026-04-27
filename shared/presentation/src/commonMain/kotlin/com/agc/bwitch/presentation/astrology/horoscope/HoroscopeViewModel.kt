@@ -117,6 +117,7 @@ class HoroscopeViewModel(
             )
         }
         refreshWeeklyMonthlyLocks()
+        refreshSelectedPeriodContentAvailability()
     }
 
     fun onSelectMonth(period: HoroscopeMonthPeriod) {
@@ -131,6 +132,7 @@ class HoroscopeViewModel(
             )
         }
         refreshWeeklyMonthlyLocks()
+        refreshSelectedPeriodContentAvailability()
     }
 
     fun onRefresh() {
@@ -386,9 +388,8 @@ class HoroscopeViewModel(
 
     fun onSelectTab(tab: HoroscopeTab) {
         _uiState.update { it.copy(selectedTab = tab, lockCardMessage = null) }
-        if (tab != HoroscopeTab.Daily) {
-            refreshWeeklyMonthlyLocks()
-        }
+        if (tab != HoroscopeTab.Daily) refreshWeeklyMonthlyLocks()
+        refreshSelectedPeriodContentAvailability()
     }
 
     fun onPremiumAccessChanged(hasPremiumAccess: Boolean) {
@@ -402,6 +403,7 @@ class HoroscopeViewModel(
         _uiState.update { it.copy(selectedSign = sign) }
         rebuildDays()
         observeSelectedHoroscope()
+        refreshSelectedPeriodContentAvailability()
     }
 
     private fun reloadForCurrentSelection() {
@@ -426,6 +428,7 @@ class HoroscopeViewModel(
         rebuildDays()
         refreshWeeklyMonthlyLocks()
         observeSelectedHoroscope()
+        refreshSelectedPeriodContentAvailability()
     }
 
     private suspend fun loadCostsAndPeriods() {
@@ -451,6 +454,7 @@ class HoroscopeViewModel(
             )
         }
         refreshWeeklyMonthlyLocks()
+        refreshSelectedPeriodContentAvailability()
     }
 
     private fun refreshWeeklyMonthlyLocks() {
@@ -492,6 +496,14 @@ class HoroscopeViewModel(
                     isMonthLocked = !it.hasPremiumAccess && !isMonthUnlocked,
                 )
             }
+        }
+    }
+
+    private fun refreshSelectedPeriodContentAvailability() {
+        scope.launch {
+            // TODO: Weekly/Monthly content availability must be resolved from their own repository/use-cases.
+            // Do NOT infer with DailyHoroscope as proxy.
+            _uiState.update { it.copy(isContentAvailable = true, isCheckingContentAvailability = false) }
         }
     }
 
@@ -705,6 +717,7 @@ class HoroscopeViewModel(
     private fun buildMonthlyRequestId(monthKey: String): String {
         return "horoscope-monthly-unlock-${Clock.System.now().toEpochMilliseconds()}-$monthKey"
     }
+
 }
 
 private fun Throwable.isInsufficientMoons(): Boolean {
