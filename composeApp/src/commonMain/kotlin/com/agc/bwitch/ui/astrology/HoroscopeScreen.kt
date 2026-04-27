@@ -454,7 +454,7 @@ private data class SelectorOption(
     val label: String,
 )
 
-private fun String.toMonthNumberOrNull(): Int =
+private fun String.toMonthNumberOrNull(): Int? =
     split("-").getOrNull(1)?.toIntOrNull()?.takeIf { it in 1..12 }
 
 private fun monthNameFromKey(monthKey: String, languageCode: String): String {
