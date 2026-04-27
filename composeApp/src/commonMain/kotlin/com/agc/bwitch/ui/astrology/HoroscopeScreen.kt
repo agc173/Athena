@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.calculateBottomPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -22,9 +21,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Snackbar
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
@@ -32,7 +28,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -68,32 +63,10 @@ fun HoroscopeScreen(
     val strings = appStrings
     val state by viewModel.uiState.collectAsState()
     val economyState by economyViewModel.uiState.collectAsState()
-    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(preselectedSign) { preselectedSign?.let(viewModel::onSelectSign) }
     LaunchedEffect(economyState.isPremium) { viewModel.onPremiumAccessChanged(economyState.isPremium) }
-    LaunchedEffect(state.infoMessage) {
-        state.infoMessage?.let {
-            snackbarHostState.showSnackbar(it.toLocalizedMessage(strings))
-            viewModel.onInfoShown()
-        }
-    }
-    LaunchedEffect(state.errorMessage) {
-        val message = state.errorMessage ?: return@LaunchedEffect
-        if (state.overlay != null) return@LaunchedEffect
-        snackbarHostState.showSnackbar(message.toLocalizedMessage(strings))
-        viewModel.onErrorShown()
-    }
-
-    Scaffold(
-        modifier = modifier,
-        snackbarHost = {
-            SnackbarHost(
-                hostState = snackbarHostState,
-                modifier = Modifier.padding(bottom = contentPadding.calculateBottomPadding()),
-            ) { Snackbar(it) }
-        },
-    ) { innerPadding ->
+    Scaffold(modifier = modifier) { innerPadding ->
         HoroscopeScreenContent(
             modifier = Modifier.padding(innerPadding).padding(contentPadding),
             state = state,
