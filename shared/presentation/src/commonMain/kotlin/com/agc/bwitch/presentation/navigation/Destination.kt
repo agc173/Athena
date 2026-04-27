@@ -56,5 +56,5 @@ sealed class Destination(val title: String) {
      */
     data class HoroscopeDaily(
         val preselectedSign: ZodiacSign? = null
-    ) : Destination("Horóscopo diario")
+    ) : Destination("Horóscopo")
 }
