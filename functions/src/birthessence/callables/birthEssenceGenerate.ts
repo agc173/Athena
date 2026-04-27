@@ -1,5 +1,4 @@
 import {HttpsError, onCall} from 'firebase-functions/v2/https';
-import {buildRouter} from '../../llm/buildRouter';
 import {ENV} from '../../config/env';
 import {addLlmTokens, reserveLlmCallOrThrow, type DailyCaps} from '../../firestore/usageDaily';
 import {createLlmClientFromRouter} from '../../oracle/shared/routerLlmClient';
@@ -239,6 +238,7 @@ export const birthEssenceGenerate = onCall(
         return {requestId, status: 'IN_PROGRESS'};
       }
 
+      const {buildRouter} = await import('../../llm/buildRouter.js');
       const router = buildRouter();
 
       let usageDateIso: string;
