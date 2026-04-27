@@ -6,11 +6,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
@@ -303,22 +306,98 @@ private fun HoroscopeScreenContent(
         } else {
             AlertDialog(
                 onDismissRequest = onCloseOverlay,
-                title = { Text("${overlay.sign.symbol()} ${overlay.sign.localizedLabel(strings)} · ${overlay.dateIso}") },
+                modifier = Modifier.widthIn(min = 320.dp, max = 520.dp),
+                title = {
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                text = overlay.sign.symbol(),
+                                style = MaterialTheme.typography.headlineMedium,
+                                modifier = Modifier.size(40.dp),
+                                textAlign = TextAlign.Center,
+                            )
+                            Text(
+                                text = overlay.sign.localizedLabel(strings),
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                        }
+                        Text(
+                            text = overlay.dateIso,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                },
                 text = {
                     val horoscope = overlay.horoscope
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 220.dp, max = 420.dp)
+                            .verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(14.dp),
+                    ) {
                         if (overlay.isLoading) {
                             Text(strings.horoscope.loading)
                         } else {
-                            Text("${strings.horoscope.moodLabel}: ${horoscope?.mood ?: "-"}", style = MaterialTheme.typography.titleSmall)
-                            Text("${strings.horoscope.luckyNumberLabel}: ${horoscope?.luckyNumber ?: "-"}", style = MaterialTheme.typography.titleSmall)
-                            Text("${strings.horoscope.luckyColorLabel}: ${horoscope?.luckyColor ?: "-"}", style = MaterialTheme.typography.titleSmall)
-                            Text(horoscope?.text ?: strings.horoscope.noContentYet, style = MaterialTheme.typography.bodyMedium)
+                            FlowRow(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                HoroscopeMetaChip(
+                                    label = strings.horoscope.moodLabel,
+                                    value = horoscope?.mood ?: "-",
+                                )
+                                HoroscopeMetaChip(
+                                    label = strings.horoscope.luckyNumberLabel,
+                                    value = horoscope?.luckyNumber?.toString() ?: "-",
+                                )
+                                HoroscopeMetaChip(
+                                    label = strings.horoscope.luckyColorLabel,
+                                    value = horoscope?.luckyColor ?: "-",
+                                )
+                            }
+                            Text(
+                                text = horoscope?.text ?: strings.horoscope.noContentYet,
+                                style = MaterialTheme.typography.bodyLarge,
+                                lineHeight = MaterialTheme.typography.bodyLarge.lineHeight * 1.2f,
+                            )
                         }
                     }
                 },
                 confirmButton = { BWitchSecondaryButton(onClick = {}, enabled = false) { Text(strings.horoscope.shareCta) } },
                 dismissButton = { BWitchPrimaryButton(onClick = onCloseOverlay) { Text(strings.horoscope.closeCta) } },
+            )
+        }
+    }
+}
+
+@Composable
+private fun HoroscopeMetaChip(
+    label: String,
+    value: String,
+) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                text = value,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
             )
         }
     }
