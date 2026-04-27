@@ -48,6 +48,9 @@ export const ENV = {
 
   // ACTIVE_LANGS se rellena abajo para poder filtrar contra SUPPORTED_LANGS
   ACTIVE_LANGS: [] as Lang[],
+  BACKFILL_ADMIN_UIDS: parseCsv('BACKFILL_ADMIN_UIDS', ''),
+  WEEKLY_WINDOW_SIZE: Math.max(2, Math.floor(optNum('WEEKLY_WINDOW_SIZE', 2))),
+  MONTHLY_WINDOW_SIZE: Math.max(2, Math.floor(optNum('MONTHLY_WINDOW_SIZE', 2))),
 
   GENERATOR_VERSION: optNum('GENERATOR_VERSION', 1),
 
