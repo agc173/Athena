@@ -9,6 +9,7 @@ import com.agc.bwitch.domain.economy.EconomyStatus
 import com.agc.bwitch.presentation.analytics.FakeAnalyticsTracker
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -264,10 +265,10 @@ class EconomyViewModelTest {
             )
             advanceUntilIdle()
 
-            viewModel.requireLunas(cost = 99, source = "horoscope_daily_unlock") {}
+            viewModel.requireLunas(cost = 99, source = "horoscope_daily_unlock") { _ -> }
             val firstRequest = viewModel.moonPaywallRequest.value
             viewModel.dismissMoonPaywall()
-            viewModel.requireLunas(cost = 99, source = "horoscope_daily_unlock") {}
+            viewModel.requireLunas(cost = 99, source = "horoscope_daily_unlock") { _ -> }
             val secondRequest = viewModel.moonPaywallRequest.value
 
             assertTrue(firstRequest != null)
@@ -275,6 +276,93 @@ class EconomyViewModelTest {
             assertTrue(firstRequest.impressionId.isNotBlank())
             assertTrue(secondRequest.impressionId.isNotBlank())
             assertTrue(firstRequest.impressionId != secondRequest.impressionId)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun `require lunas direct balance emits direct_balance origin`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val analytics = FakeAnalyticsTracker()
+            val viewModel = EconomyViewModel(
+                economyRepository = StableEconomyRepository(),
+                analyticsTracker = analytics,
+            )
+            var callbackContext: MoonUnlockFlowContext? = null
+            advanceUntilIdle()
+
+            val unlocked = viewModel.requireLunas(cost = 5, source = "horoscope_daily_unlock") { context ->
+                callbackContext = context
+            }
+            advanceUntilIdle()
+
+            assertTrue(unlocked)
+            assertEquals(UNLOCK_FLOW_ORIGIN_DIRECT_BALANCE, callbackContext?.unlockFlowOrigin)
+            val attempt = analytics.events.filterIsInstance<AnalyticsEvent.ContentUnlockAttempt>().last()
+            assertEquals(UNLOCK_FLOW_ORIGIN_DIRECT_BALANCE, attempt.unlockFlowOrigin)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun `pending unlock after rewarded ad emits paywall_rewarded with impression id`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val viewModel = EconomyViewModel(
+                economyRepository = FakeEconomyRepository(),
+            )
+            var callbackContext: MoonUnlockFlowContext? = null
+            advanceUntilIdle()
+
+            val unlocked = viewModel.requireLunas(cost = 11, source = "horoscope_daily_unlock") { context ->
+                callbackContext = context
+            }
+            assertTrue(!unlocked)
+            val request = viewModel.moonPaywallRequest.value
+            assertNotNull(request)
+
+            viewModel.onMoonPaywallActionClicked(request, action = "watch_ad")
+            viewModel.claimRewardedAd(
+                placement = "contextual_paywall",
+                paywallImpressionId = request.impressionId,
+            )
+            val firstRequest = viewModel.moonPaywallRequest.value
+            advanceUntilIdle()
+
+            assertEquals(null, firstRequest)
+            assertEquals(UNLOCK_FLOW_ORIGIN_PAYWALL_REWARDED, callbackContext?.unlockFlowOrigin)
+            assertEquals(request.impressionId, callbackContext?.paywallImpressionId)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun `pending unlock without paywall action emits unknown origin`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val viewModel = EconomyViewModel(
+                economyRepository = FakeEconomyRepository(),
+            )
+            var callbackContext: MoonUnlockFlowContext? = null
+            advanceUntilIdle()
+
+            val unlocked = viewModel.requireLunas(cost = 11, source = "horoscope_daily_unlock") { context ->
+                callbackContext = context
+            }
+            assertTrue(!unlocked)
+
+            viewModel.claimDailyLogin()
+            advanceUntilIdle()
+
+            assertEquals(UNLOCK_FLOW_ORIGIN_UNKNOWN, callbackContext?.unlockFlowOrigin)
+            assertEquals(null, callbackContext?.paywallImpressionId)
         } finally {
             Dispatchers.resetMain()
         }

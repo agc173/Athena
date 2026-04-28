@@ -53,7 +53,7 @@ fun TarotHomeScreen(
                 economyViewModel.requireLunas(
                     cost = state.extraReadingCost,
                     source = "tarot_extra_reading",
-                ) {
+                ) { _ ->
                     onSelectRequestType(TarotRequestType.TAROT_3)
                 }
             },

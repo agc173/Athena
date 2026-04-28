@@ -17,6 +17,7 @@ import com.agc.bwitch.domain.tarot.TarotDrawResponse
 import com.agc.bwitch.domain.tarot.TarotRepository
 import com.agc.bwitch.domain.tarot.TarotRequestType
 import com.agc.bwitch.presentation.analytics.FakeAnalyticsTracker
+import com.agc.bwitch.presentation.economy.UNLOCK_FLOW_ORIGIN_DIRECT_BALANCE
 import kotlin.collections.ArrayDeque
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -135,6 +136,8 @@ class TarotViewModelTest {
             assertEquals("DONE", viewModel.uiState.value.response?.status)
             assertEquals(7, viewModel.uiState.value.moonBalance)
             assertTrue(analytics.events.any { it is com.agc.bwitch.domain.analytics.AnalyticsEvent.ContentUnlocked })
+            val unlocked = analytics.events.filterIsInstance<com.agc.bwitch.domain.analytics.AnalyticsEvent.ContentUnlocked>().last()
+            assertEquals(UNLOCK_FLOW_ORIGIN_DIRECT_BALANCE, unlocked.unlockFlowOrigin)
         } finally {
             Dispatchers.resetMain()
         }

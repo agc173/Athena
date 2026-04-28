@@ -23,6 +23,9 @@ import com.agc.bwitch.domain.localization.ResolveCurrentLanguageUseCase
 import com.agc.bwitch.domain.userprofile.ObserveUserProfileUseCase
 import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeUnlockErrorType.Backend
 import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeUnlockErrorType.InsufficientMoons
+import com.agc.bwitch.presentation.economy.MoonUnlockFlowContext
+import com.agc.bwitch.presentation.economy.UNLOCK_FLOW_ORIGIN_PREMIUM
+import com.agc.bwitch.presentation.economy.UNLOCK_FLOW_ORIGIN_UNKNOWN
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -202,7 +205,7 @@ class HoroscopeViewModel(
         _uiState.update { it.copy(lockCardMessage = null) }
     }
 
-    fun onUnlockSelectedDay() {
+    fun onUnlockSelectedDay(unlockFlowContext: MoonUnlockFlowContext? = null) {
         val state = _uiState.value
         val overlay = state.overlay as? HoroscopeOverlayUi.DailyOverlay
         val target = when {
@@ -221,6 +224,8 @@ class HoroscopeViewModel(
                     cost = _uiState.value.futureDayCost,
                     hasEnoughMoons = null,
                     isPremium = _uiState.value.hasPremiumAccess,
+                    unlockFlowOrigin = resolveUnlockFlowOrigin(unlockFlowContext),
+                    paywallImpressionId = unlockFlowContext?.paywallImpressionId,
                 ),
             )
             _uiState.update {
@@ -268,6 +273,8 @@ class HoroscopeViewModel(
                         method = resolveUnlockMethod(unlockResult, _uiState.value.hasPremiumAccess),
                         costCharged = unlockResult.costCharged,
                         balanceAfter = unlockResult.balanceAfter,
+                        unlockFlowOrigin = resolveUnlockFlowOrigin(unlockFlowContext),
+                        paywallImpressionId = unlockFlowContext?.paywallImpressionId,
                     ),
                 )
                 _uiState.update { current ->
@@ -299,6 +306,8 @@ class HoroscopeViewModel(
                     AnalyticsEvent.ContentUnlockFailed(
                         module = "horoscope_daily",
                         reason = if (isInsufficient) "insufficient_moons" else (error.message ?: "backend_error"),
+                        unlockFlowOrigin = resolveUnlockFlowOrigin(unlockFlowContext),
+                        paywallImpressionId = unlockFlowContext?.paywallImpressionId,
                     ),
                 )
                 _uiState.update {
@@ -326,7 +335,7 @@ class HoroscopeViewModel(
         }
     }
 
-    fun onUnlockSelectedWeek() {
+    fun onUnlockSelectedWeek(unlockFlowContext: MoonUnlockFlowContext? = null) {
         val state = _uiState.value
         val weekKey = state.selectedWeekKey
         if (weekKey.isBlank()) return
@@ -338,6 +347,8 @@ class HoroscopeViewModel(
                     cost = _uiState.value.weeklyCost,
                     hasEnoughMoons = null,
                     isPremium = _uiState.value.hasPremiumAccess,
+                    unlockFlowOrigin = resolveUnlockFlowOrigin(unlockFlowContext),
+                    paywallImpressionId = unlockFlowContext?.paywallImpressionId,
                 ),
             )
             _uiState.update { it.copy(isUnlocking = true, lockCardMessage = null) }
@@ -355,6 +366,8 @@ class HoroscopeViewModel(
                         method = resolveUnlockMethod(unlockResult, _uiState.value.hasPremiumAccess),
                         costCharged = unlockResult.costCharged,
                         balanceAfter = unlockResult.balanceAfter,
+                        unlockFlowOrigin = resolveUnlockFlowOrigin(unlockFlowContext),
+                        paywallImpressionId = unlockFlowContext?.paywallImpressionId,
                     ),
                 )
                 _uiState.update {
@@ -370,6 +383,8 @@ class HoroscopeViewModel(
                     AnalyticsEvent.ContentUnlockFailed(
                         module = "horoscope_weekly",
                         reason = if (error.isInsufficientMoons()) "insufficient_moons" else (error.message ?: "backend_error"),
+                        unlockFlowOrigin = resolveUnlockFlowOrigin(unlockFlowContext),
+                        paywallImpressionId = unlockFlowContext?.paywallImpressionId,
                     ),
                 )
                 _uiState.update {
@@ -386,7 +401,7 @@ class HoroscopeViewModel(
         }
     }
 
-    fun onUnlockSelectedMonth() {
+    fun onUnlockSelectedMonth(unlockFlowContext: MoonUnlockFlowContext? = null) {
         val state = _uiState.value
         val monthKey = state.selectedMonthKey
         if (monthKey.isBlank()) return
@@ -398,6 +413,8 @@ class HoroscopeViewModel(
                     cost = _uiState.value.monthlyCost,
                     hasEnoughMoons = null,
                     isPremium = _uiState.value.hasPremiumAccess,
+                    unlockFlowOrigin = resolveUnlockFlowOrigin(unlockFlowContext),
+                    paywallImpressionId = unlockFlowContext?.paywallImpressionId,
                 ),
             )
             _uiState.update { it.copy(isUnlocking = true, lockCardMessage = null) }
@@ -415,6 +432,8 @@ class HoroscopeViewModel(
                         method = resolveUnlockMethod(unlockResult, _uiState.value.hasPremiumAccess),
                         costCharged = unlockResult.costCharged,
                         balanceAfter = unlockResult.balanceAfter,
+                        unlockFlowOrigin = resolveUnlockFlowOrigin(unlockFlowContext),
+                        paywallImpressionId = unlockFlowContext?.paywallImpressionId,
                     ),
                 )
                 _uiState.update {
@@ -430,6 +449,8 @@ class HoroscopeViewModel(
                     AnalyticsEvent.ContentUnlockFailed(
                         module = "horoscope_monthly",
                         reason = if (error.isInsufficientMoons()) "insufficient_moons" else (error.message ?: "backend_error"),
+                        unlockFlowOrigin = resolveUnlockFlowOrigin(unlockFlowContext),
+                        paywallImpressionId = unlockFlowContext?.paywallImpressionId,
                     ),
                 )
                 _uiState.update {
@@ -467,6 +488,14 @@ class HoroscopeViewModel(
         rebuildDays()
         observeSelectedHoroscope()
         refreshSelectedPeriodContentAvailability()
+    }
+
+    private fun resolveUnlockFlowOrigin(context: MoonUnlockFlowContext?): String {
+        return context?.unlockFlowOrigin ?: if (_uiState.value.hasPremiumAccess) {
+            UNLOCK_FLOW_ORIGIN_PREMIUM
+        } else {
+            UNLOCK_FLOW_ORIGIN_UNKNOWN
+        }
     }
 
     private fun reloadForCurrentSelection() {

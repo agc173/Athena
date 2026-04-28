@@ -56,6 +56,9 @@ import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeUiState
 import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeViewModel
 import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeWeekPeriod
 import com.agc.bwitch.presentation.economy.EconomyViewModel
+import com.agc.bwitch.presentation.economy.MoonUnlockFlowContext
+import com.agc.bwitch.presentation.economy.UNLOCK_FLOW_ORIGIN_DIRECT_BALANCE
+import com.agc.bwitch.presentation.economy.UNLOCK_FLOW_ORIGIN_PREMIUM
 import com.agc.bwitch.ui.common.designsystem.BWitchPrimaryButton
 import com.agc.bwitch.ui.common.designsystem.BWitchSecondaryButton
 import org.koin.compose.koinInject
@@ -95,37 +98,64 @@ fun HoroscopeScreen(
             onUnlock = {
                 val hasEnoughBalance = economyState.hasUsableSnapshot && economyState.balance >= state.futureDayCost
                 if (hasEnoughBalance) {
-                    viewModel.onUnlockSelectedDay()
+                    viewModel.onUnlockSelectedDay(
+                        MoonUnlockFlowContext(
+                            source = "horoscope_daily_unlock",
+                            unlockFlowOrigin = if (economyState.isPremium) {
+                                UNLOCK_FLOW_ORIGIN_PREMIUM
+                            } else {
+                                UNLOCK_FLOW_ORIGIN_DIRECT_BALANCE
+                            },
+                        ),
+                    )
                 } else {
                     viewModel.onUnlockDeferredToPaywall()
                     economyViewModel.requireLunas(
                         cost = state.futureDayCost,
                         source = "horoscope_daily_unlock",
-                    ) { viewModel.onUnlockSelectedDay() }
+                    ) { context -> viewModel.onUnlockSelectedDay(context) }
                 }
             },
             onUnlockWeek = {
                 val hasEnoughBalance = economyState.hasUsableSnapshot && economyState.balance >= state.weeklyCost
                 if (hasEnoughBalance) {
-                    viewModel.onUnlockSelectedWeek()
+                    viewModel.onUnlockSelectedWeek(
+                        MoonUnlockFlowContext(
+                            source = "horoscope_weekly_unlock",
+                            unlockFlowOrigin = if (economyState.isPremium) {
+                                UNLOCK_FLOW_ORIGIN_PREMIUM
+                            } else {
+                                UNLOCK_FLOW_ORIGIN_DIRECT_BALANCE
+                            },
+                        ),
+                    )
                 } else {
                     viewModel.onUnlockWeekDeferredToPaywall()
                     economyViewModel.requireLunas(
                         cost = state.weeklyCost,
                         source = "horoscope_weekly_unlock",
-                    ) { viewModel.onUnlockSelectedWeek() }
+                    ) { context -> viewModel.onUnlockSelectedWeek(context) }
                 }
             },
             onUnlockMonth = {
                 val hasEnoughBalance = economyState.hasUsableSnapshot && economyState.balance >= state.monthlyCost
                 if (hasEnoughBalance) {
-                    viewModel.onUnlockSelectedMonth()
+                    viewModel.onUnlockSelectedMonth(
+                        MoonUnlockFlowContext(
+                            source = "horoscope_monthly_unlock",
+                            unlockFlowOrigin = if (economyState.isPremium) {
+                                UNLOCK_FLOW_ORIGIN_PREMIUM
+                            } else {
+                                UNLOCK_FLOW_ORIGIN_DIRECT_BALANCE
+                            },
+                        ),
+                    )
                 } else {
                     viewModel.onUnlockMonthDeferredToPaywall()
                     economyViewModel.requireLunas(
                         cost = state.monthlyCost,
                         source = "horoscope_monthly_unlock",
-                    ) { viewModel.onUnlockSelectedMonth() }
+                    ) { context -> viewModel.onUnlockSelectedMonth(context) }
                 }
             },
             onCloseOverlay = viewModel::onCloseOverlay,

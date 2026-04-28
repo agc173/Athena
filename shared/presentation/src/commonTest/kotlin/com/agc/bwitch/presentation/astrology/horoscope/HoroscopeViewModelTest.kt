@@ -27,6 +27,10 @@ import com.agc.bwitch.domain.userprofile.ObserveUserProfileUseCase
 import com.agc.bwitch.domain.userprofile.UserProfile
 import com.agc.bwitch.domain.userprofile.UserProfileRepository
 import com.agc.bwitch.presentation.analytics.FakeAnalyticsTracker
+import com.agc.bwitch.presentation.economy.MoonUnlockFlowContext
+import com.agc.bwitch.presentation.economy.UNLOCK_FLOW_ORIGIN_PAYWALL_REWARDED
+import com.agc.bwitch.presentation.economy.UNLOCK_FLOW_ORIGIN_PREMIUM
+import com.agc.bwitch.presentation.economy.UNLOCK_FLOW_ORIGIN_UNKNOWN
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -191,6 +195,7 @@ class HoroscopeViewModelTest {
         assertEquals("moons", event.method)
         assertEquals(2, event.costCharged)
         assertEquals(0, event.balanceAfter)
+        assertEquals(UNLOCK_FLOW_ORIGIN_UNKNOWN, event.unlockFlowOrigin)
     }
 
     @Test
@@ -211,6 +216,36 @@ class HoroscopeViewModelTest {
         val event = analytics.events.filterIsInstance<com.agc.bwitch.domain.analytics.AnalyticsEvent.ContentUnlocked>().last()
         assertEquals("premium", event.method)
         assertEquals(0, event.costCharged)
+        assertEquals(UNLOCK_FLOW_ORIGIN_PREMIUM, event.unlockFlowOrigin)
+    }
+
+    @Test
+    fun unlockDay_paywallRewardedContext_emitsOriginAndImpressionId() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val unlockRepository = FakeUnlockRepository(futureDayCost = 2)
+        val analytics = FakeAnalyticsTracker()
+        val viewModel = createViewModel(dispatcher, unlockRepository, analyticsTracker = analytics)
+
+        advanceUntilIdle()
+        val tomorrow = currentSystemTomorrowIsoForTests()
+        viewModel.onSelectDate(tomorrow)
+        viewModel.onOpenSign(ZodiacSign.aries)
+        viewModel.onUnlockSelectedDay(
+            MoonUnlockFlowContext(
+                source = "horoscope_daily_unlock",
+                unlockFlowOrigin = UNLOCK_FLOW_ORIGIN_PAYWALL_REWARDED,
+                paywallImpressionId = "moon-paywall-42",
+                lastPaywallAction = "watch_ad",
+            ),
+        )
+        advanceUntilIdle()
+
+        val attempt = analytics.events.filterIsInstance<com.agc.bwitch.domain.analytics.AnalyticsEvent.ContentUnlockAttempt>().last()
+        val unlocked = analytics.events.filterIsInstance<com.agc.bwitch.domain.analytics.AnalyticsEvent.ContentUnlocked>().last()
+        assertEquals(UNLOCK_FLOW_ORIGIN_PAYWALL_REWARDED, attempt.unlockFlowOrigin)
+        assertEquals("moon-paywall-42", attempt.paywallImpressionId)
+        assertEquals(UNLOCK_FLOW_ORIGIN_PAYWALL_REWARDED, unlocked.unlockFlowOrigin)
+        assertEquals("moon-paywall-42", unlocked.paywallImpressionId)
     }
 
     @Test
