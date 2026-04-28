@@ -32,6 +32,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -83,6 +86,12 @@ fun HoroscopeScreen(
             onOpenSign = viewModel::onOpenSign,
             canEarnMoonsWithRewardedAd = economyState.rewardedAdsRemaining > 0,
             onEarnMoonsWithRewardedAd = { economyViewModel.claimRewardedAd("horoscope_period_lock_overlay") },
+            onRewardedAdCtaShown = {
+                economyViewModel.onRewardedAdCtaShown(
+                    placement = "horoscope_period_lock_overlay",
+                    rewardedAdsRemaining = economyState.rewardedAdsRemaining,
+                )
+            },
             onUnlock = {
                 val hasEnoughBalance = economyState.hasUsableSnapshot && economyState.balance >= state.futureDayCost
                 if (hasEnoughBalance) {
@@ -137,6 +146,7 @@ private fun HoroscopeScreenContent(
     onOpenSign: (ZodiacSign) -> Unit,
     canEarnMoonsWithRewardedAd: Boolean,
     onEarnMoonsWithRewardedAd: () -> Unit,
+    onRewardedAdCtaShown: () -> Unit,
     onUnlock: () -> Unit,
     onUnlockWeek: () -> Unit,
     onUnlockMonth: () -> Unit,
@@ -263,6 +273,7 @@ private fun HoroscopeScreenContent(
                     },
                     canEarnMoonsWithRewardedAd = canEarnMoonsWithRewardedAd,
                     onEarnMoonsWithRewardedAd = onEarnMoonsWithRewardedAd,
+                    onRewardedAdCtaShown = onRewardedAdCtaShown,
                     isLoading = state.isUnlocking,
                     canUnlock = state.selectedTab == HoroscopeTab.Daily || state.isContentAvailable,
                     errorMessage = state.lockCardMessage?.toLocalizedMessage(strings),
@@ -520,10 +531,22 @@ private fun PeriodLockOverlayCard(
     onUnlock: () -> Unit,
     canEarnMoonsWithRewardedAd: Boolean,
     onEarnMoonsWithRewardedAd: () -> Unit,
+    onRewardedAdCtaShown: () -> Unit,
     isLoading: Boolean,
     canUnlock: Boolean,
     errorMessage: String?,
 ) {
+    var rewardedCtaTracked by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(canEarnMoonsWithRewardedAd, isLoading) {
+        val ctaVisible = canEarnMoonsWithRewardedAd && !isLoading
+        when {
+            ctaVisible && !rewardedCtaTracked -> {
+                onRewardedAdCtaShown()
+                rewardedCtaTracked = true
+            }
+            !ctaVisible -> rewardedCtaTracked = false
+        }
+    }
     val cta = when (tab) {
         HoroscopeTab.Daily -> strings.horoscope.unlockDayForMoonFormat
         HoroscopeTab.Weekly -> strings.horoscope.unlockWeekForMoonFormat

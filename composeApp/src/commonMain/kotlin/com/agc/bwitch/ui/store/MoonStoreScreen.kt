@@ -16,8 +16,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.rememberSaveable
+import androidx.compose.runtime.setValue
 import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.presentation.economy.EconomyViewModel
 import com.agc.bwitch.presentation.moons.MoonStoreViewModel
@@ -38,6 +41,22 @@ fun MoonStoreScreen(
     LaunchedEffect(economyState.isLoading, economyState.error, economyState.balance) {
         if (!economyState.isLoading) {
             println("[MoonStoreScreen] Economy backend balance=${economyState.balance}, error=${economyState.error}")
+        }
+    }
+    var rewardedCtaTracked by rememberSaveable { mutableStateOf(false) }
+    val rewardedCtaVisible = economyState.rewardedAdsRemaining > 0 &&
+        !economyState.isClaimingRewardedAd &&
+        !economyState.isLoading
+    LaunchedEffect(rewardedCtaVisible, economyState.rewardedAdsRemaining) {
+        when {
+            rewardedCtaVisible && !rewardedCtaTracked -> {
+                economyViewModel.onRewardedAdCtaShown(
+                    placement = "moon_store",
+                    rewardedAdsRemaining = economyState.rewardedAdsRemaining,
+                )
+                rewardedCtaTracked = true
+            }
+            !rewardedCtaVisible -> rewardedCtaTracked = false
         }
     }
 
@@ -114,9 +133,7 @@ fun MoonStoreScreen(
                         println("[MoonStoreScreen] CTA rewarded ad tapped")
                         economyViewModel.claimRewardedAd()
                     },
-                    enabled = economyState.rewardedAdsRemaining > 0 &&
-                        !economyState.isClaimingRewardedAd &&
-                        !economyState.isLoading,
+                    enabled = rewardedCtaVisible,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     if (economyState.isClaimingRewardedAd) {

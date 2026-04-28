@@ -1,5 +1,6 @@
 package com.agc.bwitch.presentation.economy
 
+import com.agc.bwitch.domain.analytics.AnalyticsEvent
 import com.agc.bwitch.domain.economy.EconomyBalance
 import com.agc.bwitch.domain.economy.EconomyClaimResult
 import com.agc.bwitch.domain.economy.EconomyClaimStatus
@@ -79,6 +80,119 @@ class EconomyViewModelTest {
 
             val viewedEvents = analytics.events.filterIsInstance<com.agc.bwitch.domain.analytics.AnalyticsEvent.EconomyBalanceViewed>()
             assertEquals(1, viewedEvents.size)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun `moon paywall shown emits normalized analytics payload`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val analytics = FakeAnalyticsTracker()
+            val viewModel = EconomyViewModel(
+                economyRepository = StableEconomyRepository(),
+                analyticsTracker = analytics,
+            )
+            advanceUntilIdle()
+
+            viewModel.onMoonPaywallShown(
+                MoonPaywallRequest(
+                    requiredMoons = 3,
+                    source = "",
+                ),
+            )
+
+            val event = analytics.events.last() as AnalyticsEvent.PaywallShown
+            assertEquals("moon_paywall", event.placement)
+            assertEquals("unknown", event.module)
+            assertEquals("insufficient_moons", event.reason)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun `moon paywall action clicked emits normalized analytics payload`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val analytics = FakeAnalyticsTracker()
+            val viewModel = EconomyViewModel(
+                economyRepository = StableEconomyRepository(),
+                analyticsTracker = analytics,
+            )
+            advanceUntilIdle()
+
+            viewModel.onMoonPaywallActionClicked(
+                request = MoonPaywallRequest(
+                    requiredMoons = 5,
+                    source = "horoscope_daily_unlock",
+                ),
+                action = "watch_ad",
+            )
+
+            val event = analytics.events.last() as AnalyticsEvent.PaywallActionClicked
+            assertEquals("moon_paywall", event.placement)
+            assertEquals("horoscope_daily_unlock", event.module)
+            assertEquals("watch_ad", event.action)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun `rewarded ad cta shown emits analytics only when remaining is known`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val analytics = FakeAnalyticsTracker()
+            val viewModel = EconomyViewModel(
+                economyRepository = StableEconomyRepository(),
+                analyticsTracker = analytics,
+            )
+            advanceUntilIdle()
+
+            viewModel.onRewardedAdCtaShown(
+                placement = "moon_store",
+                rewardedAdsRemaining = null,
+            )
+            viewModel.onRewardedAdCtaShown(
+                placement = "moon_store",
+                rewardedAdsRemaining = 2,
+            )
+
+            val events = analytics.events.filterIsInstance<AnalyticsEvent.RewardedAdCtaShown>()
+            assertEquals(1, events.size)
+            assertEquals("moon_store", events.first().placement)
+            assertEquals(2, events.first().rewardedAdsRemaining)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun `moon paywall request gets unique impression id for equal source and cost`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val viewModel = EconomyViewModel(
+                economyRepository = StableEconomyRepository(),
+            )
+            advanceUntilIdle()
+
+            viewModel.requireLunas(cost = 99, source = "horoscope_daily_unlock") {}
+            val firstRequest = viewModel.moonPaywallRequest.value
+            viewModel.dismissMoonPaywall()
+            viewModel.requireLunas(cost = 99, source = "horoscope_daily_unlock") {}
+            val secondRequest = viewModel.moonPaywallRequest.value
+
+            assertTrue(firstRequest != null)
+            assertTrue(secondRequest != null)
+            assertTrue(firstRequest.impressionId.isNotBlank())
+            assertTrue(secondRequest.impressionId.isNotBlank())
+            assertTrue(firstRequest.impressionId != secondRequest.impressionId)
         } finally {
             Dispatchers.resetMain()
         }

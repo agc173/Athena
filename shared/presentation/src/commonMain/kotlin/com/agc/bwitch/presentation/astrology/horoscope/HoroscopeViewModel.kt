@@ -174,13 +174,6 @@ class HoroscopeViewModel(
     }
 
     fun onUnlockDeferredToPaywall() {
-        analyticsTracker.track(
-            AnalyticsEvent.PaywallShown(
-                placement = "horoscope_daily_overlay",
-                module = "horoscope_daily",
-                reason = "insufficient_moons",
-            ),
-        )
         val state = _uiState.value
         val overlay = state.overlay
         if (overlay is HoroscopeOverlayUi.DailyOverlay && overlay.isLocked) {
@@ -202,24 +195,10 @@ class HoroscopeViewModel(
     }
 
     fun onUnlockWeekDeferredToPaywall() {
-        analyticsTracker.track(
-            AnalyticsEvent.PaywallShown(
-                placement = "horoscope_weekly_overlay",
-                module = "horoscope_weekly",
-                reason = "insufficient_moons",
-            ),
-        )
         _uiState.update { it.copy(lockCardMessage = null) }
     }
 
     fun onUnlockMonthDeferredToPaywall() {
-        analyticsTracker.track(
-            AnalyticsEvent.PaywallShown(
-                placement = "horoscope_monthly_overlay",
-                module = "horoscope_monthly",
-                reason = "insufficient_moons",
-            ),
-        )
         _uiState.update { it.copy(lockCardMessage = null) }
     }
 
