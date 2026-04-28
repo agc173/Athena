@@ -273,19 +273,48 @@ fun AppRoot() {
         }
 
         moonPaywallRequest?.let { paywall ->
+            LaunchedEffect(paywall.impressionId) {
+                economyVm.onMoonPaywallShown(paywall)
+            }
             MoonPaywallDialog(
                 economyState = economyState,
                 requiredMoons = paywall.requiredMoons,
-                onDismiss = economyVm::dismissMoonPaywall,
-                onClaimDaily = economyVm::claimDailyLogin,
+                onDismiss = {
+                    economyVm.onMoonPaywallActionClicked(
+                        request = paywall,
+                        action = "dismiss",
+                    )
+                    economyVm.dismissMoonPaywall()
+                },
+                onClaimDaily = {
+                    economyVm.onMoonPaywallActionClicked(
+                        request = paywall,
+                        action = "claim_daily",
+                    )
+                    economyVm.claimDailyLogin()
+                },
                 onClaimRewardedAd = {
+                    economyVm.onMoonPaywallActionClicked(
+                        request = paywall,
+                        action = "watch_ad",
+                    )
                     economyVm.claimRewardedAd(
                         placement = paywall.source ?: REWARDED_AD_PAYWALL_PLACEMENT,
                     )
                 },
                 onOpenStore = {
+                    economyVm.onMoonPaywallActionClicked(
+                        request = paywall,
+                        action = "open_store",
+                    )
                     economyVm.dismissMoonPaywall()
                     navigator.navigate(Destination.MoonStore)
+                },
+                onRewardedAdCtaShown = {
+                    economyVm.onRewardedAdCtaShown(
+                        placement = paywall.source ?: REWARDED_AD_PAYWALL_PLACEMENT,
+                        rewardedAdsRemaining = economyState.rewardedAdsRemaining,
+                    )
                 },
             )
         }

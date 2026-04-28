@@ -64,6 +64,7 @@ class EconomyViewModel(
     val moonPaywallRequest: StateFlow<MoonPaywallRequest?> = _moonPaywallRequest.asStateFlow()
     private var pendingMoonAction: PendingMoonAction? = null
     private var lastTrackedBalanceSnapshot: EconomyTrackedSnapshot? = null
+    private var moonPaywallImpressionCounter: Long = 0L
 
     init {
         scope.launch {
@@ -91,10 +92,9 @@ class EconomyViewModel(
         onSuccess: () -> Unit,
     ): Boolean {
         val currentState = _uiState.value
-        val module = source.orEmpty().ifBlank { "unknown" }
         analyticsTracker.track(
             AnalyticsEvent.ContentUnlockAttempt(
-                module = module,
+                module = normalizeMoonPaywallModule(source),
                 cost = cost,
                 hasEnoughMoons = currentState.hasUsableSnapshot && currentState.balance >= cost,
                 isPremium = currentState.isPremium,
@@ -111,14 +111,7 @@ class EconomyViewModel(
             onSuccess = onSuccess,
         )
         if (currentState.hasUsableSnapshot) {
-            analyticsTracker.track(
-                AnalyticsEvent.PaywallShown(
-                    placement = "moon_paywall",
-                    module = module,
-                    reason = "insufficient_moons",
-                ),
-            )
-            _moonPaywallRequest.value = MoonPaywallRequest(
+            _moonPaywallRequest.value = newMoonPaywallRequest(
                 requiredMoons = cost,
                 source = source,
             )
@@ -126,6 +119,43 @@ class EconomyViewModel(
             loadEconomy()
         }
         return false
+    }
+
+    fun onMoonPaywallShown(request: MoonPaywallRequest) {
+        analyticsTracker.track(
+            AnalyticsEvent.PaywallShown(
+                placement = MOON_PAYWALL_PLACEMENT,
+                module = normalizeMoonPaywallModule(request.source),
+                reason = MOON_PAYWALL_REASON_INSUFFICIENT_MOONS,
+            ),
+        )
+    }
+
+    fun onMoonPaywallActionClicked(
+        request: MoonPaywallRequest,
+        action: String,
+    ) {
+        analyticsTracker.track(
+            AnalyticsEvent.PaywallActionClicked(
+                placement = MOON_PAYWALL_PLACEMENT,
+                module = normalizeMoonPaywallModule(request.source),
+                action = action,
+            ),
+        )
+    }
+
+    fun onRewardedAdCtaShown(
+        placement: String,
+        rewardedAdsRemaining: Int?,
+    ) {
+        val remaining = rewardedAdsRemaining ?: return
+        if (remaining < 0) return
+        analyticsTracker.track(
+            AnalyticsEvent.RewardedAdCtaShown(
+                placement = placement,
+                rewardedAdsRemaining = remaining,
+            ),
+        )
     }
 
     fun dismissMoonPaywall() {
@@ -148,11 +178,23 @@ class EconomyViewModel(
         }
 
         if (_moonPaywallRequest.value == null) {
-            _moonPaywallRequest.value = MoonPaywallRequest(
+            _moonPaywallRequest.value = newMoonPaywallRequest(
                 requiredMoons = action.requiredMoons,
                 source = action.source,
             )
         }
+    }
+
+    private fun newMoonPaywallRequest(
+        requiredMoons: Int,
+        source: String?,
+    ): MoonPaywallRequest {
+        moonPaywallImpressionCounter += 1
+        return MoonPaywallRequest(
+            requiredMoons = requiredMoons,
+            source = source,
+            impressionId = "moon-paywall-${moonPaywallImpressionCounter}",
+        )
     }
 
     fun loadEconomy() {
@@ -395,6 +437,7 @@ class EconomyViewModel(
 data class MoonPaywallRequest(
     val requiredMoons: Int,
     val source: String? = null,
+    val impressionId: String = "",
 )
 
 private data class PendingMoonAction(
@@ -406,9 +449,13 @@ private data class PendingMoonAction(
 const val ECONOMY_LOAD_ERROR_KEY = "economy.load.error"
 const val ECONOMY_CLAIM_ERROR_KEY = "economy.claim.error"
 const val REWARDED_AD_DEFAULT_PLACEMENT = "moon_store"
+private const val MOON_PAYWALL_PLACEMENT = "moon_paywall"
+private const val MOON_PAYWALL_REASON_INSUFFICIENT_MOONS = "insufficient_moons"
 
 // TODO(economy-rewarded-ad): Replace placeholder proof with SDK validated reward token.
 const val REWARDED_AD_PLACEHOLDER_PROOF = "client-placeholder-proof"
+
+private fun normalizeMoonPaywallModule(source: String?): String = source.orEmpty().ifBlank { "unknown" }
 
 private fun com.agc.bwitch.domain.economy.EconomyClaimStatus.toUiStatus(): EconomyClaimUiStatus {
     return when (this) {

@@ -10,6 +10,10 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.agc.bwitch.localization.appStrings
@@ -23,8 +27,20 @@ fun MoonPaywallDialog(
     onClaimDaily: () -> Unit,
     onClaimRewardedAd: () -> Unit,
     onOpenStore: () -> Unit,
+    onRewardedAdCtaShown: () -> Unit,
 ) {
     val strings = appStrings
+    var rewardedCtaTracked by rememberSaveable { mutableStateOf(false) }
+    val rewardedCtaVisible = economyState.rewardedAdsRemaining > 0 && !economyState.isClaimingRewardedAd
+    LaunchedEffect(rewardedCtaVisible) {
+        when {
+            rewardedCtaVisible && !rewardedCtaTracked -> {
+                onRewardedAdCtaShown()
+                rewardedCtaTracked = true
+            }
+            !rewardedCtaVisible -> rewardedCtaTracked = false
+        }
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -51,7 +67,7 @@ fun MoonPaywallDialog(
                 }
                 OutlinedButton(
                     onClick = onClaimRewardedAd,
-                    enabled = economyState.rewardedAdsRemaining > 0 && !economyState.isClaimingRewardedAd,
+                    enabled = rewardedCtaVisible,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Text(strings.profile.moonPaywallWatchAdCta)
