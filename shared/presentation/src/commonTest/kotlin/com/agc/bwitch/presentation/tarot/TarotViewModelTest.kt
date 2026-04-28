@@ -16,10 +16,12 @@ import com.agc.bwitch.domain.shared.ApiResult
 import com.agc.bwitch.domain.tarot.TarotDrawResponse
 import com.agc.bwitch.domain.tarot.TarotRepository
 import com.agc.bwitch.domain.tarot.TarotRequestType
+import com.agc.bwitch.presentation.analytics.FakeAnalyticsTracker
 import kotlin.collections.ArrayDeque
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -68,6 +70,7 @@ class TarotViewModelTest {
             val repo = FakeTarotRepository()
             val languageRepo = FakeLanguageRepository(MutableStateFlow(AppLanguage.Spanish))
             val moonRepository = FakeMoonRepository(initialBalance = 10)
+            val analytics = FakeAnalyticsTracker()
             val viewModel = TarotViewModel(
                 tarotRepository = repo,
                 resolveCurrentLanguageUseCase = ResolveCurrentLanguageUseCase(languageRepo),
@@ -76,6 +79,7 @@ class TarotViewModelTest {
                 getMoonBalanceUseCase = GetMoonBalanceUseCase(moonRepository),
                 addMoonsUseCase = AddMoonsUseCase(moonRepository),
                 spendMoonsUseCase = SpendMoonsUseCase(moonRepository),
+                analyticsTracker = analytics,
             )
 
             viewModel.newRequest(TarotRequestType.TAROT_3)
@@ -109,6 +113,7 @@ class TarotViewModelTest {
             )
             val languageRepo = FakeLanguageRepository(MutableStateFlow(AppLanguage.Spanish))
             val moonRepository = FakeMoonRepository(initialBalance = 10)
+            val analytics = FakeAnalyticsTracker()
             val viewModel = TarotViewModel(
                 tarotRepository = repo,
                 resolveCurrentLanguageUseCase = ResolveCurrentLanguageUseCase(languageRepo),
@@ -117,6 +122,7 @@ class TarotViewModelTest {
                 getMoonBalanceUseCase = GetMoonBalanceUseCase(moonRepository),
                 addMoonsUseCase = AddMoonsUseCase(moonRepository),
                 spendMoonsUseCase = SpendMoonsUseCase(moonRepository),
+                analyticsTracker = analytics,
             )
 
             viewModel.newRequest(TarotRequestType.TAROT_3)
@@ -128,6 +134,7 @@ class TarotViewModelTest {
             assertNull(viewModel.uiState.value.insufficientMoonsMessage)
             assertEquals("DONE", viewModel.uiState.value.response?.status)
             assertEquals(7, viewModel.uiState.value.moonBalance)
+            assertTrue(analytics.events.any { it is com.agc.bwitch.domain.analytics.AnalyticsEvent.ContentUnlocked })
         } finally {
             Dispatchers.resetMain()
         }

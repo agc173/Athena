@@ -41,7 +41,7 @@ val presentationModule: Module = module {
     /**
      * Horoscope
      */
-    factory { HoroscopeViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
+    factory { HoroscopeViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
 
     /**
      * BirthChart
@@ -51,14 +51,14 @@ val presentationModule: Module = module {
     factory { SynastryViewModel(get(), get(), get()) }
 
     factory { UserProfileViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
-    factory { SettingsViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
+    factory { SettingsViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     factory { OnboardingProfileViewModel(get(), get(), get(), get(), get(), get()) }
 
     factory { OracleStatusViewModel(get()) }
-    factory { OracleAskViewModel(get(), get(), get(), get()) }
-    factory { TarotViewModel(get(), get(), get(), get(), get(), get(), get()) }
-    factory { MoonStoreViewModel(get(), get(), get()) }
-    single { EconomyViewModel(get()) }
+    factory { OracleAskViewModel(get(), get(), get(), get(), get()) }
+    factory { TarotViewModel(get(), get(), get(), get(), get(), get(), get(), get()) }
+    factory { MoonStoreViewModel(get(), get(), get(), get()) }
+    single { EconomyViewModel(get(), get()) }
     factory { PendulumViewModel() }
     factory { DailyRitualViewModel(get()) }
     factory { HabitsViewModel(get(), get(), get()) }

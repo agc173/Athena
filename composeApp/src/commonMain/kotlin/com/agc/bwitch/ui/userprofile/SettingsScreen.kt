@@ -91,6 +91,11 @@ fun SettingsScreen(contentPadding: PaddingValues) {
         val error = settingsState.error ?: return@LaunchedEffect
         snackbarHostState.showSnackbar(error)
     }
+    LaunchedEffect(settingsState.subscriptionPrimaryAction) {
+        if (settingsState.subscriptionPrimaryAction == SubscriptionPrimaryAction.Subscribe) {
+            settingsVm.onPremiumCtaShown("settings_subscribe")
+        }
+    }
 
     LaunchedEffect(settingsState.feedback) {
         val feedback = settingsState.feedback ?: return@LaunchedEffect

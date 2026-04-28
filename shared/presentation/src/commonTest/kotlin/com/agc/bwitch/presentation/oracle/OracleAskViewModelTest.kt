@@ -14,11 +14,13 @@ import com.agc.bwitch.domain.oracle.OracleAskResult
 import com.agc.bwitch.domain.oracle.OracleRepository
 import com.agc.bwitch.domain.shared.ApiError
 import com.agc.bwitch.domain.shared.ApiResult
+import com.agc.bwitch.presentation.analytics.FakeAnalyticsTracker
 import com.agc.bwitch.presentation.oracle.OracleAskMessageId
 import kotlin.collections.ArrayDeque
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -73,11 +75,13 @@ class OracleAskViewModelTest {
             )
             val languageRepo = FakeLanguageRepository(MutableStateFlow(AppLanguage.English))
             val economyRepository = FakeEconomyRepository()
+            val analytics = FakeAnalyticsTracker()
             val viewModel = OracleAskViewModel(
                 oracleRepository = repo,
                 resolveCurrentLanguageUseCase = ResolveCurrentLanguageUseCase(languageRepo),
                 observeCurrentLanguageUseCase = ObserveCurrentLanguageUseCase(languageRepo),
                 economyRepository = economyRepository,
+                analyticsTracker = analytics,
             )
 
             viewModel.onQuestionChange("How should I focus today?")
@@ -104,11 +108,13 @@ class OracleAskViewModelTest {
             )
             val languageRepo = FakeLanguageRepository(MutableStateFlow(AppLanguage.English))
             val economyRepository = FakeEconomyRepository()
+            val analytics = FakeAnalyticsTracker()
             val viewModel = OracleAskViewModel(
                 oracleRepository = repo,
                 resolveCurrentLanguageUseCase = ResolveCurrentLanguageUseCase(languageRepo),
                 observeCurrentLanguageUseCase = ObserveCurrentLanguageUseCase(languageRepo),
                 economyRepository = economyRepository,
+                analyticsTracker = analytics,
             )
 
             viewModel.onQuestionChange("Will this week be kind?")
@@ -121,6 +127,7 @@ class OracleAskViewModelTest {
                 viewModel.uiState.value.error?.id,
             )
             assertEquals(10, viewModel.uiState.value.economyBalance)
+            assertTrue(analytics.events.any { it is com.agc.bwitch.domain.analytics.AnalyticsEvent.ModuleLimitReached })
         } finally {
             Dispatchers.resetMain()
         }
