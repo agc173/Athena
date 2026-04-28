@@ -17,6 +17,7 @@ import com.agc.bwitch.domain.moons.SpendMoonsUseCase
 import com.agc.bwitch.domain.tarot.TarotDrawResponse
 import com.agc.bwitch.domain.tarot.TarotRepository
 import com.agc.bwitch.domain.tarot.TarotRequestType
+import com.agc.bwitch.presentation.economy.UNLOCK_FLOW_ORIGIN_DIRECT_BALANCE
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 import kotlinx.coroutines.CoroutineScope
@@ -308,6 +309,7 @@ class TarotViewModel(
                                         method = "moons",
                                         costCharged = _uiState.value.extraReadingCost,
                                         balanceAfter = spendResult.updatedBalance.amount,
+                                        unlockFlowOrigin = UNLOCK_FLOW_ORIGIN_DIRECT_BALANCE,
                                     ),
                                 )
                                 val retryResult = tarotRepository.tarotDraw(

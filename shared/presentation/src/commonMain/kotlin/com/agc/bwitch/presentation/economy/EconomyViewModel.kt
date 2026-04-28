@@ -89,19 +89,35 @@ class EconomyViewModel(
     fun requireLunas(
         cost: Int,
         source: String? = null,
-        onSuccess: () -> Unit,
+        onSuccess: (MoonUnlockFlowContext) -> Unit,
     ): Boolean {
         val currentState = _uiState.value
+        val hasEnoughMoons = currentState.hasUsableSnapshot && currentState.balance >= cost
+        val directBalanceOrigin = if (currentState.isPremium) {
+            UNLOCK_FLOW_ORIGIN_PREMIUM
+        } else if (hasEnoughMoons) {
+            UNLOCK_FLOW_ORIGIN_DIRECT_BALANCE
+        } else {
+            UNLOCK_FLOW_ORIGIN_UNKNOWN
+        }
         analyticsTracker.track(
             AnalyticsEvent.ContentUnlockAttempt(
                 module = normalizeMoonPaywallModule(source),
                 cost = cost,
-                hasEnoughMoons = currentState.hasUsableSnapshot && currentState.balance >= cost,
+                hasEnoughMoons = hasEnoughMoons,
                 isPremium = currentState.isPremium,
+                unlockFlowOrigin = directBalanceOrigin,
             ),
         )
-        if (currentState.hasUsableSnapshot && currentState.balance >= cost) {
-            onSuccess()
+        if (hasEnoughMoons) {
+            onSuccess(
+                MoonUnlockFlowContext(
+                    source = source,
+                    unlockFlowOrigin = directBalanceOrigin,
+                    paywallImpressionId = null,
+                    lastPaywallAction = null,
+                ),
+            )
             return true
         }
 
@@ -136,6 +152,16 @@ class EconomyViewModel(
         request: MoonPaywallRequest,
         action: String,
     ) {
+        pendingMoonAction = pendingMoonAction?.let { pending ->
+            if (pending.requiredMoons == request.requiredMoons && pending.source == request.source) {
+                pending.copy(
+                    paywallImpressionId = request.impressionId,
+                    lastPaywallAction = action,
+                )
+            } else {
+                pending
+            }
+        }
         analyticsTracker.track(
             AnalyticsEvent.PaywallActionClicked(
                 placement = MOON_PAYWALL_PLACEMENT,
@@ -177,7 +203,19 @@ class EconomyViewModel(
         if (balance >= action.requiredMoons) {
             pendingMoonAction = null
             _moonPaywallRequest.value = null
-            action.onSuccess()
+            val unlockFlowOrigin = when {
+                action.lastPaywallAction == PAYWALL_ACTION_WATCH_AD -> UNLOCK_FLOW_ORIGIN_PAYWALL_REWARDED
+                action.lastPaywallAction != null -> UNLOCK_FLOW_ORIGIN_UNKNOWN
+                else -> UNLOCK_FLOW_ORIGIN_UNKNOWN
+            }
+            action.onSuccess(
+                MoonUnlockFlowContext(
+                    source = action.source,
+                    unlockFlowOrigin = unlockFlowOrigin,
+                    paywallImpressionId = action.paywallImpressionId,
+                    lastPaywallAction = action.lastPaywallAction,
+                ),
+            )
             return
         }
 
@@ -458,7 +496,16 @@ data class MoonPaywallRequest(
 private data class PendingMoonAction(
     val requiredMoons: Int,
     val source: String?,
-    val onSuccess: () -> Unit,
+    val paywallImpressionId: String? = null,
+    val lastPaywallAction: String? = null,
+    val onSuccess: (MoonUnlockFlowContext) -> Unit,
+)
+
+data class MoonUnlockFlowContext(
+    val source: String?,
+    val unlockFlowOrigin: String,
+    val paywallImpressionId: String? = null,
+    val lastPaywallAction: String? = null,
 )
 
 const val ECONOMY_LOAD_ERROR_KEY = "economy.load.error"
@@ -466,6 +513,11 @@ const val ECONOMY_CLAIM_ERROR_KEY = "economy.claim.error"
 const val REWARDED_AD_DEFAULT_PLACEMENT = "moon_store"
 private const val MOON_PAYWALL_PLACEMENT = "moon_paywall"
 private const val MOON_PAYWALL_REASON_INSUFFICIENT_MOONS = "insufficient_moons"
+private const val PAYWALL_ACTION_WATCH_AD = "watch_ad"
+const val UNLOCK_FLOW_ORIGIN_DIRECT_BALANCE = "direct_balance"
+const val UNLOCK_FLOW_ORIGIN_PAYWALL_REWARDED = "paywall_rewarded"
+const val UNLOCK_FLOW_ORIGIN_PREMIUM = "premium"
+const val UNLOCK_FLOW_ORIGIN_UNKNOWN = "unknown"
 
 // TODO(economy-rewarded-ad): Replace placeholder proof with SDK validated reward token.
 const val REWARDED_AD_PLACEHOLDER_PROOF = "client-placeholder-proof"
