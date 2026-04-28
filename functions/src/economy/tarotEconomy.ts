@@ -62,7 +62,7 @@ function assertTarotRequestType(requestType: RequestType): TarotRequestType {
   return requestType;
 }
 
-function resolveTarotDecision(params: {
+export function resolveTarotDecision(params: {
   requestType: TarotRequestType;
   isPremium: boolean;
   balance: number;

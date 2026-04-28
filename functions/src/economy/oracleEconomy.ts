@@ -46,7 +46,7 @@ function intValue(value: unknown): number {
   return Math.max(0, Math.floor(value));
 }
 
-function resolveOracleDecision(params: {
+export function resolveOracleDecision(params: {
   isPremium: boolean;
   balance: number;
   dailyUsage: EconomyDailyUsageDoc;
@@ -74,6 +74,15 @@ function resolveOracleDecision(params: {
     };
   }
 
+  if (moonUsed >= (rule.moonExtraDailyMax ?? 0)) {
+    return {
+      source: 'REJECT',
+      moonCost: 0,
+      reason: 'ORACLE_MOON_DAILY_LIMIT_REACHED',
+      usageApplied: {},
+    };
+  }
+
   if (isPremium) {
     const premiumDailyMax = rule.premiumDailyMax ?? 0;
     const totalPremiumDayUsed = premiumUsed + moonUsed;
@@ -85,13 +94,6 @@ function resolveOracleDecision(params: {
         usageApplied: {},
       };
     }
-  } else if (moonUsed >= (rule.moonExtraDailyMax ?? 0)) {
-    return {
-      source: 'REJECT',
-      moonCost: 0,
-      reason: 'ORACLE_MOON_DAILY_LIMIT_REACHED',
-      usageApplied: {},
-    };
   }
 
   const moonCost = rule.moonCostPerUse ?? 0;

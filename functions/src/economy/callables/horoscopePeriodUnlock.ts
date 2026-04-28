@@ -11,6 +11,7 @@ import {
   economyUsageDailyRef,
 } from '../firestorePaths';
 import {getPremiumStatus} from '../premiumStatus';
+import {resolveHoroscopeUnlockDecision} from '../horoscopeEconomy';
 import {getEconomyModuleRule} from '../rulesCatalog';
 import type {
   EconomyBalanceDoc,
@@ -128,19 +129,22 @@ export async function unlockHoroscopePeriod<TResponse extends UnlockHoroscopePer
       return stableResponse as TResponse;
     }
 
-    const isPremium = premium.isPremium;
     const ruleCost = getEconomyModuleRule(config.module).moonCostPerUse ?? 1;
-    const shouldCharge = !isPremium;
+    const decision = resolveHoroscopeUnlockDecision({
+      isPremium: premium.isPremium,
+      balance: currentBalance,
+      moonCost: ruleCost,
+    });
 
-    if (shouldCharge && currentBalance < ruleCost) {
+    if (decision.source === 'REJECT') {
       throw new HttpsError('failed-precondition', 'insufficient_moons');
     }
 
     const usageData = (usageSnap.data() as EconomyDailyUsageDoc | undefined) ?? {};
     const now = Timestamp.now();
-    const nextBalance = shouldCharge ? currentBalance - ruleCost : currentBalance;
-    const costCharged = shouldCharge ? ruleCost : 0;
-    const nextUsage = asCount(usageData[config.usageCounter]) + (shouldCharge ? 1 : 0);
+    const costCharged = decision.moonCost;
+    const nextBalance = currentBalance - costCharged;
+    const nextUsage = asCount(usageData[config.usageCounter]) + (decision.source === 'MOON' ? 1 : 0);
 
     tx.set(unlockRef, {
       unlockKey,
@@ -149,11 +153,11 @@ export async function unlockHoroscopePeriod<TResponse extends UnlockHoroscopePer
       createdAt: now,
       requestId,
       costCharged,
-      premiumIncluded: isPremium,
+      premiumIncluded: decision.source === 'PREMIUM_INCLUDED',
       contextSign: sign,
     }, {merge: true});
 
-    if (shouldCharge) {
+    if (decision.source === 'MOON') {
       tx.set(balanceRef, {balance: nextBalance, updatedAt: now}, {merge: true});
       tx.set(usageRef, {[config.usageCounter]: nextUsage, updatedAt: now}, {merge: true});
       tx.set(economyLedgerRef(uid, `${todayIso}:horoscope-${config.unlockKeyPrefix}:${requestId}`), {
@@ -194,7 +198,7 @@ export async function unlockHoroscopePeriod<TResponse extends UnlockHoroscopePer
         sign,
         unlockKey,
         costCharged,
-        premiumIncluded: isPremium,
+        premiumIncluded: decision.source === 'PREMIUM_INCLUDED',
       },
       dateIso: todayIso,
       [config.keyField]: periodKey,

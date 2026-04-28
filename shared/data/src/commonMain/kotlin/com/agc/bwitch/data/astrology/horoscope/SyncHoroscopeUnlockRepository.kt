@@ -15,13 +15,13 @@ class SyncHoroscopeUnlockRepository(
     }
 
     override suspend fun getWeeklyCost(): Int {
-        return runCatching { remoteDataSource.getStatus().rules?.horoscope?.costs?.weekly ?: 1 }
-            .getOrDefault(1)
+        return runCatching { remoteDataSource.getStatus().rules?.horoscope?.costs?.weekly ?: 2 }
+            .getOrDefault(2)
     }
 
     override suspend fun getMonthlyCost(): Int {
-        return runCatching { remoteDataSource.getStatus().rules?.horoscope?.costs?.monthly ?: 1 }
-            .getOrDefault(1)
+        return runCatching { remoteDataSource.getStatus().rules?.horoscope?.costs?.monthly ?: 3 }
+            .getOrDefault(3)
     }
 
     override suspend fun isUnlocked(dateIso: String): Boolean {
