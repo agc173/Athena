@@ -236,7 +236,7 @@ class SettingsViewModel(
 
     fun onSubscriptionPrimaryActionClicked() {
         if (_uiState.value.isLoading) return
-        analyticsTracker.track(AnalyticsEvent.PremiumCtaClicked(placement = "settings_primary"))
+        analyticsTracker.track(AnalyticsEvent.PremiumCtaClicked(placement = "settings_primary", originPlacement = "settings"))
         when (_uiState.value.subscriptionPrimaryAction) {
             SubscriptionPrimaryAction.Subscribe -> onSubscribeClicked()
             SubscriptionPrimaryAction.Manage -> {
@@ -254,13 +254,13 @@ class SettingsViewModel(
 
     fun onSubscribeClicked(plan: SubscriptionPlanSelection = SubscriptionPlanSelection.Monthly) {
         if (_uiState.value.isLoading) return
-        analyticsTracker.track(AnalyticsEvent.PremiumCtaClicked(placement = "settings_subscribe"))
+        analyticsTracker.track(AnalyticsEvent.PremiumCtaClicked(placement = "settings_subscribe", originPlacement = "settings"))
         val productId = when (plan) {
             SubscriptionPlanSelection.Monthly -> KnownSubscriptionProducts.MONTHLY
             SubscriptionPlanSelection.Annual -> KnownSubscriptionProducts.ANNUAL
         }
         pendingPremiumProductId = productId
-        analyticsTracker.track(AnalyticsEvent.PremiumPurchaseStarted(productId = productId))
+        analyticsTracker.track(AnalyticsEvent.PremiumPurchaseStarted(productId = productId, originPlacement = "settings"))
         scope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
             _uiEffects.emit(SettingsUiEffect.LaunchSubscriptionPurchase(plan))
@@ -327,9 +327,9 @@ class SettingsViewModel(
 
     fun onCatalogSubscriptionSelected(productId: String) {
         if (_uiState.value.isLoading) return
-        analyticsTracker.track(AnalyticsEvent.PremiumCtaClicked(placement = "settings_catalog"))
+        analyticsTracker.track(AnalyticsEvent.PremiumCtaClicked(placement = "settings_catalog", originPlacement = "settings"))
         pendingPremiumProductId = productId
-        analyticsTracker.track(AnalyticsEvent.PremiumPurchaseStarted(productId = productId))
+        analyticsTracker.track(AnalyticsEvent.PremiumPurchaseStarted(productId = productId, originPlacement = "settings"))
         scope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
             _uiEffects.emit(SettingsUiEffect.LaunchSubscriptionPurchaseWithProduct(productId))
@@ -337,7 +337,7 @@ class SettingsViewModel(
     }
 
     fun onPremiumCtaShown(placement: String) {
-        analyticsTracker.track(AnalyticsEvent.PremiumCtaShown(placement = placement))
+        analyticsTracker.track(AnalyticsEvent.PremiumCtaShown(placement = placement, originPlacement = "settings"))
     }
 
     fun onSubscriptionManagementCompleted(outcome: SubscriptionManagementOutcome) {
