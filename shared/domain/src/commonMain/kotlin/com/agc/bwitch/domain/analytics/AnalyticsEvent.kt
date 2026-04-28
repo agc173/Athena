@@ -44,43 +44,53 @@ sealed interface AnalyticsEvent {
     data class RewardedAdCtaShown(
         val placement: String,
         val rewardedAdsRemaining: Int,
+        val paywallImpressionId: String? = null,
     ) : AnalyticsEvent {
         override val name: String = "rewarded_ad_cta_shown"
-        override fun params(): Map<String, String> = mapOf(
-            "placement" to placement,
-            "rewarded_ads_remaining" to rewardedAdsRemaining.toString(),
-        )
+        override fun params(): Map<String, String> = buildMap {
+            put("placement", placement)
+            put("rewarded_ads_remaining", rewardedAdsRemaining.toString())
+            paywallImpressionId?.let { put("paywall_impression_id", it) }
+        }
     }
 
     data class RewardedAdStarted(
         val placement: String,
+        val paywallImpressionId: String? = null,
     ) : AnalyticsEvent {
         override val name: String = "rewarded_ad_started"
-        override fun params(): Map<String, String> = mapOf("placement" to placement)
+        override fun params(): Map<String, String> = buildMap {
+            put("placement", placement)
+            paywallImpressionId?.let { put("paywall_impression_id", it) }
+        }
     }
 
     data class RewardedAdCompleted(
         val placement: String,
         val reward: Int,
         val balanceAfter: Int,
+        val paywallImpressionId: String? = null,
     ) : AnalyticsEvent {
         override val name: String = "rewarded_ad_completed"
-        override fun params(): Map<String, String> = mapOf(
-            "placement" to placement,
-            "reward" to reward.toString(),
-            "balance_after" to balanceAfter.toString(),
-        )
+        override fun params(): Map<String, String> = buildMap {
+            put("placement", placement)
+            put("reward", reward.toString())
+            put("balance_after", balanceAfter.toString())
+            paywallImpressionId?.let { put("paywall_impression_id", it) }
+        }
     }
 
     data class RewardedAdFailed(
         val placement: String,
         val reason: String,
+        val paywallImpressionId: String? = null,
     ) : AnalyticsEvent {
         override val name: String = "rewarded_ad_failed"
-        override fun params(): Map<String, String> = mapOf(
-            "placement" to placement,
-            "reason" to reason,
-        )
+        override fun params(): Map<String, String> = buildMap {
+            put("placement", placement)
+            put("reason", reason)
+            paywallImpressionId?.let { put("paywall_impression_id", it) }
+        }
     }
 
     data class ContentUnlockAttempt(
@@ -88,6 +98,8 @@ sealed interface AnalyticsEvent {
         val cost: Int,
         val hasEnoughMoons: Boolean?,
         val isPremium: Boolean,
+        val unlockFlowOrigin: String? = null,
+        val paywallImpressionId: String? = null,
     ) : AnalyticsEvent {
         override val name: String = "content_unlock_attempt"
         override fun params(): Map<String, String> = buildMap {
@@ -95,6 +107,8 @@ sealed interface AnalyticsEvent {
             put("cost", cost.toString())
             hasEnoughMoons?.let { put("has_enough_moons", it.toString()) }
             put("is_premium", isPremium.toString())
+            unlockFlowOrigin?.let { put("unlock_flow_origin", it) }
+            paywallImpressionId?.let { put("paywall_impression_id", it) }
         }
     }
 
@@ -103,6 +117,8 @@ sealed interface AnalyticsEvent {
         val method: String,
         val costCharged: Int,
         val balanceAfter: Int?,
+        val unlockFlowOrigin: String? = null,
+        val paywallImpressionId: String? = null,
     ) : AnalyticsEvent {
         override val name: String = "content_unlocked"
         override fun params(): Map<String, String> = buildMap {
@@ -110,39 +126,57 @@ sealed interface AnalyticsEvent {
             put("method", method)
             put("cost_charged", costCharged.toString())
             balanceAfter?.let { put("balance_after", it.toString()) }
+            unlockFlowOrigin?.let { put("unlock_flow_origin", it) }
+            paywallImpressionId?.let { put("paywall_impression_id", it) }
         }
     }
 
     data class ContentUnlockFailed(
         val module: String,
         val reason: String,
+        val unlockFlowOrigin: String? = null,
+        val paywallImpressionId: String? = null,
     ) : AnalyticsEvent {
         override val name: String = "content_unlock_failed"
-        override fun params(): Map<String, String> = mapOf(
-            "module" to module,
-            "reason" to reason,
-        )
+        override fun params(): Map<String, String> = buildMap {
+            put("module", module)
+            put("reason", reason)
+            unlockFlowOrigin?.let { put("unlock_flow_origin", it) }
+            paywallImpressionId?.let { put("paywall_impression_id", it) }
+        }
     }
 
     data class PremiumCtaShown(
         val placement: String,
+        val originPlacement: String? = null,
     ) : AnalyticsEvent {
         override val name: String = "premium_cta_shown"
-        override fun params(): Map<String, String> = mapOf("placement" to placement)
+        override fun params(): Map<String, String> = buildMap {
+            put("placement", placement)
+            originPlacement?.let { put("origin_placement", it) }
+        }
     }
 
     data class PremiumCtaClicked(
         val placement: String,
+        val originPlacement: String? = null,
     ) : AnalyticsEvent {
         override val name: String = "premium_cta_clicked"
-        override fun params(): Map<String, String> = mapOf("placement" to placement)
+        override fun params(): Map<String, String> = buildMap {
+            put("placement", placement)
+            originPlacement?.let { put("origin_placement", it) }
+        }
     }
 
     data class PremiumPurchaseStarted(
         val productId: String,
+        val originPlacement: String? = null,
     ) : AnalyticsEvent {
         override val name: String = "premium_purchase_started"
-        override fun params(): Map<String, String> = mapOf("product_id" to productId)
+        override fun params(): Map<String, String> = buildMap {
+            put("product_id", productId)
+            originPlacement?.let { put("origin_placement", it) }
+        }
     }
 
     data class PremiumPurchaseCompleted(
@@ -243,26 +277,30 @@ sealed interface AnalyticsEvent {
         val placement: String,
         val module: String,
         val reason: String,
+        val paywallImpressionId: String? = null,
     ) : AnalyticsEvent {
         override val name: String = "paywall_shown"
-        override fun params(): Map<String, String> = mapOf(
-            "placement" to placement,
-            "module" to module,
-            "reason" to reason,
-        )
+        override fun params(): Map<String, String> = buildMap {
+            put("placement", placement)
+            put("module", module)
+            put("reason", reason)
+            paywallImpressionId?.let { put("paywall_impression_id", it) }
+        }
     }
 
     data class PaywallActionClicked(
         val placement: String,
         val module: String,
         val action: String,
+        val paywallImpressionId: String? = null,
     ) : AnalyticsEvent {
         override val name: String = "paywall_action_clicked"
-        override fun params(): Map<String, String> = mapOf(
-            "placement" to placement,
-            "module" to module,
-            "action" to action,
-        )
+        override fun params(): Map<String, String> = buildMap {
+            put("placement", placement)
+            put("module", module)
+            put("action", action)
+            paywallImpressionId?.let { put("paywall_impression_id", it) }
+        }
     }
 
     data class ModuleUsed(
