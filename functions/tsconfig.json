@@ -13,5 +13,9 @@
   "compileOnSave": true,
   "include": [
     "src"
+  ],
+  "exclude": [
+    "src/**/*.selftest.ts",
+    "src/**/*SelfTest.ts"
   ]
 }
