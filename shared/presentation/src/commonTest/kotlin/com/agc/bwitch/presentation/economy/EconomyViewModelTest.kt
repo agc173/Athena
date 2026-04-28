@@ -101,6 +101,7 @@ class EconomyViewModelTest {
                 MoonPaywallRequest(
                     requiredMoons = 3,
                     source = "",
+                    impressionId = "imp-001",
                 ),
             )
 
@@ -108,6 +109,7 @@ class EconomyViewModelTest {
             assertEquals("moon_paywall", event.placement)
             assertEquals("unknown", event.module)
             assertEquals("insufficient_moons", event.reason)
+            assertEquals("imp-001", event.paywallImpressionId)
         } finally {
             Dispatchers.resetMain()
         }
@@ -129,6 +131,7 @@ class EconomyViewModelTest {
                 request = MoonPaywallRequest(
                     requiredMoons = 5,
                     source = "horoscope_daily_unlock",
+                    impressionId = "imp-002",
                 ),
                 action = "watch_ad",
             )
@@ -137,6 +140,85 @@ class EconomyViewModelTest {
             assertEquals("moon_paywall", event.placement)
             assertEquals("horoscope_daily_unlock", event.module)
             assertEquals("watch_ad", event.action)
+            assertEquals("imp-002", event.paywallImpressionId)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun `claim rewarded ad includes paywall impression id on started and completed`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val analytics = FakeAnalyticsTracker()
+            val viewModel = EconomyViewModel(
+                economyRepository = FakeEconomyRepository(),
+                analyticsTracker = analytics,
+            )
+            advanceUntilIdle()
+
+            viewModel.claimRewardedAd(
+                placement = "contextual_paywall",
+                paywallImpressionId = "imp-003",
+            )
+            advanceUntilIdle()
+
+            val started = analytics.events.filterIsInstance<AnalyticsEvent.RewardedAdStarted>().last()
+            val completed = analytics.events.filterIsInstance<AnalyticsEvent.RewardedAdCompleted>().last()
+            assertEquals("imp-003", started.paywallImpressionId)
+            assertEquals("imp-003", completed.paywallImpressionId)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun `claim rewarded ad includes paywall impression id on failed`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val analytics = FakeAnalyticsTracker()
+            val viewModel = EconomyViewModel(
+                economyRepository = StableEconomyRepository(),
+                analyticsTracker = analytics,
+            )
+            advanceUntilIdle()
+
+            viewModel.claimRewardedAd(
+                placement = "contextual_paywall",
+                paywallImpressionId = "imp-004",
+            )
+            advanceUntilIdle()
+
+            val failed = analytics.events.filterIsInstance<AnalyticsEvent.RewardedAdFailed>().last()
+            assertEquals("imp-004", failed.paywallImpressionId)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun `claim rewarded ad keeps legacy payload when paywall impression id is omitted`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val analytics = FakeAnalyticsTracker()
+            val viewModel = EconomyViewModel(
+                economyRepository = StableEconomyRepository(),
+                analyticsTracker = analytics,
+            )
+            advanceUntilIdle()
+
+            viewModel.claimRewardedAd(placement = "moon_store")
+            advanceUntilIdle()
+
+            val started = analytics.events.filterIsInstance<AnalyticsEvent.RewardedAdStarted>().last()
+            val failed = analytics.events.filterIsInstance<AnalyticsEvent.RewardedAdFailed>().last()
+            assertEquals(null, started.paywallImpressionId)
+            assertEquals(null, failed.paywallImpressionId)
+            assertTrue("paywall_impression_id" !in started.params().keys)
+            assertTrue("paywall_impression_id" !in failed.params().keys)
         } finally {
             Dispatchers.resetMain()
         }

@@ -300,6 +300,7 @@ fun AppRoot() {
                     )
                     economyVm.claimRewardedAd(
                         placement = paywall.source ?: REWARDED_AD_PAYWALL_PLACEMENT,
+                        paywallImpressionId = paywall.impressionId,
                     )
                 },
                 onOpenStore = {
@@ -314,6 +315,7 @@ fun AppRoot() {
                     economyVm.onRewardedAdCtaShown(
                         placement = paywall.source ?: REWARDED_AD_PAYWALL_PLACEMENT,
                         rewardedAdsRemaining = economyState.rewardedAdsRemaining,
+                        paywallImpressionId = paywall.impressionId,
                     )
                 },
             )

@@ -127,6 +127,7 @@ class EconomyViewModel(
                 placement = MOON_PAYWALL_PLACEMENT,
                 module = normalizeMoonPaywallModule(request.source),
                 reason = MOON_PAYWALL_REASON_INSUFFICIENT_MOONS,
+                paywallImpressionId = request.impressionId,
             ),
         )
     }
@@ -140,6 +141,7 @@ class EconomyViewModel(
                 placement = MOON_PAYWALL_PLACEMENT,
                 module = normalizeMoonPaywallModule(request.source),
                 action = action,
+                paywallImpressionId = request.impressionId,
             ),
         )
     }
@@ -147,6 +149,7 @@ class EconomyViewModel(
     fun onRewardedAdCtaShown(
         placement: String,
         rewardedAdsRemaining: Int?,
+        paywallImpressionId: String? = null,
     ) {
         val remaining = rewardedAdsRemaining ?: return
         if (remaining < 0) return
@@ -154,6 +157,7 @@ class EconomyViewModel(
             AnalyticsEvent.RewardedAdCtaShown(
                 placement = placement,
                 rewardedAdsRemaining = remaining,
+                paywallImpressionId = paywallImpressionId,
             ),
         )
     }
@@ -308,7 +312,10 @@ class EconomyViewModel(
         }
     }
 
-    fun claimRewardedAd(placement: String? = REWARDED_AD_DEFAULT_PLACEMENT) {
+    fun claimRewardedAd(
+        placement: String? = REWARDED_AD_DEFAULT_PLACEMENT,
+        paywallImpressionId: String? = null,
+    ) {
         val currentState = _uiState.value
         if (currentState.isClaimingRewardedAd || currentState.isLoading) return
         if (currentState.rewardedAdsRemaining <= 0) return
@@ -316,7 +323,12 @@ class EconomyViewModel(
         scope.launch {
             val requestId = generateRequestId()
             val safePlacement = placement ?: REWARDED_AD_DEFAULT_PLACEMENT
-            analyticsTracker.track(AnalyticsEvent.RewardedAdStarted(placement = safePlacement))
+            analyticsTracker.track(
+                AnalyticsEvent.RewardedAdStarted(
+                    placement = safePlacement,
+                    paywallImpressionId = paywallImpressionId,
+                ),
+            )
             println("[EconomyViewModel] claimRewardedAd start requestId=$requestId placement=$placement")
             _uiState.update {
                 it.copy(
@@ -358,6 +370,7 @@ class EconomyViewModel(
                             placement = safePlacement,
                             reward = (currentBalance - previousBalance).coerceAtLeast(0),
                             balanceAfter = currentBalance,
+                            paywallImpressionId = paywallImpressionId,
                         ),
                     )
                     analyticsTracker.track(
@@ -372,6 +385,7 @@ class EconomyViewModel(
                         AnalyticsEvent.RewardedAdFailed(
                             placement = safePlacement,
                             reason = result.result.name.lowercase(),
+                            paywallImpressionId = paywallImpressionId,
                         ),
                     )
                 }
@@ -382,6 +396,7 @@ class EconomyViewModel(
                     AnalyticsEvent.RewardedAdFailed(
                         placement = safePlacement,
                         reason = error.message ?: "unknown",
+                        paywallImpressionId = paywallImpressionId,
                     ),
                 )
                 _uiState.update {
