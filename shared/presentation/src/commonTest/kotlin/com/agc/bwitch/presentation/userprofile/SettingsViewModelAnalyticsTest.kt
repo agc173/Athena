@@ -36,6 +36,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -67,12 +68,22 @@ class SettingsViewModelAnalyticsTest {
 
             advanceUntilIdle()
             viewModel.onSubscriptionPrimaryActionClicked()
+            viewModel.onPremiumCtaShown("settings_subscribe")
             viewModel.onSubscriptionPurchaseCompleted(SubscriptionPurchaseOutcome.Success)
             advanceUntilIdle()
 
+            val premiumClickedEvents = analytics.events.filterIsInstance<AnalyticsEvent.PremiumCtaClicked>()
+            val premiumShownEvents = analytics.events.filterIsInstance<AnalyticsEvent.PremiumCtaShown>()
+            val premiumStartedEvents = analytics.events.filterIsInstance<AnalyticsEvent.PremiumPurchaseStarted>()
+
             assertTrue(analytics.events.any { it is AnalyticsEvent.PremiumCtaClicked })
             assertTrue(analytics.events.any { it is AnalyticsEvent.PremiumPurchaseCompleted })
-            assertTrue(analytics.events.none { it is AnalyticsEvent.PremiumCtaShown })
+            assertTrue(premiumShownEvents.isNotEmpty())
+            assertTrue(premiumStartedEvents.isNotEmpty())
+            assertTrue(premiumClickedEvents.all { it.originPlacement == "settings" })
+            assertTrue(premiumShownEvents.all { it.originPlacement == "settings" })
+            assertTrue(premiumStartedEvents.all { it.originPlacement == "settings" })
+            assertEquals("settings", premiumClickedEvents.first().originPlacement)
         } finally {
             Dispatchers.resetMain()
         }
