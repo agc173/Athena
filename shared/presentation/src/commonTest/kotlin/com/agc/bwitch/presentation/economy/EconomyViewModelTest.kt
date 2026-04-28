@@ -331,10 +331,9 @@ class EconomyViewModelTest {
                 placement = "contextual_paywall",
                 paywallImpressionId = request.impressionId,
             )
-            val firstRequest = viewModel.moonPaywallRequest.value
             advanceUntilIdle()
 
-            assertEquals(null, firstRequest)
+            assertEquals(null, viewModel.moonPaywallRequest.value)
             assertEquals(UNLOCK_FLOW_ORIGIN_PAYWALL_REWARDED, callbackContext?.unlockFlowOrigin)
             assertEquals(request.impressionId, callbackContext?.paywallImpressionId)
         } finally {
