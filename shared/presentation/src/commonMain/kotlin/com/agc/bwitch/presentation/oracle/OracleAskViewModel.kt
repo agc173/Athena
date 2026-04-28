@@ -7,6 +7,9 @@ import com.agc.bwitch.domain.oracle.OracleQuotaSnapshot
 import com.agc.bwitch.domain.oracle.OracleRepository
 import com.agc.bwitch.domain.oracle.OracleTopic
 import com.agc.bwitch.domain.economy.EconomyRepository
+import com.agc.bwitch.domain.analytics.AnalyticsEvent
+import com.agc.bwitch.domain.analytics.AnalyticsTracker
+import com.agc.bwitch.domain.analytics.NoOpAnalyticsTracker
 import com.agc.bwitch.domain.localization.AppLanguage
 import com.agc.bwitch.domain.localization.ObserveCurrentLanguageUseCase
 import com.agc.bwitch.domain.localization.ResolveCurrentLanguageUseCase
@@ -66,6 +69,7 @@ class OracleAskViewModel(
     private val resolveCurrentLanguageUseCase: ResolveCurrentLanguageUseCase,
     private val observeCurrentLanguageUseCase: ObserveCurrentLanguageUseCase,
     private val economyRepository: EconomyRepository,
+    private val analyticsTracker: AnalyticsTracker = NoOpAnalyticsTracker,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
@@ -118,6 +122,7 @@ class OracleAskViewModel(
         }
 
         val requestId = generateRequestId()
+        analyticsTracker.track(AnalyticsEvent.ModuleUsed(module = "oracle", action = "ask"))
         _uiState.update {
             it.copy(
                 question = trimmedQuestion,
@@ -160,6 +165,14 @@ class OracleAskViewModel(
 
                 is ApiResult.Err -> {
                     val mappedError = result.error.toUserMessage()
+                    if (result.error is ApiError.ResourceExhausted || result.error is ApiError.FailedPrecondition) {
+                        analyticsTracker.track(
+                            AnalyticsEvent.ModuleLimitReached(
+                                module = "oracle",
+                                isPremium = false,
+                            ),
+                        )
+                    }
                     _uiState.update {
                         it.copy(
                             isLoading = false,

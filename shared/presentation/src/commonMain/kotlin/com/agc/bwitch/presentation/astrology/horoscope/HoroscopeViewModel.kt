@@ -1,5 +1,8 @@
 package com.agc.bwitch.presentation.astrology.horoscope
 
+import com.agc.bwitch.domain.analytics.AnalyticsEvent
+import com.agc.bwitch.domain.analytics.AnalyticsTracker
+import com.agc.bwitch.domain.analytics.NoOpAnalyticsTracker
 import com.agc.bwitch.domain.astrology.horoscope.GetDailyHoroscopeUseCase
 import com.agc.bwitch.domain.astrology.horoscope.GetHoroscopeFutureDayCostUseCase
 import com.agc.bwitch.domain.astrology.horoscope.GetMonthlyHoroscopeUseCase
@@ -57,6 +60,7 @@ class HoroscopeViewModel(
     private val isHoroscopeDayUnlockedUseCase: IsHoroscopeDayUnlockedUseCase,
     private val unlockHoroscopeFutureDayUseCase: UnlockHoroscopeFutureDayUseCase,
     private val unlockRepository: HoroscopeUnlockRepository,
+    private val analyticsTracker: AnalyticsTracker = NoOpAnalyticsTracker,
     private val dispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {
     private data class PendingUnlockTarget(
@@ -170,6 +174,13 @@ class HoroscopeViewModel(
     }
 
     fun onUnlockDeferredToPaywall() {
+        analyticsTracker.track(
+            AnalyticsEvent.PaywallShown(
+                placement = "horoscope_daily_overlay",
+                module = "horoscope_daily",
+                reason = "insufficient_moons",
+            ),
+        )
         val state = _uiState.value
         val overlay = state.overlay
         if (overlay is HoroscopeOverlayUi.DailyOverlay && overlay.isLocked) {
@@ -191,10 +202,24 @@ class HoroscopeViewModel(
     }
 
     fun onUnlockWeekDeferredToPaywall() {
+        analyticsTracker.track(
+            AnalyticsEvent.PaywallShown(
+                placement = "horoscope_weekly_overlay",
+                module = "horoscope_weekly",
+                reason = "insufficient_moons",
+            ),
+        )
         _uiState.update { it.copy(lockCardMessage = null) }
     }
 
     fun onUnlockMonthDeferredToPaywall() {
+        analyticsTracker.track(
+            AnalyticsEvent.PaywallShown(
+                placement = "horoscope_monthly_overlay",
+                module = "horoscope_monthly",
+                reason = "insufficient_moons",
+            ),
+        )
         _uiState.update { it.copy(lockCardMessage = null) }
     }
 
@@ -211,6 +236,14 @@ class HoroscopeViewModel(
         pendingUnlockTarget = target
 
         scope.launch {
+            analyticsTracker.track(
+                AnalyticsEvent.ContentUnlockAttempt(
+                    module = "horoscope_daily",
+                    cost = _uiState.value.futureDayCost,
+                    hasEnoughMoons = null,
+                    isPremium = _uiState.value.hasPremiumAccess,
+                ),
+            )
             _uiState.update {
                 it.copy(
                     isUnlocking = true,
@@ -247,9 +280,17 @@ class HoroscopeViewModel(
                     requestId = buildDailyRequestId(target.dateIso),
                     sign = target.sign,
                 )
-            }.onSuccess {
+            }.onSuccess { unlockResult ->
                 unlockedDatesSession += target.dateIso
                 pendingUnlockTarget = null
+                analyticsTracker.track(
+                    AnalyticsEvent.ContentUnlocked(
+                        module = "horoscope_daily",
+                        method = resolveUnlockMethod(unlockResult, _uiState.value.hasPremiumAccess),
+                        costCharged = unlockResult.costCharged,
+                        balanceAfter = unlockResult.balanceAfter,
+                    ),
+                )
                 _uiState.update { current ->
                     val updatedDays = current.days.map { day ->
                         if (day.dateIso == target.dateIso) day.copy(isLocked = false, isUnlocked = true) else day
@@ -275,6 +316,12 @@ class HoroscopeViewModel(
                 rebuildDays()
             }.onFailure { error ->
                 val isInsufficient = error.isInsufficientMoons()
+                analyticsTracker.track(
+                    AnalyticsEvent.ContentUnlockFailed(
+                        module = "horoscope_daily",
+                        reason = if (isInsufficient) "insufficient_moons" else (error.message ?: "backend_error"),
+                    ),
+                )
                 _uiState.update {
                     val unlockErrorMessage = if (isInsufficient) {
                         HoroscopeFeedbackMessage.UnlockInsufficientMoons
@@ -306,6 +353,14 @@ class HoroscopeViewModel(
         if (weekKey.isBlank()) return
 
         scope.launch {
+            analyticsTracker.track(
+                AnalyticsEvent.ContentUnlockAttempt(
+                    module = "horoscope_weekly",
+                    cost = _uiState.value.weeklyCost,
+                    hasEnoughMoons = null,
+                    isPremium = _uiState.value.hasPremiumAccess,
+                ),
+            )
             _uiState.update { it.copy(isUnlocking = true, lockCardMessage = null) }
             runCatching {
                 unlockRepository.unlockWeek(
@@ -313,8 +368,16 @@ class HoroscopeViewModel(
                     requestId = buildWeeklyRequestId(weekKey),
                     sign = state.selectedSign,
                 )
-            }.onSuccess {
+            }.onSuccess { unlockResult ->
                 unlockedWeekKeysSession += weekKey
+                analyticsTracker.track(
+                    AnalyticsEvent.ContentUnlocked(
+                        module = "horoscope_weekly",
+                        method = resolveUnlockMethod(unlockResult, _uiState.value.hasPremiumAccess),
+                        costCharged = unlockResult.costCharged,
+                        balanceAfter = unlockResult.balanceAfter,
+                    ),
+                )
                 _uiState.update {
                     it.copy(
                         isUnlocking = false,
@@ -324,6 +387,12 @@ class HoroscopeViewModel(
                     )
                 }
             }.onFailure { error ->
+                analyticsTracker.track(
+                    AnalyticsEvent.ContentUnlockFailed(
+                        module = "horoscope_weekly",
+                        reason = if (error.isInsufficientMoons()) "insufficient_moons" else (error.message ?: "backend_error"),
+                    ),
+                )
                 _uiState.update {
                     it.copy(
                         isUnlocking = false,
@@ -344,6 +413,14 @@ class HoroscopeViewModel(
         if (monthKey.isBlank()) return
 
         scope.launch {
+            analyticsTracker.track(
+                AnalyticsEvent.ContentUnlockAttempt(
+                    module = "horoscope_monthly",
+                    cost = _uiState.value.monthlyCost,
+                    hasEnoughMoons = null,
+                    isPremium = _uiState.value.hasPremiumAccess,
+                ),
+            )
             _uiState.update { it.copy(isUnlocking = true, lockCardMessage = null) }
             runCatching {
                 unlockRepository.unlockMonth(
@@ -351,8 +428,16 @@ class HoroscopeViewModel(
                     requestId = buildMonthlyRequestId(monthKey),
                     sign = state.selectedSign,
                 )
-            }.onSuccess {
+            }.onSuccess { unlockResult ->
                 unlockedMonthKeysSession += monthKey
+                analyticsTracker.track(
+                    AnalyticsEvent.ContentUnlocked(
+                        module = "horoscope_monthly",
+                        method = resolveUnlockMethod(unlockResult, _uiState.value.hasPremiumAccess),
+                        costCharged = unlockResult.costCharged,
+                        balanceAfter = unlockResult.balanceAfter,
+                    ),
+                )
                 _uiState.update {
                     it.copy(
                         isUnlocking = false,
@@ -362,6 +447,12 @@ class HoroscopeViewModel(
                     )
                 }
             }.onFailure { error ->
+                analyticsTracker.track(
+                    AnalyticsEvent.ContentUnlockFailed(
+                        module = "horoscope_monthly",
+                        reason = if (error.isInsufficientMoons()) "insufficient_moons" else (error.message ?: "backend_error"),
+                    ),
+                )
                 _uiState.update {
                     it.copy(
                         isUnlocking = false,
@@ -706,6 +797,16 @@ class HoroscopeViewModel(
     private fun isDateUnlocked(dateIso: String): Boolean {
         val state = _uiState.value
         return unlockedDatesSession.contains(dateIso) || state.days.firstOrNull { it.dateIso == dateIso }?.isUnlocked == true
+    }
+
+    private fun resolveUnlockMethod(
+        result: com.agc.bwitch.domain.astrology.horoscope.HoroscopeUnlockResult,
+        hasPremiumAccess: Boolean,
+    ): String = when {
+        result.alreadyUnlocked -> "already_unlocked"
+        result.costCharged > 0 -> "moons"
+        result.costCharged == 0 && hasPremiumAccess -> "premium"
+        else -> "unknown"
     }
 
     private fun todayDate(): LocalDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date

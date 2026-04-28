@@ -1,5 +1,9 @@
 package com.agc.bwitch.presentation.economy
 
+import com.agc.bwitch.domain.analytics.AnalyticsEvent
+import com.agc.bwitch.domain.analytics.AnalyticsTracker
+import com.agc.bwitch.domain.analytics.NoOpAnalyticsTracker
+import com.agc.bwitch.domain.economy.EconomyClaimStatus
 import com.agc.bwitch.domain.economy.EconomyRepository
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -50,6 +54,7 @@ enum class EconomyClaimUiStatus {
 
 class EconomyViewModel(
     private val economyRepository: EconomyRepository,
+    private val analyticsTracker: AnalyticsTracker = NoOpAnalyticsTracker,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
@@ -58,6 +63,7 @@ class EconomyViewModel(
     private val _moonPaywallRequest = MutableStateFlow<MoonPaywallRequest?>(null)
     val moonPaywallRequest: StateFlow<MoonPaywallRequest?> = _moonPaywallRequest.asStateFlow()
     private var pendingMoonAction: PendingMoonAction? = null
+    private var lastTrackedBalanceSnapshot: EconomyTrackedSnapshot? = null
 
     init {
         scope.launch {
@@ -85,6 +91,15 @@ class EconomyViewModel(
         onSuccess: () -> Unit,
     ): Boolean {
         val currentState = _uiState.value
+        val module = source.orEmpty().ifBlank { "unknown" }
+        analyticsTracker.track(
+            AnalyticsEvent.ContentUnlockAttempt(
+                module = module,
+                cost = cost,
+                hasEnoughMoons = currentState.hasUsableSnapshot && currentState.balance >= cost,
+                isPremium = currentState.isPremium,
+            ),
+        )
         if (currentState.hasUsableSnapshot && currentState.balance >= cost) {
             onSuccess()
             return true
@@ -96,6 +111,13 @@ class EconomyViewModel(
             onSuccess = onSuccess,
         )
         if (currentState.hasUsableSnapshot) {
+            analyticsTracker.track(
+                AnalyticsEvent.PaywallShown(
+                    placement = "moon_paywall",
+                    module = module,
+                    reason = "insufficient_moons",
+                ),
+            )
             _moonPaywallRequest.value = MoonPaywallRequest(
                 requiredMoons = cost,
                 source = source,
@@ -165,6 +187,23 @@ class EconomyViewModel(
                     },
                 )
             }
+            _uiState.value.takeIf { it.hasUsableSnapshot }?.let { snapshot ->
+                val trackedSnapshot = EconomyTrackedSnapshot(
+                    balance = snapshot.balance,
+                    isPremium = snapshot.isPremium,
+                    rewardedAdsRemaining = snapshot.rewardedAdsRemaining,
+                    dailyLoginClaimed = snapshot.dailyLoginClaimed,
+                )
+                if (trackedSnapshot != lastTrackedBalanceSnapshot) {
+                    analyticsTracker.track(
+                        AnalyticsEvent.EconomyBalanceViewed(
+                            balance = snapshot.balance,
+                            isPremium = snapshot.isPremium,
+                        ),
+                    )
+                    lastTrackedBalanceSnapshot = trackedSnapshot
+                }
+            }
         }
     }
 
@@ -203,6 +242,17 @@ class EconomyViewModel(
                         error = null,
                     )
                 }
+                val currentBalance = _uiState.value.balance
+                if (result.result == EconomyClaimStatus.CLAIMED) {
+                    val rewardAmount = (currentBalance - currentState.balance).takeIf { it > 0 }
+                    analyticsTracker.track(
+                        AnalyticsEvent.MoonEarned(
+                            source = "daily_login",
+                            amount = rewardAmount,
+                            balanceAfter = currentBalance.takeIf { rewardAmount != null },
+                        ),
+                    )
+                }
                 refreshEconomySnapshot()
             }.onFailure { error ->
                 println("[EconomyViewModel] claimDailyLogin failed requestId=$requestId: ${error.message}")
@@ -223,6 +273,8 @@ class EconomyViewModel(
 
         scope.launch {
             val requestId = generateRequestId()
+            val safePlacement = placement ?: REWARDED_AD_DEFAULT_PLACEMENT
+            analyticsTracker.track(AnalyticsEvent.RewardedAdStarted(placement = safePlacement))
             println("[EconomyViewModel] claimRewardedAd start requestId=$requestId placement=$placement")
             _uiState.update {
                 it.copy(
@@ -256,9 +308,40 @@ class EconomyViewModel(
                         error = null,
                     )
                 }
+                val previousBalance = currentState.balance
+                val currentBalance = _uiState.value.balance
+                if (result.result == EconomyClaimStatus.CLAIMED) {
+                    analyticsTracker.track(
+                        AnalyticsEvent.RewardedAdCompleted(
+                            placement = safePlacement,
+                            reward = (currentBalance - previousBalance).coerceAtLeast(0),
+                            balanceAfter = currentBalance,
+                        ),
+                    )
+                    analyticsTracker.track(
+                        AnalyticsEvent.MoonEarned(
+                            source = "rewarded_ad:$safePlacement",
+                            amount = (currentBalance - previousBalance).takeIf { it > 0 },
+                            balanceAfter = currentBalance.takeIf { currentBalance > previousBalance },
+                        ),
+                    )
+                } else {
+                    analyticsTracker.track(
+                        AnalyticsEvent.RewardedAdFailed(
+                            placement = safePlacement,
+                            reason = result.result.name.lowercase(),
+                        ),
+                    )
+                }
                 refreshEconomySnapshot()
             }.onFailure { error ->
                 println("[EconomyViewModel] claimRewardedAd failed requestId=$requestId: ${error.message}")
+                analyticsTracker.track(
+                    AnalyticsEvent.RewardedAdFailed(
+                        placement = safePlacement,
+                        reason = error.message ?: "unknown",
+                    ),
+                )
                 _uiState.update {
                     it.copy(
                         isClaimingRewardedAd = false,
@@ -271,6 +354,13 @@ class EconomyViewModel(
 
     @OptIn(ExperimentalUuidApi::class)
     private fun generateRequestId(): String = Uuid.random().toString()
+
+    private data class EconomyTrackedSnapshot(
+        val balance: Int,
+        val isPremium: Boolean,
+        val rewardedAdsRemaining: Int,
+        val dailyLoginClaimed: Boolean,
+    )
 
     private suspend fun refreshEconomySnapshot() {
         val statusResult = runCatching { economyRepository.getStatus() }
@@ -322,7 +412,7 @@ const val REWARDED_AD_PLACEHOLDER_PROOF = "client-placeholder-proof"
 
 private fun com.agc.bwitch.domain.economy.EconomyClaimStatus.toUiStatus(): EconomyClaimUiStatus {
     return when (this) {
-        com.agc.bwitch.domain.economy.EconomyClaimStatus.CLAIMED -> EconomyClaimUiStatus.CLAIMED
+        EconomyClaimStatus.CLAIMED -> EconomyClaimUiStatus.CLAIMED
         com.agc.bwitch.domain.economy.EconomyClaimStatus.ALREADY_CLAIMED -> EconomyClaimUiStatus.ALREADY_CLAIMED
         com.agc.bwitch.domain.economy.EconomyClaimStatus.DAILY_LIMIT_REACHED -> EconomyClaimUiStatus.DAILY_LIMIT_REACHED
     }

@@ -1,5 +1,8 @@
 package com.agc.bwitch.presentation.tarot
 
+import com.agc.bwitch.domain.analytics.AnalyticsEvent
+import com.agc.bwitch.domain.analytics.AnalyticsTracker
+import com.agc.bwitch.domain.analytics.NoOpAnalyticsTracker
 import com.agc.bwitch.domain.shared.ApiResult
 import com.agc.bwitch.domain.localization.AppLanguage
 import com.agc.bwitch.domain.localization.ObserveCurrentLanguageUseCase
@@ -66,6 +69,7 @@ class TarotViewModel(
     private val getMoonBalanceUseCase: GetMoonBalanceUseCase,
     private val addMoonsUseCase: AddMoonsUseCase,
     private val spendMoonsUseCase: SpendMoonsUseCase,
+    private val analyticsTracker: AnalyticsTracker = NoOpAnalyticsTracker,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var shuffleDelayJob: Job? = null
@@ -101,6 +105,12 @@ class TarotViewModel(
     }
 
     fun newRequest(type: TarotRequestType) {
+        analyticsTracker.track(
+            AnalyticsEvent.ModuleUsed(
+                module = "tarot",
+                action = "new_request_${type.name.lowercase()}",
+            ),
+        )
         shuffleDelayJob?.cancel()
         shuffleMinDurationElapsed = false
         shuffleRequestId = null
@@ -283,8 +293,23 @@ class TarotViewModel(
 
                 is ApiResult.Err -> {
                     if (type == TarotRequestType.TAROT_3 && result.error.requiresLegacyAdUnlockFallback()) {
-                        when (spendMoonsUseCase(_uiState.value.extraReadingCost)) {
+                        when (val spendResult = spendMoonsUseCase(_uiState.value.extraReadingCost)) {
                             is SpendMoonsResult.Success -> {
+                                analyticsTracker.track(
+                                    AnalyticsEvent.MoonSpent(
+                                        module = "tarot",
+                                        cost = _uiState.value.extraReadingCost,
+                                        balanceAfter = spendResult.updatedBalance.amount,
+                                    ),
+                                )
+                                analyticsTracker.track(
+                                    AnalyticsEvent.ContentUnlocked(
+                                        module = "tarot_extra_reading",
+                                        method = "moons",
+                                        costCharged = _uiState.value.extraReadingCost,
+                                        balanceAfter = spendResult.updatedBalance.amount,
+                                    ),
+                                )
                                 val retryResult = tarotRepository.tarotDraw(
                                     requestId = requestId,
                                     type = type,
@@ -348,6 +373,12 @@ class TarotViewModel(
                             }
 
                             is SpendMoonsResult.InsufficientBalance -> {
+                                analyticsTracker.track(
+                                    AnalyticsEvent.ModuleLimitReached(
+                                        module = "tarot_extra_reading",
+                                        isPremium = false,
+                                    ),
+                                )
                                 _uiState.update {
                                     it.copy(
                                         isLoading = false,
@@ -414,8 +445,23 @@ class TarotViewModel(
 
     fun grantOneMoonFromFutureRewardedAd() {
         scope.launch {
+            val previous = _uiState.value.moonBalance
             val balance = addMoonsUseCase(1)
             _uiState.update { it.copy(moonBalance = balance.amount) }
+            analyticsTracker.track(
+                AnalyticsEvent.RewardedAdCompleted(
+                    placement = "tarot_extra_reading",
+                    reward = (balance.amount - previous).coerceAtLeast(0),
+                    balanceAfter = balance.amount,
+                ),
+            )
+            analyticsTracker.track(
+                AnalyticsEvent.MoonEarned(
+                    source = "rewarded_ad:tarot_extra_reading",
+                    amount = (balance.amount - previous).coerceAtLeast(0),
+                    balanceAfter = balance.amount,
+                ),
+            )
         }
     }
 

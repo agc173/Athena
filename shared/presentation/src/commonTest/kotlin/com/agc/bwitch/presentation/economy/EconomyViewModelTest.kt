@@ -5,8 +5,10 @@ import com.agc.bwitch.domain.economy.EconomyClaimResult
 import com.agc.bwitch.domain.economy.EconomyClaimStatus
 import com.agc.bwitch.domain.economy.EconomyRepository
 import com.agc.bwitch.domain.economy.EconomyStatus
+import com.agc.bwitch.presentation.analytics.FakeAnalyticsTracker
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -34,6 +36,49 @@ class EconomyViewModelTest {
 
             assertEquals(11, viewModel.uiState.value.balance)
             assertEquals(true, viewModel.uiState.value.dailyLoginClaimed)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun `claim rewarded ad emits analytics completed event`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val repository = FakeEconomyRepository()
+            val analytics = FakeAnalyticsTracker()
+            val viewModel = EconomyViewModel(
+                economyRepository = repository,
+                analyticsTracker = analytics,
+            )
+
+            advanceUntilIdle()
+            viewModel.claimRewardedAd("economy_screen")
+            advanceUntilIdle()
+
+            assertTrue(analytics.events.any { it is com.agc.bwitch.domain.analytics.AnalyticsEvent.RewardedAdCompleted })
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun `economy balance viewed is deduplicated for equal snapshots`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val analytics = FakeAnalyticsTracker()
+            val viewModel = EconomyViewModel(
+                economyRepository = StableEconomyRepository(),
+                analyticsTracker = analytics,
+            )
+            advanceUntilIdle()
+            viewModel.loadEconomy()
+            advanceUntilIdle()
+
+            val viewedEvents = analytics.events.filterIsInstance<com.agc.bwitch.domain.analytics.AnalyticsEvent.EconomyBalanceViewed>()
+            assertEquals(1, viewedEvents.size)
         } finally {
             Dispatchers.resetMain()
         }
@@ -87,5 +132,37 @@ class EconomyViewModelTest {
                 rewardedAdsRemaining = 0,
             )
         }
+    }
+
+    private class StableEconomyRepository : EconomyRepository {
+        override suspend fun getBalance(): EconomyBalance = EconomyBalance(
+            balance = 20,
+            dailyLoginClaimed = false,
+            rewardedAdsClaimed = 0,
+            rewardedAdsRemaining = 1,
+        )
+
+        override suspend fun getStatus(): EconomyStatus = EconomyStatus(
+            balance = 20,
+            isPremium = false,
+            todayDateIso = "2026-04-23",
+        )
+
+        override suspend fun claimDailyLogin(requestId: String): EconomyClaimResult = EconomyClaimResult(
+            result = EconomyClaimStatus.ALREADY_CLAIMED,
+            balance = 20,
+            dailyLoginClaimed = true,
+            rewardedAdsClaimed = 0,
+            rewardedAdsRemaining = 1,
+        )
+
+        override suspend fun claimRewardedAd(requestId: String, adProof: String, placement: String?): EconomyClaimResult =
+            EconomyClaimResult(
+                result = EconomyClaimStatus.ALREADY_CLAIMED,
+                balance = 20,
+                dailyLoginClaimed = false,
+                rewardedAdsClaimed = 1,
+                rewardedAdsRemaining = 0,
+            )
     }
 }

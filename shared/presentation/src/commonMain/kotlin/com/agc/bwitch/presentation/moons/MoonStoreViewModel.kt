@@ -1,5 +1,8 @@
 package com.agc.bwitch.presentation.moons
 
+import com.agc.bwitch.domain.analytics.AnalyticsEvent
+import com.agc.bwitch.domain.analytics.AnalyticsTracker
+import com.agc.bwitch.domain.analytics.NoOpAnalyticsTracker
 import com.agc.bwitch.domain.moons.GetMoonBalanceUseCase
 import com.agc.bwitch.domain.moons.GetMoonPacksUseCase
 import com.agc.bwitch.domain.moons.MoonPack
@@ -25,6 +28,7 @@ class MoonStoreViewModel(
     private val getMoonPacks: GetMoonPacksUseCase,
     private val getMoonBalance: GetMoonBalanceUseCase,
     private val observeMoonBalance: ObserveMoonBalanceUseCase,
+    private val analyticsTracker: AnalyticsTracker = NoOpAnalyticsTracker,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
@@ -53,6 +57,15 @@ class MoonStoreViewModel(
                         packs = packs,
                     )
                 }
+                packs.forEach { pack ->
+                    analyticsTracker.track(
+                        AnalyticsEvent.MoonPackViewed(
+                            packId = pack.id,
+                            moons = pack.moons,
+                            price = pack.displayPrice,
+                        ),
+                    )
+                }
             }.onFailure {
                 _uiState.update { state ->
                     state.copy(
@@ -65,6 +78,21 @@ class MoonStoreViewModel(
     }
 
     fun onBuyPackClicked(packId: String) {
+        _uiState.value.packs.firstOrNull { it.id == packId }?.let { pack ->
+            analyticsTracker.track(
+                AnalyticsEvent.MoonPackSelected(
+                    packId = pack.id,
+                    moons = pack.moons,
+                    price = pack.displayPrice,
+                ),
+            )
+            analyticsTracker.track(
+                AnalyticsEvent.MoonPackPurchaseFailed(
+                    packId = pack.id,
+                    reason = "not_available",
+                ),
+            )
+        }
         _uiState.update {
             it.copy(feedbackMessage = "$STORE_COMING_SOON_KEY:$packId")
         }

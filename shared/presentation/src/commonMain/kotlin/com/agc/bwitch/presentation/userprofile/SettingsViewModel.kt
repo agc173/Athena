@@ -1,5 +1,8 @@
 package com.agc.bwitch.presentation.userprofile
 
+import com.agc.bwitch.domain.analytics.AnalyticsEvent
+import com.agc.bwitch.domain.analytics.AnalyticsTracker
+import com.agc.bwitch.domain.analytics.NoOpAnalyticsTracker
 import com.agc.bwitch.domain.localization.AppLanguage
 import com.agc.bwitch.domain.localization.ObserveCurrentLanguageUseCase
 import com.agc.bwitch.domain.settings.GetNotificationSettingsUseCase
@@ -117,6 +120,7 @@ class SettingsViewModel(
     private val getSubscriptionStatus: GetSubscriptionStatusUseCase,
     private val getSubscriptionCatalog: GetSubscriptionCatalogUseCase,
     private val restorePurchases: RestorePurchasesUseCase,
+    private val analyticsTracker: AnalyticsTracker = NoOpAnalyticsTracker,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
@@ -125,6 +129,7 @@ class SettingsViewModel(
 
     private val _uiEffects = MutableSharedFlow<SettingsUiEffect>()
     val uiEffects: SharedFlow<SettingsUiEffect> = _uiEffects
+    private var pendingPremiumProductId: String? = null
 
     init {
         scope.launch {
@@ -231,9 +236,11 @@ class SettingsViewModel(
 
     fun onSubscriptionPrimaryActionClicked() {
         if (_uiState.value.isLoading) return
+        analyticsTracker.track(AnalyticsEvent.PremiumCtaClicked(placement = "settings_primary"))
         when (_uiState.value.subscriptionPrimaryAction) {
             SubscriptionPrimaryAction.Subscribe -> onSubscribeClicked()
             SubscriptionPrimaryAction.Manage -> {
+                pendingPremiumProductId = null
                 scope.launch {
                     _uiEffects.emit(
                         SettingsUiEffect.LaunchManageSubscription(
@@ -247,6 +254,13 @@ class SettingsViewModel(
 
     fun onSubscribeClicked(plan: SubscriptionPlanSelection = SubscriptionPlanSelection.Monthly) {
         if (_uiState.value.isLoading) return
+        analyticsTracker.track(AnalyticsEvent.PremiumCtaClicked(placement = "settings_subscribe"))
+        val productId = when (plan) {
+            SubscriptionPlanSelection.Monthly -> KnownSubscriptionProducts.MONTHLY
+            SubscriptionPlanSelection.Annual -> KnownSubscriptionProducts.ANNUAL
+        }
+        pendingPremiumProductId = productId
+        analyticsTracker.track(AnalyticsEvent.PremiumPurchaseStarted(productId = productId))
         scope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
             _uiEffects.emit(SettingsUiEffect.LaunchSubscriptionPurchase(plan))
@@ -256,6 +270,15 @@ class SettingsViewModel(
     fun onSubscriptionPurchaseCompleted(outcome: SubscriptionPurchaseOutcome) {
         when (outcome) {
             SubscriptionPurchaseOutcome.Success -> {
+                val productId = pendingPremiumProductId ?: _uiState.value.resolveManageSubscriptionProductId().orEmpty()
+                analyticsTracker.track(
+                    AnalyticsEvent.PremiumPurchaseCompleted(
+                        productId = productId,
+                        price = null,
+                        currency = null,
+                    ),
+                )
+                pendingPremiumProductId = null
                 scope.launch {
                     runCatching { getSubscriptionStatus() }
                         .onSuccess { subscriptionStatus ->
@@ -270,10 +293,12 @@ class SettingsViewModel(
             }
 
             SubscriptionPurchaseOutcome.Cancelled -> {
+                pendingPremiumProductId = null
                 _uiState.update { it.copy(isLoading = false) }
             }
 
             SubscriptionPurchaseOutcome.Unsupported -> {
+                pendingPremiumProductId = null
                 _uiState.update {
                     it.copy(
                         isLoading = false,
@@ -283,6 +308,13 @@ class SettingsViewModel(
             }
 
             SubscriptionPurchaseOutcome.Failed -> {
+                analyticsTracker.track(
+                    AnalyticsEvent.PremiumPurchaseFailed(
+                        productId = pendingPremiumProductId ?: _uiState.value.resolveManageSubscriptionProductId().orEmpty(),
+                        reason = "failed",
+                    ),
+                )
+                pendingPremiumProductId = null
                 _uiState.update {
                     it.copy(
                         isLoading = false,
@@ -295,10 +327,17 @@ class SettingsViewModel(
 
     fun onCatalogSubscriptionSelected(productId: String) {
         if (_uiState.value.isLoading) return
+        analyticsTracker.track(AnalyticsEvent.PremiumCtaClicked(placement = "settings_catalog"))
+        pendingPremiumProductId = productId
+        analyticsTracker.track(AnalyticsEvent.PremiumPurchaseStarted(productId = productId))
         scope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
             _uiEffects.emit(SettingsUiEffect.LaunchSubscriptionPurchaseWithProduct(productId))
         }
+    }
+
+    fun onPremiumCtaShown(placement: String) {
+        analyticsTracker.track(AnalyticsEvent.PremiumCtaShown(placement = placement))
     }
 
     fun onSubscriptionManagementCompleted(outcome: SubscriptionManagementOutcome) {

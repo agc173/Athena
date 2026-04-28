@@ -26,6 +26,7 @@ import com.agc.bwitch.domain.localization.ResolveCurrentLanguageUseCase
 import com.agc.bwitch.domain.userprofile.ObserveUserProfileUseCase
 import com.agc.bwitch.domain.userprofile.UserProfile
 import com.agc.bwitch.domain.userprofile.UserProfileRepository
+import com.agc.bwitch.presentation.analytics.FakeAnalyticsTracker
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -170,6 +171,64 @@ class HoroscopeViewModelTest {
         advanceUntilIdle()
 
         assertFalse(viewModel.uiState.value.isMonthLocked)
+    }
+
+    @Test
+    fun unlockDay_emitsContentUnlocked_withMoonsMethodAndRealBalance() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val unlockRepository = FakeUnlockRepository(futureDayCost = 2)
+        val analytics = FakeAnalyticsTracker()
+        val viewModel = createViewModel(dispatcher, unlockRepository, analyticsTracker = analytics)
+
+        advanceUntilIdle()
+        val tomorrow = currentSystemTomorrowIsoForTests()
+        viewModel.onSelectDate(tomorrow)
+        viewModel.onOpenSign(ZodiacSign.aries)
+        viewModel.onUnlockSelectedDay()
+        advanceUntilIdle()
+
+        val event = analytics.events.filterIsInstance<com.agc.bwitch.domain.analytics.AnalyticsEvent.ContentUnlocked>().last()
+        assertEquals("moons", event.method)
+        assertEquals(2, event.costCharged)
+        assertEquals(0, event.balanceAfter)
+    }
+
+    @Test
+    fun unlockDay_premiumUnlock_emitsPremiumMethod() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val unlockRepository = FakeUnlockRepository(futureDayCost = 1).apply { forceZeroCost = true }
+        val analytics = FakeAnalyticsTracker()
+        val viewModel = createViewModel(dispatcher, unlockRepository, analyticsTracker = analytics)
+
+        advanceUntilIdle()
+        viewModel.onPremiumAccessChanged(true)
+        val tomorrow = currentSystemTomorrowIsoForTests()
+        viewModel.onSelectDate(tomorrow)
+        viewModel.onOpenSign(ZodiacSign.aries)
+        viewModel.onUnlockSelectedDay()
+        advanceUntilIdle()
+
+        val event = analytics.events.filterIsInstance<com.agc.bwitch.domain.analytics.AnalyticsEvent.ContentUnlocked>().last()
+        assertEquals("premium", event.method)
+        assertEquals(0, event.costCharged)
+    }
+
+    @Test
+    fun unlockDay_insufficientMoons_doesNotEmitModuleLimitReached() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val unlockRepository = FakeUnlockRepository().apply { failUnlockFutureDayInsufficient = true }
+        val analytics = FakeAnalyticsTracker()
+        val viewModel = createViewModel(dispatcher, unlockRepository, analyticsTracker = analytics)
+
+        advanceUntilIdle()
+        val tomorrow = currentSystemTomorrowIsoForTests()
+        viewModel.onSelectDate(tomorrow)
+        viewModel.onOpenSign(ZodiacSign.aries)
+        viewModel.onUnlockSelectedDay()
+        advanceUntilIdle()
+
+        assertTrue(analytics.events.any { it is com.agc.bwitch.domain.analytics.AnalyticsEvent.ContentUnlockFailed })
+        assertTrue(analytics.events.none { it is com.agc.bwitch.domain.analytics.AnalyticsEvent.ModuleLimitReached })
     }
 
     @Test
@@ -698,6 +757,7 @@ class HoroscopeViewModelTest {
         dispatcher: CoroutineDispatcher,
         unlockRepository: HoroscopeUnlockRepository,
         repo: FakeRepo = FakeRepo(),
+        analyticsTracker: com.agc.bwitch.domain.analytics.AnalyticsTracker = com.agc.bwitch.domain.analytics.NoOpAnalyticsTracker,
     ): HoroscopeViewModel {
         val observeUseCase = ObserveDailyHoroscopeUseCase(repo)
         val getUseCase = GetDailyHoroscopeUseCase(repo)
@@ -730,6 +790,7 @@ class HoroscopeViewModelTest {
             isHoroscopeDayUnlockedUseCase = isHoroscopeDayUnlockedUseCase,
             unlockHoroscopeFutureDayUseCase = unlockHoroscopeFutureDayUseCase,
             unlockRepository = unlockRepository,
+            analyticsTracker = analyticsTracker,
             dispatcher = dispatcher,
         )
     }
@@ -829,6 +890,8 @@ class HoroscopeViewModelTest {
         private val unlockedMonthKeys = unlockedMonths.toMutableSet()
         var failWeekBatchReads: Boolean = false
         var failMonthBatchReads: Boolean = false
+        var forceZeroCost: Boolean = false
+        var failUnlockFutureDayInsufficient: Boolean = false
 
         override suspend fun getFutureDayCost(): Int = futureDayCost
         override suspend fun getWeeklyCost(): Int = 2
@@ -840,13 +903,19 @@ class HoroscopeViewModelTest {
             dateIsoList.filterTo(mutableSetOf()) { unlocked.contains(it) }
 
         override suspend fun unlockFutureDay(dateIso: String, requestId: String, sign: ZodiacSign): HoroscopeUnlockResult {
+            if (failUnlockFutureDayInsufficient) throw IllegalStateException("insufficient_moons")
             val alreadyUnlocked = unlocked.contains(dateIso)
             unlocked.add(dateIso)
+            val costCharged = when {
+                alreadyUnlocked -> 0
+                forceZeroCost -> 0
+                else -> futureDayCost
+            }
             return HoroscopeUnlockResult(
                 unlocked = true,
                 alreadyUnlocked = alreadyUnlocked,
                 balanceAfter = 0,
-                costCharged = if (alreadyUnlocked) 0 else futureDayCost,
+                costCharged = costCharged,
             )
         }
 
