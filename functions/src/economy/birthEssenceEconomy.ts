@@ -52,7 +52,7 @@ function intValue(value: unknown): number {
   return Math.max(0, Math.floor(value));
 }
 
-function resolveBirthEssenceDecision(params: {
+export function resolveBirthEssenceDecision(params: {
   isPremium: boolean;
   balance: number;
   dailyUsage: EconomyDailyUsageDoc;

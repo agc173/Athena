@@ -25,6 +25,7 @@ const ECONOMY_RULES: Record<EconomyModule, EconomyModuleRule> = {
     module: 'TAROT_1',
     freeDaily: 1,
     premiumIncludedDaily: 5,
+    premiumDailyMax: 5,
     moonCostPerUse: 1,
     moonExtraDailyMax: 2,
   },
@@ -58,8 +59,8 @@ const ECONOMY_RULES: Record<EconomyModule, EconomyModuleRule> = {
     freeDaily: 2,
     moonCostPerUse: 1,
     moonPackUsesPerMoon: 3,
-    maxTotalDaily: 20,
-    premiumDailyMax: 50,
+    maxTotalDaily: 30,
+    premiumDailyMax: 30,
   },
   PENDULUM: {
     module: 'PENDULUM',

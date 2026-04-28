@@ -20,7 +20,7 @@ enum class MoonUnlockFeature {
 object MoonUnlockCostCatalog {
     private val costs = mapOf(
         MoonUnlockFeature.TarotExtraReading to 3,
-        MoonUnlockFeature.HoroscopeFutureDay to 2,
+        MoonUnlockFeature.HoroscopeFutureDay to 1,
     )
 
     fun costFor(feature: MoonUnlockFeature): Int = costs.getValue(feature)

@@ -150,7 +150,7 @@ function pickModuleStatuses(params: {
       ),
       notes: params.isPremium ?
         undefined :
-        'free total cap is 20/day but precise remaining requires per-use counter in phase 1',
+        'free total cap is 30/day but precise remaining requires per-use counter in phase 1',
     },
     {
       module: 'PENDULUM',

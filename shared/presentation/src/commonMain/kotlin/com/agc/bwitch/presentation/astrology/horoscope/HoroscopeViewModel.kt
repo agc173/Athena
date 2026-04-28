@@ -426,8 +426,8 @@ class HoroscopeViewModel(
 
     private suspend fun loadCostsAndPeriods() {
         val dailyCost = runCatching { getHoroscopeFutureDayCostUseCase() }.getOrDefault(1)
-        val weeklyCost = runCatching { unlockRepository.getWeeklyCost() }.getOrDefault(dailyCost)
-        val monthlyCost = runCatching { unlockRepository.getMonthlyCost() }.getOrDefault(dailyCost)
+        val weeklyCost = runCatching { unlockRepository.getWeeklyCost() }.getOrDefault(2)
+        val monthlyCost = runCatching { unlockRepository.getMonthlyCost() }.getOrDefault(3)
 
         _uiState.update {
             it.copy(

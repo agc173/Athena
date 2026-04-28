@@ -13,6 +13,7 @@ import {
   economyUsageDailyRef,
 } from '../firestorePaths';
 import {getPremiumStatus} from '../premiumStatus';
+import {resolveHoroscopeUnlockDecision} from '../horoscopeEconomy';
 import {getEconomyModuleRule} from '../rulesCatalog';
 import type {
   EconomyBalanceDoc,
@@ -118,19 +119,22 @@ export const unlockHoroscopeDay = onCall(
           return stableResponse;
         }
 
-        const isPremium = premium.isPremium;
         const ruleCost = getEconomyModuleRule('HOROSCOPE_FUTURE_DAY').moonCostPerUse ?? 1;
-        const shouldCharge = !isPremium;
+        const decision = resolveHoroscopeUnlockDecision({
+          isPremium: premium.isPremium,
+          balance: currentBalance,
+          moonCost: ruleCost,
+        });
 
-        if (shouldCharge && currentBalance < ruleCost) {
+        if (decision.source === 'REJECT') {
           throw new HttpsError('failed-precondition', 'insufficient_moons');
         }
 
         const usageData = (usageSnap.data() as EconomyDailyUsageDoc | undefined) ?? {};
         const now = Timestamp.now();
-        const nextBalance = shouldCharge ? currentBalance - ruleCost : currentBalance;
-        const nextUsage = asCount(usageData.horoscopeFutureDayMoonUsed) + (shouldCharge ? 1 : 0);
-        const costCharged = shouldCharge ? ruleCost : 0;
+        const costCharged = decision.moonCost;
+        const nextBalance = currentBalance - costCharged;
+        const nextUsage = asCount(usageData.horoscopeFutureDayMoonUsed) + (decision.source === 'MOON' ? 1 : 0);
 
         tx.set(unlockRef, {
           unlockKey,
@@ -139,10 +143,10 @@ export const unlockHoroscopeDay = onCall(
           createdAt: now,
           requestId,
           costCharged,
-          premiumIncluded: isPremium,
+          premiumIncluded: decision.source === 'PREMIUM_INCLUDED',
         }, {merge: true});
 
-        if (shouldCharge) {
+        if (decision.source === 'MOON') {
           tx.set(balanceRef, {balance: nextBalance, updatedAt: now}, {merge: true});
           tx.set(usageRef, {horoscopeFutureDayMoonUsed: nextUsage, updatedAt: now}, {merge: true});
           tx.set(economyLedgerRef(uid, `${todayIso}:horoscope-future-day:${requestId}`), {
@@ -173,7 +177,13 @@ export const unlockHoroscopeDay = onCall(
           type: 'HOROSCOPE_UNLOCK_DAY',
           result: response.result,
           response,
-          responsePayload: {dateIso, sign, unlockKey, costCharged, premiumIncluded: isPremium},
+          responsePayload: {
+            dateIso,
+            sign,
+            unlockKey,
+            costCharged,
+            premiumIncluded: decision.source === 'PREMIUM_INCLUDED',
+          },
           dateIso: todayIso,
           createdAt: now,
           updatedAt: now,
