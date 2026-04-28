@@ -67,6 +67,18 @@ function asOptionalLong(value: unknown): number | null {
   return Math.trunc(value);
 }
 
+function asDisplayNameOrFallback(displayNameRaw: unknown, normalizedUsername: string): string {
+  return asOptionalTrimmedString(displayNameRaw) ?? normalizedUsername;
+}
+
+export const __testables = {
+  asOptionalTrimmedString,
+  asOptionalBirthDate,
+  asOptionalBirthEssenceSummary,
+  asOptionalLong,
+  asDisplayNameOrFallback,
+};
+
 export const saveUserProfile = onCall(
     {
       region: 'europe-west1',
@@ -79,14 +91,16 @@ export const saveUserProfile = onCall(
       const data = (request.data ?? {}) as SaveUserProfileData;
 
       const normalizedUsername = normalizeUsername(data.username);
-      if (normalizedUsername != null) {
-        const validationError = validateNormalizedUsername(normalizedUsername);
-        if (validationError) {
-          throw new HttpsError('invalid-argument', validationError);
-        }
+      if (normalizedUsername == null) {
+        throw new HttpsError('invalid-argument', 'username is required');
       }
 
-      const displayName = asOptionalTrimmedString(data.displayName);
+      const validationError = validateNormalizedUsername(normalizedUsername);
+      if (validationError) {
+        throw new HttpsError('invalid-argument', validationError);
+      }
+
+      const displayName = asDisplayNameOrFallback(data.displayName, normalizedUsername);
       const photoUrl = asOptionalTrimmedString(data.photoUrl);
       const email = asOptionalTrimmedString(data.email);
       const birthDate = asOptionalBirthDate(data.birthDate);
@@ -98,17 +112,17 @@ export const saveUserProfile = onCall(
       const profileRef = db.collection('users').doc(uid).collection('profile').doc('current');
 
       const profilePatch: FirebaseFirestore.UpdateData<UserProfileDoc> = {
-        displayName: displayName ?? undefined,
-        photoUrl: photoUrl ?? undefined,
-        email: email ?? undefined,
-        birthDate: birthDate ?? undefined,
-        zodiacSign: zodiacSign ?? undefined,
-        birthEssenceSummary: birthEssenceSummary ?? undefined,
         updatedAtEpochMillis,
         updatedAt: Timestamp.now(),
       };
 
-      profilePatch.username = normalizedUsername ?? FieldValue.delete();
+      profilePatch.displayName = displayName;
+      profilePatch.username = normalizedUsername;
+      if (photoUrl != null) profilePatch.photoUrl = photoUrl;
+      if (email != null) profilePatch.email = email;
+      if (birthDate != null) profilePatch.birthDate = birthDate;
+      if (zodiacSign != null) profilePatch.zodiacSign = zodiacSign;
+      if (birthEssenceSummary != null) profilePatch.birthEssenceSummary = birthEssenceSummary;
 
       await db.runTransaction(async (tx) => {
         const profileSnap = await tx.get(profileRef);
@@ -120,24 +134,22 @@ export const saveUserProfile = onCall(
           return;
         }
 
-        if (normalizedUsername != null) {
-          const newUsernameRef = db.collection('usernames').doc(normalizedUsername);
-          const newUsernameSnap = await tx.get(newUsernameRef);
+        const newUsernameRef = db.collection('usernames').doc(normalizedUsername);
+        const newUsernameSnap = await tx.get(newUsernameRef);
 
-          if (newUsernameSnap.exists) {
-            const ownerUid = (newUsernameSnap.data() as UsernameIndexDoc | undefined)?.uid;
-            if (ownerUid !== uid) {
-              throw new HttpsError('failed-precondition', 'username_taken');
-            }
+        if (newUsernameSnap.exists) {
+          const ownerUid = (newUsernameSnap.data() as UsernameIndexDoc | undefined)?.uid;
+          if (ownerUid !== uid) {
+            throw new HttpsError('failed-precondition', 'username_taken');
           }
-
-          const usernameIndexWrite: UsernameIndexWrite = {
-            uid,
-            username: normalizedUsername,
-            updatedAt: FieldValue.serverTimestamp(),
-          };
-          tx.set(newUsernameRef, usernameIndexWrite);
         }
+
+        const usernameIndexWrite: UsernameIndexWrite = {
+          uid,
+          username: normalizedUsername,
+          updatedAt: FieldValue.serverTimestamp(),
+        };
+        tx.set(newUsernameRef, usernameIndexWrite);
 
         if (currentNormalizedUsername != null) {
           const oldUsernameRef = db.collection('usernames').doc(currentNormalizedUsername);
