@@ -1,5 +1,6 @@
 import {FieldValue, Timestamp, getFirestore} from 'firebase-admin/firestore';
 import {HttpsError, onCall} from 'firebase-functions/v2/https';
+import * as logger from 'firebase-functions/logger';
 import {ENV} from '../../config/env';
 import {normalizeUsername, validateNormalizedUsername} from '../username';
 
@@ -36,6 +37,19 @@ type UsernameIndexWrite = {
   uid: string;
   username: string;
   updatedAt: FirebaseFirestore.FieldValue;
+};
+
+type SanitizedProfileLog = {
+  uid: string;
+  hasUsername: boolean;
+  usernameLength: number;
+  hasDisplayName: boolean;
+  hasPhotoUrl: boolean;
+  hasEmail: boolean;
+  hasBirthDate: boolean;
+  hasZodiacSign: boolean;
+  hasBirthEssenceSummary: boolean;
+  updatedAtEpochMillis: number;
 };
 
 function asOptionalTrimmedString(value: unknown): string | null {
@@ -77,7 +91,33 @@ export const __testables = {
   asOptionalBirthEssenceSummary,
   asOptionalLong,
   asDisplayNameOrFallback,
+  sanitizedProfileLog,
 };
+
+function sanitizedProfileLog(input: {
+  uid: string;
+  username: string | null;
+  displayName: string | null;
+  photoUrl: string | null;
+  email: string | null;
+  birthDate: string | null;
+  zodiacSign: string | null;
+  birthEssenceSummary: string | null;
+  updatedAtEpochMillis: number;
+}): SanitizedProfileLog {
+  return {
+    uid: input.uid,
+    hasUsername: input.username != null,
+    usernameLength: input.username?.length ?? 0,
+    hasDisplayName: input.displayName != null,
+    hasPhotoUrl: input.photoUrl != null,
+    hasEmail: input.email != null,
+    hasBirthDate: input.birthDate != null,
+    hasZodiacSign: input.zodiacSign != null,
+    hasBirthEssenceSummary: input.birthEssenceSummary != null,
+    updatedAtEpochMillis: input.updatedAtEpochMillis,
+  };
+}
 
 export const saveUserProfile = onCall(
     {
@@ -107,6 +147,18 @@ export const saveUserProfile = onCall(
       const zodiacSign = asOptionalTrimmedString(data.zodiacSign);
       const birthEssenceSummary = asOptionalBirthEssenceSummary(data.birthEssenceSummary);
       const updatedAtEpochMillis = asOptionalLong(data.updatedAtEpochMillis) ?? Date.now();
+
+      logger.info('saveUserProfile normalized payload', sanitizedProfileLog({
+        uid,
+        username: normalizedUsername,
+        displayName,
+        photoUrl,
+        email,
+        birthDate,
+        zodiacSign,
+        birthEssenceSummary,
+        updatedAtEpochMillis,
+      }));
 
       const db = getFirestore();
       const profileRef = db.collection('users').doc(uid).collection('profile').doc('current');

@@ -138,7 +138,12 @@ class OnboardingProfileViewModel(
                 mimeType = mimeType,
                 previousUrl = current.photoUrl
             )
-            save(current.copy(photoUrl = uploadedUrl))
+            _uiState.update {
+                it.copy(
+                    profile = current.copy(photoUrl = uploadedUrl),
+                    error = null,
+                )
+            }
             _snackbarEvents.tryEmit(ONBOARDING_AVATAR_UPDATED_MESSAGE_KEY)
         }.onFailure { e ->
             _uiState.update { it.copy(error = e.message) }
