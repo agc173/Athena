@@ -157,17 +157,3 @@ tasks.matching {
 dependencies {
     debugImplementation(libs.compose.uiTooling)
 }
-
-configurations.matching {
-    it.name.contains("RuntimeClasspath") || it.name.contains("CompileClasspath")
-}.all {
-    // Temporary pinning to keep Android variants aligned while we mix
-    // Compose/KMP + GitLive Firebase + selected native Firebase SDK artifacts.
-    // Do not remove blindly: validate with a reproducible online build + dependency insight.
-    resolutionStrategy.force(
-        "androidx.core:core:1.13.1",
-        "androidx.core:core-ktx:1.13.1",
-        "com.google.firebase:firebase-common:20.4.2",
-        "com.google.firebase:firebase-common-ktx:20.4.2"
-    )
-}
