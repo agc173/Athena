@@ -202,44 +202,44 @@ export const saveUserProfile = onCall(
 
       try {
         await db.runTransaction(async (tx) => {
-        const profileSnap = await tx.get(profileRef);
-        const currentProfile = profileSnap.data() as UserProfileDoc | undefined;
-        const currentNormalizedUsername = normalizeUsername(currentProfile?.username);
+          const profileSnap = await tx.get(profileRef);
+          const currentProfile = profileSnap.data() as UserProfileDoc | undefined;
+          const currentNormalizedUsername = normalizeUsername(currentProfile?.username);
 
-        if (currentNormalizedUsername === normalizedUsername) {
-          tx.set(profileRef, profilePatch, {merge: true});
-          return;
-        }
-
-        const newUsernameRef = db.collection('usernames').doc(normalizedUsername);
-        const newUsernameSnap = await tx.get(newUsernameRef);
-
-        if (newUsernameSnap.exists) {
-          const ownerUid = (newUsernameSnap.data() as UsernameIndexDoc | undefined)?.uid;
-          if (ownerUid !== uid) {
-            throw new HttpsError('failed-precondition', 'username_taken');
+          if (currentNormalizedUsername === normalizedUsername) {
+            tx.set(profileRef, profilePatch, {merge: true});
+            return;
           }
-        }
 
-        const usernameIndexWrite: UsernameIndexWrite = {
-          uid,
-          username: normalizedUsername,
-          updatedAt: FieldValue.serverTimestamp(),
-        };
-        tx.set(newUsernameRef, usernameIndexWrite);
+          const newUsernameRef = db.collection('usernames').doc(normalizedUsername);
+          const newUsernameSnap = await tx.get(newUsernameRef);
 
-        if (currentNormalizedUsername != null) {
-          const oldUsernameRef = db.collection('usernames').doc(currentNormalizedUsername);
-          const oldUsernameSnap = await tx.get(oldUsernameRef);
-          if (oldUsernameSnap.exists) {
-            const ownerUid = (oldUsernameSnap.data() as UsernameIndexDoc | undefined)?.uid;
-            if (ownerUid === uid) {
-              tx.delete(oldUsernameRef);
+          if (newUsernameSnap.exists) {
+            const ownerUid = (newUsernameSnap.data() as UsernameIndexDoc | undefined)?.uid;
+            if (ownerUid !== uid) {
+              throw new HttpsError('failed-precondition', 'username_taken');
             }
           }
-        }
 
-        tx.set(profileRef, profilePatch, {merge: true});
+          const usernameIndexWrite: UsernameIndexWrite = {
+            uid,
+            username: normalizedUsername,
+            updatedAt: FieldValue.serverTimestamp(),
+          };
+          tx.set(newUsernameRef, usernameIndexWrite);
+
+          if (currentNormalizedUsername != null) {
+            const oldUsernameRef = db.collection('usernames').doc(currentNormalizedUsername);
+            const oldUsernameSnap = await tx.get(oldUsernameRef);
+            if (oldUsernameSnap.exists) {
+              const ownerUid = (oldUsernameSnap.data() as UsernameIndexDoc | undefined)?.uid;
+              if (ownerUid === uid) {
+                tx.delete(oldUsernameRef);
+              }
+            }
+          }
+
+          tx.set(profileRef, profilePatch, {merge: true});
         });
       } catch (error) {
         if (isHttpsError(error)) throw error;
