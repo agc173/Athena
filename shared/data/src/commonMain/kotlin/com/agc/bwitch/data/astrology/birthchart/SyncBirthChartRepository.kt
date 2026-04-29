@@ -113,7 +113,12 @@ class SyncBirthChartRepository(
                 responseSerializer = BirthEssenceGenerateResponseDto.serializer(),
             )
         ) {
-            is ApiResult.Err -> result
+            is ApiResult.Err -> {
+                println(
+                    "BWITCH_BIRTH_ESSENCE callable=birthEssenceGenerate error=${result.error::class.simpleName} message=${result.error.message}"
+                )
+                result
+            }
             is ApiResult.Ok -> {
                 ApiResult.Ok(
                     BirthEssenceReading(

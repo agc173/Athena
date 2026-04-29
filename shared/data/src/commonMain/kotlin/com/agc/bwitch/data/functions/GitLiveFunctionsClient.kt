@@ -30,7 +30,9 @@ class GitLiveFunctionsClient(
             ApiResult.Ok(payload)
         } catch (e: FirebaseFunctionsException) {
             val mapped = e.toApiError()
-            println("[GitLiveFunctionsClient] callable=$name FirebaseFunctionsException mapped=$mapped message=${e.message}")
+            println(
+                "[GitLiveFunctionsClient] callable=$name code=${e.code} mapped=$mapped message=${e.message}"
+            )
             ApiResult.Err(mapped)
         } catch (e: Throwable) {
             println("[GitLiveFunctionsClient] callable=$name Throwable=$e message=${e.message}")
@@ -39,7 +41,10 @@ class GitLiveFunctionsClient(
     }
 
     private fun FirebaseFunctionsException.toApiError(): ApiError {
+        val code = this.code.toString()
         val haystack = buildString {
+            append(code)
+            append(' ')
             append(message ?: "")
             append(' ')
             append(this@toApiError.toString())

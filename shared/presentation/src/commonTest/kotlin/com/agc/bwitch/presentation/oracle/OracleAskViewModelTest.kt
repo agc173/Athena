@@ -167,6 +167,34 @@ class OracleAskViewModelTest {
         }
     }
 
+    @Test
+    fun `retry relaunches latest submitted question when input was cleared`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val repo = FakeOracleRepository()
+            val languageRepo = FakeLanguageRepository(MutableStateFlow(AppLanguage.English))
+            val viewModel = OracleAskViewModel(
+                oracleRepository = repo,
+                resolveCurrentLanguageUseCase = ResolveCurrentLanguageUseCase(languageRepo),
+                observeCurrentLanguageUseCase = ObserveCurrentLanguageUseCase(languageRepo),
+                economyRepository = FakeEconomyRepository(),
+            )
+
+            viewModel.onQuestionChange("Will I travel soon?")
+            viewModel.ask()
+            advanceUntilIdle()
+            viewModel.onQuestionChange("")
+            viewModel.retry()
+            advanceUntilIdle()
+
+            assertEquals(2, repo.callCount)
+            assertEquals("Will I travel soon?", repo.lastRequest?.question)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
     private class FakeOracleRepository : OracleRepository {
         constructor(scriptedResults: List<ApiResult<OracleAskResult>> = emptyList()) {
             results.addAll(scriptedResults)
@@ -174,10 +202,12 @@ class OracleAskViewModelTest {
 
         private val results = ArrayDeque<ApiResult<OracleAskResult>>()
         var lastRequest: OracleAskRequest? = null
+        var callCount: Int = 0
 
         override suspend fun getStatus() = ApiResult.Err(com.agc.bwitch.domain.shared.ApiError.Unknown())
 
         override suspend fun ask(request: OracleAskRequest): ApiResult<OracleAskResult> {
+            callCount += 1
             lastRequest = request
             return results.removeFirstOrNull()
                 ?: ApiResult.Ok(
