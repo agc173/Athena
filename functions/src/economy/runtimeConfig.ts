@@ -12,28 +12,28 @@ const DEFAULT_CONFIG: EconomyRuntimeConfig = {
   birthEssenceEconomyV2Enabled: false,
 };
 
-const CONFIG_DOC_PATH = 'config/economy/current';
+const CONFIG_DOC_PATH = 'config/economy';
 const CACHE_TTL_MS = 30_000;
 
 let cachedConfig: EconomyRuntimeConfig | null = null;
 let cachedAtMs = 0;
 
-function normalizeBoolean(value: unknown, fallback: boolean): boolean {
+export function normalizeBoolean(value: unknown, fallback: boolean): boolean {
   if (typeof value === 'boolean') return value;
   return fallback;
 }
 
-export async function getEconomyRuntimeConfig(): Promise<EconomyRuntimeConfig> {
-  const now = Date.now();
-  if (cachedConfig && now - cachedAtMs <= CACHE_TTL_MS) {
-    return cachedConfig;
-  }
+export function isValidDocumentPath(path: string): boolean {
+  const segments = path.split('/').filter((segment) => segment.length > 0);
+  return segments.length > 0 && segments.length % 2 === 0;
+}
 
-  const db = getFirestore();
-  const configSnap = await db.doc(CONFIG_DOC_PATH).get();
-  const raw = configSnap.data() ?? {};
+export function getEconomyRuntimeConfigPath(): string {
+  return CONFIG_DOC_PATH;
+}
 
-  const parsed: EconomyRuntimeConfig = {
+export function parseEconomyRuntimeConfig(raw: Record<string, unknown>): EconomyRuntimeConfig {
+  return {
     tarotEconomyV2Enabled: normalizeBoolean(
         raw.tarotEconomyV2Enabled,
         DEFAULT_CONFIG.tarotEconomyV2Enabled
@@ -47,10 +47,29 @@ export async function getEconomyRuntimeConfig(): Promise<EconomyRuntimeConfig> {
         DEFAULT_CONFIG.birthEssenceEconomyV2Enabled
     ),
   };
+}
 
-  cachedConfig = parsed;
-  cachedAtMs = now;
-  return parsed;
+export async function getEconomyRuntimeConfig(): Promise<EconomyRuntimeConfig> {
+  const now = Date.now();
+  if (cachedConfig && now - cachedAtMs <= CACHE_TTL_MS) {
+    return cachedConfig;
+  }
+
+  try {
+    const db = getFirestore();
+    const configSnap = await db.doc(CONFIG_DOC_PATH).get();
+    const raw = configSnap.exists ? (configSnap.data() ?? {}) : {};
+
+    const parsed = parseEconomyRuntimeConfig(raw as Record<string, unknown>);
+
+    cachedConfig = parsed;
+    cachedAtMs = now;
+    return parsed;
+  } catch (_error) {
+    cachedConfig = DEFAULT_CONFIG;
+    cachedAtMs = now;
+    return DEFAULT_CONFIG;
+  }
 }
 
 export async function isTarotEconomyV2Enabled(): Promise<boolean> {
