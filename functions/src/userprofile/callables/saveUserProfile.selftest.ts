@@ -36,6 +36,33 @@ test('optional fields are normalized to null (never undefined)', () => {
   assert.equal(__testables.asOptionalLong(undefined), null);
 });
 
+test('sanitized log omits sensitive values and tracks presence flags', () => {
+  const logEntry = __testables.sanitizedProfileLog({
+    uid: 'uid-123',
+    username: 'witch.user',
+    displayName: null,
+    photoUrl: 'https://cdn/avatar.png',
+    email: 'user@example.com',
+    birthDate: null,
+    zodiacSign: 'aries',
+    birthEssenceSummary: null,
+    updatedAtEpochMillis: 123456,
+  });
+
+  assert.deepEqual(logEntry, {
+    uid: 'uid-123',
+    hasUsername: true,
+    usernameLength: 10,
+    hasDisplayName: false,
+    hasPhotoUrl: true,
+    hasEmail: true,
+    hasBirthDate: false,
+    hasZodiacSign: true,
+    hasBirthEssenceSummary: false,
+    updatedAtEpochMillis: 123456,
+  });
+});
+
 test('normalized username still passes format validation', () => {
   const normalized = normalizeUsername('  @Witch.User  ');
   assert.equal(normalized, 'witch.user');
