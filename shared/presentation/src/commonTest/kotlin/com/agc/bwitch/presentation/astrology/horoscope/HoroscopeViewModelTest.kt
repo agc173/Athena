@@ -262,7 +262,7 @@ class HoroscopeViewModelTest {
         viewModel.onUnlockSelectedDay()
         advanceUntilIdle()
 
-        assertTrue(unlockRepository.unlockedDays.contains(tomorrow))
+        assertTrue(unlockRepository.getUnlockedDays(listOf(tomorrow)).contains(tomorrow))
     }
 
     @Test
