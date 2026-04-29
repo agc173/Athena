@@ -9,6 +9,17 @@ plugins {
     alias(libs.plugins.google.services)
 }
 
+configurations.configureEach {
+    resolutionStrategy {
+        force(
+            "androidx.core:core:1.15.0",
+            "androidx.core:core-ktx:1.15.0",
+            "com.google.firebase:firebase-common:20.4.2",
+            "com.google.firebase:firebase-common-ktx:20.4.2",
+        )
+    }
+}
+
 kotlin {
     androidTarget {
         compilerOptions {
