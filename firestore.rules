@@ -5,6 +5,10 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function isOwner(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+
     // Daily (se mantiene patrón existente: lectura autenticada).
     match /horoscopeDaily/{dateIso}/signs/{sign} {
       allow read: if isAuthenticated();
@@ -36,6 +40,29 @@ service cloud.firestore {
         allow read: if isAuthenticated();
         allow write: if false;
       }
+    }
+
+    // User-owned docs (scope limitado a rutas que la app usa desde cliente).
+    match /users/{uid}/profile/current {
+      allow read, write: if isOwner(uid);
+    }
+
+    match /users/{uid}/birthEssence/current {
+      allow read, write: if isOwner(uid);
+    }
+
+    match /users/{uid}/dailyRitual/current {
+      allow read, write: if isOwner(uid);
+    }
+
+    match /users/{uid}/habits/current {
+      allow read, write: if isOwner(uid);
+    }
+
+    // Username index is backend-owned for writes (Functions/Admin SDK), readable for checks.
+    match /usernames/{username} {
+      allow read: if isAuthenticated();
+      allow write: if false;
     }
 
     // Default deny para evitar aperturas accidentales de otras colecciones (users/economy/etc).

@@ -119,6 +119,30 @@ function sanitizedProfileLog(input: {
   };
 }
 
+
+function isHttpsError(error: unknown): error is HttpsError {
+  return error instanceof HttpsError;
+}
+
+function safeUidTag(uid: string): string {
+  if (uid.length <= 6) return uid;
+  return uid.slice(0, 3) + '***' + uid.slice(-3);
+}
+
+function safeErrorInfo(error: unknown): {errorCode: string | null; errorMessage: string | null} {
+  if (typeof error !== 'object' || error == null) {
+    return {errorCode: null, errorMessage: null};
+  }
+
+  const codeRaw = 'code' in error ? (error as {code?: unknown}).code : null;
+  const messageRaw = 'message' in error ? (error as {message?: unknown}).message : null;
+
+  return {
+    errorCode: typeof codeRaw === 'string' ? codeRaw : null,
+    errorMessage: typeof messageRaw === 'string' ? messageRaw.slice(0, 120) : null,
+  };
+}
+
 export const saveUserProfile = onCall(
     {
       region: 'europe-west1',
@@ -176,7 +200,8 @@ export const saveUserProfile = onCall(
       if (zodiacSign != null) profilePatch.zodiacSign = zodiacSign;
       if (birthEssenceSummary != null) profilePatch.birthEssenceSummary = birthEssenceSummary;
 
-      await db.runTransaction(async (tx) => {
+      try {
+        await db.runTransaction(async (tx) => {
         const profileSnap = await tx.get(profileRef);
         const currentProfile = profileSnap.data() as UserProfileDoc | undefined;
         const currentNormalizedUsername = normalizeUsername(currentProfile?.username);
@@ -215,7 +240,22 @@ export const saveUserProfile = onCall(
         }
 
         tx.set(profileRef, profilePatch, {merge: true});
-      });
+        });
+      } catch (error) {
+        if (isHttpsError(error)) throw error;
+
+        const errorInfo = safeErrorInfo(error);
+        logger.error('saveUserProfile transaction failed', {
+          uidTag: safeUidTag(uid),
+          hasUid: uid.length > 0,
+          hasUsername: normalizedUsername.length > 0,
+          usernameLength: normalizedUsername.length,
+          errorCode: errorInfo.errorCode,
+          errorMessage: errorInfo.errorMessage,
+        });
+
+        throw new HttpsError('internal', 'save_user_profile_failed');
+      }
 
       return {
         username: normalizedUsername,

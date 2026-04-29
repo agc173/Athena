@@ -10,8 +10,28 @@ Archivo fuente de reglas: `firestore.rules`.
   - `/horoscopeWeekly/{weekKey}/signs/{sign}/langs/{lang}`
   - `/horoscopeMonthly/{monthKey}/signs/{sign}`
   - `/horoscopeMonthly/{monthKey}/signs/{sign}/langs/{lang}`
-- Denegar **todas** las escrituras desde cliente en esas rutas.
-- Mantener `deny by default` para el resto de documentos (incluyendo users/economy), evitando aperturas globales.
+- Permitir **read/write** solo al dueño autenticado (`request.auth.uid == uid`) en rutas de usuario usadas por cliente:
+  - `/users/{uid}/profile/current`
+  - `/users/{uid}/birthEssence/current`
+  - `/users/{uid}/dailyRitual/current`
+  - `/users/{uid}/habits/current`
+- `usernames`:
+  - Permitir **read** autenticado (`/usernames/{username}`)
+  - Denegar **write** desde cliente (el índice lo mantiene backend)
+- Mantener `deny by default` para el resto de documentos (incluyendo economy/entitlements backend-owned).
 
 ## Nota backend/admin
-- Cloud Functions con Admin SDK **bypassean** Firestore Rules, por lo que la denegación de `write` al cliente no bloquea los procesos backend.
+- Cloud Functions con Admin SDK **bypassean** Firestore Rules, por lo que la denegación de `write` al cliente no bloquea procesos backend como `saveUserProfile`.
+
+## Validación recomendada (Emulator)
+1. Levantar emuladores:
+   - `firebase emulators:start --only auth,firestore,functions`
+2. Casos mínimos con usuario autenticado UID `A`:
+   - `A` puede leer/escribir `users/A/profile/current` ✅
+   - `A` puede leer/escribir `users/A/birthEssence/current` ✅
+   - `A` puede leer/escribir `users/A/dailyRitual/current` ✅
+   - `A` puede leer/escribir `users/A/habits/current` ✅
+   - `A` **no** puede leer/escribir `users/B/profile/current` ❌
+   - `A` puede leer `usernames/{any}` ✅
+   - `A` **no** puede escribir `usernames/{any}` ❌
+3. Probar callable `saveUserProfile` y revisar logs sanitizados para errores inesperados.
