@@ -23,7 +23,7 @@ enum class AppLanguage(
             German,
         )
 
-        val fallback: AppLanguage = Spanish
+        val fallback: AppLanguage = English
 
         fun fromCodeOrNull(rawCode: String?): AppLanguage? {
             val normalized = rawCode
