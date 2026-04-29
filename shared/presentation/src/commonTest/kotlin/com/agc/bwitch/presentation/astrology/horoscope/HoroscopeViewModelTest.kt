@@ -249,6 +249,23 @@ class HoroscopeViewModelTest {
     }
 
     @Test
+    fun unlockDay_withoutOverlay_usesSelectedLockedDayTarget() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val unlockRepository = FakeUnlockRepository(futureDayCost = 1)
+        val viewModel = createViewModel(dispatcher, unlockRepository)
+
+        advanceUntilIdle()
+        val tomorrow = currentSystemTomorrowIsoForTests()
+        viewModel.onSelectDate(tomorrow)
+        // Simula cierre de overlay previo al unlock final.
+        viewModel.onCloseOverlay()
+        viewModel.onUnlockSelectedDay()
+        advanceUntilIdle()
+
+        assertTrue(unlockRepository.unlockedDays.contains(tomorrow))
+    }
+
+    @Test
     fun unlockDay_insufficientMoons_doesNotEmitModuleLimitReached() = runTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
         val unlockRepository = FakeUnlockRepository().apply { failUnlockFutureDayInsufficient = true }

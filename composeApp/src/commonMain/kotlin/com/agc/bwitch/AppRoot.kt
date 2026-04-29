@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.sp
 import com.agc.bwitch.domain.astrology.birthchart.BirthChartRepository
 import com.agc.bwitch.domain.userprofile.GetUserProfileUseCase
 import com.agc.bwitch.domain.userprofile.ObserveUserProfileUseCase
+import com.agc.bwitch.domain.userprofile.PullUserProfileUseCase
 import com.agc.bwitch.domain.userprofile.UserProfile
 import com.agc.bwitch.domain.userprofile.hasMinimumProfileCompleted
 import com.agc.bwitch.localization.NavigationStrings
@@ -94,6 +95,7 @@ fun AppRoot() {
     val birthChartRepository: BirthChartRepository = koinInject()
     val getUserProfile: GetUserProfileUseCase = koinInject()
     val observeUserProfile: ObserveUserProfileUseCase = koinInject()
+    val pullUserProfile: PullUserProfileUseCase = koinInject()
 
     var profileForGate by remember { mutableStateOf<UserProfile?>(null) }
     var hasProfileGateSnapshot by remember { mutableStateOf(false) }
@@ -118,12 +120,30 @@ fun AppRoot() {
 
         isProfileGateLoading = true
 
+        val uidTag = session.uid.toUidLogTag()
         val initialProfile = runCatching { getUserProfile() }.getOrNull()
         profileForGate = initialProfile
+        val initialComplete = initialProfile.hasMinimumProfileCompleted()
+        println("BWITCH_GATE initial uid=$uidTag hasProfile=${initialProfile != null} complete=$initialComplete")
+        val pullResult = runCatching { pullUserProfile() }
+        pullResult
+            .onFailure { error ->
+                println("BWITCH_GATE pull_failed uid=$uidTag reason=${error.message}")
+            }
+        val syncedProfile = runCatching { getUserProfile() }.getOrNull()
+        profileForGate = if (pullResult.isSuccess) {
+            syncedProfile
+        } else {
+            syncedProfile ?: initialProfile
+        }
+        val syncedComplete = profileForGate.hasMinimumProfileCompleted()
+        println("BWITCH_GATE synced uid=$uidTag pullOk=${pullResult.isSuccess} hasProfile=${profileForGate != null} complete=$syncedComplete")
         hasProfileGateSnapshot = true
         isProfileGateLoading = false
 
         observeUserProfile().collect { profile ->
+            val complete = profile.hasMinimumProfileCompleted()
+            println("BWITCH_GATE observe uid=$uidTag hasProfile=${profile != null} complete=$complete")
             profileForGate = profile
         }
     }
@@ -322,6 +342,8 @@ fun AppRoot() {
         }
     }
 }
+
+private fun String?.toUidLogTag(): String = this?.takeLast(6).orEmpty().ifBlank { "no_uid" }
 
 private const val REWARDED_AD_PAYWALL_PLACEMENT = "contextual_paywall"
 

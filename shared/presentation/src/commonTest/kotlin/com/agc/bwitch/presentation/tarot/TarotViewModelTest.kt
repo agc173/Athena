@@ -214,6 +214,49 @@ class TarotViewModelTest {
         }
     }
 
+    @Test
+    fun `tarot error from tarot_1 is cleared and does not contaminate tarot_3`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val repo = FakeTarotRepository(
+                scriptedResults = listOf(
+                    ApiResult.Err(ApiError.Internal("tarot1 failure")),
+                    ApiResult.Ok(
+                        TarotDrawResponse(
+                            requestId = "req-2",
+                            status = "DONE",
+                            cards = emptyList(),
+                            interpretation = "ok tarot3",
+                        ),
+                    ),
+                ),
+            )
+            val languageRepo = FakeLanguageRepository(MutableStateFlow(AppLanguage.Spanish))
+            val moonRepository = FakeMoonRepository(initialBalance = 10)
+            val viewModel = TarotViewModel(
+                tarotRepository = repo,
+                resolveCurrentLanguageUseCase = ResolveCurrentLanguageUseCase(languageRepo),
+                observeCurrentLanguageUseCase = ObserveCurrentLanguageUseCase(languageRepo),
+                observeMoonBalanceUseCase = ObserveMoonBalanceUseCase(moonRepository),
+                getMoonBalanceUseCase = GetMoonBalanceUseCase(moonRepository),
+                addMoonsUseCase = AddMoonsUseCase(moonRepository),
+                spendMoonsUseCase = SpendMoonsUseCase(moonRepository),
+            )
+
+            viewModel.newRequest(TarotRequestType.TAROT_1)
+            advanceUntilIdle()
+            assertEquals(TAROT_DRAW_ERROR_KEY, viewModel.uiState.value.error)
+
+            viewModel.newRequest(TarotRequestType.TAROT_3)
+            advanceUntilIdle()
+            assertNull(viewModel.uiState.value.error)
+            assertEquals("DONE", viewModel.uiState.value.response?.status)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
     private class FakeMoonRepository(initialBalance: Int = 0) : MoonRepository {
         private val state = MutableStateFlow(MoonBalance(initialBalance))
         var spendCalls: Int = 0

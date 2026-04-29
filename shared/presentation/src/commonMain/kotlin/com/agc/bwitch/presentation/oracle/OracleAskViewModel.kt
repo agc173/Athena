@@ -76,6 +76,7 @@ class OracleAskViewModel(
     private val _uiState = MutableStateFlow(OracleAskUiState())
     val uiState: StateFlow<OracleAskUiState> = _uiState.asStateFlow()
     private val currentLanguageCode = MutableStateFlow(AppLanguage.fallback.code)
+    private var lastSubmittedQuestion: String? = null
 
     init {
         scope.launch {
@@ -135,6 +136,7 @@ class OracleAskViewModel(
                 quotaSnapshot = null,
             )
         }
+        lastSubmittedQuestion = trimmedQuestion
 
         scope.launch {
             val effectiveLang = lang ?: currentLanguageCode.value
@@ -192,10 +194,13 @@ class OracleAskViewModel(
     }
 
     fun retry(topic: OracleTopic? = null, lang: String? = null) {
+        if (lastSubmittedQuestion.isNullOrBlank()) return
+        _uiState.update { it.copy(question = lastSubmittedQuestion.orEmpty()) }
         ask(topic = topic, lang = lang)
     }
 
     fun startNewConsultation() {
+        lastSubmittedQuestion = null
         _uiState.value = OracleAskUiState()
     }
 

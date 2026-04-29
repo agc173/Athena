@@ -208,13 +208,20 @@ class HoroscopeViewModel(
     fun onUnlockSelectedDay(unlockFlowContext: MoonUnlockFlowContext? = null) {
         val state = _uiState.value
         val overlay = state.overlay as? HoroscopeOverlayUi.DailyOverlay
+        val selectedDateIso = state.selectedDateIso.ifBlank { todayIso() }
+        val selectedDayLocked = state.days.firstOrNull { it.dateIso == selectedDateIso }?.isLocked == true
         val target = when {
             overlay != null && overlay.isLocked -> PendingUnlockTarget(
-                dateIso = state.selectedDateIso.ifBlank { todayIso() },
+                dateIso = selectedDateIso,
                 sign = overlay.sign,
+            )
+            selectedDayLocked -> PendingUnlockTarget(
+                dateIso = selectedDateIso,
+                sign = state.selectedSign,
             )
             else -> pendingUnlockTarget
         } ?: return
+        println("BWITCH_HOROSCOPE unlock_attempt date=${target.dateIso} sign=${target.sign.name} from=${unlockFlowContext?.unlockFlowOrigin}")
         pendingUnlockTarget = target
 
         scope.launch {

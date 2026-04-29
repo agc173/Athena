@@ -47,7 +47,12 @@ class TarotRepositoryImpl(
                 responseSerializer = TarotDrawResponseDto.serializer(),
             )
         ) {
-            is ApiResult.Err -> result
+            is ApiResult.Err -> {
+                println(
+                    "BWITCH_TAROT callable=tarotDraw requestType=${type.name} requestId=$requestId error=${result.error::class.simpleName} message=${result.error.message}"
+                )
+                result
+            }
             is ApiResult.Ok -> parseResponse(result.value)
         }
     }
