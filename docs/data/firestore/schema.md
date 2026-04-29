@@ -408,7 +408,7 @@ Campos:
 
 ## Economy backend (fase 5: rewarded ads claim backend)
 
-### /config/economy/current
+### /config/economy
 Flags runtime para rollout gradual de economía backend.
 
 Campos:
