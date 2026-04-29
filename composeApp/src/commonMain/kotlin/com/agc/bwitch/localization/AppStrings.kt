@@ -1459,6 +1459,7 @@ private val portugueseAppStrings = fallbackAppStrings.copy(
         profileSaveError = "Não foi possível salvar o perfil",
         avatarUpdatedMessage = "Avatar atualizado",
         avatarUploadError = "Não foi possível enviar o avatar",
+        selectAvatarButton = "Selecionar avatar",
     ),
     settings = fallbackAppStrings.settings.copy(
         subtitle = "Gerencie sua conta e as configurações principais do BWitch.",
@@ -1903,6 +1904,7 @@ private val russianAppStrings = fallbackAppStrings.copy(
         profileSaveError = "Не удалось сохранить профиль",
         avatarUpdatedMessage = "Аватар обновлён",
         avatarUploadError = "Не удалось загрузить аватар",
+        selectAvatarButton = "Выбрать аватар",
     ),
     settings = fallbackAppStrings.settings.copy(
         subtitle = "Управляйте аккаунтом и основными настройками BWitch.",
@@ -2362,6 +2364,7 @@ private val frenchAppStrings = fallbackAppStrings.copy(
         profileSaveError = "Impossible d'enregistrer le profil",
         avatarUpdatedMessage = "Avatar mis à jour",
         avatarUploadError = "Impossible d'envoyer l'avatar",
+        selectAvatarButton = "Sélectionner un avatar",
     ),
     settings = fallbackAppStrings.settings.copy(
         subtitle = "Gérez votre compte et les réglages principaux de BWitch.",
@@ -2810,6 +2813,7 @@ private val italianAppStrings = fallbackAppStrings.copy(
         profileSaveError = "Impossibile salvare il profilo",
         avatarUpdatedMessage = "Avatar aggiornato",
         avatarUploadError = "Impossibile caricare l'avatar",
+        selectAvatarButton = "Seleziona avatar",
     ),
     settings = fallbackAppStrings.settings.copy(
         subtitle = "Gestisci il tuo account e le impostazioni principali di BWitch.",
@@ -3256,6 +3260,7 @@ private val germanAppStrings = fallbackAppStrings.copy(
         profileSaveError = "Profil konnte nicht gespeichert werden",
         avatarUpdatedMessage = "Avatar aktualisiert",
         avatarUploadError = "Avatar konnte nicht hochgeladen werden",
+        selectAvatarButton = "Avatar auswählen",
     ),
     settings = fallbackAppStrings.settings.copy(
         subtitle = "Verwalte dein Konto und die wichtigsten BWitch-Einstellungen.",
