@@ -12,6 +12,7 @@ import {generateTarotReading} from '../tarot/tarotService';
 import {ConsumeIntent, RequestType, type TarotDrawData} from '../types';
 import {createLlmClientFromRouter} from '../shared/routerLlmClient';
 import {dateIsoMadrid, oracleRef, oracleSubRef} from '../firestore/paths';
+import {buildEconomyPayload, stripUndefinedDeep} from './payloadBuilders';
 
 const ALLOWED_TAROT_TYPES = new Set<RequestType>([
   RequestType.TAROT_1,
@@ -57,19 +58,6 @@ type UserDailyDoc = {
 
 function stripUndefined<T extends Record<string, any>>(obj: T): T {
   return Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined)) as T;
-}
-
-function stripUndefinedDeep<T>(value: T): T {
-  if (Array.isArray(value)) return value.map(stripUndefinedDeep) as any;
-  if (value && typeof value === 'object') {
-    const out: any = {};
-    for (const [k, v] of Object.entries(value as any)) {
-      if (v === undefined) continue;
-      out[k] = stripUndefinedDeep(v);
-    }
-    return out;
-  }
-  return value;
 }
 
 function normalizeLang(lang?: string): string {
@@ -427,18 +415,19 @@ export const tarotDraw = onCall(
         const llmMeta = stripUndefinedDeep(generated.llmMeta);
 
         const readingId = requestId;
-        const responsePayload = {
+        const responsePayload = stripUndefinedDeep({
           requestId,
           status: 'COMPLETED_SUCCESS',
           reading: generated.reading,
           draw: generated.draw,
           quotaSnapshot: economyV2Enabled ? undefined : legacyQuotaSnapshot,
           systemMode,
-          economy: economyV2Enabled ? {
-            source: economyDecisionSource,
-            moonCost: economyMoonCost,
-          } : undefined,
-        };
+          economy: buildEconomyPayload(
+              economyV2Enabled,
+              economyDecisionSource,
+              economyMoonCost
+          ),
+        });
 
         const drawForHistory = generated.draw.type === RequestType.TAROT_1 ?
           [{
@@ -502,7 +491,7 @@ export const tarotDraw = onCall(
           durationMs: generated.llmMeta.durationMs,
         });
 
-        return stripUndefinedDeep(responsePayload);
+        return responsePayload;
       } catch (error) {
         console.error('tarotDraw error:', error);
         const errorMessage = error instanceof Error ? error.message : String(error);
