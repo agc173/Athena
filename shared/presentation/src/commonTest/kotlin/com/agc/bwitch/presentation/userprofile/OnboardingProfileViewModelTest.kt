@@ -14,29 +14,43 @@ import com.agc.bwitch.presentation.auth.SessionViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class OnboardingProfileViewModelTest {
 
     @Test
     fun uploadAvatar_doesNotCallSaveProfileWhenUsernameMissing() = runTest {
-        val userRepo = FakeUserProfileRepository()
-        val avatarRepo = FakeAvatarRepository()
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val userRepo = FakeUserProfileRepository()
+            val avatarRepo = FakeAvatarRepository()
 
-        val vm = OnboardingProfileViewModel(
-            observe = ObserveUserProfileUseCase(userRepo),
-            get = GetUserProfileUseCase(userRepo),
-            save = SaveUserProfileUseCase(userRepo),
-            uploadAvatar = UploadAvatarUseCase(avatarRepo),
-            deriveZodiacSign = DeriveZodiacSignUseCase(),
-            sessionVm = SessionViewModel(FakeAuthRepository())
-        )
+            val vm = OnboardingProfileViewModel(
+                observe = ObserveUserProfileUseCase(userRepo),
+                get = GetUserProfileUseCase(userRepo),
+                save = SaveUserProfileUseCase(userRepo),
+                uploadAvatar = UploadAvatarUseCase(avatarRepo),
+                deriveZodiacSign = DeriveZodiacSignUseCase(),
+                sessionVm = SessionViewModel(FakeAuthRepository())
+            )
 
-        vm.uploadAvatarAndSave("file:///tmp/avatar.png", "image/png")
+            vm.uploadAvatarAndSave("file:///tmp/avatar.png", "image/png")
+            advanceUntilIdle()
 
-        assertEquals(0, userRepo.saveCalls)
+            assertEquals(0, userRepo.saveCalls)
+        } finally {
+            Dispatchers.resetMain()
+        }
     }
 }
 
