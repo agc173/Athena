@@ -155,7 +155,10 @@ fun OnboardingProfileScreen(contentPadding: PaddingValues) {
             }
         )
 
-        AvatarPickerButton(enabled = !state.isBusy) { uriString, mimeType ->
+        AvatarPickerButton(
+            enabled = !state.isBusy,
+            buttonText = strings.selectAvatarButton,
+        ) { uriString, mimeType ->
             vm.uploadAvatarAndSave(uriString, mimeType)
         }
 

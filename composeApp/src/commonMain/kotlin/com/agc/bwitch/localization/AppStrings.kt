@@ -50,6 +50,7 @@ data class OnboardingStrings(
     val profileSaveError: String,
     val avatarUpdatedMessage: String,
     val avatarUploadError: String,
+    val selectAvatarButton: String,
 )
 
 data class SettingsStrings(
@@ -540,6 +541,7 @@ val fallbackAppStrings: AppStrings = AppStrings(
         profileSaveError = "No se pudo guardar el perfil",
         avatarUpdatedMessage = "Avatar actualizado",
         avatarUploadError = "No se pudo subir el avatar",
+        selectAvatarButton = "Seleccionar avatar",
     ),
     settings = SettingsStrings(
         subtitle = "Gestiona tu cuenta y la configuración principal de BWitch.",
@@ -998,6 +1000,7 @@ private val englishAppStrings = fallbackAppStrings.copy(
         profileSaveError = "Could not save profile",
         avatarUpdatedMessage = "Avatar updated",
         avatarUploadError = "Could not upload avatar",
+        selectAvatarButton = "Select avatar",
     ),
     settings = fallbackAppStrings.settings.copy(
         subtitle = "Manage your account and BWitch core settings.",

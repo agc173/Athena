@@ -4,9 +4,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import bwitch.composeapp.generated.resources.Res
-import bwitch.composeapp.generated.resources.profile_select_avatar
-import org.jetbrains.compose.resources.stringResource
 import platform.Foundation.NSData
 import platform.Foundation.NSTemporaryDirectory
 import platform.Foundation.NSURL
@@ -25,6 +22,7 @@ import platform.darwin.NSObject
 @Composable
 actual fun AvatarPickerButton(
     enabled: Boolean,
+    buttonText: String,
     onPicked: (uriString: String, mimeType: String?) -> Unit
 ) {
     val delegate = remember { ImagePickerDelegate(onPicked) }
@@ -44,7 +42,7 @@ actual fun AvatarPickerButton(
         },
         enabled = enabled
     ) {
-        Text(stringResource(Res.string.profile_select_avatar))
+        Text(buttonText)
     }
 }
 
