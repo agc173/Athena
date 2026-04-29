@@ -24,6 +24,9 @@ class ProfileCompletionTest {
     @Test
     fun `profile missing zodiac sign is incomplete`() {
         val profile = UserProfile(
+            displayName = null,
+            photoUrl = null,
+            email = null,
             username = "luna_user",
             birthDate = LocalDate.parse("1995-10-12"),
             zodiacSign = null,
