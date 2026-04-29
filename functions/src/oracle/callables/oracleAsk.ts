@@ -12,6 +12,7 @@ import {dateIsoMadrid, oracleRef, oracleSubRef} from '../firestore/paths';
 import {createLlmClientFromRouter} from '../shared/routerLlmClient';
 import {generateOracleAnswer} from '../oracle/oracleService';
 import {ConsumeIntent, RequestType, type OracleAskData} from '../types';
+import {buildEconomyPayload, stripUndefinedDeep} from './payloadBuilders';
 
 const DEFAULT_DAILY_QUOTA = {
   freeTarot1Remaining: 1,
@@ -51,21 +52,6 @@ type UserDailyDoc = {
 
 function stripUndefined<T extends Record<string, any>>(obj: T): T {
   return Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined)) as T;
-}
-
-function stripUndefinedDeep<T>(value: T): T {
-  if (Array.isArray(value)) {
-    return value.map(stripUndefinedDeep) as any;
-  }
-  if (value && typeof value === 'object') {
-    const out: any = {};
-    for (const [k, v] of Object.entries(value as any)) {
-      if (v === undefined) continue;
-      out[k] = stripUndefinedDeep(v);
-    }
-    return out;
-  }
-  return value;
 }
 
 function normalizeLang(lang?: string): string {
@@ -387,17 +373,18 @@ export const oracleAsk = onCall(
 
         const llmMeta = stripUndefinedDeep(generated.llmMeta);
 
-        const responsePayload = {
+        const responsePayload = stripUndefinedDeep({
           requestId,
           status: 'COMPLETED_SUCCESS',
           answer: generated.answer,
           quotaSnapshot: economyV2Enabled ? undefined : legacyQuotaSnapshot,
           systemMode,
-          economy: economyV2Enabled ? {
-            source: economyDecisionSource,
-            moonCost: economyMoonCost,
-          } : undefined,
-        };
+          economy: buildEconomyPayload(
+              economyV2Enabled,
+              economyDecisionSource,
+              economyMoonCost
+          ),
+        });
 
         const answerRef = oracleSubRef('oracleAnswers', uid, 'items', requestId);
 
@@ -450,7 +437,7 @@ export const oracleAsk = onCall(
           durationMs: generated.llmMeta.durationMs,
         });
 
-        return stripUndefinedDeep(responsePayload);
+        return responsePayload;
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
 
