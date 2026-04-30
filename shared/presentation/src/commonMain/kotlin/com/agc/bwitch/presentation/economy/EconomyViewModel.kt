@@ -57,6 +57,7 @@ enum class EconomyClaimUiStatus {
 class EconomyViewModel(
     private val economyRepository: EconomyRepository,
     private val analyticsTracker: AnalyticsTracker = NoOpAnalyticsTracker,
+    private val autoLoadOnInit: Boolean = false,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
@@ -69,6 +70,10 @@ class EconomyViewModel(
     private var moonPaywallImpressionCounter: Long = 0L
 
     init {
+        if (autoLoadOnInit) {
+            loadEconomy()
+        }
+
         scope.launch {
             uiState
                 .map { it.hasUsableSnapshot to it.balance }

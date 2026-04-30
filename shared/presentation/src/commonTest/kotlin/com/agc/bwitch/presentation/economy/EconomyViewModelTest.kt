@@ -29,7 +29,7 @@ class EconomyViewModelTest {
         Dispatchers.setMain(dispatcher)
         try {
             val repository = FakeEconomyRepository()
-            val viewModel = EconomyViewModel(economyRepository = repository)
+            val viewModel = EconomyViewModel(economyRepository = repository, autoLoadOnInit = true)
 
             advanceUntilIdle()
             assertEquals(10, viewModel.uiState.value.balance)
@@ -54,6 +54,7 @@ class EconomyViewModelTest {
             val viewModel = EconomyViewModel(
                 economyRepository = repository,
                 analyticsTracker = analytics,
+                autoLoadOnInit = true,
             )
 
             advanceUntilIdle()
@@ -75,6 +76,7 @@ class EconomyViewModelTest {
             val viewModel = EconomyViewModel(
                 economyRepository = StableEconomyRepository(),
                 analyticsTracker = analytics,
+                autoLoadOnInit = true,
             )
             advanceUntilIdle()
             viewModel.loadEconomy()
@@ -96,6 +98,7 @@ class EconomyViewModelTest {
             val viewModel = EconomyViewModel(
                 economyRepository = StableEconomyRepository(),
                 analyticsTracker = analytics,
+                autoLoadOnInit = true,
             )
             advanceUntilIdle()
 
@@ -126,6 +129,7 @@ class EconomyViewModelTest {
             val viewModel = EconomyViewModel(
                 economyRepository = StableEconomyRepository(),
                 analyticsTracker = analytics,
+                autoLoadOnInit = true,
             )
             advanceUntilIdle()
 
@@ -157,6 +161,7 @@ class EconomyViewModelTest {
             val viewModel = EconomyViewModel(
                 economyRepository = FakeEconomyRepository(),
                 analyticsTracker = analytics,
+                autoLoadOnInit = true,
             )
             advanceUntilIdle()
 
@@ -184,6 +189,7 @@ class EconomyViewModelTest {
             val viewModel = EconomyViewModel(
                 economyRepository = StableEconomyRepository(),
                 analyticsTracker = analytics,
+                autoLoadOnInit = true,
             )
             advanceUntilIdle()
 
@@ -209,6 +215,7 @@ class EconomyViewModelTest {
             val viewModel = EconomyViewModel(
                 economyRepository = StableEconomyRepository(),
                 analyticsTracker = analytics,
+                autoLoadOnInit = true,
             )
             advanceUntilIdle()
 
@@ -235,6 +242,7 @@ class EconomyViewModelTest {
             val viewModel = EconomyViewModel(
                 economyRepository = StableEconomyRepository(),
                 analyticsTracker = analytics,
+                autoLoadOnInit = true,
             )
             advanceUntilIdle()
 
@@ -263,6 +271,7 @@ class EconomyViewModelTest {
         try {
             val viewModel = EconomyViewModel(
                 economyRepository = StableEconomyRepository(),
+                autoLoadOnInit = true,
             )
             advanceUntilIdle()
 
@@ -291,6 +300,7 @@ class EconomyViewModelTest {
             val viewModel = EconomyViewModel(
                 economyRepository = StableEconomyRepository(),
                 analyticsTracker = analytics,
+                autoLoadOnInit = true,
             )
             var callbackContext: MoonUnlockFlowContext? = null
             advanceUntilIdle()
@@ -316,6 +326,7 @@ class EconomyViewModelTest {
         try {
             val viewModel = EconomyViewModel(
                 economyRepository = FakeEconomyRepository(),
+                autoLoadOnInit = true,
             )
             var callbackContext: MoonUnlockFlowContext? = null
             advanceUntilIdle()
@@ -349,6 +360,7 @@ class EconomyViewModelTest {
         try {
             val viewModel = EconomyViewModel(
                 economyRepository = FakeEconomyRepository(),
+                autoLoadOnInit = true,
             )
             var callbackContext: MoonUnlockFlowContext? = null
             advanceUntilIdle()
