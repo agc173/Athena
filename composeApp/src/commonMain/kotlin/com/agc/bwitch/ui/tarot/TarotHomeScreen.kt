@@ -12,9 +12,12 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.agc.bwitch.domain.economy.EconomyModulePreview
+import com.agc.bwitch.domain.economy.EconomyNextSource
 import com.agc.bwitch.domain.tarot.TarotRequestType
 import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.presentation.economy.EconomyViewModel
+import com.agc.bwitch.presentation.economy.toModuleCostUiStateOrNull
 import com.agc.bwitch.presentation.tarot.TarotViewModel
 import org.koin.compose.koinInject
 
@@ -27,6 +30,13 @@ fun TarotHomeScreen(
 ) {
     val strings = appStrings.tarot
     val state by viewModel.uiState.collectAsState()
+    val economyState by economyViewModel.uiState.collectAsState()
+    val tarot1CostLabel = economyState.modulePreviews
+        .firstOrNull { it.module == "TAROT_1" }
+        ?.toTarotCostLabelOrNull(freeLabel = "Gratis hoy")
+    val tarot3CostLabel = economyState.modulePreviews
+        .firstOrNull { it.module == "TAROT_3" }
+        ?.toTarotCostLabelOrNull(freeLabel = "Gratis esta semana")
 
     Column(
         modifier = Modifier
@@ -43,12 +53,14 @@ fun TarotHomeScreen(
         TarotOptionCard(
             title = strings.homeSingleCardTitle,
             subtitle = strings.homeSingleCardSubtitle,
+            costLabel = tarot1CostLabel,
             onClick = { onSelectRequestType(TarotRequestType.TAROT_1) },
         )
 
         TarotOptionCard(
             title = strings.homeThreeCardTitle,
             subtitle = "${strings.homeThreeCardSubtitle} · ${state.extraReadingCost} ${appStrings.profile.moonCreditsTitle}",
+            costLabel = tarot3CostLabel,
             onClick = {
                 economyViewModel.requireLunas(
                     cost = state.extraReadingCost,
@@ -71,6 +83,7 @@ fun TarotHomeScreen(
 private fun TarotOptionCard(
     title: String,
     subtitle: String,
+    costLabel: String?,
     onClick: () -> Unit,
 ) {
     Card(onClick = onClick) {
@@ -80,6 +93,20 @@ private fun TarotOptionCard(
         ) {
             Text(title, style = MaterialTheme.typography.titleMedium)
             Text(subtitle, style = MaterialTheme.typography.bodyMedium)
+            costLabel?.let {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
         }
+    }
+}
+
+private fun EconomyModulePreview.toTarotCostLabelOrNull(freeLabel: String): String? {
+    return when (nextSource) {
+        EconomyNextSource.FREE -> freeLabel
+        else -> toModuleCostUiStateOrNull()?.label
     }
 }
