@@ -26,6 +26,7 @@ import com.agc.bwitch.presentation.oracle.OracleAskMessageId
 import com.agc.bwitch.presentation.oracle.OracleAskViewModel
 import com.agc.bwitch.presentation.economy.EconomyViewModel
 import com.agc.bwitch.presentation.economy.toModuleCostUiStateOrNull
+import com.agc.bwitch.ui.common.localization.resolve
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
 import com.agc.bwitch.ui.common.designsystem.BWitchPrimaryButton
 import com.agc.bwitch.ui.common.designsystem.BWitchSecondaryButton
@@ -79,7 +80,7 @@ fun OracleScreen(
 
         oracleCostState?.let { costState ->
             Text(
-                text = costState.label,
+                text = costState.label.resolve(appStrings.economy),
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.onSurfaceVariant,
             )
