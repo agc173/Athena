@@ -120,9 +120,10 @@ class OracleRepositoryImpl(
 
     private companion object {
         const val REQUEST_TYPE_ORACLE_1Q = "ORACLE_1Q"
+        const val ORACLE_FALLBACK_LANGUAGE_CODE = "es"
     }
 
     private fun normalizeLanguageCode(raw: String?): String {
-        return AppLanguage.fromCodeOrNull(raw)?.code ?: AppLanguage.fallback.code
+        return AppLanguage.fromCodeOrNull(raw)?.code ?: ORACLE_FALLBACK_LANGUAGE_CODE
     }
 }
