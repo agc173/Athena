@@ -56,6 +56,30 @@ type UserDailyDoc = {
   updatedAt?: Timestamp;
 };
 
+function buildUidTag(uid?: string): string {
+  if (!uid) return 'anon';
+  if (uid.length <= 8) return `${uid.slice(0, 2)}***`;
+  return `${uid.slice(0, 4)}***${uid.slice(-2)}`;
+}
+
+function logControlledHttpsError(params: {
+  error: HttpsError;
+  requestType?: unknown;
+  hasRewardedProof: boolean;
+  uid?: string;
+  economyV2Enabled?: boolean;
+}) {
+  console.warn('BWITCH_CALLABLE_ERROR', {
+    callable: 'tarotDraw',
+    code: params.error.code,
+    message: params.error.message,
+    requestType: params.requestType ?? null,
+    hasRewardedProof: params.hasRewardedProof,
+    uidTag: buildUidTag(params.uid),
+    economyV2Enabled: params.economyV2Enabled ?? null,
+  });
+}
+
 function stripUndefined<T extends Record<string, any>>(obj: T): T {
   return Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined)) as T;
 }
@@ -180,46 +204,50 @@ export const tarotDraw = onCall(
       secrets: ['DEEPSEEK_API_KEY'],
     },
     async (request) => {
+      const data = request.data as TarotDrawData | undefined;
+      const hasRewardedProof = typeof data?.adUnlock?.rewardedProof === 'string' &&
+        data.adUnlock.rewardedProof.trim().length > 0;
+      let economyV2Enabled: boolean | undefined;
       const uid = request.auth?.uid;
-      if (!uid) {
-        throw new HttpsError('unauthenticated', 'Authentication is required');
-      }
+      try {
+        if (!uid) {
+          throw new HttpsError('unauthenticated', 'Authentication is required');
+        }
 
-      const data = request.data as TarotDrawData;
-      if (!data?.requestType || !ALLOWED_TAROT_TYPES.has(data.requestType)) {
-        throw new HttpsError(
-            'invalid-argument',
-            'requestType must be TAROT_1 or TAROT_3'
-        );
-      }
+        if (!data?.requestType || !ALLOWED_TAROT_TYPES.has(data.requestType)) {
+          throw new HttpsError(
+              'invalid-argument',
+              'requestType must be TAROT_1 or TAROT_3'
+          );
+        }
 
-      if (!data.requestId || typeof data.requestId !== 'string' || data.requestId.trim().length === 0) {
-        throw new HttpsError('invalid-argument', 'requestId is required');
-      }
+        if (!data.requestId || typeof data.requestId !== 'string' || data.requestId.trim().length === 0) {
+          throw new HttpsError('invalid-argument', 'requestId is required');
+        }
 
-      const requestId = data.requestId.trim();
-      const lang = normalizeLang(data.lang);
-      const question = normalizeQuestion(data.question);
-      const dateIso = dateIsoMadrid();
+        const requestId = data.requestId.trim();
+        const lang = normalizeLang(data.lang);
+        const question = normalizeQuestion(data.question);
+        const dateIso = dateIsoMadrid();
 
-      const economyV2Enabled = await isTarotEconomyV2Enabled();
-      const [systemMode, subscriber] = await Promise.all([
-        getSystemMode(),
-        isSubscriber(uid),
-      ]);
+        economyV2Enabled = await isTarotEconomyV2Enabled();
+        const [systemMode, subscriber] = await Promise.all([
+          getSystemMode(),
+          isSubscriber(uid),
+        ]);
 
-      if (systemMode === 'EMERGENCY' && !subscriber) {
-        throw new HttpsError('resource-exhausted', 'tarotDraw temporarily unavailable');
-      }
-      if (systemMode === 'DEGRADED' && data.requestType === RequestType.TAROT_3) {
-        throw new HttpsError('resource-exhausted', 'TAROT_3 unavailable while system is DEGRADED');
-      }
+        if (systemMode === 'EMERGENCY' && !subscriber) {
+          throw new HttpsError('resource-exhausted', 'tarotDraw temporarily unavailable');
+        }
+        if (systemMode === 'DEGRADED' && data.requestType === RequestType.TAROT_3) {
+          throw new HttpsError('resource-exhausted', 'TAROT_3 unavailable while system is DEGRADED');
+        }
 
-      const db = getFirestore();
-      const requestRef = oracleRef('oracleRequests', requestId);
-      const userDailyRef = oracleSubRef('oracleUserDaily', dateIso, 'users', uid);
+        const db = getFirestore();
+        const requestRef = oracleRef('oracleRequests', requestId);
+        const userDailyRef = oracleSubRef('oracleUserDaily', dateIso, 'users', uid);
 
-      const reservation = economyV2Enabled ?
+        const reservation = economyV2Enabled ?
         await reserveTarotEconomyAccess({
           uid,
           requestId,
@@ -334,102 +362,102 @@ export const tarotDraw = onCall(
           };
         });
 
-      const legacyIntent = !economyV2Enabled &&
+        const legacyIntent = !economyV2Enabled &&
         reservation.type === 'reserved' &&
         'intent' in reservation ?
         reservation.intent :
         undefined;
-      const legacyQuotaSnapshot = !economyV2Enabled &&
+        const legacyQuotaSnapshot = !economyV2Enabled &&
         reservation.type === 'reserved' &&
         'quotaSnapshot' in reservation ?
         reservation.quotaSnapshot :
         undefined;
-      const economyDecisionSource = economyV2Enabled &&
+        const economyDecisionSource = economyV2Enabled &&
         reservation.type === 'reserved' &&
         'source' in reservation ?
         reservation.source :
         undefined;
-      const economyMoonCost = economyV2Enabled &&
+        const economyMoonCost = economyV2Enabled &&
         reservation.type === 'reserved' &&
         'moonCost' in reservation ?
         reservation.moonCost :
         undefined;
 
-      if (reservation.type === 'completed') {
-        return reservation.payload;
-      }
-
-      if (reservation.type === 'in-progress') {
-        return {requestId, status: 'IN_PROGRESS'};
-      }
-
-      const {buildRouter} = await import('../../llm/buildRouter.js');
-      const router = buildRouter();
-
-      let usageDateIso: string;
-      try {
-        const {dateIso: reservedDateIso} = await reserveLlmCallOrThrow('tarot', llmDailyCaps());
-        usageDateIso = reservedDateIso;
-      } catch (error) {
-        console.error('tarotDraw error:', error);
-        const errorMessage = error instanceof Error ? error.message : String(error);
-
-        if (errorMessage.includes('DAILY_LLM_CAP_EXCEEDED')) {
-          if (economyV2Enabled) {
-            await refundTarotEconomyRequest({
-              uid,
-              requestId,
-              dateIso,
-              errorMessage: 'DAILY_LLM_CAP_EXCEEDED',
-            });
-          } else {
-            await failRequestAndCompensateQuota({
-              requestRef,
-              userDailyRef,
-              requestType: data.requestType,
-              intent: legacyIntent ?? ConsumeIntent.AD_UNLOCK,
-              errorMessage: 'DAILY_LLM_CAP_EXCEEDED',
-            });
-          }
-          throw new HttpsError('resource-exhausted', 'DAILY_LLM_CAP_EXCEEDED');
+        if (reservation.type === 'completed') {
+          return reservation.payload;
         }
 
-        throw error;
-      }
+        if (reservation.type === 'in-progress') {
+          return {requestId, status: 'IN_PROGRESS'};
+        }
 
-      const llmClient = createLlmClientFromRouter(router, 'tarot', {
-        usageDailyDateIso: usageDateIso,
-        skipUsageReservation: true,
-        skipUsageTokenTracking: true,
-      });
+        const {buildRouter} = await import('../../llm/buildRouter.js');
+        const router = buildRouter();
 
-      try {
-        const generated = await generateTarotReading({
-          requestId,
-          requestType: data.requestType,
-          lang,
-          question,
-          llm: llmClient,
+        let usageDateIso: string;
+        try {
+          const {dateIso: reservedDateIso} = await reserveLlmCallOrThrow('tarot', llmDailyCaps());
+          usageDateIso = reservedDateIso;
+        } catch (error) {
+          console.error('tarotDraw error:', error);
+          const errorMessage = error instanceof Error ? error.message : String(error);
+
+          if (errorMessage.includes('DAILY_LLM_CAP_EXCEEDED')) {
+            if (economyV2Enabled) {
+              await refundTarotEconomyRequest({
+                uid,
+                requestId,
+                dateIso,
+                errorMessage: 'DAILY_LLM_CAP_EXCEEDED',
+              });
+            } else {
+              await failRequestAndCompensateQuota({
+                requestRef,
+                userDailyRef,
+                requestType: data.requestType,
+                intent: legacyIntent ?? ConsumeIntent.AD_UNLOCK,
+                errorMessage: 'DAILY_LLM_CAP_EXCEEDED',
+              });
+            }
+            throw new HttpsError('resource-exhausted', 'DAILY_LLM_CAP_EXCEEDED');
+          }
+
+          throw error;
+        }
+
+        const llmClient = createLlmClientFromRouter(router, 'tarot', {
+          usageDailyDateIso: usageDateIso,
+          skipUsageReservation: true,
+          skipUsageTokenTracking: true,
         });
 
-        const llmMeta = stripUndefinedDeep(generated.llmMeta);
+        try {
+          const generated = await generateTarotReading({
+            requestId,
+            requestType: data.requestType,
+            lang,
+            question,
+            llm: llmClient,
+          });
 
-        const readingId = requestId;
-        const responsePayload = stripUndefinedDeep({
-          requestId,
-          status: 'COMPLETED_SUCCESS',
-          reading: generated.reading,
-          draw: generated.draw,
-          quotaSnapshot: economyV2Enabled ? undefined : legacyQuotaSnapshot,
-          systemMode,
-          economy: buildEconomyPayload(
-              economyV2Enabled,
-              economyDecisionSource,
-              economyMoonCost
-          ),
-        });
+          const llmMeta = stripUndefinedDeep(generated.llmMeta);
 
-        const drawForHistory = generated.draw.type === RequestType.TAROT_1 ?
+          const readingId = requestId;
+          const responsePayload = stripUndefinedDeep({
+            requestId,
+            status: 'COMPLETED_SUCCESS',
+            reading: generated.reading,
+            draw: generated.draw,
+            quotaSnapshot: economyV2Enabled ? undefined : legacyQuotaSnapshot,
+            systemMode,
+            economy: buildEconomyPayload(
+                economyV2Enabled,
+                economyDecisionSource,
+                economyMoonCost
+            ),
+          });
+
+          const drawForHistory = generated.draw.type === RequestType.TAROT_1 ?
           [{
             id: generated.draw.card.id,
             orientation: generated.draw.card.orientation,
@@ -441,89 +469,101 @@ export const tarotDraw = onCall(
             position: card.position,
           }));
 
-        const readingRef = oracleSubRef('tarotReadings', uid, 'items', readingId);
-        await db.runTransaction(async (tx) => {
-          if (!economyV2Enabled) {
-            tx.set(requestRef, {
-              status: 'COMPLETED_SUCCESS',
-              readingId,
+          const readingRef = oracleSubRef('tarotReadings', uid, 'items', readingId);
+          await db.runTransaction(async (tx) => {
+            if (!economyV2Enabled) {
+              tx.set(requestRef, {
+                status: 'COMPLETED_SUCCESS',
+                readingId,
+                responsePayload,
+                llmMeta,
+                updatedAt: FieldValue.serverTimestamp(),
+              }, {merge: true});
+            }
+
+            tx.set(readingRef, stripUndefinedDeep({
+              requestId,
+              requestType: data.requestType,
+              lang,
+              question,
+              draw: drawForHistory,
+              reading: generated.reading,
+              createdAt: FieldValue.serverTimestamp(),
+              llmMeta,
+            }), {merge: true});
+          });
+
+          if (economyV2Enabled) {
+            await completeTarotEconomyRequest({
+              uid,
+              requestId,
               responsePayload,
               llmMeta,
+            });
+          }
+
+          await addLlmTokens(
+              'tarot',
+              usageDateIso,
+              generated.llmMeta.inputTokens,
+              generated.llmMeta.outputTokens
+          );
+
+          await updateProviderUsage({
+            dateIso,
+            provider: generated.llmMeta.provider,
+            success: true,
+            inputTokens: generated.llmMeta.inputTokens,
+            outputTokens: generated.llmMeta.outputTokens,
+            costUsd: generated.llmMeta.costUsd,
+            durationMs: generated.llmMeta.durationMs,
+          });
+
+          return responsePayload;
+        } catch (error) {
+          console.error('tarotDraw error:', error);
+          const errorMessage = error instanceof Error ? error.message : String(error);
+
+          if (economyV2Enabled) {
+            await refundTarotEconomyRequest({
+              uid,
+              requestId,
+              dateIso,
+              errorMessage,
+            });
+          } else {
+            await requestRef.set({
+              status: 'FAILED',
+              error: {
+                message: errorMessage,
+              },
               updatedAt: FieldValue.serverTimestamp(),
             }, {merge: true});
           }
 
-          tx.set(readingRef, stripUndefinedDeep({
-            requestId,
-            requestType: data.requestType,
-            lang,
-            question,
-            draw: drawForHistory,
-            reading: generated.reading,
-            createdAt: FieldValue.serverTimestamp(),
-            llmMeta,
-          }), {merge: true});
-        });
-
-        if (economyV2Enabled) {
-          await completeTarotEconomyRequest({
-            uid,
-            requestId,
-            responsePayload,
-            llmMeta,
-          });
-        }
-
-        await addLlmTokens(
-            'tarot',
-            usageDateIso,
-            generated.llmMeta.inputTokens,
-            generated.llmMeta.outputTokens
-        );
-
-        await updateProviderUsage({
-          dateIso,
-          provider: generated.llmMeta.provider,
-          success: true,
-          inputTokens: generated.llmMeta.inputTokens,
-          outputTokens: generated.llmMeta.outputTokens,
-          costUsd: generated.llmMeta.costUsd,
-          durationMs: generated.llmMeta.durationMs,
-        });
-
-        return responsePayload;
-      } catch (error) {
-        console.error('tarotDraw error:', error);
-        const errorMessage = error instanceof Error ? error.message : String(error);
-
-        if (economyV2Enabled) {
-          await refundTarotEconomyRequest({
-            uid,
-            requestId,
+          await updateProviderUsage({
             dateIso,
-            errorMessage,
+            provider: router.name,
+            success: false,
           });
-        } else {
-          await requestRef.set({
-            status: 'FAILED',
-            error: {
-              message: errorMessage,
-            },
-            updatedAt: FieldValue.serverTimestamp(),
-          }, {merge: true});
-        }
 
-        await updateProviderUsage({
-          dateIso,
-          provider: router.name,
-          success: false,
-        });
-
-        const publicErrorMessage = process.env.FUNCTIONS_EMULATOR === 'true' ?
+          const publicErrorMessage = process.env.FUNCTIONS_EMULATOR === 'true' ?
           `Failed to generate tarot reading: ${errorMessage}` :
           'Failed to generate tarot reading';
 
-        throw new HttpsError('internal', publicErrorMessage);
+          throw new HttpsError('internal', publicErrorMessage);
+        }
+      } catch (error) {
+        if (error instanceof HttpsError) {
+          logControlledHttpsError({
+            error,
+            requestType: data?.requestType,
+            hasRewardedProof,
+            uid,
+            economyV2Enabled,
+          });
+        }
+        throw error;
       }
     }
 );
