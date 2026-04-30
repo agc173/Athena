@@ -124,3 +124,30 @@ data class GetHoroscopeMonthlyUnlocksRequestDto(
 data class GetHoroscopeMonthlyUnlocksResponseDto(
     val unlockedMonthKeyList: List<String> = emptyList(),
 )
+
+
+@Serializable
+data class EconomyModulePreviewDto(
+    val module: String = "",
+    val nextSource: String = "UNKNOWN",
+    val cost: Int = 0,
+    val balance: Int = 0,
+    val canExecute: Boolean = false,
+    val reasonIfRejected: String? = null,
+    val labelKey: String? = null,
+    val uiHint: String? = null,
+    val freeRemaining: Int? = null,
+    val premiumRemaining: Int? = null,
+    val moonRemaining: Int? = null,
+)
+
+@Serializable
+data class EconomyModulePreviewsResponseDto(
+    val previews: List<EconomyModulePreviewDto> = emptyList(),
+)
+
+
+@Serializable
+data class EconomyModulePreviewsRequestDto(
+    val modules: List<String> = emptyList(),
+)

@@ -4,11 +4,14 @@ import com.agc.bwitch.data.remote.economy.EconomyBalanceDto
 import com.agc.bwitch.data.remote.economy.EconomyClaimResultDto
 import com.agc.bwitch.data.remote.economy.EconomyRemoteDataSource
 import com.agc.bwitch.data.remote.economy.EconomyStatusDto
+import com.agc.bwitch.data.remote.economy.EconomyModulePreviewDto
 import com.agc.bwitch.domain.economy.EconomyBalance
 import com.agc.bwitch.domain.economy.EconomyClaimResult
 import com.agc.bwitch.domain.economy.EconomyClaimStatus
 import com.agc.bwitch.domain.economy.EconomyRepository
 import com.agc.bwitch.domain.economy.EconomyStatus
+import com.agc.bwitch.domain.economy.EconomyNextSource
+import com.agc.bwitch.domain.economy.EconomyModulePreview
 
 class EconomyRepositoryImpl(
     private val remoteDataSource: EconomyRemoteDataSource,
@@ -45,6 +48,12 @@ class EconomyRepositoryImpl(
             )
             .toDomain()
     }
+
+    override suspend fun getModulePreviews(modules: List<String>): List<EconomyModulePreview> {
+        return remoteDataSource
+            .getModulePreviews(modules)
+            .map { it.toEconomyModulePreview() }
+    }
 }
 
 private fun EconomyBalanceDto.toDomain(): EconomyBalance {
@@ -80,5 +89,35 @@ private fun String.toClaimStatus(): EconomyClaimStatus {
         "ALREADY_CLAIMED" -> EconomyClaimStatus.ALREADY_CLAIMED
         "DAILY_LIMIT_REACHED" -> EconomyClaimStatus.DAILY_LIMIT_REACHED
         else -> throw IllegalStateException("Unknown economy claim result: $this")
+    }
+}
+
+
+private fun EconomyModulePreviewDto.toEconomyModulePreview(): EconomyModulePreview {
+    return EconomyModulePreview(
+        module = module,
+        nextSource = nextSource.toEconomyNextSource(),
+        cost = cost,
+        balance = balance,
+        canExecute = canExecute,
+        reasonIfRejected = reasonIfRejected,
+        labelKey = labelKey,
+        uiHint = uiHint,
+        freeRemaining = freeRemaining,
+        premiumRemaining = premiumRemaining,
+        moonRemaining = moonRemaining,
+    )
+}
+
+private fun String.toEconomyNextSource(): EconomyNextSource {
+    return when (this) {
+        "FREE" -> EconomyNextSource.FREE
+        "PREMIUM" -> EconomyNextSource.PREMIUM
+        "MOON" -> EconomyNextSource.MOON
+        "REJECTED" -> EconomyNextSource.REJECTED
+        "NOT_CONFIGURED" -> EconomyNextSource.NOT_CONFIGURED
+        "COMING_SOON" -> EconomyNextSource.COMING_SOON
+        "RULE_CONFIGURED_NOT_WIRED" -> EconomyNextSource.RULE_CONFIGURED_NOT_WIRED
+        else -> EconomyNextSource.UNKNOWN
     }
 }
