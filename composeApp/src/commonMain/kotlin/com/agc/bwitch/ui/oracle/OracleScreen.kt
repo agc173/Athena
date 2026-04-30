@@ -24,6 +24,8 @@ import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.presentation.oracle.OracleAskMessage
 import com.agc.bwitch.presentation.oracle.OracleAskMessageId
 import com.agc.bwitch.presentation.oracle.OracleAskViewModel
+import com.agc.bwitch.presentation.economy.EconomyViewModel
+import com.agc.bwitch.presentation.economy.toModuleCostUiStateOrNull
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
 import com.agc.bwitch.ui.common.designsystem.BWitchPrimaryButton
 import com.agc.bwitch.ui.common.designsystem.BWitchSecondaryButton
@@ -38,11 +40,16 @@ fun OracleScreen(
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
     viewModel: OracleAskViewModel = koinInject(),
+    economyViewModel: EconomyViewModel = koinInject(),
 ) {
     val dimens = BWitchThemeTokens.dimens
     val colors = MaterialTheme.colorScheme
     val strings = appStrings.oracle
     val state by viewModel.uiState.collectAsState()
+    val economyState by economyViewModel.uiState.collectAsState()
+    val oracleCostState = economyState.modulePreviews
+        .firstOrNull { it.module == "ORACLE_1Q" }
+        ?.toModuleCostUiStateOrNull()
 
     BWitchScreen(
         contentPadding = contentPadding,
@@ -69,6 +76,14 @@ fun OracleScreen(
             enabled = !state.isLoading,
             minLines = 3,
         )
+
+        oracleCostState?.let { costState ->
+            Text(
+                text = costState.label,
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.onSurfaceVariant,
+            )
+        }
 
         BWitchPrimaryButton(
             onClick = { viewModel.ask() },

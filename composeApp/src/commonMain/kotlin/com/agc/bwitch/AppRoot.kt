@@ -94,9 +94,17 @@ fun AppRoot() {
     val economyVm: EconomyViewModel = koinInject()
     val economyState by economyVm.uiState.collectAsState()
     val moonPaywallRequest by economyVm.moonPaywallRequest.collectAsState()
-    LaunchedEffect(economyState) {
-        println("BWITCH_ECONOMY_DEBUG ENTER")
-        println("BWITCH_ECONOMY_DEBUG state=$economyState")
+    LaunchedEffect(economyState.modulePreviews) {
+        if (isDebugBuild) {
+            economyState.modulePreviews.forEach { preview ->
+                println(
+                    "BWITCH_ECONOMY_DEBUG module=${preview.module} " +
+                        "source=${preview.nextSource} cost=${preview.cost} " +
+                        "balance=${preview.balance} canExecute=${preview.canExecute} " +
+                        "reason=${preview.reasonIfRejected}"
+                )
+            }
+        }
     }
 
     val birthChartRepository: BirthChartRepository = koinInject()
