@@ -11,6 +11,7 @@ export {backfillPeriodHoroscopes} from './admin/callables/backfillPeriodHoroscop
 export {
   getEconomyBalance,
   getEconomyStatus,
+  getEconomyModulePreviews,
   claimDailyLogin,
   claimRewardedAd,
   unlockHoroscopeDay,

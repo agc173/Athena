@@ -131,6 +131,12 @@ fun AppRoot() {
 
     val isAuthenticated = session.isLoggedIn && !session.isAnonymous
 
+    LaunchedEffect(isAuthenticated, session.isAnonymous, session.uid) {
+        if (session.isLoggedIn && !session.isAnonymous && !session.uid.isNullOrBlank()) {
+            economyVm.loadEconomy()
+        }
+    }
+
     LaunchedEffect(isAuthenticated, session.uid) {
         if (!isAuthenticated || session.uid.isNullOrBlank()) {
             profileForGate = null
