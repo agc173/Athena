@@ -4,6 +4,7 @@ import com.agc.bwitch.domain.analytics.AnalyticsEvent
 import com.agc.bwitch.domain.analytics.AnalyticsTracker
 import com.agc.bwitch.domain.analytics.NoOpAnalyticsTracker
 import com.agc.bwitch.domain.economy.EconomyClaimStatus
+import com.agc.bwitch.domain.economy.EconomyModulePreview
 import com.agc.bwitch.domain.economy.EconomyRepository
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -29,6 +30,7 @@ data class EconomyUiState(
     val rewardedAdsRemaining: Int = 0,
     val isClaimingDailyLogin: Boolean = false,
     val isClaimingRewardedAd: Boolean = false,
+    val modulePreviews: List<EconomyModulePreview> = emptyList(),
     val lastClaimResult: EconomyClaimUiResult? = null,
     val error: String? = null,
 ) {
@@ -245,12 +247,19 @@ class EconomyViewModel(
 
             val statusDeferred = async { runCatching { economyRepository.getStatus() } }
             val balanceDeferred = async { runCatching { economyRepository.getBalance() } }
+            val previewsDeferred = async {
+                runCatching {
+                    economyRepository.getModulePreviews(DEBUG_MONETIZABLE_MODULES)
+                }
+            }
 
             val statusResult = statusDeferred.await()
             val balanceResult = balanceDeferred.await()
+            val previewsResult = previewsDeferred.await()
 
             statusResult.exceptionOrNull()?.let { println("[EconomyViewModel] getStatus failed: ${it.message}") }
             balanceResult.exceptionOrNull()?.let { println("[EconomyViewModel] getBalance failed: ${it.message}") }
+            previewsResult.exceptionOrNull()?.let { println("[EconomyViewModel] getModulePreviews failed: ${it.message}") }
 
             _uiState.update { state ->
                 val status = statusResult.getOrNull()
@@ -264,6 +273,7 @@ class EconomyViewModel(
                     isPremium = status?.isPremium ?: state.isPremium,
                     dailyLoginClaimed = balance?.dailyLoginClaimed ?: state.dailyLoginClaimed,
                     rewardedAdsRemaining = balance?.rewardedAdsRemaining ?: state.rewardedAdsRemaining,
+                    modulePreviews = previewsResult.getOrNull() ?: state.modulePreviews,
                     error = if (statusResult.isFailure && balanceResult.isFailure) {
                         ECONOMY_LOAD_ERROR_KEY
                     } else {
@@ -511,6 +521,15 @@ data class MoonUnlockFlowContext(
 const val ECONOMY_LOAD_ERROR_KEY = "economy.load.error"
 const val ECONOMY_CLAIM_ERROR_KEY = "economy.claim.error"
 const val REWARDED_AD_DEFAULT_PLACEMENT = "moon_store"
+val DEBUG_MONETIZABLE_MODULES = listOf(
+    "ORACLE_1Q",
+    "TAROT_1",
+    "TAROT_3",
+    "HOROSCOPE_FUTURE_DAY",
+    "BIRTH_ESSENCE",
+    "SYNASTRY",
+    "PENDULUM",
+)
 private const val MOON_PAYWALL_PLACEMENT = "moon_paywall"
 private const val MOON_PAYWALL_REASON_INSUFFICIENT_MOONS = "insufficient_moons"
 private const val PAYWALL_ACTION_WATCH_AD = "watch_ad"

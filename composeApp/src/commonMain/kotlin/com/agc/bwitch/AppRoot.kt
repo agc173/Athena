@@ -44,6 +44,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.agc.bwitch.domain.astrology.birthchart.BirthChartRepository
+import com.agc.bwitch.domain.economy.EconomyModulePreview
 import com.agc.bwitch.domain.userprofile.GetUserProfileUseCase
 import com.agc.bwitch.domain.userprofile.ObserveUserProfileUseCase
 import com.agc.bwitch.domain.userprofile.PullUserProfileUseCase
@@ -51,7 +52,9 @@ import com.agc.bwitch.domain.userprofile.UserProfile
 import com.agc.bwitch.domain.userprofile.hasMinimumProfileCompleted
 import com.agc.bwitch.localization.NavigationStrings
 import com.agc.bwitch.localization.appStrings
+import com.agc.bwitch.platform.isDebugBuild
 import com.agc.bwitch.presentation.auth.SessionViewModel
+import com.agc.bwitch.presentation.economy.DEBUG_MONETIZABLE_MODULES
 import com.agc.bwitch.presentation.economy.EconomyViewModel
 import com.agc.bwitch.presentation.navigation.Destination
 import com.agc.bwitch.presentation.navigation.Navigator
@@ -91,6 +94,24 @@ fun AppRoot() {
     val economyVm: EconomyViewModel = koinInject()
     val economyState by economyVm.uiState.collectAsState()
     val moonPaywallRequest by economyVm.moonPaywallRequest.collectAsState()
+    LaunchedEffect(
+        session.uid,
+        session.email,
+        economyState.hasUsableSnapshot,
+        economyState.balance,
+        economyState.isPremium,
+        economyState.modulePreviews,
+    ) {
+        if (!isDebugBuild || !economyState.hasUsableSnapshot) return@LaunchedEffect
+        val uidLog = session.uid ?: "uid_unavailable"
+        val emailLog = session.email ?: "email_unavailable"
+        println("BWITCH_ECONOMY_DEBUG uid=$uidLog email=$emailLog balance=${economyState.balance} isPremium=${economyState.isPremium}")
+        val previewsByModule = economyState.modulePreviews.associateBy { it.module }
+        DEBUG_MONETIZABLE_MODULES.forEach { module ->
+            val preview = previewsByModule[module]
+            println("BWITCH_ECONOMY_DEBUG preview=${preview.toDebugLine(module)}")
+        }
+    }
 
     val birthChartRepository: BirthChartRepository = koinInject()
     val getUserProfile: GetUserProfileUseCase = koinInject()
@@ -344,6 +365,11 @@ fun AppRoot() {
 }
 
 private fun String?.toUidLogTag(): String = this?.takeLast(6).orEmpty().ifBlank { "no_uid" }
+
+private fun EconomyModulePreview?.toDebugLine(module: String): String {
+    if (this == null) return "module=$module missing=true"
+    return "module=$module nextSource=$nextSource cost=$cost balance=$balance canExecute=$canExecute reasonIfRejected=${reasonIfRejected ?: "none"}"
+}
 
 private const val REWARDED_AD_PAYWALL_PLACEMENT = "contextual_paywall"
 
