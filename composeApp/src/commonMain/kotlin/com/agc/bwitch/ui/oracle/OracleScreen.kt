@@ -16,6 +16,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
@@ -52,6 +53,18 @@ fun OracleScreen(
     val oraclePreview = economyState.modulePreviews
         .firstOrNull { it.module == "ORACLE_1Q" }
     val oracleCostState = oraclePreview?.toModuleCostUiStateOrNull()
+
+    LaunchedEffect(state.answer?.coreGuidance) {
+        if (state.answer != null) {
+            economyViewModel.loadEconomy()
+        }
+    }
+
+    LaunchedEffect(state.error?.id) {
+        if (state.error?.id.isEconomyRestrictionError()) {
+            economyViewModel.loadEconomy()
+        }
+    }
 
     BWitchScreen(
         contentPadding = contentPadding,
@@ -220,7 +233,19 @@ fun OracleScreen(
                     color = MaterialTheme.colorScheme.onErrorContainer,
                 )
                 BWitchPrimaryButton(
-                    onClick = { viewModel.retry() },
+                    onClick = {
+                        val shouldRequireLunas = error.id.isEconomyRestrictionError()
+                        if (shouldRequireLunas) {
+                            economyViewModel.requireLunas(
+                                cost = oraclePreview?.cost?.takeIf { it > 0 } ?: 3,
+                                source = "oracle_1q",
+                            ) {
+                                viewModel.retry()
+                            }
+                        } else {
+                            viewModel.retry()
+                        }
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = !state.isLoading && !state.inProgress,
                 ) {
@@ -240,9 +265,13 @@ private fun OracleAskMessage.toUiText(strings: OracleStrings) = when (id) {
     OracleAskMessageId.FailedPreconditionWithAdUnlock -> strings.errorFailedPreconditionWithAdUnlock
     OracleAskMessageId.FailedPreconditionTemporaryUnavailable -> strings.errorFailedPreconditionTemporaryUnavailable
     OracleAskMessageId.FailedPreconditionGeneric -> strings.errorFailedPreconditionGeneric
+    OracleAskMessageId.InsufficientMoons -> strings.errorInsufficientMoons
     OracleAskMessageId.InvalidArgumentFallback -> strings.errorInvalidArgumentFallback
     OracleAskMessageId.InternalTemporaryUnavailable -> strings.errorInternalTemporaryUnavailable
     OracleAskMessageId.InternalGeneric -> strings.errorInternalGeneric
     OracleAskMessageId.UnknownFallback -> strings.errorUnknownFallback
     OracleAskMessageId.RawBackendMessage -> strings.errorUnknownFallback
 }
+
+private fun OracleAskMessageId?.isEconomyRestrictionError(): Boolean =
+    this == OracleAskMessageId.InsufficientMoons
