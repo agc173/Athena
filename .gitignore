@@ -22,4 +22,6 @@ GoogleService-Info.plist
 .env
 firestore-debug.log
 pubsub-debug.log
-*-debug.log
+*-debug.log.firebase/
+composeApp/release/
+public/
