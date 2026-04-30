@@ -95,8 +95,10 @@ fun AppRoot() {
     val economyState by economyVm.uiState.collectAsState()
     val moonPaywallRequest by economyVm.moonPaywallRequest.collectAsState()
     LaunchedEffect(economyState.modulePreviews) {
-        if (isDebugBuild) {
-            economyState.modulePreviews.forEach { preview ->
+        if (!isDebugBuild) return@LaunchedEffect
+        economyState.modulePreviews
+            .filter { it.module in DEBUG_MONETIZABLE_MODULES }
+            .forEach { preview ->
                 println(
                     "BWITCH_ECONOMY_DEBUG module=${preview.module} " +
                         "source=${preview.nextSource} cost=${preview.cost} " +
@@ -104,7 +106,6 @@ fun AppRoot() {
                         "reason=${preview.reasonIfRejected}"
                 )
             }
-        }
     }
 
     val birthChartRepository: BirthChartRepository = koinInject()
@@ -141,30 +142,19 @@ fun AppRoot() {
 
         isProfileGateLoading = true
 
-        val uidTag = session.uid.toUidLogTag()
         val initialProfile = runCatching { getUserProfile() }.getOrNull()
         profileForGate = initialProfile
-        val initialComplete = initialProfile.hasMinimumProfileCompleted()
-        println("BWITCH_GATE initial uid=$uidTag hasProfile=${initialProfile != null} complete=$initialComplete")
         val pullResult = runCatching { pullUserProfile() }
-        pullResult
-            .onFailure { error ->
-                println("BWITCH_GATE pull_failed uid=$uidTag reason=${error.message}")
-            }
         val syncedProfile = runCatching { getUserProfile() }.getOrNull()
         profileForGate = if (pullResult.isSuccess) {
             syncedProfile
         } else {
             syncedProfile ?: initialProfile
         }
-        val syncedComplete = profileForGate.hasMinimumProfileCompleted()
-        println("BWITCH_GATE synced uid=$uidTag pullOk=${pullResult.isSuccess} hasProfile=${profileForGate != null} complete=$syncedComplete")
         hasProfileGateSnapshot = true
         isProfileGateLoading = false
 
         observeUserProfile().collect { profile ->
-            val complete = profile.hasMinimumProfileCompleted()
-            println("BWITCH_GATE observe uid=$uidTag hasProfile=${profile != null} complete=$complete")
             profileForGate = profile
         }
     }
