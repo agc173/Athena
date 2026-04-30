@@ -184,6 +184,22 @@ class EconomyRemoteDataSource(
         }
     }
 
+
+
+    suspend fun getModulePreviews(modules: List<String>): List<EconomyModulePreviewDto> {
+        return when (
+            val result = functionsClient.call(
+                name = GET_ECONOMY_MODULE_PREVIEWS_CALLABLE,
+                data = EconomyModulePreviewsRequestDto(modules = modules),
+                requestSerializer = EconomyModulePreviewsRequestDto.serializer(),
+                responseSerializer = EconomyModulePreviewsResponseDto.serializer(),
+            )
+        ) {
+            is ApiResult.Ok -> result.value.previews
+            is ApiResult.Err -> throw result.error.toException()
+        }
+    }
+
     private companion object {
         const val GET_ECONOMY_BALANCE_CALLABLE = "getEconomyBalance"
         const val GET_ECONOMY_STATUS_CALLABLE = "getEconomyStatus"
@@ -195,6 +211,7 @@ class EconomyRemoteDataSource(
         const val GET_HOROSCOPE_WEEKLY_UNLOCKS_CALLABLE = "getHoroscopeWeeklyUnlocks"
         const val UNLOCK_HOROSCOPE_MONTHLY_CALLABLE = "unlockHoroscopeMonthly"
         const val GET_HOROSCOPE_MONTHLY_UNLOCKS_CALLABLE = "getHoroscopeMonthlyUnlocks"
+        const val GET_ECONOMY_MODULE_PREVIEWS_CALLABLE = "getEconomyModulePreviews"
     }
 }
 

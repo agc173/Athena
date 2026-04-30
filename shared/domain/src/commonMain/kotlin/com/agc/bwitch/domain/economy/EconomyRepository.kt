@@ -9,4 +9,5 @@ interface EconomyRepository {
         adProof: String,
         placement: String?,
     ): EconomyClaimResult
+    suspend fun getModulePreviews(modules: List<String>): List<EconomyModulePreview>
 }

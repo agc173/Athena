@@ -18,3 +18,4 @@ export * from './birthEssenceEconomy';
 export * from './callables/unlockHoroscopeDay';
 export * from './callables/unlockHoroscopeWeekly';
 export * from './callables/unlockHoroscopeMonthly';
+export * from './callables/getEconomyModulePreviews';
