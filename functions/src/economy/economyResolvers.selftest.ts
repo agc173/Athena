@@ -157,3 +157,35 @@ test('rewarded ads keep +1 reward and max 3 per day', () => {
   assert.equal(REWARDED_AD_REWARD, 1);
   assert.equal(REWARDED_AD_DAILY_MAX, 3);
 });
+
+
+test('oracle free first call works without rewarded proof semantics', () => {
+  const decision = resolveOracleDecision({
+    isPremium: false,
+    balance: 0,
+    dailyUsage: {},
+  });
+
+  assert.equal(decision.source, 'FREE');
+});
+
+test('oracle second call spends moon when free is exhausted', () => {
+  const decision = resolveOracleDecision({
+    isPremium: false,
+    balance: 10,
+    dailyUsage: {oracleFreeUsed: 1, oracleMoonUsed: 0},
+  });
+
+  assert.equal(decision.source, 'MOON');
+  assert.equal(decision.moonCost, 3);
+});
+
+test('oracle premium uses subscription before free quota', () => {
+  const decision = resolveOracleDecision({
+    isPremium: true,
+    balance: 0,
+    dailyUsage: {},
+  });
+
+  assert.equal(decision.source, 'PREMIUM_INCLUDED');
+});

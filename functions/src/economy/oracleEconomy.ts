@@ -58,19 +58,20 @@ export function resolveOracleDecision(params: {
   const premiumUsed = intValue(dailyUsage.oraclePremiumUsed);
   const moonUsed = intValue(dailyUsage.oracleMoonUsed);
 
-  if (freeUsed < (rule.freeDaily ?? 0)) {
-    return {
-      source: 'FREE',
-      moonCost: 0,
-      usageApplied: {dailyCounter: 'oracleFreeUsed'},
-    };
-  }
 
   if (isPremium && premiumUsed < (rule.premiumIncludedDaily ?? 0)) {
     return {
       source: 'PREMIUM_INCLUDED',
       moonCost: 0,
       usageApplied: {dailyCounter: 'oraclePremiumUsed'},
+    };
+  }
+
+  if (freeUsed < (rule.freeDaily ?? 0)) {
+    return {
+      source: 'FREE',
+      moonCost: 0,
+      usageApplied: {dailyCounter: 'oracleFreeUsed'},
     };
   }
 
