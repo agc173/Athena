@@ -57,6 +57,7 @@ enum class OracleAskMessageId {
     FailedPreconditionWithAdUnlock,
     FailedPreconditionTemporaryUnavailable,
     FailedPreconditionGeneric,
+    InsufficientMoons,
     InvalidArgumentFallback,
     InternalTemporaryUnavailable,
     InternalGeneric,
@@ -221,7 +222,7 @@ class OracleAskViewModel(
                     message = OracleAskMessage(id = OracleAskMessageId.ResourceExhaustedWithAdUnlock),
                 )
                 backendMessage.isEconomyRestrictionHint() -> OracleAskMappedError(
-                    message = OracleAskMessage(id = OracleAskMessageId.ResourceExhaustedGeneric),
+                    message = OracleAskMessage(id = OracleAskMessageId.InsufficientMoons),
                     refreshEconomyAfterError = true,
                 )
                 else -> OracleAskMappedError(
@@ -236,7 +237,7 @@ class OracleAskViewModel(
                     message = OracleAskMessage(id = OracleAskMessageId.FailedPreconditionTemporaryUnavailable),
                 )
                 backendMessage.isEconomyRestrictionHint() -> OracleAskMappedError(
-                    message = OracleAskMessage(id = OracleAskMessageId.FailedPreconditionGeneric),
+                    message = OracleAskMessage(id = OracleAskMessageId.InsufficientMoons),
                     refreshEconomyAfterError = true,
                 )
                 else -> OracleAskMappedError(
@@ -258,20 +259,25 @@ class OracleAskViewModel(
                 backendMessage.isTemporaryUnavailabilityHint() -> OracleAskMappedError(
                     message = OracleAskMessage(id = OracleAskMessageId.InternalTemporaryUnavailable),
                 )
+                backendMessage.isEconomyRestrictionHint() -> OracleAskMappedError(
+                    message = OracleAskMessage(id = OracleAskMessageId.InsufficientMoons),
+                    refreshEconomyAfterError = true,
+                )
                 else -> OracleAskMappedError(
                     message = OracleAskMessage(id = OracleAskMessageId.InternalGeneric),
                 )
             }
-            is ApiError.Unknown -> {
-                if (message.isNullOrBlank()) {
-                    OracleAskMappedError(
-                        message = OracleAskMessage(id = OracleAskMessageId.UnknownFallback),
-                    )
-                } else {
-                    OracleAskMappedError(
-                        message = OracleAskMessage(id = OracleAskMessageId.RawBackendMessage, rawMessage = message),
-                    )
-                }
+            is ApiError.Unknown -> when {
+                backendMessage.isEconomyRestrictionHint() -> OracleAskMappedError(
+                    message = OracleAskMessage(id = OracleAskMessageId.InsufficientMoons),
+                    refreshEconomyAfterError = true,
+                )
+                message.isNullOrBlank() -> OracleAskMappedError(
+                    message = OracleAskMessage(id = OracleAskMessageId.UnknownFallback),
+                )
+                else -> OracleAskMappedError(
+                    message = OracleAskMessage(id = OracleAskMessageId.RawBackendMessage, rawMessage = message),
+                )
             }
         }
     }
