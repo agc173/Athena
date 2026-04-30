@@ -1,4 +1,4 @@
-import {FieldValue, Timestamp, getFirestore} from 'firebase-admin/firestore';
+import {FieldValue, getFirestore} from 'firebase-admin/firestore';
 import {HttpsError, onCall} from 'firebase-functions/v2/https';
 import {ENV} from '../../config/env';
 import {addLlmTokens, reserveLlmCallOrThrow, type DailyCaps} from '../../firestore/usageDaily';
@@ -8,47 +8,15 @@ import {
   refundOracleEconomyRequest,
   reserveOracleEconomyAccess,
 } from '../../economy';
-import {dateIsoMadrid, oracleRef, oracleSubRef} from '../firestore/paths';
+import {dateIsoMadrid, oracleSubRef} from '../firestore/paths';
 import {createLlmClientFromRouter} from '../shared/routerLlmClient';
 import {generateOracleAnswer} from '../oracle/oracleService';
-import {ConsumeIntent, RequestType, type OracleAskData} from '../types';
+import {RequestType, type OracleAskData} from '../types';
 import {buildEconomyPayload, stripUndefinedDeep} from './payloadBuilders';
 
-const DEFAULT_DAILY_QUOTA = {
-  freeTarot1Remaining: 1,
-  adUnlockRemaining: 2,
-  maxRequestsRemaining: 4,
-  tarot3Remaining: 1,
-};
 
 type SystemMode = 'NORMAL' | 'DEGRADED' | 'EMERGENCY';
 
-type RequestDoc = {
-  uid: string;
-  requestId: string;
-  requestType: RequestType.ORACLE_1Q;
-  lang: string;
-  topic?: unknown;
-  question: string;
-  dateIso: string;
-  intent?: ConsumeIntent;
-  status: 'PROCESSING' | 'FAILED' | 'COMPLETED_SUCCESS';
-  systemMode: SystemMode;
-  responsePayload?: unknown;
-  llmMeta?: unknown;
-  error?: unknown;
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
-};
-
-type UserDailyDoc = {
-  freeTarot1Remaining: number;
-  adUnlockRemaining: number;
-  maxRequestsRemaining: number;
-  tarot3Remaining: number;
-  createdAt?: Timestamp;
-  updatedAt?: Timestamp;
-};
 
 function buildUidTag(uid?: string): string {
   if (!uid) return 'anon';
@@ -123,40 +91,6 @@ function llmDailyCaps(): DailyCaps {
   };
 }
 
-async function failRequestAndCompensateQuota(params: {
-  requestRef: FirebaseFirestore.DocumentReference;
-  userDailyRef: FirebaseFirestore.DocumentReference;
-  intent: ConsumeIntent;
-  errorMessage: string;
-}) {
-  const db = getFirestore();
-
-  await db.runTransaction(async (tx) => {
-    const requestSnap = await tx.get(params.requestRef);
-    const requestData = requestSnap.data() as RequestDoc | undefined;
-
-    if (requestData?.status !== 'PROCESSING') {
-      return;
-    }
-
-    const compensationPatch: Record<string, FieldValue> = {
-      maxRequestsRemaining: FieldValue.increment(1),
-      updatedAt: FieldValue.serverTimestamp(),
-    };
-
-    if (params.intent === ConsumeIntent.AD_UNLOCK) {
-      compensationPatch.adUnlockRemaining = FieldValue.increment(1);
-    }
-
-    tx.set(params.userDailyRef, compensationPatch, {merge: true});
-    tx.set(params.requestRef, {
-      status: 'FAILED',
-      error: {message: params.errorMessage},
-      updatedAt: FieldValue.serverTimestamp(),
-    }, {merge: true});
-  });
-}
-
 async function updateProviderUsage(params: {
   dateIso: string;
   provider: string;
@@ -224,126 +158,22 @@ export const oracleAsk = onCall(
         }
 
         const db = getFirestore();
-        const requestRef = oracleRef('oracleRequests', requestId);
-        const userDailyRef = oracleSubRef('oracleUserDaily', dateIso, 'users', uid);
 
-        const reservation = economyV2Enabled ?
-        await reserveOracleEconomyAccess({
+        const reservation = await reserveOracleEconomyAccess({
           uid,
           requestId,
           dateIso,
           lang,
           question,
-        }) :
-        await db.runTransaction(async (tx) => {
-          const [requestSnap, userDailySnap] = await Promise.all([
-            tx.get(requestRef),
-            tx.get(userDailyRef),
-          ]);
-
-          if (requestSnap.exists) {
-            const existing = requestSnap.data() as RequestDoc;
-
-            if (existing.uid !== uid) {
-              throw new HttpsError('permission-denied', 'requestId already exists for a different user');
-            }
-            if (existing.status === 'COMPLETED_SUCCESS' && existing.responsePayload) {
-              return {type: 'completed' as const, payload: existing.responsePayload};
-            }
-            if (existing.status === 'FAILED') {
-              throw new HttpsError('aborted', 'requestId already failed; retry with new requestId');
-            }
-            return {type: 'in-progress' as const};
-          }
-
-          const now = Timestamp.now();
-          const currentDaily = (userDailySnap.data() as UserDailyDoc | undefined) ?? {
-            ...DEFAULT_DAILY_QUOTA,
-            createdAt: now,
-          };
-
-          const nextDaily: UserDailyDoc = {
-            freeTarot1Remaining: currentDaily.freeTarot1Remaining,
-            adUnlockRemaining: currentDaily.adUnlockRemaining,
-            maxRequestsRemaining: currentDaily.maxRequestsRemaining,
-            tarot3Remaining: currentDaily.tarot3Remaining,
-            createdAt: currentDaily.createdAt ?? now,
-            updatedAt: now,
-          };
-
-          if (nextDaily.maxRequestsRemaining <= 0) {
-            throw new HttpsError('resource-exhausted', 'Daily max requests exhausted');
-          }
-
-          let intent: ConsumeIntent;
-          if (subscriber) {
-            intent = ConsumeIntent.SUBSCRIPTION;
-          } else {
-            if (!data.adUnlock?.rewardedProof || data.adUnlock.rewardedProof.trim().length === 0) {
-              throw new HttpsError('failed-precondition', 'rewardedProof is required for AD_UNLOCK');
-            }
-
-            const effectiveAdUnlockRemaining = systemMode === 'DEGRADED' ?
-              Math.min(nextDaily.adUnlockRemaining, 1) :
-              nextDaily.adUnlockRemaining;
-
-            if (effectiveAdUnlockRemaining <= 0) {
-              throw new HttpsError('resource-exhausted', 'Daily ad unlock quota exhausted');
-            }
-
-            intent = ConsumeIntent.AD_UNLOCK;
-            nextDaily.adUnlockRemaining -= 1;
-          }
-
-          nextDaily.maxRequestsRemaining -= 1;
-
-          tx.set(userDailyRef, nextDaily, {merge: true});
-
-          const requestDoc: RequestDoc = {
-            uid,
-            requestId,
-            requestType: data.requestType,
-            lang,
-            topic: data.topic,
-            question,
-            dateIso,
-            intent,
-            status: 'PROCESSING',
-            systemMode,
-            createdAt: now,
-            updatedAt: now,
-          };
-
-          tx.create(requestRef, stripUndefined(requestDoc));
-
-          return {
-            type: 'reserved' as const,
-            intent,
-            quotaSnapshot: {
-              freeTarot1Remaining: nextDaily.freeTarot1Remaining,
-              adUnlockRemaining: nextDaily.adUnlockRemaining,
-              maxRequestsRemaining: nextDaily.maxRequestsRemaining,
-              tarot3Remaining: nextDaily.tarot3Remaining,
-            },
-          };
         });
 
-        const legacyIntent = !economyV2Enabled &&
-        reservation.type === 'reserved' &&
-        'intent' in reservation ?
-        reservation.intent :
-        undefined;
-        const legacyQuotaSnapshot = !economyV2Enabled &&
-        reservation.type === 'reserved' &&
-        'quotaSnapshot' in reservation ?
-        reservation.quotaSnapshot :
-        undefined;
-        const economyDecisionSource = economyV2Enabled &&
+
+        const economyDecisionSource =
         reservation.type === 'reserved' &&
         'source' in reservation ?
         reservation.source :
         undefined;
-        const economyMoonCost = economyV2Enabled &&
+        const economyMoonCost =
         reservation.type === 'reserved' &&
         'moonCost' in reservation ?
         reservation.moonCost :
@@ -368,21 +198,12 @@ export const oracleAsk = onCall(
           const errorMessage = error instanceof Error ? error.message : String(error);
 
           if (errorMessage.includes('DAILY_LLM_CAP_EXCEEDED')) {
-            if (economyV2Enabled) {
-              await refundOracleEconomyRequest({
-                uid,
-                requestId,
-                dateIso,
-                errorMessage: 'DAILY_LLM_CAP_EXCEEDED',
-              });
-            } else {
-              await failRequestAndCompensateQuota({
-                requestRef,
-                userDailyRef,
-                intent: legacyIntent ?? ConsumeIntent.AD_UNLOCK,
-                errorMessage: 'DAILY_LLM_CAP_EXCEEDED',
-              });
-            }
+            await refundOracleEconomyRequest({
+              uid,
+              requestId,
+              dateIso,
+              errorMessage: 'DAILY_LLM_CAP_EXCEEDED',
+            });
             throw new HttpsError('resource-exhausted', 'DAILY_LLM_CAP_EXCEEDED');
           }
 
@@ -410,10 +231,9 @@ export const oracleAsk = onCall(
             requestId,
             status: 'COMPLETED_SUCCESS',
             answer: generated.answer,
-            quotaSnapshot: economyV2Enabled ? undefined : legacyQuotaSnapshot,
             systemMode,
             economy: buildEconomyPayload(
-                economyV2Enabled,
+                true,
                 economyDecisionSource,
                 economyMoonCost
             ),
@@ -422,15 +242,6 @@ export const oracleAsk = onCall(
           const answerRef = oracleSubRef('oracleAnswers', uid, 'items', requestId);
 
           await db.runTransaction(async (tx) => {
-            if (!economyV2Enabled) {
-              tx.set(requestRef, {
-                status: 'COMPLETED_SUCCESS',
-                responsePayload,
-                llmMeta,
-                updatedAt: FieldValue.serverTimestamp(),
-              }, {merge: true});
-            }
-
             const answerDoc = stripUndefined({
               requestId,
               lang,
@@ -444,14 +255,12 @@ export const oracleAsk = onCall(
             tx.set(answerRef, answerDoc, {merge: true});
           });
 
-          if (economyV2Enabled) {
-            await completeOracleEconomyRequest({
-              uid,
-              requestId,
-              responsePayload,
-              llmMeta,
-            });
-          }
+          await completeOracleEconomyRequest({
+            uid,
+            requestId,
+            responsePayload,
+            llmMeta,
+          });
 
           await addLlmTokens(
               'oracle',
@@ -474,22 +283,12 @@ export const oracleAsk = onCall(
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : String(error);
 
-          if (economyV2Enabled) {
-            await refundOracleEconomyRequest({
-              uid,
-              requestId,
-              dateIso,
-              errorMessage,
-            });
-          } else {
-            await requestRef.set({
-              status: 'FAILED',
-              error: {
-                message: errorMessage,
-              },
-              updatedAt: FieldValue.serverTimestamp(),
-            }, {merge: true});
-          }
+          await refundOracleEconomyRequest({
+            uid,
+            requestId,
+            dateIso,
+            errorMessage,
+          });
 
           await updateProviderUsage({
             dateIso: usageDateIso,
