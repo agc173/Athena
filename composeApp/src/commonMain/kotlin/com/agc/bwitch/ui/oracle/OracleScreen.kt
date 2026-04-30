@@ -24,6 +24,7 @@ import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.presentation.oracle.OracleAskMessage
 import com.agc.bwitch.presentation.oracle.OracleAskMessageId
 import com.agc.bwitch.presentation.oracle.OracleAskViewModel
+import com.agc.bwitch.domain.economy.EconomyNextSource
 import com.agc.bwitch.presentation.economy.EconomyViewModel
 import com.agc.bwitch.presentation.economy.toModuleCostUiStateOrNull
 import com.agc.bwitch.ui.common.localization.resolve
@@ -48,9 +49,9 @@ fun OracleScreen(
     val strings = appStrings.oracle
     val state by viewModel.uiState.collectAsState()
     val economyState by economyViewModel.uiState.collectAsState()
-    val oracleCostState = economyState.modulePreviews
+    val oraclePreview = economyState.modulePreviews
         .firstOrNull { it.module == "ORACLE_1Q" }
-        ?.toModuleCostUiStateOrNull()
+    val oracleCostState = oraclePreview?.toModuleCostUiStateOrNull()
 
     BWitchScreen(
         contentPadding = contentPadding,
@@ -87,7 +88,21 @@ fun OracleScreen(
         }
 
         BWitchPrimaryButton(
-            onClick = { viewModel.ask() },
+            onClick = {
+                val shouldRequireLunas =
+                    oraclePreview?.nextSource == EconomyNextSource.REJECTED &&
+                        oraclePreview.reasonIfRejected == "insufficient_moons"
+                if (shouldRequireLunas) {
+                    economyViewModel.requireLunas(
+                        cost = oraclePreview.cost.takeIf { it > 0 } ?: 3,
+                        source = "oracle_1q",
+                    ) {
+                        viewModel.ask()
+                    }
+                } else {
+                    viewModel.ask()
+                }
+            },
             modifier = Modifier.fillMaxWidth(),
             enabled = !state.isLoading && !state.inProgress,
         ) {
