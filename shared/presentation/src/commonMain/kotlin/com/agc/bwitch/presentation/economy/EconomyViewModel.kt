@@ -257,9 +257,9 @@ class EconomyViewModel(
             val balanceResult = balanceDeferred.await()
             val previewsResult = previewsDeferred.await()
 
-            statusResult.exceptionOrNull()?.let { println("[EconomyViewModel] getStatus failed: ${it.message}") }
-            balanceResult.exceptionOrNull()?.let { println("[EconomyViewModel] getBalance failed: ${it.message}") }
-            previewsResult.exceptionOrNull()?.let { println("[EconomyViewModel] getModulePreviews failed: ${it.message}") }
+            statusResult.exceptionOrNull()?.let { println("BWITCH_ECONOMY_DEBUG getStatus failed=$it message=${it.message}") }
+            balanceResult.exceptionOrNull()?.let { println("BWITCH_ECONOMY_DEBUG getBalance failed=$it message=${it.message}") }
+            previewsResult.exceptionOrNull()?.let { println("BWITCH_ECONOMY_DEBUG getModulePreviews failed=$it message=${it.message}") }
 
             _uiState.update { state ->
                 val status = statusResult.getOrNull()

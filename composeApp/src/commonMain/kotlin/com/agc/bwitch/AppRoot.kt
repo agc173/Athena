@@ -94,23 +94,9 @@ fun AppRoot() {
     val economyVm: EconomyViewModel = koinInject()
     val economyState by economyVm.uiState.collectAsState()
     val moonPaywallRequest by economyVm.moonPaywallRequest.collectAsState()
-    LaunchedEffect(
-        session.uid,
-        session.email,
-        economyState.hasUsableSnapshot,
-        economyState.balance,
-        economyState.isPremium,
-        economyState.modulePreviews,
-    ) {
-        if (!isDebugBuild || !economyState.hasUsableSnapshot) return@LaunchedEffect
-        val uidLog = session.uid ?: "uid_unavailable"
-        val emailLog = session.email ?: "email_unavailable"
-        println("BWITCH_ECONOMY_DEBUG uid=$uidLog email=$emailLog balance=${economyState.balance} isPremium=${economyState.isPremium}")
-        val previewsByModule = economyState.modulePreviews.associateBy { it.module }
-        DEBUG_MONETIZABLE_MODULES.forEach { module ->
-            val preview = previewsByModule[module]
-            println("BWITCH_ECONOMY_DEBUG preview=${preview.toDebugLine(module)}")
-        }
+    LaunchedEffect(economyState) {
+        println("BWITCH_ECONOMY_DEBUG ENTER")
+        println("BWITCH_ECONOMY_DEBUG state=$economyState")
     }
 
     val birthChartRepository: BirthChartRepository = koinInject()
