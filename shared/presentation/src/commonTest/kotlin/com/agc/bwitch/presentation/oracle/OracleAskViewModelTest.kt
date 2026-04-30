@@ -20,6 +20,7 @@ import com.agc.bwitch.presentation.oracle.OracleAskMessageId
 import kotlin.collections.ArrayDeque
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -124,7 +125,11 @@ class OracleAskViewModelTest {
 
             assertEquals(1, economyRepository.getStatusCalls)
             assertEquals(
-                OracleAskMessageId.FailedPreconditionGeneric,
+                OracleAskMessageId.InsufficientMoons,
+                viewModel.uiState.value.error?.id,
+            )
+            assertNotEquals(
+                OracleAskMessageId.ResourceExhaustedWithAdUnlock,
                 viewModel.uiState.value.error?.id,
             )
             assertEquals(10, viewModel.uiState.value.economyBalance)
