@@ -4,6 +4,7 @@ import com.agc.bwitch.domain.analytics.AnalyticsEvent
 import com.agc.bwitch.domain.economy.EconomyBalance
 import com.agc.bwitch.domain.economy.EconomyClaimResult
 import com.agc.bwitch.domain.economy.EconomyClaimStatus
+import com.agc.bwitch.domain.economy.EconomyModulePreview
 import com.agc.bwitch.domain.economy.EconomyRepository
 import com.agc.bwitch.domain.economy.EconomyStatus
 import com.agc.bwitch.presentation.analytics.FakeAnalyticsTracker
@@ -415,6 +416,8 @@ class EconomyViewModelTest {
                 rewardedAdsRemaining = 0,
             )
         }
+
+        override suspend fun getModulePreviews(modules: List<String>): List<EconomyModulePreview> = emptyList()
     }
 
     private class StableEconomyRepository : EconomyRepository {
@@ -447,5 +450,7 @@ class EconomyViewModelTest {
                 rewardedAdsClaimed = 1,
                 rewardedAdsRemaining = 0,
             )
+
+        override suspend fun getModulePreviews(modules: List<String>): List<EconomyModulePreview> = emptyList()
     }
 }
