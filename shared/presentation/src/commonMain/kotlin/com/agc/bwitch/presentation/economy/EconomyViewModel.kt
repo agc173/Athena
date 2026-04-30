@@ -85,7 +85,6 @@ class EconomyViewModel(
                     }
                 }
         }
-        loadEconomy()
     }
 
     fun requireLunas(
