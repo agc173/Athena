@@ -50,6 +50,34 @@ type UserDailyDoc = {
   updatedAt?: Timestamp;
 };
 
+function buildUidTag(uid?: string): string {
+  if (!uid) return 'anon';
+  if (uid.length <= 8) return `${uid.slice(0, 2)}***`;
+  return `${uid.slice(0, 4)}***${uid.slice(-2)}`;
+}
+
+function logControlledHttpsError(params: {
+  error: HttpsError;
+  requestType?: unknown;
+  hasQuestion: boolean;
+  hasTopic: boolean;
+  hasRewardedProof: boolean;
+  uid?: string;
+  economyV2Enabled?: boolean;
+}) {
+  console.warn('BWITCH_CALLABLE_ERROR', {
+    callable: 'oracleAsk',
+    code: params.error.code,
+    message: params.error.message,
+    requestType: params.requestType ?? null,
+    hasQuestion: params.hasQuestion,
+    hasTopic: params.hasTopic,
+    hasRewardedProof: params.hasRewardedProof,
+    uidTag: buildUidTag(params.uid),
+    economyV2Enabled: params.economyV2Enabled ?? null,
+  });
+}
+
 function stripUndefined<T extends Record<string, any>>(obj: T): T {
   return Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined)) as T;
 }
@@ -160,41 +188,46 @@ export const oracleAsk = onCall(
       secrets: ['DEEPSEEK_API_KEY'],
     },
     async (request) => {
+      const data = request.data as OracleAskData | undefined;
+      const hasQuestion = typeof data?.question === 'string' && data.question.trim().length > 0;
+      const hasTopic = data?.topic !== undefined && data.topic !== null;
+      const hasRewardedProof = typeof data?.adUnlock?.rewardedProof === 'string' &&
+        data.adUnlock.rewardedProof.trim().length > 0;
       const uid = request.auth?.uid;
-      if (!uid) throw new HttpsError('unauthenticated', 'Authentication is required');
+      let economyV2Enabled: boolean | undefined;
+      try {
+        if (!uid) throw new HttpsError('unauthenticated', 'Authentication is required');
 
-      const data = request.data as OracleAskData;
+        if (data?.requestType !== RequestType.ORACLE_1Q) {
+          throw new HttpsError('invalid-argument', 'requestType must be ORACLE_1Q');
+        }
+        if (!data.question || data.question.trim().length === 0) {
+          throw new HttpsError('invalid-argument', 'question is required');
+        }
+        if (!data.requestId || typeof data.requestId !== 'string' || data.requestId.trim().length === 0) {
+          throw new HttpsError('invalid-argument', 'requestId is required');
+        }
 
-      if (data?.requestType !== RequestType.ORACLE_1Q) {
-        throw new HttpsError('invalid-argument', 'requestType must be ORACLE_1Q');
-      }
-      if (!data.question || data.question.trim().length === 0) {
-        throw new HttpsError('invalid-argument', 'question is required');
-      }
-      if (!data.requestId || typeof data.requestId !== 'string' || data.requestId.trim().length === 0) {
-        throw new HttpsError('invalid-argument', 'requestId is required');
-      }
+        const requestId = data.requestId.trim();
+        const lang = normalizeLang(data.lang);
+        const question = normalizeQuestion(data.question);
+        const dateIso = dateIsoMadrid();
 
-      const requestId = data.requestId.trim();
-      const lang = normalizeLang(data.lang);
-      const question = normalizeQuestion(data.question);
-      const dateIso = dateIsoMadrid();
+        economyV2Enabled = await isOracleEconomyV2Enabled();
+        const [systemMode, subscriber] = await Promise.all([
+          getSystemMode(),
+          isSubscriber(uid),
+        ]);
 
-      const economyV2Enabled = await isOracleEconomyV2Enabled();
-      const [systemMode, subscriber] = await Promise.all([
-        getSystemMode(),
-        isSubscriber(uid),
-      ]);
+        if (systemMode === 'EMERGENCY' && !subscriber) {
+          throw new HttpsError('resource-exhausted', 'oracleAsk temporarily unavailable');
+        }
 
-      if (systemMode === 'EMERGENCY' && !subscriber) {
-        throw new HttpsError('resource-exhausted', 'oracleAsk temporarily unavailable');
-      }
+        const db = getFirestore();
+        const requestRef = oracleRef('oracleRequests', requestId);
+        const userDailyRef = oracleSubRef('oracleUserDaily', dateIso, 'users', uid);
 
-      const db = getFirestore();
-      const requestRef = oracleRef('oracleRequests', requestId);
-      const userDailyRef = oracleSubRef('oracleUserDaily', dateIso, 'users', uid);
-
-      const reservation = economyV2Enabled ?
+        const reservation = economyV2Enabled ?
         await reserveOracleEconomyAccess({
           uid,
           requestId,
@@ -295,176 +328,190 @@ export const oracleAsk = onCall(
           };
         });
 
-      const legacyIntent = !economyV2Enabled &&
+        const legacyIntent = !economyV2Enabled &&
         reservation.type === 'reserved' &&
         'intent' in reservation ?
         reservation.intent :
         undefined;
-      const legacyQuotaSnapshot = !economyV2Enabled &&
+        const legacyQuotaSnapshot = !economyV2Enabled &&
         reservation.type === 'reserved' &&
         'quotaSnapshot' in reservation ?
         reservation.quotaSnapshot :
         undefined;
-      const economyDecisionSource = economyV2Enabled &&
+        const economyDecisionSource = economyV2Enabled &&
         reservation.type === 'reserved' &&
         'source' in reservation ?
         reservation.source :
         undefined;
-      const economyMoonCost = economyV2Enabled &&
+        const economyMoonCost = economyV2Enabled &&
         reservation.type === 'reserved' &&
         'moonCost' in reservation ?
         reservation.moonCost :
         undefined;
 
-      if (reservation.type === 'completed') {
-        return reservation.payload;
-      }
+        if (reservation.type === 'completed') {
+          return reservation.payload;
+        }
 
-      if (reservation.type === 'in-progress') {
-        return {requestId, status: 'IN_PROGRESS'};
-      }
+        if (reservation.type === 'in-progress') {
+          return {requestId, status: 'IN_PROGRESS'};
+        }
 
-      const {buildRouter} = await import('../../llm/buildRouter.js');
-      const router = buildRouter();
+        const {buildRouter} = await import('../../llm/buildRouter.js');
+        const router = buildRouter();
 
-      let usageDateIso: string;
-      try {
-        const {dateIso: reservedDateIso} = await reserveLlmCallOrThrow('oracle', llmDailyCaps());
-        usageDateIso = reservedDateIso;
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
+        let usageDateIso: string;
+        try {
+          const {dateIso: reservedDateIso} = await reserveLlmCallOrThrow('oracle', llmDailyCaps());
+          usageDateIso = reservedDateIso;
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : String(error);
 
-        if (errorMessage.includes('DAILY_LLM_CAP_EXCEEDED')) {
+          if (errorMessage.includes('DAILY_LLM_CAP_EXCEEDED')) {
+            if (economyV2Enabled) {
+              await refundOracleEconomyRequest({
+                uid,
+                requestId,
+                dateIso,
+                errorMessage: 'DAILY_LLM_CAP_EXCEEDED',
+              });
+            } else {
+              await failRequestAndCompensateQuota({
+                requestRef,
+                userDailyRef,
+                intent: legacyIntent ?? ConsumeIntent.AD_UNLOCK,
+                errorMessage: 'DAILY_LLM_CAP_EXCEEDED',
+              });
+            }
+            throw new HttpsError('resource-exhausted', 'DAILY_LLM_CAP_EXCEEDED');
+          }
+
+          throw error;
+        }
+
+        const llmClient = createLlmClientFromRouter(router, 'oracle', {
+          usageDailyDateIso: usageDateIso,
+          skipUsageReservation: true,
+          skipUsageTokenTracking: true,
+        });
+
+        try {
+          const generated = await generateOracleAnswer({
+            requestId,
+            lang,
+            question,
+            topic: data.topic,
+            llm: llmClient,
+          });
+
+          const llmMeta = stripUndefinedDeep(generated.llmMeta);
+
+          const responsePayload = stripUndefinedDeep({
+            requestId,
+            status: 'COMPLETED_SUCCESS',
+            answer: generated.answer,
+            quotaSnapshot: economyV2Enabled ? undefined : legacyQuotaSnapshot,
+            systemMode,
+            economy: buildEconomyPayload(
+                economyV2Enabled,
+                economyDecisionSource,
+                economyMoonCost
+            ),
+          });
+
+          const answerRef = oracleSubRef('oracleAnswers', uid, 'items', requestId);
+
+          await db.runTransaction(async (tx) => {
+            if (!economyV2Enabled) {
+              tx.set(requestRef, {
+                status: 'COMPLETED_SUCCESS',
+                responsePayload,
+                llmMeta,
+                updatedAt: FieldValue.serverTimestamp(),
+              }, {merge: true});
+            }
+
+            const answerDoc = stripUndefined({
+              requestId,
+              lang,
+              topic: data.topic,
+              question,
+              answer: generated.answer,
+              createdAt: FieldValue.serverTimestamp(),
+              llmMeta,
+            });
+
+            tx.set(answerRef, answerDoc, {merge: true});
+          });
+
+          if (economyV2Enabled) {
+            await completeOracleEconomyRequest({
+              uid,
+              requestId,
+              responsePayload,
+              llmMeta,
+            });
+          }
+
+          await addLlmTokens(
+              'oracle',
+              usageDateIso,
+              generated.llmMeta.inputTokens,
+              generated.llmMeta.outputTokens
+          );
+
+          await updateProviderUsage({
+            dateIso: usageDateIso,
+            provider: generated.llmMeta.provider,
+            success: true,
+            inputTokens: generated.llmMeta.inputTokens,
+            outputTokens: generated.llmMeta.outputTokens,
+            costUsd: generated.llmMeta.costUsd,
+            durationMs: generated.llmMeta.durationMs,
+          });
+
+          return responsePayload;
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : String(error);
+
           if (economyV2Enabled) {
             await refundOracleEconomyRequest({
               uid,
               requestId,
               dateIso,
-              errorMessage: 'DAILY_LLM_CAP_EXCEEDED',
+              errorMessage,
             });
           } else {
-            await failRequestAndCompensateQuota({
-              requestRef,
-              userDailyRef,
-              intent: legacyIntent ?? ConsumeIntent.AD_UNLOCK,
-              errorMessage: 'DAILY_LLM_CAP_EXCEEDED',
-            });
-          }
-          throw new HttpsError('resource-exhausted', 'DAILY_LLM_CAP_EXCEEDED');
-        }
-
-        throw error;
-      }
-
-      const llmClient = createLlmClientFromRouter(router, 'oracle', {
-        usageDailyDateIso: usageDateIso,
-        skipUsageReservation: true,
-        skipUsageTokenTracking: true,
-      });
-
-      try {
-        const generated = await generateOracleAnswer({
-          requestId,
-          lang,
-          question,
-          topic: data.topic,
-          llm: llmClient,
-        });
-
-        const llmMeta = stripUndefinedDeep(generated.llmMeta);
-
-        const responsePayload = stripUndefinedDeep({
-          requestId,
-          status: 'COMPLETED_SUCCESS',
-          answer: generated.answer,
-          quotaSnapshot: economyV2Enabled ? undefined : legacyQuotaSnapshot,
-          systemMode,
-          economy: buildEconomyPayload(
-              economyV2Enabled,
-              economyDecisionSource,
-              economyMoonCost
-          ),
-        });
-
-        const answerRef = oracleSubRef('oracleAnswers', uid, 'items', requestId);
-
-        await db.runTransaction(async (tx) => {
-          if (!economyV2Enabled) {
-            tx.set(requestRef, {
-              status: 'COMPLETED_SUCCESS',
-              responsePayload,
-              llmMeta,
+            await requestRef.set({
+              status: 'FAILED',
+              error: {
+                message: errorMessage,
+              },
               updatedAt: FieldValue.serverTimestamp(),
             }, {merge: true});
           }
 
-          const answerDoc = stripUndefined({
-            requestId,
-            lang,
-            topic: data.topic,
-            question,
-            answer: generated.answer,
-            createdAt: FieldValue.serverTimestamp(),
-            llmMeta,
+          await updateProviderUsage({
+            dateIso: usageDateIso,
+            provider: router.name,
+            success: false,
           });
 
-          tx.set(answerRef, answerDoc, {merge: true});
-        });
-
-        if (economyV2Enabled) {
-          await completeOracleEconomyRequest({
-            uid,
-            requestId,
-            responsePayload,
-            llmMeta,
-          });
+          throw new HttpsError('internal', 'Failed to generate oracle answer');
         }
-
-        await addLlmTokens(
-            'oracle',
-            usageDateIso,
-            generated.llmMeta.inputTokens,
-            generated.llmMeta.outputTokens
-        );
-
-        await updateProviderUsage({
-          dateIso: usageDateIso,
-          provider: generated.llmMeta.provider,
-          success: true,
-          inputTokens: generated.llmMeta.inputTokens,
-          outputTokens: generated.llmMeta.outputTokens,
-          costUsd: generated.llmMeta.costUsd,
-          durationMs: generated.llmMeta.durationMs,
-        });
-
-        return responsePayload;
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-
-        if (economyV2Enabled) {
-          await refundOracleEconomyRequest({
+        if (error instanceof HttpsError) {
+          logControlledHttpsError({
+            error,
+            requestType: data?.requestType,
+            hasQuestion,
+            hasTopic,
+            hasRewardedProof,
             uid,
-            requestId,
-            dateIso,
-            errorMessage,
+            economyV2Enabled,
           });
-        } else {
-          await requestRef.set({
-            status: 'FAILED',
-            error: {
-              message: errorMessage,
-            },
-            updatedAt: FieldValue.serverTimestamp(),
-          }, {merge: true});
         }
-
-        await updateProviderUsage({
-          dateIso: usageDateIso,
-          provider: router.name,
-          success: false,
-        });
-
-        throw new HttpsError('internal', 'Failed to generate oracle answer');
+        throw error;
       }
     }
 );
