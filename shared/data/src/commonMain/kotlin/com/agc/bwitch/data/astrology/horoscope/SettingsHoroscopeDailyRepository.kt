@@ -2,7 +2,6 @@ package com.agc.bwitch.data.astrology.horoscope
 
 import com.agc.bwitch.domain.astrology.horoscope.DailyHoroscope
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
-import com.agc.bwitch.domain.localization.AppLanguage
 import com.russhwolf.settings.Settings
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -56,7 +55,7 @@ class SettingsHoroscopeDailyRepository(
     private fun readLegacyWithoutLanguage(dateIso: String, sign: ZodiacSign, languageCode: String): DailyHoroscope? {
         // Política explícita: fallback local de clave legacy solo para `es`.
         // Evitamos etiquetar silenciosamente contenido histórico (normalmente español) como otro idioma.
-        if (languageCode.lowercase() != AppLanguage.fallback.code) return null
+        if (languageCode.lowercase() != LEGACY_LANGUAGE_CODE) return null
         val raw = settings.getStringOrNull(legacyKey(dateIso, sign)) ?: return null
         return decodeFromSettings(raw)
     }
@@ -83,7 +82,7 @@ private data class LegacyDailyHoroscope(
         DailyHoroscope(
             sign = sign,
             dateIso = dateIso,
-            languageCode = AppLanguage.fallback.code,
+            languageCode = LEGACY_LANGUAGE_CODE,
             text = text,
             mood = mood,
             luckyNumber = luckyNumber,
@@ -92,3 +91,5 @@ private data class LegacyDailyHoroscope(
             updatedAtEpochMillis = updatedAtEpochMillis,
         )
 }
+
+private const val LEGACY_LANGUAGE_CODE = "es"
