@@ -18,6 +18,7 @@ data class AppStrings(
     val horoscope: HoroscopeStrings,
     val synastry: SynastryStrings,
     val pendulum: PendulumStrings,
+    val economy: EconomyStrings,
     val oracle: OracleStrings,
     val tarot: TarotStrings,
     val zodiac: ZodiacStrings,
@@ -406,6 +407,14 @@ data class PendulumStrings(
     val messageNo: String,
     val messageMaybe: String,
     val messageNotNow: String,
+)
+
+data class EconomyStrings(
+    val freeToday: String,
+    val freeThisWeek: String,
+    val includedWithPremium: String,
+    val moonCostFormat: String,
+    val notEnoughMoons: String,
 )
 
 data class OracleStrings(
@@ -879,6 +888,13 @@ val fallbackAppStrings: AppStrings = AppStrings(
         messageMaybe = "Las señales aún son inciertas",
         messageNotNow = "Todavía no es el momento",
     ),
+    economy = EconomyStrings(
+        freeToday = "Gratis hoy",
+        freeThisWeek = "Gratis esta semana",
+        includedWithPremium = "Incluido con Premium",
+        moonCostFormat = "%d 🌙",
+        notEnoughMoons = "Faltan lunas",
+    ),
     oracle = OracleStrings(
         headerTitle = "Consulta intuitiva",
         headerSubtitle = "Haz una pregunta clara para recibir una guía enfocada",
@@ -1340,6 +1356,13 @@ private val englishAppStrings = fallbackAppStrings.copy(
         messageNo = "Destiny seems unfavorable",
         messageMaybe = "The signs are still uncertain",
         messageNotNow = "It is not the right moment yet",
+    ),
+    economy = fallbackAppStrings.economy.copy(
+        freeToday = "Free today",
+        freeThisWeek = "Free this week",
+        includedWithPremium = "Included with Premium",
+        moonCostFormat = "%d 🌙",
+        notEnoughMoons = "Not enough moons",
     ),
     oracle = fallbackAppStrings.oracle.copy(
         headerTitle = "Intuitive consultation",

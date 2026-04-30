@@ -17,8 +17,10 @@ import com.agc.bwitch.domain.economy.EconomyNextSource
 import com.agc.bwitch.domain.tarot.TarotRequestType
 import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.presentation.economy.EconomyViewModel
+import com.agc.bwitch.presentation.economy.ModuleCostLabel
 import com.agc.bwitch.presentation.economy.toModuleCostUiStateOrNull
 import com.agc.bwitch.presentation.tarot.TarotViewModel
+import com.agc.bwitch.ui.common.localization.resolve
 import org.koin.compose.koinInject
 
 @Composable
@@ -33,10 +35,12 @@ fun TarotHomeScreen(
     val economyState by economyViewModel.uiState.collectAsState()
     val tarot1CostLabel = economyState.modulePreviews
         .firstOrNull { it.module == "TAROT_1" }
-        ?.toTarotCostLabelOrNull(freeLabel = "Gratis hoy")
+        ?.toTarotCostLabelOrNull(freeLabel = ModuleCostLabel.FreeToday)
+        ?.resolve(appStrings.economy)
     val tarot3CostLabel = economyState.modulePreviews
         .firstOrNull { it.module == "TAROT_3" }
-        ?.toTarotCostLabelOrNull(freeLabel = "Gratis esta semana")
+        ?.toTarotCostLabelOrNull(freeLabel = ModuleCostLabel.FreeThisWeek)
+        ?.resolve(appStrings.economy)
 
     Column(
         modifier = Modifier
@@ -104,7 +108,7 @@ private fun TarotOptionCard(
     }
 }
 
-private fun EconomyModulePreview.toTarotCostLabelOrNull(freeLabel: String): String? {
+private fun EconomyModulePreview.toTarotCostLabelOrNull(freeLabel: ModuleCostLabel): ModuleCostLabel? {
     return when (nextSource) {
         EconomyNextSource.FREE -> freeLabel
         else -> toModuleCostUiStateOrNull()?.label
