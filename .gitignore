@@ -25,3 +25,4 @@ pubsub-debug.log
 *-debug.log.firebase/
 composeApp/release/
 public/
+.firebase/
