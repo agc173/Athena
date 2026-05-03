@@ -41,6 +41,8 @@ fun TarotHomeScreen(
         .firstOrNull { it.module == "TAROT_3" }
         ?.toTarotCostLabelOrNull(freeLabel = ModuleCostLabel.FreeThisWeek)
         ?.resolve(appStrings.economy)
+    val tarot3Preview = economyState.modulePreviews
+        .firstOrNull { it.module == "TAROT_3" }
 
     Column(
         modifier = Modifier
@@ -66,10 +68,18 @@ fun TarotHomeScreen(
             subtitle = "${strings.homeThreeCardSubtitle} · ${state.extraReadingCost} ${appStrings.profile.moonCreditsTitle}",
             costLabel = tarot3CostLabel,
             onClick = {
-                economyViewModel.requireLunas(
-                    cost = state.extraReadingCost,
-                    source = "tarot_extra_reading",
-                ) { _ ->
+                val shouldRequireLunas =
+                    tarot3Preview?.nextSource == EconomyNextSource.REJECTED &&
+                        tarot3Preview.reasonIfRejected == "insufficient_moons"
+
+                if (shouldRequireLunas) {
+                    economyViewModel.requireLunas(
+                        cost = tarot3Preview.cost.takeIf { it > 0 } ?: state.extraReadingCost,
+                        source = "tarot_extra_reading",
+                    ) {
+                        onSelectRequestType(TarotRequestType.TAROT_3)
+                    }
+                } else {
                     onSelectRequestType(TarotRequestType.TAROT_3)
                 }
             },
