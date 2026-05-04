@@ -41,6 +41,8 @@ fun TarotHomeScreen(
         .firstOrNull { it.module == "TAROT_3" }
         ?.toTarotCostLabelOrNull(freeLabel = ModuleCostLabel.FreeThisWeek)
         ?.resolve(appStrings.economy)
+    val tarot3Preview = economyState.modulePreviews
+        .firstOrNull { it.module == "TAROT_3" }
 
     Column(
         modifier = Modifier
@@ -66,10 +68,15 @@ fun TarotHomeScreen(
             subtitle = "${strings.homeThreeCardSubtitle} · ${state.extraReadingCost} ${appStrings.profile.moonCreditsTitle}",
             costLabel = tarot3CostLabel,
             onClick = {
-                economyViewModel.requireLunas(
-                    cost = state.extraReadingCost,
-                    source = "tarot_extra_reading",
-                ) { _ ->
+                val shouldGateWithPaywall = tarot3Preview?.requiresMoonPaywallGate() == true
+                if (shouldGateWithPaywall) {
+                    economyViewModel.requireLunas(
+                        cost = tarot3Preview.cost,
+                        source = "tarot_extra_reading",
+                    ) { _ ->
+                        onSelectRequestType(TarotRequestType.TAROT_3)
+                    }
+                } else {
                     onSelectRequestType(TarotRequestType.TAROT_3)
                 }
             },
@@ -81,6 +88,12 @@ fun TarotHomeScreen(
             color = MaterialTheme.colorScheme.primary,
         )
     }
+}
+
+private fun EconomyModulePreview.requiresMoonPaywallGate(): Boolean {
+    return nextSource == EconomyNextSource.REJECTED &&
+        reasonIfRejected.equals("insufficient_moons", ignoreCase = true) &&
+        !canExecute
 }
 
 @Composable
