@@ -16,7 +16,8 @@ import {getEconomyModuleRule} from '../rulesCatalog';
 import {resolveTarotDecision} from '../tarotEconomy';
 import {resolveOracleDecision} from '../oracleEconomy';
 import {resolveSynastryDecision} from '../synastryEconomy';
-import {isSynastryEconomyV2Enabled} from '../runtimeConfig';
+import {resolvePendulumDecision} from '../pendulumEconomy';
+import {isPendulumEconomyV2Enabled, isSynastryEconomyV2Enabled} from '../runtimeConfig';
 import {RequestType} from '../../oracle/types';
 import type {
   EconomyBalanceDoc,
@@ -93,6 +94,7 @@ function normalizeReason(reason: string | undefined): string | undefined {
   if (!reason) return undefined;
   if (reason === 'INSUFFICIENT_MOON_BALANCE') return 'insufficient_moons';
   if (reason === 'SYNASTRY_DAILY_LIMIT_REACHED') return 'daily_limit';
+  if (reason === 'PENDULUM_DAILY_LIMIT_REACHED') return 'daily_limit';
   if (reason === 'MODULE_NOT_CONFIGURED') return 'module_not_configured';
   if (reason === 'RULE_CONFIGURED_NOT_WIRED') return 'rule_configured_not_wired';
   return reason.toLowerCase();
@@ -149,6 +151,7 @@ export async function getEconomyModulePreviewsCore(uid: string, modulesInput?: u
   const monthly = (monthlySnap.data() as EconomyMonthlyUsageDoc | undefined) ?? {};
   const lifetime = (lifetimeSnap.data() as EconomyLifetimeDoc | undefined) ?? {};
   const synastryEconomyV2Enabled = await isSynastryEconomyV2Enabled();
+  const pendulumEconomyV2Enabled = await isPendulumEconomyV2Enabled();
   const requestedModules = normalizeRequestedModules(modulesInput);
 
   const previews = requestedModules.map((module): EconomyModulePreview => {
@@ -254,15 +257,35 @@ export async function getEconomyModulePreviewsCore(uid: string, modulesInput?: u
       const freeUsed = intValue(daily.pendulumFreeUsed);
       const freeDaily = intValue(rule.freeDaily);
       const freeRemaining = Math.max(0, freeDaily - freeUsed);
+      if (!pendulumEconomyV2Enabled) {
+        return {
+          module,
+          nextSource: 'RULE_CONFIGURED_NOT_WIRED',
+          cost: rule.moonCostPerUse ?? 0,
+          balance,
+          canExecute: false,
+          uiHint: 'Rules configured in backend; runtime consumption wiring pending',
+          reasonIfRejected: 'rule_configured_not_wired',
+          freeRemaining,
+          moonPackUsesPerMoon: rule.moonPackUsesPerMoon,
+          dailyCap: rule.maxTotalDaily,
+        };
+      }
+      const decision = resolvePendulumDecision({isPremium: premium.isPremium, balance, dailyUsage: daily});
+      const moonPacksPurchased = intValue(daily.pendulumMoonPacksPurchased);
+      const moonUsesUsed = intValue(daily.pendulumMoonUsesUsed);
+      const packUses = Math.max(1, intValue(rule.moonPackUsesPerMoon));
+      const moonRemaining = Math.max(0, moonPacksPurchased * packUses - moonUsesUsed);
+      const isInsufficientMoonsReject = decision.source === 'REJECT' && decision.reason === 'INSUFFICIENT_MOON_BALANCE';
       return {
         module,
-        nextSource: 'RULE_CONFIGURED_NOT_WIRED',
-        cost: rule.moonCostPerUse ?? 0,
+        nextSource: toNextSource(decision.source),
+        cost: decision.source === 'MOON' ? decision.moonCost : (isInsufficientMoonsReject ? (rule.moonCostPerUse ?? 0) : 0),
         balance,
-        canExecute: false,
-        uiHint: 'Rules configured in backend; runtime consumption wiring pending',
-        reasonIfRejected: 'rule_configured_not_wired',
+        canExecute: decision.source !== 'REJECT',
+        reasonIfRejected: normalizeReason(decision.reason),
         freeRemaining,
+        moonRemaining,
         moonPackUsesPerMoon: rule.moonPackUsesPerMoon,
         dailyCap: rule.maxTotalDaily,
       };

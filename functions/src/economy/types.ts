@@ -40,7 +40,8 @@ export type EconomyLedgerEntryDoc = {
   | 'HOROSCOPE_FUTURE_DAY_MOON_SPEND'
   | 'HOROSCOPE_WEEKLY_MOON_SPEND'
   | 'HOROSCOPE_MONTHLY_MOON_SPEND'
-  | 'SYNASTRY_MOON_SPEND';
+  | 'SYNASTRY_MOON_SPEND'
+  | 'PENDULUM_MOON_SPEND';
   amount: number;
   createdAt: Timestamp;
   requestId: string;
@@ -71,6 +72,7 @@ export type EconomyRequestType =
   | 'ORACLE_1Q'
   | 'BIRTH_ESSENCE'
   | 'SYNASTRY'
+  | 'PENDULUM'
   | 'HOROSCOPE_UNLOCK_DAY'
   | 'HOROSCOPE_UNLOCK_WEEKLY'
   | 'HOROSCOPE_UNLOCK_MONTHLY';
@@ -136,7 +138,8 @@ export type EconomyDailyUsageDoc = {
   synastryPremiumUsed?: number;
 
   pendulumFreeUsed?: number;
-  pendulumMoonPacksUsed?: number;
+  pendulumMoonPacksPurchased?: number;
+  pendulumMoonUsesUsed?: number;
   pendulumPremiumUsed?: number;
 
   horoscopeFutureDayMoonUsed?: number;

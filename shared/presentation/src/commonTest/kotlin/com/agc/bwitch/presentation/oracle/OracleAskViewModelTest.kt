@@ -10,6 +10,7 @@ import com.agc.bwitch.domain.economy.EconomyClaimStatus
 import com.agc.bwitch.domain.economy.EconomyModulePreview
 import com.agc.bwitch.domain.economy.EconomyRepository
 import com.agc.bwitch.domain.economy.EconomyStatus
+import com.agc.bwitch.domain.economy.PendulumAuthorizationResult
 import com.agc.bwitch.domain.economy.SynastryAuthorizationResult
 import com.agc.bwitch.domain.oracle.OracleAskRequest
 import com.agc.bwitch.domain.oracle.OracleAskResult
@@ -287,6 +288,13 @@ class OracleAskViewModelTest {
             languageCode: String?,
         ): SynastryAuthorizationResult {
             return SynastryAuthorizationResult(authorized = true, economyDisabled = true)
+        }
+
+        override suspend fun authorizePendulum(
+            requestId: String,
+            languageCode: String?,
+        ): PendulumAuthorizationResult {
+            return PendulumAuthorizationResult(authorized = true, economyDisabled = true)
         }
     }
 }

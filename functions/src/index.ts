@@ -21,6 +21,7 @@ export {
   getHoroscopeWeeklyUnlocks,
   getHoroscopeMonthlyUnlocks,
   synastryAuthorize,
+  pendulumAuthorize,
 } from './economy';
 
 initializeApp();

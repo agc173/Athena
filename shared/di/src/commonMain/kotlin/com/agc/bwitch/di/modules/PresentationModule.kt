@@ -59,7 +59,7 @@ val presentationModule: Module = module {
     factory { TarotViewModel(get(), get(), get(), get(), get(), get(), get(), get()) }
     factory { MoonStoreViewModel(get(), get(), get(), get()) }
     single { EconomyViewModel(get(), get()) }
-    factory { PendulumViewModel() }
+    factory { PendulumViewModel(get()) }
     factory { DailyRitualViewModel(get()) }
     factory { HabitsViewModel(get(), get(), get()) }
 

@@ -9,6 +9,7 @@ import com.agc.bwitch.domain.economy.EconomyModulePreview
 import com.agc.bwitch.domain.economy.EconomyRepository
 import com.agc.bwitch.domain.economy.EconomyStatus
 import com.agc.bwitch.domain.economy.SynastryAuthorizationResult
+import com.agc.bwitch.domain.economy.PendulumAuthorizationResult
 import com.agc.bwitch.domain.localization.AppLanguage
 import com.agc.bwitch.domain.localization.AppLanguageRepository
 import com.agc.bwitch.domain.localization.ObserveCurrentLanguageUseCase
@@ -120,4 +121,7 @@ private class FakeEconomyRepository : EconomyRepository {
         authorized = true,
         economyDisabled = true,
     )
+
+    override suspend fun authorizePendulum(requestId: String, languageCode: String?): PendulumAuthorizationResult =
+        PendulumAuthorizationResult(authorized = true, economyDisabled = true)
 }
