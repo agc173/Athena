@@ -13,7 +13,6 @@ module.exports = [
       'generated/**/*',
       '**/*.selftest.ts',
       '**/*SelfTest.ts',
-      'eslint.config.js',
     ],
   },
   ...compat.extends(
@@ -24,12 +23,39 @@ module.exports = [
     'google',
     'plugin:@typescript-eslint/recommended',
   ),
+
   {
-    files: ['**/*.{js,ts}'],
+    files: ['eslint.config.js'],
+    languageOptions: {
+      globals: {
+        require: 'readonly',
+        module: 'readonly',
+        __dirname: 'readonly',
+      },
+    },
+    rules: {
+      'no-undef': 'off',
+      '@typescript-eslint/no-var-requires': 'off',
+      indent: 'off',
+      'quote-props': 'off',
+    },
+  },
+  {
+    files: ['**/*.js'],
+    rules: {
+      'no-unused-vars': ['error', {
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+        caughtErrorsIgnorePattern: '^_',
+      }],
+    },
+  },
+  {
+    files: ['**/*.ts'],
     languageOptions: {
       parser: require('@typescript-eslint/parser'),
       parserOptions: {
-        project: ['tsconfig.json', 'tsconfig.dev.json', './tsconfig.tools.json'],
+        project: ['tsconfig.json', './tsconfig.tools.json'],
         sourceType: 'module',
         tsconfigRootDir: __dirname,
       },
@@ -49,6 +75,11 @@ module.exports = [
       'comma-dangle': 'off',
       indent: 'off',
       'quote-props': 'off',
+      '@typescript-eslint/no-unused-vars': ['error', {
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+        caughtErrorsIgnorePattern: '^_',
+      }],
     },
   },
 ];

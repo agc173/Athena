@@ -1,5 +1,15 @@
 {
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": false,
+    "noEmit": true,
+    "module": "NodeNext",
+    "moduleResolution": "nodenext",
+    "target": "es2017"
+  },
   "include": [
-    "eslint.config.js"
-  ]
+    "eslint.config.js",
+    "tools/**/*.ts"
+  ],
+  "exclude": ["node_modules", "lib"]
 }
