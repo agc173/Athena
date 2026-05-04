@@ -20,3 +20,4 @@ export * from './callables/unlockHoroscopeDay';
 export * from './callables/unlockHoroscopeWeekly';
 export * from './callables/unlockHoroscopeMonthly';
 export * from './callables/getEconomyModulePreviews';
+export * from './callables/synastryAuthorize';

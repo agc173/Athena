@@ -4,6 +4,7 @@ import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
 import com.agc.bwitch.domain.astrology.synastry.SynastryInput
 import com.agc.bwitch.domain.astrology.synastry.SynastryPersonInput
 import com.agc.bwitch.domain.astrology.synastry.SynastryReadingGenerator
+import com.agc.bwitch.domain.economy.EconomyRepository
 import com.agc.bwitch.domain.localization.ObserveCurrentLanguageUseCase
 import com.agc.bwitch.domain.localization.ResolveCurrentLanguageUseCase
 import kotlinx.coroutines.CoroutineScope
@@ -16,9 +17,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 class SynastryViewModel(
     private val readingGenerator: SynastryReadingGenerator,
+    private val economyRepository: EconomyRepository,
     private val resolveCurrentLanguageUseCase: ResolveCurrentLanguageUseCase,
     private val observeCurrentLanguageUseCase: ObserveCurrentLanguageUseCase,
     dispatcher: CoroutineDispatcher = Dispatchers.Main,
@@ -78,6 +82,14 @@ class SynastryViewModel(
             _uiState.update { it.copy(isGenerating = true, error = null) }
 
             runCatching {
+                val requestId = generateRequestId()
+                val authorization = economyRepository.authorizeSynastry(
+                    requestId = requestId,
+                    languageCode = state.currentLanguageCode,
+                )
+                if (!authorization.authorized) {
+                    throw IllegalStateException(authorization.status ?: "synastry_not_authorized")
+                }
                 readingGenerator(
                     SynastryInput(
                         personA = SynastryPersonInput(
@@ -96,13 +108,21 @@ class SynastryViewModel(
             }.onSuccess { reading ->
                 _uiState.update { it.copy(reading = reading, isGenerating = false, error = null) }
             }.onFailure { throwable ->
+                val normalized = throwable.message?.lowercase().orEmpty()
                 _uiState.update {
                     it.copy(
                         isGenerating = false,
-                        error = throwable.message ?: "generic_generate_error",
+                        error = when {
+                            "insufficient_moons" in normalized -> "insufficient_moons"
+                            "daily_limit" in normalized || "synastry_daily_limit_reached" in normalized -> "daily_limit"
+                            else -> throwable.message ?: "generic_generate_error"
+                        },
                     )
                 }
             }
         }
     }
+
+    @OptIn(ExperimentalUuidApi::class)
+    private fun generateRequestId(): String = Uuid.random().toString()
 }

@@ -153,3 +153,19 @@ data class EconomyModulePreviewsResponseDto(
 data class EconomyModulePreviewsRequestDto(
     val modules: List<String> = emptyList(),
 )
+
+@Serializable
+data class SynastryAuthorizeRequestDto(
+    val requestId: String,
+    val languageCode: String? = null,
+)
+
+@Serializable
+data class SynastryAuthorizeResponseDto(
+    val authorized: Boolean = false,
+    val economyDisabled: Boolean = false,
+    val status: String? = null,
+    val requestId: String? = null,
+    val source: String? = null,
+    val moonCost: Int = 0,
+)

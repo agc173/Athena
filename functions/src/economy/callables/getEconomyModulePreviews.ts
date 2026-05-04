@@ -15,6 +15,8 @@ import {getPremiumStatus} from '../premiumStatus';
 import {getEconomyModuleRule} from '../rulesCatalog';
 import {resolveTarotDecision} from '../tarotEconomy';
 import {resolveOracleDecision} from '../oracleEconomy';
+import {resolveSynastryDecision} from '../synastryEconomy';
+import {isSynastryEconomyV2Enabled} from '../runtimeConfig';
 import {RequestType} from '../../oracle/types';
 import type {
   EconomyBalanceDoc,
@@ -146,6 +148,7 @@ export async function getEconomyModulePreviewsCore(uid: string, modulesInput?: u
   const weekly = (weeklySnap.data() as EconomyWeeklyUsageDoc | undefined) ?? {};
   const monthly = (monthlySnap.data() as EconomyMonthlyUsageDoc | undefined) ?? {};
   const lifetime = (lifetimeSnap.data() as EconomyLifetimeDoc | undefined) ?? {};
+  const synastryEconomyV2Enabled = await isSynastryEconomyV2Enabled();
   const requestedModules = normalizeRequestedModules(modulesInput);
 
   const previews = requestedModules.map((module): EconomyModulePreview => {
@@ -203,11 +206,52 @@ export async function getEconomyModulePreviewsCore(uid: string, modulesInput?: u
       };
     }
 
-    if (module === 'SYNASTRY' || module === 'PENDULUM') {
+    if (module === 'SYNASTRY') {
       const rule = getEconomyModuleRule(module);
-      const freeUsed = module === 'SYNASTRY'
-        ? intValue(daily.synastryFreeUsed)
-        : intValue(daily.pendulumFreeUsed);
+      const freeUsed = intValue(daily.synastryFreeUsed);
+      const freeDaily = intValue(rule.freeDaily);
+      const freeRemaining = Math.max(0, freeDaily - freeUsed);
+      if (!synastryEconomyV2Enabled) {
+        return {
+          module,
+          nextSource: 'RULE_CONFIGURED_NOT_WIRED',
+          cost: rule.moonCostPerUse ?? 0,
+          balance,
+          canExecute: false,
+          uiHint: 'Rules configured in backend; runtime consumption wiring pending',
+          reasonIfRejected: 'rule_configured_not_wired',
+          freeRemaining,
+          moonPackUsesPerMoon: rule.moonPackUsesPerMoon,
+          dailyCap: rule.maxTotalDaily,
+        };
+      }
+      const decision = resolveSynastryDecision({
+        isPremium: premium.isPremium,
+        balance,
+        dailyUsage: daily,
+      });
+      const moonPacksPurchased = intValue(daily.synastryMoonPacksPurchased);
+      const moonUsesUsed = intValue(daily.synastryMoonUsesUsed);
+      const packUses = Math.max(1, intValue(rule.moonPackUsesPerMoon));
+      const moonRemaining = Math.max(0, moonPacksPurchased * packUses - moonUsesUsed);
+      const isInsufficientMoonsReject = decision.source === 'REJECT' && decision.reason === 'INSUFFICIENT_MOON_BALANCE';
+      return {
+        module,
+        nextSource: toNextSource(decision.source),
+        cost: decision.source === 'MOON' ? decision.moonCost : (isInsufficientMoonsReject ? (rule.moonCostPerUse ?? 0) : 0),
+        balance,
+        canExecute: decision.source !== 'REJECT',
+        reasonIfRejected: normalizeReason(decision.reason),
+        freeRemaining,
+        moonRemaining,
+        moonPackUsesPerMoon: rule.moonPackUsesPerMoon,
+        dailyCap: rule.maxTotalDaily,
+      };
+    }
+
+    if (module === 'PENDULUM') {
+      const rule = getEconomyModuleRule(module);
+      const freeUsed = intValue(daily.pendulumFreeUsed);
       const freeDaily = intValue(rule.freeDaily);
       const freeRemaining = Math.max(0, freeDaily - freeUsed);
       return {

@@ -20,6 +20,7 @@ export {
   unlockHoroscopeMonthly,
   getHoroscopeWeeklyUnlocks,
   getHoroscopeMonthlyUnlocks,
+  synastryAuthorize,
 } from './economy';
 
 initializeApp();

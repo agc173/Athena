@@ -25,6 +25,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -58,6 +59,10 @@ import com.agc.bwitch.localization.AppStrings
 import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.presentation.astrology.synastry.SynastryPersonForm
 import com.agc.bwitch.presentation.astrology.synastry.SynastryViewModel
+import com.agc.bwitch.presentation.economy.EconomyViewModel
+import com.agc.bwitch.presentation.economy.runWithEconomyGate
+import com.agc.bwitch.presentation.economy.toModuleCostUiStateOrNull
+import com.agc.bwitch.ui.common.localization.resolve
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
 import com.agc.bwitch.ui.common.designsystem.BWitchPrimaryButton
 import com.agc.bwitch.ui.theme.BWitchThemeTokens
@@ -68,11 +73,27 @@ fun SynastryScreen(
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
     viewModel: SynastryViewModel = koinInject(),
+    economyViewModel: EconomyViewModel = koinInject(),
 ) {
     val state by viewModel.uiState.collectAsState()
+    val economyState by economyViewModel.uiState.collectAsState()
+    val synastryPreview = economyState.modulePreviews.firstOrNull { it.module == "SYNASTRY" }
+    val synastryCostState = synastryPreview?.toModuleCostUiStateOrNull()
     val spacing = BWitchThemeTokens.dimens
     val strings = appStrings
     val synastryStrings = strings.synastry
+    var wasGenerating by remember { mutableStateOf(false) }
+
+    LaunchedEffect(state.isGenerating, state.reading, state.error) {
+        if (wasGenerating && !state.isGenerating) {
+            val endedWithReading = state.reading != null
+            val endedWithEconomyError = state.error == "insufficient_moons" || state.error == "daily_limit"
+            if (endedWithReading || endedWithEconomyError) {
+                economyViewModel.loadEconomy()
+            }
+        }
+        wasGenerating = state.isGenerating
+    }
 
     Column(
         modifier = modifier
@@ -110,8 +131,37 @@ fun SynastryScreen(
             strings = strings,
         )
 
+        synastryCostState?.let { costState ->
+            val isSynastryMoonPack =
+                synastryPreview?.module == "SYNASTRY" &&
+                    (synastryPreview?.nextSource == com.agc.bwitch.domain.economy.EconomyNextSource.MOON ||
+                        synastryPreview?.reasonIfRejected.equals("insufficient_moons", ignoreCase = true))
+            val label = if (isSynastryMoonPack) {
+                strings.economy.synastryMoonPackCostFormat
+                    .replaceFirst("%d", (synastryPreview?.cost ?: 1).toString())
+                    .replaceFirst("%d", (synastryPreview?.moonPackUsesPerMoon ?: 3).toString())
+            } else {
+                costState.label.resolve(strings.economy)
+            }
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
         BWitchPrimaryButton(
-            onClick = viewModel::generate,
+            onClick = {
+                val shouldGate = synastryPreview?.reasonIfRejected.equals("insufficient_moons", ignoreCase = true)
+                if (shouldGate) {
+                    runWithEconomyGate(
+                        preview = synastryPreview,
+                        economyViewModel = economyViewModel,
+                        source = "synastry",
+                    ) { viewModel.generate() }
+                } else {
+                    viewModel.generate()
+                }
+            },
             enabled = state.canGenerate,
             modifier = Modifier.fillMaxWidth(),
         ) {
@@ -122,6 +172,8 @@ fun SynastryScreen(
             Text(
                 text = when (error) {
                     "required_sun_signs_error" -> synastryStrings.requiredSunSignsError
+                    "insufficient_moons" -> strings.economy.notEnoughMoons
+                    "daily_limit" -> strings.economy.dailyLimitReached
                     "generic_generate_error" -> synastryStrings.genericGenerateError
                     else -> synastryStrings.genericGenerateError
                 },
