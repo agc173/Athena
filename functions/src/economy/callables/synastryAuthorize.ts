@@ -28,12 +28,26 @@ export const synastryAuthorize = onCall({
   const dateIso = DateTime.now().setZone('Europe/Madrid').toISODate();
   if (!dateIso) throw new HttpsError('internal', 'Unable to resolve dateIso');
 
-  const reservation = await reserveSynastryEconomyAccess({
-    uid,
-    requestId,
-    dateIso,
-    lang: data.languageCode,
-  });
+  const reservation = await (async () => {
+    try {
+      return await reserveSynastryEconomyAccess({
+        uid,
+        requestId,
+        dateIso,
+        lang: data.languageCode,
+      });
+    } catch (error) {
+      if (error instanceof HttpsError) {
+        if (error.message === 'INSUFFICIENT_MOON_BALANCE') {
+          throw new HttpsError(error.code, 'insufficient_moons');
+        }
+        if (error.message === 'SYNASTRY_DAILY_LIMIT_REACHED' || error.message === 'SYNASTRY_PREMIUM_DAILY_LIMIT_REACHED') {
+          throw new HttpsError(error.code, 'daily_limit');
+        }
+      }
+      throw error;
+    }
+  })();
 
   if (reservation.type === 'completed') return reservation.payload;
   if (reservation.type === 'in-progress') return {authorized: false, status: 'IN_PROGRESS'};

@@ -88,7 +88,11 @@ class SynastryViewModel(
                     languageCode = state.currentLanguageCode,
                 )
                 if (!authorization.authorized) {
-                    throw IllegalStateException(authorization.status ?: "synastry_not_authorized")
+                    val status = authorization.status
+                    if (status == "IN_PROGRESS") {
+                        throw IllegalStateException("synastry_in_progress")
+                    }
+                    throw IllegalStateException(status ?: "synastry_not_authorized")
                 }
                 readingGenerator(
                     SynastryInput(
@@ -113,9 +117,16 @@ class SynastryViewModel(
                     it.copy(
                         isGenerating = false,
                         error = when {
-                            "insufficient_moons" in normalized -> "insufficient_moons"
-                            "daily_limit" in normalized || "synastry_daily_limit_reached" in normalized -> "daily_limit"
-                            else -> throwable.message ?: "generic_generate_error"
+                            normalized.contains("synastry_in_progress") -> null
+                            normalized.contains("daily_limit") ||
+                                normalized.contains("synastry_daily_limit_reached") ||
+                                normalized.contains("daily") -> "daily_limit"
+                            normalized.contains("insufficient_moons") ||
+                                normalized.contains("insufficient_moon_balance") ||
+                                normalized.contains("failed-precondition") ||
+                                normalized.contains("moon") ||
+                                normalized.contains("resource-exhausted") -> "insufficient_moons"
+                            else -> "generic_generate_error"
                         },
                     )
                 }
