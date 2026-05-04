@@ -43,6 +43,10 @@ fun MoonStoreScreen(
             println("[MoonStoreScreen] Economy backend balance=${economyState.balance}, error=${economyState.error}")
         }
     }
+    LaunchedEffect(Unit) {
+        economyViewModel.loadEconomy()
+    }
+
     var rewardedCtaTracked by rememberSaveable { mutableStateOf(false) }
     val rewardedCtaVisible = economyState.rewardedAdsRemaining > 0 &&
         !economyState.isClaimingRewardedAd &&

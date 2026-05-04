@@ -151,12 +151,15 @@ fun SynastryScreen(
         }
         BWitchPrimaryButton(
             onClick = {
-                val shouldGate = synastryPreview?.reasonIfRejected.equals("insufficient_moons", ignoreCase = true)
+                val shouldGate =
+                    synastryPreview?.reasonIfRejected.equals("insufficient_moons", ignoreCase = true) ||
+                        state.error == "insufficient_moons"
                 if (shouldGate) {
                     runWithEconomyGate(
                         preview = synastryPreview,
                         economyViewModel = economyViewModel,
                         source = "synastry",
+                        fallbackCost = (synastryPreview?.cost ?: 0).takeIf { it > 0 } ?: 1,
                     ) { viewModel.generate() }
                 } else {
                     viewModel.generate()

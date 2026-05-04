@@ -188,6 +188,13 @@ fun AppRoot() {
         runCatching { birthChartRepository.getBirthEssence() }
     }
 
+
+    LaunchedEffect(isAuthenticated, dest) {
+        if (!isAuthenticated) return@LaunchedEffect
+        if (!dest.requiresEconomyRefreshOnEnter()) return@LaunchedEffect
+        economyVm.loadEconomy()
+    }
+
     val currentMainTab = remember(dest) { MainTab.items.firstOrNull { it.matches(dest) } }
 
     AppScaffold(
@@ -366,6 +373,23 @@ fun AppRoot() {
                 },
             )
         }
+    }
+}
+
+
+private fun Destination.requiresEconomyRefreshOnEnter(): Boolean {
+    return when (this) {
+        Destination.MoonStore,
+        Destination.UserProfile,
+        is Destination.HoroscopeDaily,
+        Destination.BirthChart,
+        Destination.Synastry,
+        Destination.TarotHome,
+        is Destination.Tarot,
+        Destination.Oracle,
+        Destination.Pendulum,
+        -> true
+        else -> false
     }
 }
 
