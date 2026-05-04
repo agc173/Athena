@@ -159,9 +159,9 @@ fun BirthChartScreen(
             BWitchCard {
                 Text(birthChartStrings.triadTitle, style = MaterialTheme.typography.titleMedium)
                 Text(
-                    "${birthChartStrings.triadSunLabel}: ${state.selectedSunSign.toDisplayName(strings)} · " +
-                        "${birthChartStrings.triadMoonLabel}: ${state.selectedMoonSign.toDisplayName(strings)} · " +
-                        "${birthChartStrings.triadAscLabel}: ${state.selectedRisingSign.toDisplayName(strings)}",
+                    "${birthChartStrings.triadSunLabel}: ${(state.generatedSunSign ?: state.selectedSunSign).toDisplayName(strings)} · " +
+                        "${birthChartStrings.triadMoonLabel}: ${(state.generatedMoonSign ?: state.selectedMoonSign).toDisplayName(strings)} · " +
+                        "${birthChartStrings.triadAscLabel}: ${(state.generatedRisingSign ?: state.selectedRisingSign).toDisplayName(strings)}",
                     style = MaterialTheme.typography.bodyMedium,
                     color = extras.textSecondary,
                 )
@@ -259,9 +259,9 @@ private fun BirthChartUiState.toShareProfileOrNull(): BirthEssenceProfile? {
     if (interpretation.isBlank()) return null
 
     return BirthEssenceProfile(
-        sunSign = selectedSunSign,
-        moonSign = selectedMoonSign,
-        risingSign = selectedRisingSign,
+        sunSign = generatedSunSign ?: selectedSunSign,
+        moonSign = generatedMoonSign ?: selectedMoonSign,
+        risingSign = generatedRisingSign ?: selectedRisingSign,
         interpretation = interpretation,
         languageCode = generatedLanguageCode,
         archetype = generatedArchetype,

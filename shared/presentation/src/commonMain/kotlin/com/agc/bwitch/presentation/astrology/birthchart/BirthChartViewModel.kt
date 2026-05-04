@@ -51,6 +51,9 @@ class BirthChartViewModel(
                             currentLanguageCode = languageCode,
                             generatedInterpretation = null,
                             generatedArchetype = null,
+                            generatedSunSign = null,
+                            generatedMoonSign = null,
+                            generatedRisingSign = null,
                             generatedLanguageCode = languageCode,
                             error = null,
                         )
@@ -78,6 +81,21 @@ class BirthChartViewModel(
                             essence?.archetype ?: s.generatedArchetype
                         } else {
                             s.generatedArchetype
+                        },
+                        generatedSunSign = if (matchesCurrentLanguage) {
+                            essence?.sunSign ?: s.generatedSunSign
+                        } else {
+                            s.generatedSunSign
+                        },
+                        generatedMoonSign = if (matchesCurrentLanguage) {
+                            essence?.moonSign ?: s.generatedMoonSign
+                        } else {
+                            s.generatedMoonSign
+                        },
+                        generatedRisingSign = if (matchesCurrentLanguage) {
+                            essence?.risingSign ?: s.generatedRisingSign
+                        } else {
+                            s.generatedRisingSign
                         },
                         generatedLanguageCode = if (matchesCurrentLanguage) {
                             essence?.languageCode ?: s.generatedLanguageCode
@@ -151,6 +169,9 @@ class BirthChartViewModel(
                             generatedInterpretation = result.value.interpretation.sanitizeInterpretation(),
                             generatedLanguageCode = result.value.languageCode,
                             generatedArchetype = result.value.archetype,
+                            generatedSunSign = s.selectedSunSign,
+                            generatedMoonSign = s.selectedMoonSign,
+                            generatedRisingSign = s.selectedRisingSign,
                         )
                     }
                 }
@@ -180,9 +201,9 @@ class BirthChartViewModel(
             runCatching {
                 saveBirthEssence(
                     BirthEssenceDraft(
-                        sunSign = s.selectedSunSign,
-                        moonSign = s.selectedMoonSign,
-                        risingSign = s.selectedRisingSign,
+                        sunSign = s.generatedSunSign ?: s.selectedSunSign,
+                        moonSign = s.generatedMoonSign ?: s.selectedMoonSign,
+                        risingSign = s.generatedRisingSign ?: s.selectedRisingSign,
                         interpretation = interpretation,
                         languageCode = s.generatedLanguageCode,
                         archetype = s.generatedArchetype,
@@ -209,6 +230,12 @@ class BirthChartViewModel(
         val rawMessage = error.message.orEmpty()
         if (rawMessage.contains("not_found", ignoreCase = true)) {
             return BIRTH_CHART_GENERATE_UNAVAILABLE_KEY
+        }
+        if (
+            rawMessage.contains("insufficient_moons", ignoreCase = true) ||
+            rawMessage.contains("INSUFFICIENT_MOON_BALANCE", ignoreCase = true)
+        ) {
+            return "insufficient_moons"
         }
 
         return rawMessage.ifBlank { BIRTH_CHART_GENERATE_ERROR_FALLBACK_KEY }

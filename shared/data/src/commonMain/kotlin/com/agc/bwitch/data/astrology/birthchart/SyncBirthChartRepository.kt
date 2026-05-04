@@ -24,6 +24,8 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.datetime.Clock
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 import kotlinx.serialization.Serializable
 
 class SyncBirthChartRepository(
@@ -98,6 +100,7 @@ class SyncBirthChartRepository(
     }
 
     override suspend fun generateBirthEssence(input: BirthEssenceInput): ApiResult<BirthEssenceReading> {
+        val requestId = generateRequestId()
         return when (
             val result = functionsClient.call(
                 name = "birthEssenceGenerate",
@@ -108,6 +111,7 @@ class SyncBirthChartRepository(
                     languageCode = input.languageCode,
                     lang = input.languageCode,
                     archetype = input.archetypeHint?.name,
+                    requestId = requestId,
                 ),
                 requestSerializer = BirthEssenceGenerateRequestDto.serializer(),
                 responseSerializer = BirthEssenceGenerateResponseDto.serializer(),
@@ -237,6 +241,7 @@ data class BirthEssenceGenerateRequestDto(
     val languageCode: String,
     val lang: String,
     val archetype: String? = null,
+    val requestId: String,
 )
 
 @Serializable
@@ -253,3 +258,6 @@ private fun normalizeLanguageCode(raw: String?): String? =
         ?.substringBefore('-')
         ?.substringBefore('_')
         ?.ifBlank { null }
+
+@OptIn(ExperimentalUuidApi::class)
+private fun generateRequestId(): String = Uuid.random().toString()
