@@ -61,8 +61,7 @@ import com.agc.bwitch.presentation.astrology.synastry.SynastryPersonForm
 import com.agc.bwitch.presentation.astrology.synastry.SynastryViewModel
 import com.agc.bwitch.presentation.economy.EconomyViewModel
 import com.agc.bwitch.presentation.economy.runWithEconomyGate
-import com.agc.bwitch.presentation.economy.toModuleCostUiStateOrNull
-import com.agc.bwitch.ui.common.localization.resolve
+import com.agc.bwitch.ui.common.economy.EconomyGateInfoRow
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
 import com.agc.bwitch.ui.common.designsystem.BWitchPrimaryButton
 import com.agc.bwitch.ui.theme.BWitchThemeTokens
@@ -78,7 +77,6 @@ fun SynastryScreen(
     val state by viewModel.uiState.collectAsState()
     val economyState by economyViewModel.uiState.collectAsState()
     val synastryPreview = economyState.modulePreviews.firstOrNull { it.module == "SYNASTRY" }
-    val synastryCostState = synastryPreview?.toModuleCostUiStateOrNull()
     val spacing = BWitchThemeTokens.dimens
     val strings = appStrings
     val synastryStrings = strings.synastry
@@ -131,39 +129,20 @@ fun SynastryScreen(
             strings = strings,
         )
 
-        synastryCostState?.let { costState ->
-            val isSynastryMoonPack =
-                synastryPreview?.module == "SYNASTRY" &&
-                    (synastryPreview?.nextSource == com.agc.bwitch.domain.economy.EconomyNextSource.MOON ||
-                        synastryPreview?.reasonIfRejected.equals("insufficient_moons", ignoreCase = true))
-            val label = if (isSynastryMoonPack) {
-                strings.economy.synastryMoonPackCostFormat
-                    .replaceFirst("%d", (synastryPreview?.cost ?: 1).toString())
-                    .replaceFirst("%d", (synastryPreview?.moonPackUsesPerMoon ?: 3).toString())
-            } else {
-                costState.label.resolve(strings.economy)
-            }
-            Text(
-                text = label,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+        EconomyGateInfoRow(
+            preview = synastryPreview,
+            economyStrings = strings.economy,
+            fallbackCost = 1,
+            packUsesLabel = strings.economy.synastryMoonPackCostFormat,
+        )
         BWitchPrimaryButton(
             onClick = {
-                val shouldGate =
-                    synastryPreview?.reasonIfRejected.equals("insufficient_moons", ignoreCase = true) ||
-                        state.error == "insufficient_moons"
-                if (shouldGate) {
-                    runWithEconomyGate(
-                        preview = synastryPreview,
-                        economyViewModel = economyViewModel,
-                        source = "synastry",
-                        fallbackCost = (synastryPreview?.cost ?: 0).takeIf { it > 0 } ?: 1,
-                    ) { viewModel.generate() }
-                } else {
-                    viewModel.generate()
-                }
+                runWithEconomyGate(
+                    preview = synastryPreview,
+                    economyViewModel = economyViewModel,
+                    source = "synastry",
+                    fallbackCost = (synastryPreview?.cost ?: 0).takeIf { it > 0 } ?: 1,
+                ) { viewModel.generate() }
             },
             enabled = state.canGenerate,
             modifier = Modifier.fillMaxWidth(),

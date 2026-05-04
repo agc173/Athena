@@ -13,15 +13,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.agc.bwitch.domain.economy.EconomyModulePreview
-import com.agc.bwitch.domain.economy.EconomyNextSource
 import com.agc.bwitch.domain.tarot.TarotRequestType
 import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.presentation.economy.EconomyViewModel
-import com.agc.bwitch.presentation.economy.ModuleCostLabel
 import com.agc.bwitch.presentation.economy.runWithEconomyGate
-import com.agc.bwitch.presentation.economy.toModuleCostUiStateOrNull
 import com.agc.bwitch.presentation.tarot.TarotViewModel
-import com.agc.bwitch.ui.common.localization.resolve
+import com.agc.bwitch.ui.common.economy.resolveEconomyGateLabel
 import org.koin.compose.koinInject
 
 @Composable
@@ -34,14 +31,18 @@ fun TarotHomeScreen(
     val strings = appStrings.tarot
     val state by viewModel.uiState.collectAsState()
     val economyState by economyViewModel.uiState.collectAsState()
-    val tarot1CostLabel = economyState.modulePreviews
-        .firstOrNull { it.module == "TAROT_1" }
-        ?.toTarotCostLabelOrNull(freeLabel = ModuleCostLabel.FreeToday)
-        ?.resolve(appStrings.economy)
-    val tarot3CostLabel = economyState.modulePreviews
-        .firstOrNull { it.module == "TAROT_3" }
-        ?.toTarotCostLabelOrNull(freeLabel = ModuleCostLabel.FreeThisWeek)
-        ?.resolve(appStrings.economy)
+    val tarot1CostLabel = resolveEconomyGateLabel(
+        preview = economyState.modulePreviews.firstOrNull { it.module == "TAROT_1" },
+        economyStrings = appStrings.economy,
+        fallbackCost = 1,
+        freeLabelOverride = appStrings.economy.freeToday,
+    )
+    val tarot3CostLabel = resolveEconomyGateLabel(
+        preview = economyState.modulePreviews.firstOrNull { it.module == "TAROT_3" },
+        economyStrings = appStrings.economy,
+        fallbackCost = 3,
+        freeLabelOverride = appStrings.economy.freeThisWeek,
+    )
     val tarot1Preview = economyState.modulePreviews.firstOrNull { it.module == "TAROT_1" }
     val tarot3Preview = economyState.modulePreviews.firstOrNull { it.module == "TAROT_3" }
 
@@ -133,12 +134,5 @@ private fun TarotOptionCard(
                 )
             }
         }
-    }
-}
-
-private fun EconomyModulePreview.toTarotCostLabelOrNull(freeLabel: ModuleCostLabel): ModuleCostLabel? {
-    return when (nextSource) {
-        EconomyNextSource.FREE -> freeLabel
-        else -> toModuleCostUiStateOrNull()?.label
     }
 }

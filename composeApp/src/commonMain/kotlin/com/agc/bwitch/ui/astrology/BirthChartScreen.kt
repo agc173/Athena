@@ -46,9 +46,8 @@ import com.agc.bwitch.presentation.astrology.birthchart.BIRTH_CHART_SYNC_UPDATED
 import com.agc.bwitch.presentation.astrology.birthchart.BIRTH_CHART_SYNC_UP_TO_DATE_KEY
 import com.agc.bwitch.presentation.economy.EconomyViewModel
 import com.agc.bwitch.presentation.economy.runWithEconomyGate
-import com.agc.bwitch.presentation.economy.toModuleCostUiStateOrNull
 import com.agc.bwitch.ui.common.toVisualResource
-import com.agc.bwitch.ui.common.localization.resolve
+import com.agc.bwitch.ui.common.economy.EconomyGateInfoRow
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
 import com.agc.bwitch.ui.common.designsystem.BWitchPrimaryButton
 import com.agc.bwitch.ui.theme.BWitchThemeTokens
@@ -71,7 +70,6 @@ fun BirthChartScreen(
     val birthEssencePreview = economyState.modulePreviews.firstOrNull {
         it.module == "BIRTH_ESSENCE" || it.module == "NATAL_ESSENCE"
     }
-    val birthEssenceCostState = birthEssencePreview?.toModuleCostUiStateOrNull()
     val shareLauncher = rememberBirthEssenceShareLauncher(birthChartStrings)
     var shareError by remember { mutableStateOf<String?>(null) }
     var sharePreviewEssence by remember { mutableStateOf<BirthEssenceProfile?>(null) }
@@ -131,13 +129,11 @@ fun BirthChartScreen(
             onSelect = viewModel::onRisingSignChange,
         )
 
-        birthEssenceCostState?.let { costState ->
-            Text(
-                text = costState.label.resolve(appStrings.economy),
-                style = MaterialTheme.typography.bodySmall,
-                color = extras.textSecondary,
-            )
-        }
+        EconomyGateInfoRow(
+            preview = birthEssencePreview,
+            economyStrings = appStrings.economy,
+            fallbackCost = 5,
+        )
 
         BWitchPrimaryButton(
             onClick = {
@@ -145,6 +141,7 @@ fun BirthChartScreen(
                     preview = birthEssencePreview,
                     economyViewModel = economyViewModel,
                     source = "birth_essence",
+                    fallbackCost = 5,
                 ) {
                     viewModel.discoverEssence()
                 }

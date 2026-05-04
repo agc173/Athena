@@ -20,10 +20,7 @@ fun EconomyModulePreview?.toMoonGateDecision(
             !preview.canExecute
     if (!isInsufficientMoonsGate) return null
 
-    val requiredMoons = preview.cost
-        .takeIf { it > 0 }
-        ?: fallbackCost
-        ?: return null
+    val requiredMoons = resolveEconomyGateFallbackCost(preview, fallbackCost) ?: return null
 
     return EconomyGateDecision(
         shouldOpenPaywall = true,
@@ -54,4 +51,9 @@ fun runWithEconomyGate(
     }
 
     action()
+}
+
+fun resolveEconomyGateFallbackCost(preview: EconomyModulePreview?, fallbackCost: Int? = null): Int? {
+    val currentPreview = preview ?: return fallbackCost
+    return currentPreview.cost.takeIf { it > 0 } ?: fallbackCost
 }
