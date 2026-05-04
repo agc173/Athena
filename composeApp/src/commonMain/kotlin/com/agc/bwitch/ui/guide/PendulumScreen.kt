@@ -56,7 +56,6 @@ import com.agc.bwitch.presentation.pendulum.PendulumPhase
 import com.agc.bwitch.presentation.pendulum.PendulumViewModel
 import com.agc.bwitch.presentation.economy.EconomyViewModel
 import com.agc.bwitch.presentation.economy.runWithEconomyGate
-import com.agc.bwitch.presentation.economy.toModuleCostUiStateOrNull
 import kotlin.math.PI
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -66,7 +65,7 @@ import kotlin.math.roundToInt
 import kotlin.math.sin
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
-import com.agc.bwitch.ui.common.localization.resolve
+import com.agc.bwitch.ui.common.economy.EconomyGateInfoRow
 
 @Composable
 fun PendulumScreen(
@@ -78,7 +77,6 @@ fun PendulumScreen(
     val orbitProgress = remember { Animatable(0f) }
     val economyState by economyViewModel.uiState.collectAsState()
     val pendulumPreview = economyState.modulePreviews.firstOrNull { it.module == "PENDULUM" }
-    val pendulumCostState = pendulumPreview?.toModuleCostUiStateOrNull()
     val colors = MaterialTheme.colorScheme
     LaunchedEffect(state.phase, state.selectedAnswer) {
         when (state.phase) {
@@ -140,12 +138,12 @@ fun PendulumScreen(
             enabled = !isAnimating,
         )
 
-        pendulumCostState?.let {
-            val label = if (pendulumPreview?.nextSource == com.agc.bwitch.domain.economy.EconomyNextSource.MOON || pendulumPreview?.reasonIfRejected.equals("insufficient_moons", true)) {
-                appStrings.economy.pendulumMoonPackCostFormat.replaceFirst("%d", (pendulumPreview?.cost ?: 1).toString()).replaceFirst("%d", (pendulumPreview?.moonPackUsesPerMoon ?: 10).toString())
-            } else it.label.resolve(appStrings.economy)
-            Text(text = label, style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
-        }
+        EconomyGateInfoRow(
+            preview = pendulumPreview,
+            economyStrings = appStrings.economy,
+            fallbackCost = 1,
+            packUsesLabel = appStrings.economy.pendulumMoonPackCostFormat,
+        )
 
         PendulumBoard(
             modifier = Modifier
@@ -157,8 +155,7 @@ fun PendulumScreen(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
                 ) {
-                    val shouldGate = pendulumPreview?.reasonIfRejected.equals("insufficient_moons", true) || state.error == "insufficient_moons"
-                    if (shouldGate) runWithEconomyGate(pendulumPreview, economyViewModel, "pendulum", 1) { viewModel.startSwing() } else viewModel.startSwing()
+                    runWithEconomyGate(pendulumPreview, economyViewModel, "pendulum", 1) { viewModel.startSwing() }
                 },
             phase = state.phase,
             selectedAnswer = state.selectedAnswer,

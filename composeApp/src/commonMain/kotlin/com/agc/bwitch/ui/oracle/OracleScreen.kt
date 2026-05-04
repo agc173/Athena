@@ -27,8 +27,7 @@ import com.agc.bwitch.presentation.oracle.OracleAskMessageId
 import com.agc.bwitch.presentation.oracle.OracleAskViewModel
 import com.agc.bwitch.presentation.economy.EconomyViewModel
 import com.agc.bwitch.presentation.economy.runWithEconomyGate
-import com.agc.bwitch.presentation.economy.toModuleCostUiStateOrNull
-import com.agc.bwitch.ui.common.localization.resolve
+import com.agc.bwitch.ui.common.economy.EconomyGateInfoRow
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
 import com.agc.bwitch.ui.common.designsystem.BWitchPrimaryButton
 import com.agc.bwitch.ui.common.designsystem.BWitchSecondaryButton
@@ -52,7 +51,6 @@ fun OracleScreen(
     val economyState by economyViewModel.uiState.collectAsState()
     val oraclePreview = economyState.modulePreviews
         .firstOrNull { it.module == "ORACLE_1Q" }
-    val oracleCostState = oraclePreview?.toModuleCostUiStateOrNull()
 
     LaunchedEffect(state.answer?.coreGuidance) {
         if (state.answer != null) {
@@ -92,13 +90,11 @@ fun OracleScreen(
             minLines = 3,
         )
 
-        oracleCostState?.let { costState ->
-            Text(
-                text = costState.label.resolve(appStrings.economy),
-                style = MaterialTheme.typography.bodySmall,
-                color = colors.onSurfaceVariant,
-            )
-        }
+        EconomyGateInfoRow(
+            preview = oraclePreview,
+            economyStrings = appStrings.economy,
+            fallbackCost = 3,
+        )
 
         BWitchPrimaryButton(
             onClick = {
