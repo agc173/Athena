@@ -1,9 +1,7 @@
 package com.agc.bwitch.ui.common
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -57,16 +55,11 @@ fun AppScaffold(
         topBar = {
             TopAppBar(
                 title = {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        Text(
-                            text = title,
-                            style = topBarTitleStyle,
-                            modifier = Modifier.padding(start = dimens.topBarTitleStartPadding),
-                        )
-                        topBarBadge?.invoke()
-                    }
+                    Text(
+                        text = title,
+                        style = topBarTitleStyle,
+                        modifier = Modifier.padding(start = dimens.topBarTitleStartPadding),
+                    )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = extras.topBarContainer,
@@ -95,7 +88,10 @@ fun AppScaffold(
                         }
                     }
                 },
-                actions = actions,
+                actions = {
+                    topBarBadge?.invoke()
+                    actions()
+                },
             )
             HorizontalDivider(color = extras.topBarDivider.copy(alpha = 0.4f), thickness = 1.dp)
         },
