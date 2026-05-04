@@ -20,10 +20,8 @@ module.exports = [
     'plugin:import/errors',
     'plugin:import/warnings',
     'plugin:import/typescript',
-    'google',
     'plugin:@typescript-eslint/recommended',
   ),
-
   {
     files: ['eslint.config.js'],
     languageOptions: {
@@ -67,7 +65,6 @@ module.exports = [
     rules: {
       'import/no-unresolved': 'off',
       'require-jsdoc': 'off',
-      'valid-jsdoc': 'off',
       'max-len': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-non-null-assertion': 'off',
