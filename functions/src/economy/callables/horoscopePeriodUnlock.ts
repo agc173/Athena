@@ -1,6 +1,6 @@
 import {Timestamp, getFirestore} from 'firebase-admin/firestore';
 import {HttpsError} from 'firebase-functions/v2/https';
-import {logger} from 'firebase-functions';
+import * as logger from 'firebase-functions/logger';
 import {type ZodiacSign} from '../../firestore/paths';
 import {
   dateIsoMadrid,
