@@ -13,6 +13,7 @@ import com.agc.bwitch.domain.economy.EconomyStatus
 import com.agc.bwitch.domain.economy.EconomyNextSource
 import com.agc.bwitch.domain.economy.EconomyModulePreview
 import com.agc.bwitch.domain.economy.SynastryAuthorizationResult
+import com.agc.bwitch.domain.economy.PendulumAuthorizationResult
 
 class EconomyRepositoryImpl(
     private val remoteDataSource: EconomyRemoteDataSource,
@@ -61,6 +62,10 @@ class EconomyRepositoryImpl(
         languageCode: String?,
     ): SynastryAuthorizationResult {
         return remoteDataSource.authorizeSynastry(requestId, languageCode).toDomain()
+    }
+
+    override suspend fun authorizePendulum(requestId: String, languageCode: String?): PendulumAuthorizationResult {
+        return remoteDataSource.authorizePendulum(requestId, languageCode).toDomain()
     }
 }
 
@@ -140,4 +145,9 @@ private fun com.agc.bwitch.data.remote.economy.SynastryAuthorizeResponseDto.toDo
         source = source,
         moonCost = moonCost,
     )
+}
+
+
+private fun com.agc.bwitch.data.remote.economy.PendulumAuthorizeResponseDto.toDomain(): PendulumAuthorizationResult {
+    return PendulumAuthorizationResult(authorized = authorized, economyDisabled = economyDisabled, status = status, source = source, moonCost = moonCost)
 }

@@ -417,6 +417,7 @@ data class EconomyStrings(
     val notEnoughMoons: String,
     val dailyLimitReached: String,
     val synastryMoonPackCostFormat: String,
+    val pendulumMoonPackCostFormat: String,
 )
 
 data class OracleStrings(
@@ -899,6 +900,7 @@ val fallbackAppStrings: AppStrings = AppStrings(
         notEnoughMoons = "Faltan lunas",
         dailyLimitReached = "Límite diario alcanzado",
         synastryMoonPackCostFormat = "%d 🌙 / %d usos",
+        pendulumMoonPackCostFormat = "%d 🌙 / %d usos",
     ),
     oracle = OracleStrings(
         headerTitle = "Consulta intuitiva",
@@ -1371,6 +1373,7 @@ private val englishAppStrings = fallbackAppStrings.copy(
         notEnoughMoons = "Not enough moons",
         dailyLimitReached = "Daily limit reached",
         synastryMoonPackCostFormat = "%d 🌙 / %d uses",
+        pendulumMoonPackCostFormat = "%d 🌙 / %d uses",
     ),
     oracle = fallbackAppStrings.oracle.copy(
         headerTitle = "Intuitive consultation",

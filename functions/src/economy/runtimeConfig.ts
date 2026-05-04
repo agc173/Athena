@@ -5,6 +5,7 @@ export type EconomyRuntimeConfig = {
   oracleEconomyV2Enabled: boolean;
   birthEssenceEconomyV2Enabled: boolean;
   synastryEconomyV2Enabled: boolean;
+  pendulumEconomyV2Enabled: boolean;
 };
 
 const DEFAULT_CONFIG: EconomyRuntimeConfig = {
@@ -12,6 +13,7 @@ const DEFAULT_CONFIG: EconomyRuntimeConfig = {
   oracleEconomyV2Enabled: false,
   birthEssenceEconomyV2Enabled: false,
   synastryEconomyV2Enabled: false,
+  pendulumEconomyV2Enabled: false,
 };
 
 const CONFIG_DOC_PATH = 'config/economy';
@@ -51,6 +53,10 @@ export function parseEconomyRuntimeConfig(raw: Record<string, unknown>): Economy
     synastryEconomyV2Enabled: normalizeBoolean(
         raw.synastryEconomyV2Enabled,
         DEFAULT_CONFIG.synastryEconomyV2Enabled
+    ),
+    pendulumEconomyV2Enabled: normalizeBoolean(
+        raw.pendulumEconomyV2Enabled,
+        DEFAULT_CONFIG.pendulumEconomyV2Enabled
     ),
   };
 }
@@ -105,4 +111,9 @@ export async function isEconomyV2Enabled(module: 'tarot' | 'oracle' | 'birth-ess
 
 export async function isSynastryEconomyV2Enabled(): Promise<boolean> {
   return (await getEconomyRuntimeConfig()).synastryEconomyV2Enabled;
+}
+
+
+export async function isPendulumEconomyV2Enabled(): Promise<boolean> {
+  return (await getEconomyRuntimeConfig()).pendulumEconomyV2Enabled;
 }

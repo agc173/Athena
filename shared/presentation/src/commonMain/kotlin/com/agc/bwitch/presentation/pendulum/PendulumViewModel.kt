@@ -1,58 +1,55 @@
 package com.agc.bwitch.presentation.pendulum
 
+import com.agc.bwitch.domain.economy.EconomyRepository
 import com.agc.bwitch.domain.pendulum.PendulumAnswer
 import kotlin.random.Random
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
-class PendulumViewModel {
+class PendulumViewModel(
+    private val economyRepository: EconomyRepository,
+    dispatcher: CoroutineDispatcher = Dispatchers.Main,
+) {
+    private val scope = CoroutineScope(SupervisorJob() + dispatcher)
     private val _uiState = MutableStateFlow(PendulumUiState())
     val uiState: StateFlow<PendulumUiState> = _uiState.asStateFlow()
 
-    fun onQuestionChange(value: String) {
-        _uiState.update { it.copy(question = value) }
-    }
+    fun onQuestionChange(value: String) { _uiState.update { it.copy(question = value, error = null) } }
 
     fun startSwing() {
         if (_uiState.value.phase == PendulumPhase.ANIMATING) return
-
-        val selectedAnswer = randomAnswer()
-        _uiState.update { current ->
-            val resetQuestion = if (current.phase == PendulumPhase.RESULT) "" else current.question
-            current.copy(
-                question = resetQuestion,
-                phase = PendulumPhase.ANIMATING,
-                selectedAnswer = selectedAnswer,
-            )
+        val questionSnapshot = _uiState.value.question
+        scope.launch {
+            val auth = runCatching { economyRepository.authorizePendulum(generateRequestId(), null) }
+            val authorized = auth.getOrNull()?.authorized == true
+            if (!authorized) {
+                val normalized = (auth.exceptionOrNull()?.message ?: auth.getOrNull()?.status.orEmpty()).lowercase()
+                _uiState.update { it.copy(error = when {
+                    normalized.contains("daily_limit") || normalized.contains("pendulum_daily_limit_reached") -> "daily_limit"
+                    normalized.contains("insufficient_moons") || normalized.contains("insufficient_moon_balance") || normalized.contains("moon") -> "insufficient_moons"
+                    else -> "insufficient_moons"
+                }) }
+                return@launch
+            }
+            val selectedAnswer = randomAnswer()
+            _uiState.update { current ->
+                val resetQuestion = if (current.phase == PendulumPhase.RESULT) "" else questionSnapshot
+                current.copy(question = resetQuestion, phase = PendulumPhase.ANIMATING, selectedAnswer = selectedAnswer, error = null)
+            }
         }
     }
 
-    fun onSwingFinished() {
-        _uiState.update { current ->
-            if (current.phase != PendulumPhase.ANIMATING) return@update current
-            current.copy(phase = PendulumPhase.RESULT)
-        }
-    }
-
-    fun reset() {
-        _uiState.update {
-            PendulumUiState(
-                question = "",
-                phase = PendulumPhase.IDLE,
-                selectedAnswer = null,
-            )
-        }
-    }
-
-    private fun randomAnswer(): PendulumAnswer {
-        val value = Random.nextInt(100)
-        return when {
-            value < 35 -> PendulumAnswer.YES
-            value < 70 -> PendulumAnswer.NO
-            value < 85 -> PendulumAnswer.MAYBE
-            else -> PendulumAnswer.NOT_NOW
-        }
-    }
+    fun onSwingFinished() { _uiState.update { if (it.phase != PendulumPhase.ANIMATING) it else it.copy(phase = PendulumPhase.RESULT) } }
+    fun reset() { _uiState.update { PendulumUiState() } }
+    private fun randomAnswer(): PendulumAnswer { val value = Random.nextInt(100); return when { value < 35 -> PendulumAnswer.YES; value < 70 -> PendulumAnswer.NO; value < 85 -> PendulumAnswer.MAYBE; else -> PendulumAnswer.NOT_NOW } }
+    @OptIn(ExperimentalUuidApi::class) private fun generateRequestId(): String = Uuid.random().toString()
 }

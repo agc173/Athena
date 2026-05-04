@@ -214,6 +214,21 @@ class EconomyRemoteDataSource(
         }
     }
 
+
+    suspend fun authorizePendulum(requestId: String, languageCode: String?): PendulumAuthorizeResponseDto {
+        return when (
+            val result = functionsClient.call(
+                name = PENDULUM_AUTHORIZE_CALLABLE,
+                data = PendulumAuthorizeRequestDto(requestId = requestId, languageCode = languageCode),
+                requestSerializer = PendulumAuthorizeRequestDto.serializer(),
+                responseSerializer = PendulumAuthorizeResponseDto.serializer(),
+            )
+        ) {
+            is ApiResult.Ok -> result.value
+            is ApiResult.Err -> throw result.error.toException()
+        }
+    }
+
     private companion object {
         const val GET_ECONOMY_BALANCE_CALLABLE = "getEconomyBalance"
         const val GET_ECONOMY_STATUS_CALLABLE = "getEconomyStatus"
@@ -227,6 +242,7 @@ class EconomyRemoteDataSource(
         const val GET_HOROSCOPE_MONTHLY_UNLOCKS_CALLABLE = "getHoroscopeMonthlyUnlocks"
         const val GET_ECONOMY_MODULE_PREVIEWS_CALLABLE = "getEconomyModulePreviews"
         const val SYNASTRY_AUTHORIZE_CALLABLE = "synastryAuthorize"
+        const val PENDULUM_AUTHORIZE_CALLABLE = "pendulumAuthorize"
     }
 }
 
