@@ -34,6 +34,7 @@ module.exports = [
     rules: {
       'no-undef': 'off',
       '@typescript-eslint/no-var-requires': 'off',
+      '@typescript-eslint/no-require-imports': 'off',
       indent: 'off',
       'quote-props': 'off',
     },
