@@ -85,11 +85,6 @@ fun TarotHomeScreen(
             },
         )
 
-        Text(
-            text = appStrings.profile.moonCreditsValueFormat.replaceFirst("%d", "${state.moonBalance}"),
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.primary,
-        )
     }
 }
 
@@ -142,21 +137,8 @@ private fun TarotOptionCard(
 }
 
 private fun EconomyModulePreview.toTarotCostLabelOrNull(freeLabel: ModuleCostLabel): ModuleCostLabel? {
-    val fallbackCost = when (module) {
-        "TAROT_1" -> 1
-        "TAROT_3" -> 3
-        else -> 0
-    }
-    val resolvedCost = if (cost > 0) cost else fallbackCost
     return when (nextSource) {
         EconomyNextSource.FREE -> freeLabel
-        EconomyNextSource.REJECTED -> {
-            if (reasonIfRejected.equals("insufficient_moons", ignoreCase = true)) {
-                if (resolvedCost > 0) ModuleCostLabel.MoonCost(resolvedCost) else null
-            } else {
-                toModuleCostUiStateOrNull()?.label
-            }
-        }
         else -> toModuleCostUiStateOrNull()?.label
     }
 }

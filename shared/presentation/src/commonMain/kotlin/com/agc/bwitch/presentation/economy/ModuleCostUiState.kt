@@ -19,10 +19,14 @@ fun EconomyModulePreview.toModuleCostUiStateOrNull(): ModuleCostUiState? {
     return when (nextSource) {
         EconomyNextSource.FREE -> ModuleCostUiState(label = ModuleCostLabel.FreeToday)
         EconomyNextSource.PREMIUM -> ModuleCostUiState(label = ModuleCostLabel.IncludedWithPremium)
-        EconomyNextSource.MOON -> ModuleCostUiState(label = ModuleCostLabel.MoonCost(cost.coerceAtLeast(0)))
+        EconomyNextSource.MOON -> if (cost > 0) {
+            ModuleCostUiState(label = ModuleCostLabel.MoonCost(cost))
+        } else {
+            null
+        }
         EconomyNextSource.REJECTED -> {
-            if (reasonIfRejected.equals("insufficient_moons", ignoreCase = true)) {
-                ModuleCostUiState(label = ModuleCostLabel.NotEnoughMoons)
+            if (reasonIfRejected.equals("insufficient_moons", ignoreCase = true) && cost > 0) {
+                ModuleCostUiState(label = ModuleCostLabel.MoonCost(cost))
             } else {
                 null
             }
