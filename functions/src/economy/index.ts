@@ -14,6 +14,7 @@ export * from './runtimeConfig';
 export * from './tarotEconomy';
 export * from './oracleEconomy';
 export * from './birthEssenceEconomy';
+export * from './synastryEconomy';
 
 export * from './callables/unlockHoroscopeDay';
 export * from './callables/unlockHoroscopeWeekly';

@@ -106,6 +106,8 @@ private fun EconomyModulePreviewDto.toEconomyModulePreview(): EconomyModulePrevi
         freeRemaining = freeRemaining,
         premiumRemaining = premiumRemaining,
         moonRemaining = moonRemaining,
+        moonPackUsesPerMoon = moonPackUsesPerMoon,
+        dailyCap = dailyCap,
     )
 }
 

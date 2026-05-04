@@ -39,7 +39,8 @@ export type EconomyLedgerEntryDoc = {
   | 'REFUND'
   | 'HOROSCOPE_FUTURE_DAY_MOON_SPEND'
   | 'HOROSCOPE_WEEKLY_MOON_SPEND'
-  | 'HOROSCOPE_MONTHLY_MOON_SPEND';
+  | 'HOROSCOPE_MONTHLY_MOON_SPEND'
+  | 'SYNASTRY_MOON_SPEND';
   amount: number;
   createdAt: Timestamp;
   requestId: string;
@@ -69,6 +70,7 @@ export type EconomyRequestType =
   | 'TAROT_3'
   | 'ORACLE_1Q'
   | 'BIRTH_ESSENCE'
+  | 'SYNASTRY'
   | 'HOROSCOPE_UNLOCK_DAY'
   | 'HOROSCOPE_UNLOCK_WEEKLY'
   | 'HOROSCOPE_UNLOCK_MONTHLY';
@@ -129,7 +131,8 @@ export type EconomyDailyUsageDoc = {
   birthEssenceTotalUsed?: number;
 
   synastryFreeUsed?: number;
-  synastryMoonPacksUsed?: number;
+  synastryMoonPacksPurchased?: number;
+  synastryMoonUsesUsed?: number;
   synastryPremiumUsed?: number;
 
   pendulumFreeUsed?: number;
