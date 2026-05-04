@@ -58,6 +58,7 @@ import com.agc.bwitch.domain.tarot.TarotRequestType
 import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.presentation.tarot.TarotRevealPhase
 import com.agc.bwitch.presentation.tarot.TarotViewModel
+import com.agc.bwitch.presentation.economy.EconomyViewModel
 import com.agc.bwitch.ui.tarot.components.TarotCardView
 import com.agc.bwitch.ui.tarot.components.TarotLoadingDeck
 import com.agc.bwitch.ui.tarot.components.TarotMiniCard
@@ -71,6 +72,7 @@ fun TarotScreen(
     initialRequestType: TarotRequestType? = null,
     modifier: Modifier = Modifier,
     viewModel: TarotViewModel = koinInject(),
+    economyViewModel: EconomyViewModel = koinInject(),
     tarotSoundPlayer: TarotSoundPlayer = koinInject(),
     tarotHaptics: TarotHaptics = koinInject(),
 ) {
@@ -79,6 +81,12 @@ fun TarotScreen(
 
     LaunchedEffect(initialRequestType) {
         initialRequestType?.let { viewModel.newRequest(it) }
+    }
+
+    LaunchedEffect(state.isLoading, state.response, state.error, state.insufficientMoonsMessage) {
+        if (!state.isLoading && (state.response != null || state.error != null || state.insufficientMoonsMessage != null)) {
+            economyViewModel.loadEconomy()
+        }
     }
 
     Box {

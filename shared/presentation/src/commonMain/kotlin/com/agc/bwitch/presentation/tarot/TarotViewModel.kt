@@ -402,7 +402,7 @@ class TarotViewModel(
                         }
                     }
 
-                    val economyError = type == TarotRequestType.TAROT_3 && result.error.isEconomyRestriction()
+                    val economyError = result.error.isEconomyRestriction()
                     _uiState.update {
                         it.copy(
                             isLoading = false,
@@ -427,9 +427,7 @@ class TarotViewModel(
                             },
                         )
                     }
-                    if (type == TarotRequestType.TAROT_3) {
-                        refreshMoonBalanceFromBackend()
-                    }
+                    refreshMoonBalanceFromBackend()
                 }
             }
         }
