@@ -92,10 +92,21 @@ fun TarotHomeScreen(
     }
 }
 
-private fun EconomyModulePreview.requiresMoonPaywallGate(): Boolean {
+private fun EconomyModulePreview.requiresMoonPaywallGate(requiredCost: Int): Boolean {
     return nextSource == EconomyNextSource.REJECTED &&
         reasonIfRejected.equals("insufficient_moons", ignoreCase = true) &&
-        !canExecute
+        !canExecute &&
+        requiredCost > 0
+}
+
+private fun fallbackTarotMoonCost(type: TarotRequestType): Int = when (type) {
+    TarotRequestType.TAROT_1 -> 1
+    TarotRequestType.TAROT_3 -> 3
+}
+
+private fun resolveRequiredMoonCost(type: TarotRequestType, preview: EconomyModulePreview?): Int {
+    val previewCost = preview?.cost ?: 0
+    return if (previewCost > 0) previewCost else fallbackTarotMoonCost(type)
 }
 
 private fun handleTarotSelection(
@@ -104,14 +115,15 @@ private fun handleTarotSelection(
     economyViewModel: EconomyViewModel,
     onSelectRequestType: (TarotRequestType) -> Unit,
 ) {
-    val shouldGateWithPaywall = preview?.requiresMoonPaywallGate() == true
+    val requiredCost = resolveRequiredMoonCost(type, preview)
+    val shouldGateWithPaywall = preview?.requiresMoonPaywallGate(requiredCost) == true
     if (!shouldGateWithPaywall) {
         onSelectRequestType(type)
         return
     }
 
     economyViewModel.requireLunas(
-        cost = preview.cost,
+        cost = requiredCost,
         source = when (type) {
             TarotRequestType.TAROT_1 -> "tarot_single_card"
             TarotRequestType.TAROT_3 -> "tarot_extra_reading"
@@ -147,11 +159,17 @@ private fun TarotOptionCard(
 }
 
 private fun EconomyModulePreview.toTarotCostLabelOrNull(freeLabel: ModuleCostLabel): ModuleCostLabel? {
+    val fallbackCost = when (module) {
+        "TAROT_1" -> 1
+        "TAROT_3" -> 3
+        else -> 0
+    }
+    val resolvedCost = if (cost > 0) cost else fallbackCost
     return when (nextSource) {
         EconomyNextSource.FREE -> freeLabel
         EconomyNextSource.REJECTED -> {
             if (reasonIfRejected.equals("insufficient_moons", ignoreCase = true)) {
-                ModuleCostLabel.MoonCost(cost.coerceAtLeast(0))
+                if (resolvedCost > 0) ModuleCostLabel.MoonCost(resolvedCost) else null
             } else {
                 toModuleCostUiStateOrNull()?.label
             }

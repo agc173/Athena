@@ -170,10 +170,12 @@ export async function getEconomyModulePreviewsCore(uid: string, modulesInput?: u
         dailyUsage: daily,
         weeklyUsage: weekly,
       });
+      const ruleCost = getEconomyModuleRule(module).moonCostPerUse ?? 0;
+      const isInsufficientMoonsReject = decision.source === 'REJECT' && decision.reason === 'INSUFFICIENT_MOON_BALANCE';
       return {
         module,
         nextSource: toNextSource(decision.source),
-        cost: decision.source === 'MOON' ? decision.moonCost : 0,
+        cost: decision.source === 'MOON' ? decision.moonCost : (isInsufficientMoonsReject ? ruleCost : 0),
         balance,
         canExecute: decision.source !== 'REJECT',
         reasonIfRejected: normalizeReason(decision.reason),
