@@ -41,6 +41,18 @@ type TarotDecision = {
   usageApplied: UsageApplied;
 };
 
+function stripUndefinedDeep<T>(value: T): T {
+  if (Array.isArray(value)) return value.map((item) => stripUndefinedDeep(item)) as T;
+  if (value && typeof value === 'object') {
+    const out: Record<string, unknown> = {};
+    for (const [key, nested] of Object.entries(value as Record<string, unknown>)) {
+      if (nested !== undefined) out[key] = stripUndefinedDeep(nested);
+    }
+    return out as T;
+  }
+  return value;
+}
+
 export type TarotEconomyReservationResult =
   | {type: 'completed'; payload: unknown}
   | {type: 'in-progress'}
@@ -239,7 +251,7 @@ export async function reserveTarotEconomyAccess(params: {
       }, {merge: true});
     }
 
-    const requestDoc: EconomyRequestDoc = {
+    const requestDoc = stripUndefinedDeep<EconomyRequestDoc>({
       requestId: params.requestId,
       type: requestType,
       result: 'RESERVED',
@@ -253,7 +265,7 @@ export async function reserveTarotEconomyAccess(params: {
       question: params.question,
       createdAt: now,
       updatedAt: now,
-    };
+    });
 
     tx.create(reqRef, requestDoc);
 
