@@ -200,6 +200,20 @@ class EconomyRemoteDataSource(
         }
     }
 
+    suspend fun authorizeSynastry(requestId: String, languageCode: String?): SynastryAuthorizeResponseDto {
+        return when (
+            val result = functionsClient.call(
+                name = SYNASTRY_AUTHORIZE_CALLABLE,
+                data = SynastryAuthorizeRequestDto(requestId = requestId, languageCode = languageCode),
+                requestSerializer = SynastryAuthorizeRequestDto.serializer(),
+                responseSerializer = SynastryAuthorizeResponseDto.serializer(),
+            )
+        ) {
+            is ApiResult.Ok -> result.value
+            is ApiResult.Err -> throw result.error.toException()
+        }
+    }
+
     private companion object {
         const val GET_ECONOMY_BALANCE_CALLABLE = "getEconomyBalance"
         const val GET_ECONOMY_STATUS_CALLABLE = "getEconomyStatus"
@@ -212,6 +226,7 @@ class EconomyRemoteDataSource(
         const val UNLOCK_HOROSCOPE_MONTHLY_CALLABLE = "unlockHoroscopeMonthly"
         const val GET_HOROSCOPE_MONTHLY_UNLOCKS_CALLABLE = "getHoroscopeMonthlyUnlocks"
         const val GET_ECONOMY_MODULE_PREVIEWS_CALLABLE = "getEconomyModulePreviews"
+        const val SYNASTRY_AUTHORIZE_CALLABLE = "synastryAuthorize"
     }
 }
 

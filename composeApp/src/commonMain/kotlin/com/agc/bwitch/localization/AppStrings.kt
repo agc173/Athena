@@ -415,6 +415,8 @@ data class EconomyStrings(
     val includedWithPremium: String,
     val moonCostFormat: String,
     val notEnoughMoons: String,
+    val dailyLimitReached: String,
+    val synastryMoonPackCostFormat: String,
 )
 
 data class OracleStrings(
@@ -895,6 +897,8 @@ val fallbackAppStrings: AppStrings = AppStrings(
         includedWithPremium = "Incluido con Premium",
         moonCostFormat = "%d 🌙",
         notEnoughMoons = "Faltan lunas",
+        dailyLimitReached = "Límite diario alcanzado",
+        synastryMoonPackCostFormat = "%d 🌙 / %d usos",
     ),
     oracle = OracleStrings(
         headerTitle = "Consulta intuitiva",
@@ -1365,6 +1369,8 @@ private val englishAppStrings = fallbackAppStrings.copy(
         includedWithPremium = "Included with Premium",
         moonCostFormat = "%d 🌙",
         notEnoughMoons = "Not enough moons",
+        dailyLimitReached = "Daily limit reached",
+        synastryMoonPackCostFormat = "%d 🌙 / %d uses",
     ),
     oracle = fallbackAppStrings.oracle.copy(
         headerTitle = "Intuitive consultation",

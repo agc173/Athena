@@ -10,4 +10,13 @@ interface EconomyRepository {
         placement: String?,
     ): EconomyClaimResult
     suspend fun getModulePreviews(modules: List<String>): List<EconomyModulePreview>
+    suspend fun authorizeSynastry(requestId: String, languageCode: String?): SynastryAuthorizationResult
 }
+
+data class SynastryAuthorizationResult(
+    val authorized: Boolean,
+    val economyDisabled: Boolean = false,
+    val status: String? = null,
+    val source: String? = null,
+    val moonCost: Int = 0,
+)

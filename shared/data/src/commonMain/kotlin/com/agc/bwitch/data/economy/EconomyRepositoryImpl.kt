@@ -12,6 +12,7 @@ import com.agc.bwitch.domain.economy.EconomyRepository
 import com.agc.bwitch.domain.economy.EconomyStatus
 import com.agc.bwitch.domain.economy.EconomyNextSource
 import com.agc.bwitch.domain.economy.EconomyModulePreview
+import com.agc.bwitch.domain.economy.SynastryAuthorizationResult
 
 class EconomyRepositoryImpl(
     private val remoteDataSource: EconomyRemoteDataSource,
@@ -53,6 +54,13 @@ class EconomyRepositoryImpl(
         return remoteDataSource
             .getModulePreviews(modules)
             .map { it.toEconomyModulePreview() }
+    }
+
+    override suspend fun authorizeSynastry(
+        requestId: String,
+        languageCode: String?,
+    ): SynastryAuthorizationResult {
+        return remoteDataSource.authorizeSynastry(requestId, languageCode).toDomain()
     }
 }
 
@@ -122,4 +130,14 @@ private fun String.toEconomyNextSource(): EconomyNextSource {
         "RULE_CONFIGURED_NOT_WIRED" -> EconomyNextSource.RULE_CONFIGURED_NOT_WIRED
         else -> EconomyNextSource.UNKNOWN
     }
+}
+
+private fun com.agc.bwitch.data.remote.economy.SynastryAuthorizeResponseDto.toDomain(): SynastryAuthorizationResult {
+    return SynastryAuthorizationResult(
+        authorized = authorized,
+        economyDisabled = economyDisabled,
+        status = status,
+        source = source,
+        moonCost = moonCost,
+    )
 }

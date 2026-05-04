@@ -48,7 +48,7 @@ val presentationModule: Module = module {
      */
     factory { BirthChartViewModel(get(), get(), get(), get(), get(), get(), get()) }
 
-    factory { SynastryViewModel(get(), get(), get()) }
+    factory { SynastryViewModel(get(), get(), get(), get()) }
 
     factory { UserProfileViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     factory { SettingsViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
