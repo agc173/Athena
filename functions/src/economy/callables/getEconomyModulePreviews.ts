@@ -47,6 +47,8 @@ export type EconomyModulePreview = {
   freeRemaining?: number;
   premiumRemaining?: number;
   moonRemaining?: number;
+  moonPackUsesPerMoon?: number;
+  dailyCap?: number;
 };
 
 type GetEconomyModulePreviewsData = { modules?: unknown };
@@ -88,6 +90,7 @@ function normalizeRequestedModules(input: unknown): EconomyModule[] {
 function normalizeReason(reason: string | undefined): string | undefined {
   if (!reason) return undefined;
   if (reason === 'INSUFFICIENT_MOON_BALANCE') return 'insufficient_moons';
+  if (reason === 'SYNASTRY_DAILY_LIMIT_REACHED') return 'daily_limit';
   if (reason === 'MODULE_NOT_CONFIGURED') return 'module_not_configured';
   if (reason === 'RULE_CONFIGURED_NOT_WIRED') return 'rule_configured_not_wired';
   return reason.toLowerCase();
@@ -202,6 +205,11 @@ export async function getEconomyModulePreviewsCore(uid: string, modulesInput?: u
 
     if (module === 'SYNASTRY' || module === 'PENDULUM') {
       const rule = getEconomyModuleRule(module);
+      const freeUsed = module === 'SYNASTRY'
+        ? intValue(daily.synastryFreeUsed)
+        : intValue(daily.pendulumFreeUsed);
+      const freeDaily = intValue(rule.freeDaily);
+      const freeRemaining = Math.max(0, freeDaily - freeUsed);
       return {
         module,
         nextSource: 'RULE_CONFIGURED_NOT_WIRED',
@@ -210,6 +218,9 @@ export async function getEconomyModulePreviewsCore(uid: string, modulesInput?: u
         canExecute: false,
         uiHint: 'Rules configured in backend; runtime consumption wiring pending',
         reasonIfRejected: 'rule_configured_not_wired',
+        freeRemaining,
+        moonPackUsesPerMoon: rule.moonPackUsesPerMoon,
+        dailyCap: rule.maxTotalDaily,
       };
     }
 

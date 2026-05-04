@@ -139,6 +139,8 @@ data class EconomyModulePreviewDto(
     val freeRemaining: Int? = null,
     val premiumRemaining: Int? = null,
     val moonRemaining: Int? = null,
+    val moonPackUsesPerMoon: Int? = null,
+    val dailyCap: Int? = null,
 )
 
 @Serializable

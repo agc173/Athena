@@ -5,6 +5,7 @@ import {resolveHoroscopeUnlockDecision} from './horoscopeEconomy';
 import {resolveOracleDecision} from './oracleEconomy';
 import {REWARDED_AD_DAILY_MAX, REWARDED_AD_REWARD} from './rulesCatalog';
 import {resolveTarotDecision} from './tarotEconomy';
+import {resolveSynastryDecision} from './synastryEconomy';
 import {RequestType} from '../oracle/types';
 
 test('tarot resolver uses FREE first', () => {
@@ -188,4 +189,53 @@ test('oracle premium uses subscription before free quota', () => {
   });
 
   assert.equal(decision.source, 'PREMIUM_INCLUDED');
+});
+
+test('synastry free path while below freeDaily limit', () => {
+  const decision = resolveSynastryDecision({
+    isPremium: false,
+    balance: 0,
+    dailyUsage: {synastryFreeUsed: 0},
+  });
+  assert.equal(decision.source, 'FREE');
+});
+
+test('synastry buys pack after free exhausted when balance is enough', () => {
+  const decision = resolveSynastryDecision({
+    isPremium: false,
+    balance: 1,
+    dailyUsage: {synastryFreeUsed: 2, synastryMoonPacksPurchased: 0, synastryMoonUsesUsed: 0},
+  });
+  assert.equal(decision.source, 'MOON');
+  assert.equal(decision.moonCost, 1);
+});
+
+test('synastry consumes existing pack use without charging moon', () => {
+  const decision = resolveSynastryDecision({
+    isPremium: false,
+    balance: 0,
+    dailyUsage: {synastryFreeUsed: 2, synastryMoonPacksPurchased: 1, synastryMoonUsesUsed: 1},
+  });
+  assert.equal(decision.source, 'MOON');
+  assert.equal(decision.moonCost, 0);
+});
+
+test('synastry rejects insufficient moons when pack exhausted', () => {
+  const decision = resolveSynastryDecision({
+    isPremium: false,
+    balance: 0,
+    dailyUsage: {synastryFreeUsed: 2, synastryMoonPacksPurchased: 1, synastryMoonUsesUsed: 3},
+  });
+  assert.equal(decision.source, 'REJECT');
+  assert.equal(decision.reason, 'INSUFFICIENT_MOON_BALANCE');
+});
+
+test('synastry rejects on daily hard cap', () => {
+  const decision = resolveSynastryDecision({
+    isPremium: false,
+    balance: 10,
+    dailyUsage: {synastryFreeUsed: 2, synastryMoonUsesUsed: 28},
+  });
+  assert.equal(decision.source, 'REJECT');
+  assert.equal(decision.reason, 'SYNASTRY_DAILY_LIMIT_REACHED');
 });
