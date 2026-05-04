@@ -41,8 +41,8 @@ fun TarotHomeScreen(
         .firstOrNull { it.module == "TAROT_3" }
         ?.toTarotCostLabelOrNull(freeLabel = ModuleCostLabel.FreeThisWeek)
         ?.resolve(appStrings.economy)
-    val tarot3Preview = economyState.modulePreviews
-        .firstOrNull { it.module == "TAROT_3" }
+    val tarot1Preview = economyState.modulePreviews.firstOrNull { it.module == "TAROT_1" }
+    val tarot3Preview = economyState.modulePreviews.firstOrNull { it.module == "TAROT_3" }
 
     Column(
         modifier = Modifier
@@ -60,7 +60,14 @@ fun TarotHomeScreen(
             title = strings.homeSingleCardTitle,
             subtitle = strings.homeSingleCardSubtitle,
             costLabel = tarot1CostLabel,
-            onClick = { onSelectRequestType(TarotRequestType.TAROT_1) },
+            onClick = {
+                handleTarotSelection(
+                    type = TarotRequestType.TAROT_1,
+                    preview = tarot1Preview,
+                    economyViewModel = economyViewModel,
+                    onSelectRequestType = onSelectRequestType,
+                )
+            },
         )
 
         TarotOptionCard(
@@ -68,17 +75,12 @@ fun TarotHomeScreen(
             subtitle = "${strings.homeThreeCardSubtitle} · ${state.extraReadingCost} ${appStrings.profile.moonCreditsTitle}",
             costLabel = tarot3CostLabel,
             onClick = {
-                val shouldGateWithPaywall = tarot3Preview?.requiresMoonPaywallGate() == true
-                if (shouldGateWithPaywall) {
-                    economyViewModel.requireLunas(
-                        cost = tarot3Preview.cost,
-                        source = "tarot_extra_reading",
-                    ) { _ ->
-                        onSelectRequestType(TarotRequestType.TAROT_3)
-                    }
-                } else {
-                    onSelectRequestType(TarotRequestType.TAROT_3)
-                }
+                handleTarotSelection(
+                    type = TarotRequestType.TAROT_3,
+                    preview = tarot3Preview,
+                    economyViewModel = economyViewModel,
+                    onSelectRequestType = onSelectRequestType,
+                )
             },
         )
 
@@ -94,6 +96,29 @@ private fun EconomyModulePreview.requiresMoonPaywallGate(): Boolean {
     return nextSource == EconomyNextSource.REJECTED &&
         reasonIfRejected.equals("insufficient_moons", ignoreCase = true) &&
         !canExecute
+}
+
+private fun handleTarotSelection(
+    type: TarotRequestType,
+    preview: EconomyModulePreview?,
+    economyViewModel: EconomyViewModel,
+    onSelectRequestType: (TarotRequestType) -> Unit,
+) {
+    val shouldGateWithPaywall = preview?.requiresMoonPaywallGate() == true
+    if (!shouldGateWithPaywall) {
+        onSelectRequestType(type)
+        return
+    }
+
+    economyViewModel.requireLunas(
+        cost = preview.cost,
+        source = when (type) {
+            TarotRequestType.TAROT_1 -> "tarot_single_card"
+            TarotRequestType.TAROT_3 -> "tarot_extra_reading"
+        },
+    ) { _ ->
+        onSelectRequestType(type)
+    }
 }
 
 @Composable
@@ -124,6 +149,13 @@ private fun TarotOptionCard(
 private fun EconomyModulePreview.toTarotCostLabelOrNull(freeLabel: ModuleCostLabel): ModuleCostLabel? {
     return when (nextSource) {
         EconomyNextSource.FREE -> freeLabel
+        EconomyNextSource.REJECTED -> {
+            if (reasonIfRejected.equals("insufficient_moons", ignoreCase = true)) {
+                ModuleCostLabel.MoonCost(cost.coerceAtLeast(0))
+            } else {
+                toModuleCostUiStateOrNull()?.label
+            }
+        }
         else -> toModuleCostUiStateOrNull()?.label
     }
 }
