@@ -191,6 +191,17 @@ fun AppRoot() {
 
     AppScaffold(
         title = destinationTitle(dest, navigationStrings),
+        topBarBadge = if (dest.showsTopBarMoonBalance() && economyState.hasUsableSnapshot) {
+            {
+                Text(
+                    text = appStrings.economy.moonCostFormat.replace("%d", economyState.balance.toString()),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
+        } else {
+            null
+        },
         canGoBack = navigator.canGoBack(),
         onBack = { navigator.goBack() },
         actions = {
@@ -351,6 +362,20 @@ fun AppRoot() {
                 },
             )
         }
+    }
+}
+
+private fun Destination.showsTopBarMoonBalance(): Boolean {
+    return when (this) {
+        is Destination.HoroscopeDaily,
+        Destination.BirthChart,
+        Destination.Synastry,
+        Destination.TarotHome,
+        is Destination.Tarot,
+        Destination.Oracle,
+        Destination.Pendulum,
+        -> true
+        else -> false
     }
 }
 
