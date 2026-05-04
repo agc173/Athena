@@ -90,11 +90,13 @@ fun MoonPaywallDialog(
     )
 }
 
+@Composable
 private fun contextualPaywallTitle(source: String?, fallback: String): String = when (source?.lowercase()) {
     "synastry", "pendulum" -> appStrings.economy.paywallFreeUsedTitle
     else -> fallback
 }
 
+@Composable
 private fun contextualPaywallMessage(source: String?, requiredMoons: Int, fallbackFormat: String): String = when (source?.lowercase()) {
     "synastry" -> appStrings.economy.synastryPaywallFreeUsedMessage
         .replaceFirst("%d", "3")
