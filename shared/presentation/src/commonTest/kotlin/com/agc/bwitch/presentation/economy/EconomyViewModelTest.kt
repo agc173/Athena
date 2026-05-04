@@ -7,6 +7,7 @@ import com.agc.bwitch.domain.economy.EconomyClaimStatus
 import com.agc.bwitch.domain.economy.EconomyModulePreview
 import com.agc.bwitch.domain.economy.EconomyRepository
 import com.agc.bwitch.domain.economy.EconomyStatus
+import com.agc.bwitch.domain.economy.SynastryAuthorizationResult
 import com.agc.bwitch.presentation.analytics.FakeAnalyticsTracker
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -430,6 +431,13 @@ class EconomyViewModelTest {
         }
 
         override suspend fun getModulePreviews(modules: List<String>): List<EconomyModulePreview> = emptyList()
+
+        override suspend fun authorizeSynastry(
+            requestId: String,
+            languageCode: String?,
+        ): SynastryAuthorizationResult {
+            return SynastryAuthorizationResult(authorized = true, economyDisabled = true)
+        }
     }
 
     private class StableEconomyRepository : EconomyRepository {
@@ -464,5 +472,12 @@ class EconomyViewModelTest {
             )
 
         override suspend fun getModulePreviews(modules: List<String>): List<EconomyModulePreview> = emptyList()
+
+        override suspend fun authorizeSynastry(
+            requestId: String,
+            languageCode: String?,
+        ): SynastryAuthorizationResult {
+            return SynastryAuthorizationResult(authorized = true, economyDisabled = true)
+        }
     }
 }

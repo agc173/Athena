@@ -6,6 +6,7 @@ import com.agc.bwitch.domain.economy.EconomyClaimStatus
 import com.agc.bwitch.domain.economy.EconomyModulePreview
 import com.agc.bwitch.domain.economy.EconomyRepository
 import com.agc.bwitch.domain.economy.EconomyStatus
+import com.agc.bwitch.domain.economy.SynastryAuthorizationResult
 import com.agc.bwitch.domain.moons.MoonBalance
 import com.agc.bwitch.domain.moons.MoonRepository
 import com.agc.bwitch.domain.moons.SpendMoonsResult
@@ -141,5 +142,12 @@ class BackendFirstMoonRepositoryTest {
         )
 
         override suspend fun getModulePreviews(modules: List<String>): List<EconomyModulePreview> = emptyList()
+
+        override suspend fun authorizeSynastry(
+            requestId: String,
+            languageCode: String?,
+        ): SynastryAuthorizationResult {
+            return SynastryAuthorizationResult(authorized = true, economyDisabled = true)
+        }
     }
 }
