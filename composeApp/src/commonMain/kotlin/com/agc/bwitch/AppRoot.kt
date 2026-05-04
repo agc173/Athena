@@ -332,6 +332,7 @@ fun AppRoot() {
             MoonPaywallDialog(
                 economyState = economyState,
                 requiredMoons = paywall.requiredMoons,
+                source = paywall.source,
                 onDismiss = {
                     economyVm.onMoonPaywallActionClicked(
                         request = paywall,
