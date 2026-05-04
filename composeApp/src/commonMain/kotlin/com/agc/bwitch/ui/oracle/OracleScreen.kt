@@ -25,8 +25,8 @@ import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.presentation.oracle.OracleAskMessage
 import com.agc.bwitch.presentation.oracle.OracleAskMessageId
 import com.agc.bwitch.presentation.oracle.OracleAskViewModel
-import com.agc.bwitch.domain.economy.EconomyNextSource
 import com.agc.bwitch.presentation.economy.EconomyViewModel
+import com.agc.bwitch.presentation.economy.runWithEconomyGate
 import com.agc.bwitch.presentation.economy.toModuleCostUiStateOrNull
 import com.agc.bwitch.ui.common.localization.resolve
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
@@ -102,17 +102,12 @@ fun OracleScreen(
 
         BWitchPrimaryButton(
             onClick = {
-                val shouldRequireLunas =
-                    oraclePreview?.nextSource == EconomyNextSource.REJECTED &&
-                        oraclePreview.reasonIfRejected == "insufficient_moons"
-                if (shouldRequireLunas) {
-                    economyViewModel.requireLunas(
-                        cost = oraclePreview.cost.takeIf { it > 0 } ?: 3,
-                        source = "oracle_1q",
-                    ) {
-                        viewModel.ask()
-                    }
-                } else {
+                runWithEconomyGate(
+                    preview = oraclePreview,
+                    economyViewModel = economyViewModel,
+                    source = "oracle_1q",
+                    fallbackCost = 3,
+                ) {
                     viewModel.ask()
                 }
             },
@@ -234,11 +229,12 @@ fun OracleScreen(
                 )
                 BWitchPrimaryButton(
                     onClick = {
-                        val shouldRequireLunas = error.id.isEconomyRestrictionError()
-                        if (shouldRequireLunas) {
-                            economyViewModel.requireLunas(
-                                cost = oraclePreview?.cost?.takeIf { it > 0 } ?: 3,
+                        if (error.id.isEconomyRestrictionError()) {
+                            runWithEconomyGate(
+                                preview = oraclePreview,
+                                economyViewModel = economyViewModel,
                                 source = "oracle_1q",
+                                fallbackCost = 3,
                             ) {
                                 viewModel.retry()
                             }
