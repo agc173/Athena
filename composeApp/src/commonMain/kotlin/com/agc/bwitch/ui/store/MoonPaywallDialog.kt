@@ -24,6 +24,7 @@ import com.agc.bwitch.presentation.economy.EconomyUiState
 fun MoonPaywallDialog(
     economyState: EconomyUiState,
     requiredMoons: Int,
+    source: String? = null,
     onDismiss: () -> Unit,
     onClaimDaily: () -> Unit,
     onClaimRewardedAd: () -> Unit,
@@ -46,7 +47,7 @@ fun MoonPaywallDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text(text = strings.profile.moonPaywallTitle)
+            Text(text = contextualPaywallTitle(source, strings.profile.moonPaywallTitle))
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -56,7 +57,7 @@ fun MoonPaywallDialog(
                     color = MaterialTheme.colorScheme.primary,
                 )
                 Text(
-                    text = strings.profile.moonPaywallNeedFormat.replaceFirst("%d", "$requiredMoons"),
+                    text = contextualPaywallMessage(source, requiredMoons, strings.profile.moonPaywallNeedFormat),
                     style = MaterialTheme.typography.bodyMedium,
                 )
                 OutlinedButton(
@@ -87,4 +88,19 @@ fun MoonPaywallDialog(
         },
         modifier = Modifier.padding(8.dp),
     )
+}
+
+private fun contextualPaywallTitle(source: String?, fallback: String): String = when (source?.lowercase()) {
+    "synastry", "pendulum" -> appStrings.economy.paywallFreeUsedTitle
+    else -> fallback
+}
+
+private fun contextualPaywallMessage(source: String?, requiredMoons: Int, fallbackFormat: String): String = when (source?.lowercase()) {
+    "synastry" -> appStrings.economy.synastryPaywallFreeUsedMessage
+        .replaceFirst("%d", "3")
+        .replaceFirst("%d", "$requiredMoons")
+    "pendulum" -> appStrings.economy.pendulumPaywallFreeUsedMessage
+        .replaceFirst("%d", "10")
+        .replaceFirst("%d", "$requiredMoons")
+    else -> fallbackFormat.replaceFirst("%d", "$requiredMoons")
 }

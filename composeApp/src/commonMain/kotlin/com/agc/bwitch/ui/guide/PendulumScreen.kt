@@ -142,7 +142,7 @@ fun PendulumScreen(
             preview = pendulumPreview,
             economyStrings = appStrings.economy,
             fallbackCost = 1,
-            packUsesLabel = appStrings.economy.pendulumMoonPackCostFormat,
+            packUsesLabel = appStrings.economy.pendulumPackValueFormat,
         )
 
         PendulumBoard(

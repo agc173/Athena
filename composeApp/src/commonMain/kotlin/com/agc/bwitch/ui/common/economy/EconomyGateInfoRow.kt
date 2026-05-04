@@ -41,13 +41,30 @@ fun resolveEconomyGateLabel(
     freeLabelOverride: String? = null,
 ): String? {
     val currentPreview = preview ?: return null
+    val packUses = currentPreview.moonPackUsesPerMoon?.takeIf { it > 1 }
+    val packRemaining = currentPreview.moonRemaining?.takeIf { it > 0 }
+    if (packRemaining != null && packUses != null) {
+        val template = if (packRemaining == 1) economyStrings.packRemainingSingular else economyStrings.packRemainingPlural
+        return template
+            .replaceFirst("%d", packRemaining.toString())
+            .replaceFirst("%d", packUses.toString())
+    }
+
     return when (currentPreview.nextSource) {
-        EconomyNextSource.FREE -> freeLabelOverride ?: economyStrings.freeToday
+        EconomyNextSource.FREE -> {
+            val freeRemaining = currentPreview.freeRemaining
+            when {
+                freeRemaining == 1 -> economyStrings.freeRemainingTodaySingular
+                freeRemaining != null && freeRemaining > 1 -> economyStrings.freeRemainingTodayPlural.replaceFirst("%d", freeRemaining.toString())
+                else -> freeLabelOverride ?: economyStrings.freeToday
+            }
+        }
         EconomyNextSource.PREMIUM -> economyStrings.includedWithPremium
         EconomyNextSource.MOON -> currentPreview.buildMoonCostLabel(
             economyStrings = economyStrings,
             fallbackCost = fallbackCost,
             packUsesLabel = packUsesLabel,
+            packUsesFirst = true,
         )
         EconomyNextSource.REJECTED -> when {
             currentPreview.reasonIfRejected.equals("daily_limit", ignoreCase = true) -> economyStrings.dailyLimitReached
@@ -55,6 +72,7 @@ fun resolveEconomyGateLabel(
                 economyStrings = economyStrings,
                 fallbackCost = fallbackCost,
                 packUsesLabel = packUsesLabel,
+                packUsesFirst = true,
             )
             else -> null
         }
@@ -70,13 +88,20 @@ private fun EconomyModulePreview.buildMoonCostLabel(
     economyStrings: EconomyStrings,
     fallbackCost: Int?,
     packUsesLabel: String?,
+    packUsesFirst: Boolean = false,
 ): String? {
     val amount = cost.takeIf { it > 0 } ?: fallbackCost ?: return null
     val packUses = moonPackUsesPerMoon?.takeIf { it > 1 }
     return if (packUses != null) {
-        (packUsesLabel ?: economyStrings.synastryMoonPackCostFormat)
-            .replaceFirst("%d", amount.toString())
-            .replaceFirst("%d", packUses.toString())
+        if (packUsesLabel != null && packUsesFirst) {
+            packUsesLabel
+                .replaceFirst("%d", packUses.toString())
+                .replaceFirst("%d", amount.toString())
+        } else {
+            (packUsesLabel ?: economyStrings.synastryMoonPackCostFormat)
+                .replaceFirst("%d", amount.toString())
+                .replaceFirst("%d", packUses.toString())
+        }
     } else {
         economyStrings.moonCostFormat.replaceFirst("%d", amount.toString())
     }

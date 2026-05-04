@@ -133,7 +133,7 @@ fun SynastryScreen(
             preview = synastryPreview,
             economyStrings = strings.economy,
             fallbackCost = 1,
-            packUsesLabel = strings.economy.synastryMoonPackCostFormat,
+            packUsesLabel = strings.economy.synastryPackValueFormat,
         )
         BWitchPrimaryButton(
             onClick = {
