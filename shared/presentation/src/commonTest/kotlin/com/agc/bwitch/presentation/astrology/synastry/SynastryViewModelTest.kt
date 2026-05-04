@@ -2,6 +2,13 @@ package com.agc.bwitch.presentation.astrology.synastry
 
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
 import com.agc.bwitch.domain.astrology.synastry.SynastryReadingGenerator
+import com.agc.bwitch.domain.economy.EconomyBalance
+import com.agc.bwitch.domain.economy.EconomyClaimResult
+import com.agc.bwitch.domain.economy.EconomyClaimStatus
+import com.agc.bwitch.domain.economy.EconomyModulePreview
+import com.agc.bwitch.domain.economy.EconomyRepository
+import com.agc.bwitch.domain.economy.EconomyStatus
+import com.agc.bwitch.domain.economy.SynastryAuthorizationResult
 import com.agc.bwitch.domain.localization.AppLanguage
 import com.agc.bwitch.domain.localization.AppLanguageRepository
 import com.agc.bwitch.domain.localization.ObserveCurrentLanguageUseCase
@@ -20,10 +27,12 @@ class SynastryViewModelTest {
     fun `generate uses current language code from app language`() = runTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
         val languageRepository = FakeLanguageRepository(MutableStateFlow(AppLanguage.English))
+        val fakeEconomyRepository = FakeEconomyRepository()
         val viewModel = SynastryViewModel(
             readingGenerator = SynastryReadingGenerator(),
             resolveCurrentLanguageUseCase = ResolveCurrentLanguageUseCase(languageRepository),
             observeCurrentLanguageUseCase = ObserveCurrentLanguageUseCase(languageRepository),
+            economyRepository = fakeEconomyRepository,
             dispatcher = dispatcher,
         )
 
@@ -41,10 +50,12 @@ class SynastryViewModelTest {
     fun `generate keeps required sun sign validation`() = runTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
         val languageRepository = FakeLanguageRepository(MutableStateFlow(AppLanguage.Spanish))
+        val fakeEconomyRepository = FakeEconomyRepository()
         val viewModel = SynastryViewModel(
             readingGenerator = SynastryReadingGenerator(),
             resolveCurrentLanguageUseCase = ResolveCurrentLanguageUseCase(languageRepository),
             observeCurrentLanguageUseCase = ObserveCurrentLanguageUseCase(languageRepository),
+            economyRepository = fakeEconomyRepository,
             dispatcher = dispatcher,
         )
 
@@ -64,4 +75,49 @@ private class FakeLanguageRepository(
         state.value = language
     }
     override fun observeCurrentLanguage() = state
+}
+
+private class FakeEconomyRepository : EconomyRepository {
+    override suspend fun getBalance(): EconomyBalance = EconomyBalance(
+        balance = 0,
+        dailyLoginClaimed = false,
+        rewardedAdsClaimed = 0,
+        rewardedAdsRemaining = 0,
+    )
+
+    override suspend fun getStatus(): EconomyStatus = EconomyStatus(
+        balance = 0,
+        isPremium = false,
+        todayDateIso = "2026-01-01",
+    )
+
+    override suspend fun claimDailyLogin(requestId: String): EconomyClaimResult = EconomyClaimResult(
+        result = EconomyClaimStatus.ALREADY_CLAIMED,
+        balance = 0,
+        dailyLoginClaimed = false,
+        rewardedAdsClaimed = 0,
+        rewardedAdsRemaining = 0,
+    )
+
+    override suspend fun claimRewardedAd(
+        requestId: String,
+        adProof: String,
+        placement: String?,
+    ): EconomyClaimResult = EconomyClaimResult(
+        result = EconomyClaimStatus.ALREADY_CLAIMED,
+        balance = 0,
+        dailyLoginClaimed = false,
+        rewardedAdsClaimed = 0,
+        rewardedAdsRemaining = 0,
+    )
+
+    override suspend fun getModulePreviews(modules: List<String>): List<EconomyModulePreview> = emptyList()
+
+    override suspend fun authorizeSynastry(
+        requestId: String,
+        languageCode: String?,
+    ): SynastryAuthorizationResult = SynastryAuthorizationResult(
+        authorized = true,
+        economyDisabled = true,
+    )
 }
