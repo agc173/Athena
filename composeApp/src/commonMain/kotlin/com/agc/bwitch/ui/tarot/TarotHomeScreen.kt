@@ -18,6 +18,7 @@ import com.agc.bwitch.domain.tarot.TarotRequestType
 import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.presentation.economy.EconomyViewModel
 import com.agc.bwitch.presentation.economy.ModuleCostLabel
+import com.agc.bwitch.presentation.economy.runWithEconomyGate
 import com.agc.bwitch.presentation.economy.toModuleCostUiStateOrNull
 import com.agc.bwitch.presentation.tarot.TarotViewModel
 import com.agc.bwitch.ui.common.localization.resolve
@@ -92,22 +93,6 @@ fun TarotHomeScreen(
     }
 }
 
-private fun EconomyModulePreview.requiresMoonPaywallGate(requiredCost: Int): Boolean {
-    return nextSource == EconomyNextSource.REJECTED &&
-        reasonIfRejected.equals("insufficient_moons", ignoreCase = true) &&
-        !canExecute &&
-        requiredCost > 0
-}
-
-private fun fallbackTarotMoonCost(type: TarotRequestType): Int = when (type) {
-    TarotRequestType.TAROT_1 -> 1
-    TarotRequestType.TAROT_3 -> 3
-}
-
-private fun resolveRequiredMoonCost(type: TarotRequestType, preview: EconomyModulePreview?): Int {
-    val previewCost = preview?.cost ?: 0
-    return if (previewCost > 0) previewCost else fallbackTarotMoonCost(type)
-}
 
 private fun handleTarotSelection(
     type: TarotRequestType,
@@ -115,20 +100,18 @@ private fun handleTarotSelection(
     economyViewModel: EconomyViewModel,
     onSelectRequestType: (TarotRequestType) -> Unit,
 ) {
-    val requiredCost = resolveRequiredMoonCost(type, preview)
-    val shouldGateWithPaywall = preview?.requiresMoonPaywallGate(requiredCost) == true
-    if (!shouldGateWithPaywall) {
-        onSelectRequestType(type)
-        return
-    }
-
-    economyViewModel.requireLunas(
-        cost = requiredCost,
+    runWithEconomyGate(
+        preview = preview,
+        economyViewModel = economyViewModel,
         source = when (type) {
             TarotRequestType.TAROT_1 -> "tarot_single_card"
             TarotRequestType.TAROT_3 -> "tarot_extra_reading"
         },
-    ) { _ ->
+        fallbackCost = when (type) {
+            TarotRequestType.TAROT_1 -> 1
+            TarotRequestType.TAROT_3 -> 3
+        },
+    ) {
         onSelectRequestType(type)
     }
 }
