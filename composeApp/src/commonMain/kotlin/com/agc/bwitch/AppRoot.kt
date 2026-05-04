@@ -64,6 +64,7 @@ import com.agc.bwitch.ui.astrology.HoroscopeScreen
 import com.agc.bwitch.ui.astrology.SynastryScreen
 import com.agc.bwitch.ui.auth.AuthScreen
 import com.agc.bwitch.ui.common.AppScaffold
+import com.agc.bwitch.ui.common.MoonBalanceBadge
 import com.agc.bwitch.ui.guide.GuideHomeScreen
 import com.agc.bwitch.ui.guide.PendulumScreen
 import com.agc.bwitch.ui.onboarding.OnboardingProfileScreen
@@ -193,11 +194,7 @@ fun AppRoot() {
         title = destinationTitle(dest, navigationStrings),
         topBarBadge = if (dest.showsTopBarMoonBalance() && economyState.hasUsableSnapshot) {
             {
-                Text(
-                    text = appStrings.economy.moonCostFormat.replace("%d", economyState.balance.toString()),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                )
+                MoonBalanceBadge(balance = economyState.balance)
             }
         } else {
             null
