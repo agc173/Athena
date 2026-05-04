@@ -15,6 +15,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -43,7 +44,11 @@ import com.agc.bwitch.presentation.astrology.birthchart.BIRTH_CHART_SYNC_NO_ESSE
 import com.agc.bwitch.presentation.astrology.birthchart.BIRTH_CHART_SYNC_REMOTE_LOADED_KEY
 import com.agc.bwitch.presentation.astrology.birthchart.BIRTH_CHART_SYNC_UPDATED_KEY
 import com.agc.bwitch.presentation.astrology.birthchart.BIRTH_CHART_SYNC_UP_TO_DATE_KEY
+import com.agc.bwitch.presentation.economy.EconomyViewModel
+import com.agc.bwitch.presentation.economy.runWithEconomyGate
+import com.agc.bwitch.presentation.economy.toModuleCostUiStateOrNull
 import com.agc.bwitch.ui.common.toVisualResource
+import com.agc.bwitch.ui.common.localization.resolve
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
 import com.agc.bwitch.ui.common.designsystem.BWitchPrimaryButton
 import com.agc.bwitch.ui.theme.BWitchThemeTokens
@@ -54,16 +59,34 @@ import org.koin.compose.koinInject
 fun BirthChartScreen(
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
-    viewModel: BirthChartViewModel = koinInject()
+    viewModel: BirthChartViewModel = koinInject(),
+    economyViewModel: EconomyViewModel = koinInject(),
 ) {
     val dimens = BWitchThemeTokens.dimens
     val extras = BWitchThemeTokens.extras
     val strings = appStrings
     val birthChartStrings = strings.birthChart
     val state by viewModel.uiState.collectAsState()
+    val economyState by economyViewModel.uiState.collectAsState()
+    val birthEssencePreview = economyState.modulePreviews.firstOrNull {
+        it.module == "BIRTH_ESSENCE" || it.module == "NATAL_ESSENCE"
+    }
+    val birthEssenceCostState = birthEssencePreview?.toModuleCostUiStateOrNull()
     val shareLauncher = rememberBirthEssenceShareLauncher(birthChartStrings)
     var shareError by remember { mutableStateOf<String?>(null) }
     var sharePreviewEssence by remember { mutableStateOf<BirthEssenceProfile?>(null) }
+    var wasGenerating by remember { mutableStateOf(false) }
+
+    LaunchedEffect(state.isGenerating, state.hasGeneratedResult, state.error) {
+        if (wasGenerating && !state.isGenerating) {
+            val endedWithResult = state.hasGeneratedResult
+            val endedWithEconomyError = state.error.isBirthEssenceEconomyError()
+            if (endedWithResult || endedWithEconomyError) {
+                economyViewModel.loadEconomy()
+            }
+        }
+        wasGenerating = state.isGenerating
+    }
 
     Column(
         modifier = modifier
@@ -108,8 +131,24 @@ fun BirthChartScreen(
             onSelect = viewModel::onRisingSignChange,
         )
 
+        birthEssenceCostState?.let { costState ->
+            Text(
+                text = costState.label.resolve(appStrings.economy),
+                style = MaterialTheme.typography.bodySmall,
+                color = extras.textSecondary,
+            )
+        }
+
         BWitchPrimaryButton(
-            onClick = viewModel::discoverEssence,
+            onClick = {
+                runWithEconomyGate(
+                    preview = birthEssencePreview,
+                    economyViewModel = economyViewModel,
+                    source = "birth_essence",
+                ) {
+                    viewModel.discoverEssence()
+                }
+            },
             enabled = !state.isBusy,
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -191,6 +230,12 @@ fun BirthChartScreen(
             }
         )
     }
+}
+
+private fun String?.isBirthEssenceEconomyError(): Boolean {
+    val normalized = this?.trim()?.lowercase().orEmpty()
+    if (normalized.isBlank()) return false
+    return normalized.contains("insufficient_moons")
 }
 
 private fun String.toBirthChartUiText(strings: com.agc.bwitch.localization.BirthChartStrings): String {
