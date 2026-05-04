@@ -194,7 +194,14 @@ fun AppRoot() {
         title = destinationTitle(dest, navigationStrings),
         topBarBadge = if (dest.showsTopBarMoonBalance() && economyState.hasUsableSnapshot) {
             {
-                MoonBalanceBadge(balance = economyState.balance)
+                MoonBalanceBadge(
+                    balance = economyState.balance,
+                    onClick = {
+                        if (dest != Destination.MoonStore) {
+                            navigator.navigate(Destination.MoonStore)
+                        }
+                    },
+                )
             }
         } else {
             null
