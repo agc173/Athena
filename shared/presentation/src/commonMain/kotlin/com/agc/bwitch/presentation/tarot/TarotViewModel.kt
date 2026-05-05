@@ -15,6 +15,7 @@ import com.agc.bwitch.domain.moons.ObserveMoonBalanceUseCase
 import com.agc.bwitch.domain.moons.SpendMoonsResult
 import com.agc.bwitch.domain.moons.SpendMoonsUseCase
 import com.agc.bwitch.domain.tarot.TarotDrawResponse
+import com.agc.bwitch.domain.tarot.LastTarotReadingRepository
 import com.agc.bwitch.domain.tarot.TarotRepository
 import com.agc.bwitch.domain.tarot.TarotRequestType
 import com.agc.bwitch.presentation.economy.UNLOCK_FLOW_ORIGIN_DIRECT_BALANCE
@@ -70,6 +71,7 @@ class TarotViewModel(
     private val getMoonBalanceUseCase: GetMoonBalanceUseCase,
     private val addMoonsUseCase: AddMoonsUseCase,
     private val spendMoonsUseCase: SpendMoonsUseCase,
+    private val lastTarotReadingRepository: LastTarotReadingRepository,
     private val analyticsTracker: AnalyticsTracker = NoOpAnalyticsTracker,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -199,6 +201,35 @@ class TarotViewModel(
         newRequest(_uiState.value.selectedType)
     }
 
+    fun hasSavedReading(): Boolean = runCatching { lastTarotReadingRepository.get() }.getOrNull() != null
+
+    fun openLastReading() {
+        scope.launch {
+            val saved = runCatching { lastTarotReadingRepository.get() }.getOrNull() ?: return@launch
+            shuffleDelayJob?.cancel()
+            shuffleMinDurationElapsed = false
+            shuffleRequestId = null
+            _uiState.update {
+                it.copy(
+                    requestId = saved.requestId,
+                    selectedType = if (saved.cards.size > 1) TarotRequestType.TAROT_3 else TarotRequestType.TAROT_1,
+                    isLoading = false,
+                    response = saved,
+                    error = null,
+                    revealPhase = TarotRevealPhase.READING_VISIBLE,
+                    revealedCardCount = saved.cards.size,
+                    activeCardIndex = 0,
+                    activeCardRevealed = false,
+                    overlayVisible = false,
+                    overlayCardIndex = null,
+                    overlayCardRevealed = false,
+                    openedMiniCardIndex = null,
+                    insufficientMoonsMessage = null,
+                )
+            }
+        }
+    }
+
     fun toggleMiniCard(index: Int) {
         _uiState.update {
             it.copy(
@@ -287,9 +318,8 @@ class TarotViewModel(
                             openedMiniCardIndex = null,
                         )
                     }
-                    if (type == TarotRequestType.TAROT_3) {
-                        refreshMoonBalanceFromBackend()
-                    }
+                    refreshMoonBalanceFromBackend()
+                    runCatching { lastTarotReadingRepository.save(result.value) }
                 }
 
                 is ApiResult.Err -> {
@@ -342,10 +372,13 @@ class TarotViewModel(
                                             insufficientMoonsMessage = null,
                                         )
                                     }
+                                    runCatching { lastTarotReadingRepository.save(retryResult.value) }
+                                    refreshMoonBalanceFromBackend()
                                     return@launch
                                 }
                                 if (retryResult is ApiResult.Err) {
                                     val retryEconomyError = retryResult.error.isEconomyRestriction()
+                                    val retryTarotLimitError = retryResult.error.isTarotLimitReached()
                                     _uiState.update {
                                         it.copy(
                                             isLoading = false,
@@ -363,10 +396,10 @@ class TarotViewModel(
                                             } else {
                                                 null
                                             },
-                                            error = if (retryEconomyError) {
-                                                null
-                                            } else {
-                                                TAROT_DRAW_ERROR_KEY
+                                            error = when {
+                                                retryEconomyError -> null
+                                                retryTarotLimitError -> TAROT_LIMIT_REACHED_ERROR_KEY
+                                                else -> TAROT_DRAW_ERROR_KEY
                                             },
                                         )
                                     }
@@ -403,6 +436,7 @@ class TarotViewModel(
                     }
 
                     val economyError = result.error.isEconomyRestriction()
+                    val tarotLimitError = result.error.isTarotLimitReached()
                     _uiState.update {
                         it.copy(
                             isLoading = false,
@@ -420,10 +454,10 @@ class TarotViewModel(
                             } else {
                                 null
                             },
-                            error = if (economyError) {
-                                null
-                            } else {
-                                TAROT_DRAW_ERROR_KEY
+                            error = when {
+                                economyError -> null
+                                tarotLimitError -> TAROT_LIMIT_REACHED_ERROR_KEY
+                                else -> TAROT_DRAW_ERROR_KEY
                             },
                         )
                     }
@@ -472,6 +506,7 @@ class TarotViewModel(
 
 const val TAROT_EXTRA_READING_NOT_ENOUGH_MOONS_KEY = "tarot.error.not_enough_moons"
 const val TAROT_DRAW_ERROR_KEY = "tarot.error.draw_failed"
+const val TAROT_LIMIT_REACHED_ERROR_KEY = "tarot.error.limit_reached"
 
 private fun com.agc.bwitch.domain.shared.ApiError.isEconomyRestriction(): Boolean {
     val normalizedMessage = message.orEmpty().lowercase()
@@ -480,6 +515,14 @@ private fun com.agc.bwitch.domain.shared.ApiError.isEconomyRestriction(): Boolea
         "not enough moons" in normalizedMessage ||
         "insufficient moons" in normalizedMessage ||
         "moon_balance" in normalizedMessage
+}
+
+private fun com.agc.bwitch.domain.shared.ApiError.isTarotLimitReached(): Boolean {
+    val normalizedMessage = message.orEmpty()
+    return normalizedMessage.contains("TAROT_1_DAILY_LIMIT_REACHED") ||
+        normalizedMessage.contains("TAROT_3_MOON_DAILY_LIMIT_REACHED") ||
+        normalizedMessage.contains("TAROT_3_PREMIUM_DAILY_LIMIT_REACHED") ||
+        normalizedMessage.contains("TAROT_3_WEEKLY_LIMIT_REACHED")
 }
 
 private fun com.agc.bwitch.domain.shared.ApiError.requiresLegacyAdUnlockFallback(): Boolean {

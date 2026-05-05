@@ -57,6 +57,7 @@ import com.agc.bwitch.domain.tarot.TarotReadingDetails
 import com.agc.bwitch.domain.tarot.TarotRequestType
 import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.presentation.tarot.TarotRevealPhase
+import com.agc.bwitch.presentation.tarot.TAROT_LIMIT_REACHED_ERROR_KEY
 import com.agc.bwitch.presentation.tarot.TarotViewModel
 import com.agc.bwitch.presentation.economy.EconomyViewModel
 import com.agc.bwitch.ui.tarot.components.TarotCardView
@@ -80,7 +81,11 @@ fun TarotScreen(
     val strings = appStrings.tarot
 
     LaunchedEffect(initialRequestType) {
-        initialRequestType?.let { viewModel.newRequest(it) }
+        if (initialRequestType != null) {
+            viewModel.newRequest(initialRequestType)
+        } else {
+            viewModel.openLastReading()
+        }
     }
 
     LaunchedEffect(state.isLoading, state.response, state.error, state.insufficientMoonsMessage) {
@@ -324,7 +329,11 @@ fun TarotScreen(
 
             state.error?.let { _ ->
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    val errorMessage = strings.unknownErrorFallback
+                    val errorMessage = if (state.error == TAROT_LIMIT_REACHED_ERROR_KEY) {
+                        strings.limitReachedError
+                    } else {
+                        strings.unknownErrorFallback
+                    }
                     Text("${strings.errorPrefix} $errorMessage", color = MaterialTheme.colorScheme.error)
                     Button(
                         onClick = viewModel::retry,

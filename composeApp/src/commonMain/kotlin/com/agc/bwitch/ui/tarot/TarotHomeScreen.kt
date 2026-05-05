@@ -25,6 +25,7 @@ import org.koin.compose.koinInject
 fun TarotHomeScreen(
     contentPadding: PaddingValues,
     onSelectRequestType: (TarotRequestType) -> Unit,
+    onSelectLastReading: () -> Unit,
     viewModel: TarotViewModel = koinInject(),
     economyViewModel: EconomyViewModel = koinInject(),
 ) {
@@ -44,6 +45,7 @@ fun TarotHomeScreen(
         fallbackCost = 3,
         freeLabelOverride = appStrings.economy.freeThisWeek,
     ) ?: appStrings.economy.moonCostFormat.replaceFirst("%d", "3")
+    val hasSavedReading = viewModel.hasSavedReading()
 
     Column(
         modifier = Modifier
@@ -84,6 +86,14 @@ fun TarotHomeScreen(
                 )
             },
         )
+        if (hasSavedReading) {
+            TarotOptionCard(
+                title = strings.homeLastReadingTitle,
+                subtitle = strings.homeLastReadingSubtitle,
+                costLabel = null,
+                onClick = onSelectLastReading,
+            )
+        }
 
     }
 }
@@ -115,7 +125,7 @@ private fun handleTarotSelection(
 private fun TarotOptionCard(
     title: String,
     subtitle: String,
-    costLabel: String,
+    costLabel: String?,
     onClick: () -> Unit,
 ) {
     Card(onClick = onClick) {
@@ -125,11 +135,13 @@ private fun TarotOptionCard(
         ) {
             Text(title, style = MaterialTheme.typography.titleMedium)
             Text(subtitle, style = MaterialTheme.typography.bodyMedium)
-            Text(
-                text = costLabel,
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.primary,
-            )
+            costLabel?.let {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
         }
     }
 }

@@ -14,6 +14,7 @@ import com.agc.bwitch.domain.moons.SpendMoonsUseCase
 import com.agc.bwitch.domain.shared.ApiError
 import com.agc.bwitch.domain.shared.ApiResult
 import com.agc.bwitch.domain.tarot.TarotDrawResponse
+import com.agc.bwitch.domain.tarot.LastTarotReadingRepository
 import com.agc.bwitch.domain.tarot.TarotRepository
 import com.agc.bwitch.domain.tarot.TarotRequestType
 import com.agc.bwitch.presentation.analytics.FakeAnalyticsTracker
@@ -52,6 +53,7 @@ class TarotViewModelTest {
                 getMoonBalanceUseCase = GetMoonBalanceUseCase(moonRepository),
                 addMoonsUseCase = AddMoonsUseCase(moonRepository),
                 spendMoonsUseCase = SpendMoonsUseCase(moonRepository),
+                lastTarotReadingRepository = FakeLastTarotReadingRepository(),
             )
 
             viewModel.newRequest(TarotRequestType.TAROT_1)
@@ -80,6 +82,7 @@ class TarotViewModelTest {
                 getMoonBalanceUseCase = GetMoonBalanceUseCase(moonRepository),
                 addMoonsUseCase = AddMoonsUseCase(moonRepository),
                 spendMoonsUseCase = SpendMoonsUseCase(moonRepository),
+                lastTarotReadingRepository = FakeLastTarotReadingRepository(),
                 analyticsTracker = analytics,
             )
 
@@ -123,6 +126,7 @@ class TarotViewModelTest {
                 getMoonBalanceUseCase = GetMoonBalanceUseCase(moonRepository),
                 addMoonsUseCase = AddMoonsUseCase(moonRepository),
                 spendMoonsUseCase = SpendMoonsUseCase(moonRepository),
+                lastTarotReadingRepository = FakeLastTarotReadingRepository(),
                 analyticsTracker = analytics,
             )
 
@@ -163,6 +167,7 @@ class TarotViewModelTest {
                 getMoonBalanceUseCase = GetMoonBalanceUseCase(moonRepository),
                 addMoonsUseCase = AddMoonsUseCase(moonRepository),
                 spendMoonsUseCase = SpendMoonsUseCase(moonRepository),
+                lastTarotReadingRepository = FakeLastTarotReadingRepository(),
             )
 
             viewModel.newRequest(TarotRequestType.TAROT_3)
@@ -202,6 +207,7 @@ class TarotViewModelTest {
                 getMoonBalanceUseCase = GetMoonBalanceUseCase(moonRepository),
                 addMoonsUseCase = AddMoonsUseCase(moonRepository),
                 spendMoonsUseCase = SpendMoonsUseCase(moonRepository),
+                lastTarotReadingRepository = FakeLastTarotReadingRepository(),
             )
 
             viewModel.newRequest(TarotRequestType.TAROT_3)
@@ -242,6 +248,7 @@ class TarotViewModelTest {
                 getMoonBalanceUseCase = GetMoonBalanceUseCase(moonRepository),
                 addMoonsUseCase = AddMoonsUseCase(moonRepository),
                 spendMoonsUseCase = SpendMoonsUseCase(moonRepository),
+                lastTarotReadingRepository = FakeLastTarotReadingRepository(),
             )
 
             viewModel.newRequest(TarotRequestType.TAROT_1)
@@ -318,5 +325,13 @@ class TarotViewModelTest {
         }
 
         override fun observeCurrentLanguage(): Flow<AppLanguage> = state
+    }
+
+    private class FakeLastTarotReadingRepository : LastTarotReadingRepository {
+        private var cached: TarotDrawResponse? = null
+        override fun get(): TarotDrawResponse? = cached
+        override fun save(response: TarotDrawResponse) {
+            cached = response
+        }
     }
 }
