@@ -509,6 +509,14 @@ data class TarotStrings(
     val fallbackArtSoon: String,
     val cardBackContentDescription: String,
     val cardFaceContentDescription: String,
+    val pendingSessionTitle: String = "Tirada pendiente",
+    val pendingSessionBody: String = "Tienes una tirada pagada pendiente. Puedes continuarla sin volver a gastar.",
+    val continuePendingCta: String = "Continuar tirada",
+    val startNewDrawCta: String = "Nueva tirada",
+    val discardPendingTitle: String = "Descartar tirada pendiente",
+    val discardPendingBody: String = "Si empiezas una tirada nueva, perderás la tirada pendiente actual.",
+    val discardConfirmCta: String = "Descartar y continuar",
+    val discardCancelCta: String = "Cancelar",
 )
 
 data class ZodiacStrings(
