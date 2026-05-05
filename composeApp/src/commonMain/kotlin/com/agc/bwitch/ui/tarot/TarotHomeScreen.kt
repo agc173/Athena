@@ -45,6 +45,7 @@ fun TarotHomeScreen(
     )
     val tarot1Preview = economyState.modulePreviews.firstOrNull { it.module == "TAROT_1" }
     val tarot3Preview = economyState.modulePreviews.firstOrNull { it.module == "TAROT_3" }
+    val hasPendingSession = state.hasActiveRecoverableSession
 
     Column(
         modifier = Modifier
@@ -57,12 +58,24 @@ fun TarotHomeScreen(
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+        if (hasPendingSession) {
+            TarotOptionCard(
+                title = strings.pendingSessionTitle,
+                subtitle = strings.pendingSessionBody,
+                costLabel = null,
+                onClick = { onSelectRequestType(state.selectedType) },
+            )
+        }
 
         TarotOptionCard(
             title = strings.homeSingleCardTitle,
             subtitle = strings.homeSingleCardSubtitle,
             costLabel = tarot1CostLabel,
             onClick = {
+                if (hasPendingSession) {
+                    onSelectRequestType(TarotRequestType.TAROT_1)
+                    return@TarotOptionCard
+                }
                 handleTarotSelection(
                     type = TarotRequestType.TAROT_1,
                     preview = tarot1Preview,
@@ -77,6 +90,10 @@ fun TarotHomeScreen(
             subtitle = strings.homeThreeCardSubtitle,
             costLabel = tarot3CostLabel,
             onClick = {
+                if (hasPendingSession) {
+                    onSelectRequestType(TarotRequestType.TAROT_3)
+                    return@TarotOptionCard
+                }
                 handleTarotSelection(
                     type = TarotRequestType.TAROT_3,
                     preview = tarot3Preview,

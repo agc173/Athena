@@ -17,6 +17,9 @@ import com.agc.bwitch.domain.moons.SpendMoonsUseCase
 import com.agc.bwitch.domain.tarot.TarotDrawResponse
 import com.agc.bwitch.domain.tarot.TarotRepository
 import com.agc.bwitch.domain.tarot.TarotRequestType
+import com.agc.bwitch.domain.tarot.TarotSessionPhase
+import com.agc.bwitch.domain.tarot.TarotSessionRepository
+import com.agc.bwitch.domain.tarot.TarotSessionSnapshot
 import com.agc.bwitch.presentation.economy.UNLOCK_FLOW_ORIGIN_DIRECT_BALANCE
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -33,6 +36,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
 
 enum class TarotRevealPhase {
     IDLE,
@@ -60,7 +64,14 @@ data class TarotUiState(
     val moonBalance: Int = 0,
     val extraReadingCost: Int = MoonUnlockCostCatalog.costFor(MoonUnlockFeature.TarotExtraReading),
     val insufficientMoonsMessage: String? = null,
-)
+    val showDiscardDialog: Boolean = false,
+    val pendingStartType: TarotRequestType? = null,
+    val createdAtEpochMillis: Long? = null,
+    val isSessionRestoreResolved: Boolean = false,
+) {
+    val hasActiveRecoverableSession: Boolean
+        get() = requestId != null && (isLoading || response != null || revealPhase != TarotRevealPhase.IDLE)
+}
 
 class TarotViewModel(
     private val tarotRepository: TarotRepository,
@@ -70,6 +81,7 @@ class TarotViewModel(
     private val getMoonBalanceUseCase: GetMoonBalanceUseCase,
     private val addMoonsUseCase: AddMoonsUseCase,
     private val spendMoonsUseCase: SpendMoonsUseCase,
+    private val tarotSessionRepository: TarotSessionRepository,
     private val analyticsTracker: AnalyticsTracker = NoOpAnalyticsTracker,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -82,6 +94,10 @@ class TarotViewModel(
     val uiState: StateFlow<TarotUiState> = _uiState.asStateFlow()
 
     init {
+        scope.launch {
+            tarotSessionRepository.loadSession()?.let { restoreSession(it) }
+            _uiState.update { it.copy(isSessionRestoreResolved = true) }
+        }
         scope.launch {
             runCatching { resolveCurrentLanguageUseCase() }
                 .onSuccess { language ->
@@ -106,6 +122,15 @@ class TarotViewModel(
     }
 
     fun newRequest(type: TarotRequestType) {
+        if (_uiState.value.isLoading) return
+        if (_uiState.value.hasActiveRecoverableSession) {
+            _uiState.update { it.copy(showDiscardDialog = true, pendingStartType = type) }
+            return
+        }
+        startNewRequest(type)
+    }
+
+    private fun startNewRequest(type: TarotRequestType) {
         analyticsTracker.track(
             AnalyticsEvent.ModuleUsed(
                 module = "tarot",
@@ -132,11 +157,26 @@ class TarotViewModel(
                 overlayCardRevealed = false,
                 openedMiniCardIndex = null,
                 insufficientMoonsMessage = null,
+                showDiscardDialog = false,
+                pendingStartType = null,
+                createdAtEpochMillis = Clock.System.now().toEpochMilliseconds(),
             )
         }
+        persistSession(TarotSessionPhase.PENDING_BACKEND_REQUEST)
         scope.launch {
             draw(requestId, type)
         }
+    }
+
+    fun confirmDiscardAndStart() {
+        val pendingType = _uiState.value.pendingStartType ?: return
+        scope.launch { tarotSessionRepository.clearSession() }
+        _uiState.update { it.copy(showDiscardDialog = false, pendingStartType = null, requestId = null, response = null, createdAtEpochMillis = null) }
+        startNewRequest(pendingType)
+    }
+
+    fun cancelDiscard() {
+        _uiState.update { it.copy(showDiscardDialog = false, pendingStartType = null) }
     }
 
     fun startShuffle() {
@@ -149,6 +189,7 @@ class TarotViewModel(
             currentState.copy(revealPhase = TarotRevealPhase.SHUFFLING)
         }
         if (!startedShuffle) return
+        persistSession(TarotSessionPhase.RESULT_READY_WAITING_SHUFFLE_REVEAL)
 
         shuffleDelayJob?.cancel()
         shuffleMinDurationElapsed = false
@@ -187,6 +228,7 @@ class TarotViewModel(
                 overlayCardRevealed = false,
             )
         }
+        persistSession(TarotSessionPhase.PARTIALLY_REVEALED)
     }
 
     fun closeOverlay() {
@@ -250,6 +292,7 @@ class TarotViewModel(
 
             currentState.copy(revealPhase = TarotRevealPhase.READING_VISIBLE)
         }
+        persistSession(TarotSessionPhase.COMPLETED_READING_VISIBLE)
     }
 
     private fun draw(requestId: String, type: TarotRequestType) {
@@ -290,6 +333,7 @@ class TarotViewModel(
                     if (type == TarotRequestType.TAROT_3) {
                         refreshMoonBalanceFromBackend()
                     }
+                    persistSession(TarotSessionPhase.RESULT_READY_WAITING_SHUFFLE_REVEAL)
                 }
 
                 is ApiResult.Err -> {
@@ -342,6 +386,7 @@ class TarotViewModel(
                                             insufficientMoonsMessage = null,
                                         )
                                     }
+                                    persistSession(TarotSessionPhase.RESULT_READY_WAITING_SHUFFLE_REVEAL)
                                     return@launch
                                 }
                                 if (retryResult is ApiResult.Err) {
@@ -349,7 +394,9 @@ class TarotViewModel(
                                     _uiState.update {
                                         it.copy(
                                             isLoading = false,
+                                            requestId = null,
                                             response = null,
+                                            createdAtEpochMillis = null,
                                             revealPhase = TarotRevealPhase.IDLE,
                                             revealedCardCount = 0,
                                             activeCardIndex = 0,
@@ -370,6 +417,7 @@ class TarotViewModel(
                                             },
                                         )
                                     }
+                                    tarotSessionRepository.clearSession()
                                     return@launch
                                 }
                             }
@@ -384,7 +432,9 @@ class TarotViewModel(
                                 _uiState.update {
                                     it.copy(
                                         isLoading = false,
+                                        requestId = null,
                                         response = null,
+                                        createdAtEpochMillis = null,
                                         revealPhase = TarotRevealPhase.IDLE,
                                         revealedCardCount = 0,
                                         activeCardIndex = 0,
@@ -397,6 +447,7 @@ class TarotViewModel(
                                         error = null,
                                     )
                                 }
+                                tarotSessionRepository.clearSession()
                                 return@launch
                             }
                         }
@@ -406,7 +457,9 @@ class TarotViewModel(
                     _uiState.update {
                         it.copy(
                             isLoading = false,
+                            requestId = null,
                             response = null,
+                            createdAtEpochMillis = null,
                             revealPhase = TarotRevealPhase.IDLE,
                             revealedCardCount = 0,
                             activeCardIndex = 0,
@@ -427,9 +480,57 @@ class TarotViewModel(
                             },
                         )
                     }
+                    tarotSessionRepository.clearSession()
                     refreshMoonBalanceFromBackend()
                 }
             }
+        }
+    }
+
+    private fun restoreSession(snapshot: TarotSessionSnapshot) {
+        _uiState.update {
+            it.copy(
+                requestId = snapshot.requestId,
+                selectedType = snapshot.type,
+                isLoading = snapshot.phase == TarotSessionPhase.PENDING_BACKEND_REQUEST,
+                response = snapshot.response,
+                revealPhase = runCatching { TarotRevealPhase.valueOf(snapshot.revealPhase) }.getOrDefault(TarotRevealPhase.WAITING_TO_SHUFFLE),
+                revealedCardCount = snapshot.revealedCardCount,
+                activeCardIndex = snapshot.activeCardIndex,
+                activeCardRevealed = snapshot.activeCardRevealed,
+                overlayVisible = snapshot.overlayVisible,
+                overlayCardIndex = snapshot.overlayCardIndex,
+                overlayCardRevealed = snapshot.overlayCardRevealed,
+                openedMiniCardIndex = snapshot.openedMiniCardIndex,
+                createdAtEpochMillis = snapshot.createdAtEpochMillis,
+                isSessionRestoreResolved = true,
+            )
+        }
+    }
+
+    private fun persistSession(phase: TarotSessionPhase) {
+        val s = _uiState.value
+        val requestId = s.requestId ?: return
+        scope.launch {
+            val now = Clock.System.now().toEpochMilliseconds()
+            tarotSessionRepository.saveSession(
+                TarotSessionSnapshot(
+                    requestId = requestId,
+                    type = s.selectedType,
+                    createdAtEpochMillis = s.createdAtEpochMillis ?: now,
+                    updatedAtEpochMillis = now,
+                    phase = phase,
+                    response = s.response,
+                    revealPhase = s.revealPhase.name,
+                    revealedCardCount = s.revealedCardCount,
+                    activeCardIndex = s.activeCardIndex,
+                    activeCardRevealed = s.activeCardRevealed,
+                    overlayVisible = s.overlayVisible,
+                    overlayCardIndex = s.overlayCardIndex,
+                    overlayCardRevealed = s.overlayCardRevealed,
+                    openedMiniCardIndex = s.openedMiniCardIndex,
+                ),
+            )
         }
     }
 
