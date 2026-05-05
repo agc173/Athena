@@ -29,7 +29,6 @@ fun TarotHomeScreen(
     economyViewModel: EconomyViewModel = koinInject(),
 ) {
     val strings = appStrings.tarot
-    val state by viewModel.uiState.collectAsState()
     val economyState by economyViewModel.uiState.collectAsState()
     val tarot1CostLabel = resolveEconomyGateLabel(
         preview = economyState.modulePreviews.firstOrNull { it.module == "TAROT_1" },
@@ -74,7 +73,7 @@ fun TarotHomeScreen(
 
         TarotOptionCard(
             title = strings.homeThreeCardTitle,
-            subtitle = "${strings.homeThreeCardSubtitle} · ${state.extraReadingCost} ${appStrings.profile.moonCreditsTitle}",
+            subtitle = strings.homeThreeCardSubtitle,
             costLabel = tarot3CostLabel,
             onClick = {
                 handleTarotSelection(
