@@ -85,7 +85,7 @@ class TarotRepositoryImpl(
             readingTypeHint = reading.type,
         ) ?: return ApiResult.Err(ApiError.Internal("Invalid response: invalid draw"))
 
-        val details = parseReadingDetails(reading)
+        val details = parseReadingDetails(reading, response.requestType)
             ?: return ApiResult.Err(ApiError.Internal("Invalid response: invalid reading"))
 
         return ApiResult.Ok(
@@ -136,8 +136,13 @@ class TarotRepositoryImpl(
         }
     }
 
-    private fun parseReadingDetails(reading: ReadingDto): TarotReadingDetails? {
-        return when (reading.type) {
+    private fun parseReadingDetails(reading: ReadingDto, requestTypeHint: String? = null): TarotReadingDetails? {
+        val resolvedType = reading.type ?: requestTypeHint ?: when {
+            reading.interpretation != null -> TarotRequestType.TAROT_1.name
+            !reading.cards.isNullOrEmpty() -> TarotRequestType.TAROT_3.name
+            else -> null
+        }
+        return when (resolvedType) {
             TarotRequestType.TAROT_1.name -> {
                 val interpretation = reading.interpretation ?: return null
                 val theme = interpretation.theme ?: return null
