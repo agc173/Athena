@@ -479,6 +479,8 @@ data class TarotStrings(
     val homeSingleCardSubtitle: String,
     val homeThreeCardTitle: String,
     val homeThreeCardSubtitle: String,
+    val lastReadingTitle: String,
+    val lastReadingSubtitle: String,
     val revealIntro: String,
     val tapDeckToShuffle: String,
     val loadingSingleTitle: String,
@@ -509,14 +511,6 @@ data class TarotStrings(
     val fallbackArtSoon: String,
     val cardBackContentDescription: String,
     val cardFaceContentDescription: String,
-    val pendingSessionTitle: String = "Tirada pendiente",
-    val pendingSessionBody: String = "Tienes una tirada pagada pendiente. Puedes continuarla sin volver a gastar.",
-    val continuePendingCta: String = "Continuar tirada",
-    val startNewDrawCta: String = "Nueva tirada",
-    val discardPendingTitle: String = "Descartar tirada pendiente",
-    val discardPendingBody: String = "Si empiezas una tirada nueva, perderás la tirada pendiente actual.",
-    val discardConfirmCta: String = "Descartar y continuar",
-    val discardCancelCta: String = "Cancelar",
 )
 
 data class ZodiacStrings(
@@ -977,6 +971,8 @@ val fallbackAppStrings: AppStrings = AppStrings(
         homeSingleCardSubtitle = "Una guía clara para tu situación actual",
         homeThreeCardTitle = "Tirada de 3 cartas",
         homeThreeCardSubtitle = "Pasado · Presente · Futuro",
+        lastReadingTitle = "Última tirada",
+        lastReadingSubtitle = "Vuelve a tu tirada guardada sin volver a gastar.",
         revealIntro = "Revela tus cartas y explora su lectura",
         tapDeckToShuffle = "Pulsa el mazo para barajar",
         loadingSingleTitle = "Barajando las cartas...",
@@ -1458,6 +1454,8 @@ private val englishAppStrings = fallbackAppStrings.copy(
         homeSingleCardSubtitle = "Clear guidance for your current situation",
         homeThreeCardTitle = "3-card spread",
         homeThreeCardSubtitle = "Past · Present · Future",
+        lastReadingTitle = "Last reading",
+        lastReadingSubtitle = "Return to your saved reading without spending again.",
         revealIntro = "Reveal your cards and explore their reading",
         tapDeckToShuffle = "Tap the deck to shuffle",
         loadingSingleTitle = "Shuffling the cards...",
@@ -1899,6 +1897,8 @@ private val portugueseAppStrings = fallbackAppStrings.copy(
     ),
     tarot = fallbackAppStrings.tarot.copy(
         languageCode = "pt",
+        lastReadingTitle = "Última tiragem",
+        lastReadingSubtitle = "Volte para sua tiragem salva sem gastar novamente.",
         guideEntrySubtitle = "Leituras e interpretação simbólica",
         guideEntryDetails = "Carta única · Tiragem de 3",
         homeIntro = "As cartas oferecem uma leitura simbólica para o seu momento atual",
@@ -2358,6 +2358,8 @@ private val russianAppStrings = fallbackAppStrings.copy(
     ),
     tarot = fallbackAppStrings.tarot.copy(
         languageCode = "ru",
+        lastReadingTitle = "Последний расклад",
+        lastReadingSubtitle = "Вернитесь к сохранённому раскладу без повторной траты.",
         guideEntrySubtitle = "Расклады и символическая интерпретация",
         guideEntryDetails = "Одна карта · Расклад из 3",
         homeIntro = "Карты дают символическое чтение вашего текущего момента",
@@ -2810,6 +2812,8 @@ private val frenchAppStrings = fallbackAppStrings.copy(
     ),
     tarot = fallbackAppStrings.tarot.copy(
         languageCode = "fr",
+        lastReadingTitle = "Dernier tirage",
+        lastReadingSubtitle = "Revenez à votre tirage enregistré sans redépenser.",
         guideEntrySubtitle = "Tirages et interprétation symbolique",
         guideEntryDetails = "Carte unique · Tirage de 3",
         homeIntro = "Les cartes offrent une lecture symbolique de votre moment actuel",
@@ -3261,6 +3265,8 @@ private val italianAppStrings = fallbackAppStrings.copy(
     ),
     tarot = fallbackAppStrings.tarot.copy(
         languageCode = "it",
+        lastReadingTitle = "Ultima lettura",
+        lastReadingSubtitle = "Torna alla lettura salvata senza spendere di nuovo.",
         guideEntrySubtitle = "Letture e interpretazione simbolica",
         guideEntryDetails = "Carta singola · Stesa da 3",
         homeIntro = "Le carte offrono una lettura simbolica del tuo momento attuale",
@@ -3711,6 +3717,8 @@ private val germanAppStrings = fallbackAppStrings.copy(
     ),
     tarot = fallbackAppStrings.tarot.copy(
         languageCode = "de",
+        lastReadingTitle = "Letzte Legung",
+        lastReadingSubtitle = "Kehre zu deiner gespeicherten Legung zurück, ohne erneut auszugeben.",
         guideEntrySubtitle = "Legungen und symbolische Deutung",
         guideEntryDetails = "Einzelkarte · 3er-Legung",
         homeIntro = "Die Karten bieten eine symbolische Deutung für deinen aktuellen Moment",

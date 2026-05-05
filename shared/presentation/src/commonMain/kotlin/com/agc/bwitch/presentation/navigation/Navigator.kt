@@ -62,6 +62,12 @@ class Navigator(
 
         persistTopLevelStack()
         val targetStack = topLevelStacks[root] ?: ArrayDeque<Destination>().apply { addLast(root) }
+        if (root == Destination.Guide && targetStack.lastOrNull() is Destination.Tarot) {
+            targetStack.removeLast()
+            if (targetStack.isEmpty() || targetStack.lastOrNull() != Destination.TarotHome) {
+                targetStack.addLast(Destination.TarotHome)
+            }
+        }
         backStack.clear()
         backStack.addAll(targetStack)
         _current.value = backStack.last()
