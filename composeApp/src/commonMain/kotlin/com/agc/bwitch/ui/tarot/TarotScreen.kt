@@ -80,9 +80,11 @@ fun TarotScreen(
     val state by viewModel.uiState.collectAsState()
     val strings = appStrings.tarot
 
-    LaunchedEffect(initialRequestType, state.requestId, state.isSessionRestoreResolved, state.hasActiveRecoverableSession) {
-        if (state.isSessionRestoreResolved && !state.hasActiveRecoverableSession && state.requestId == null) {
-            initialRequestType?.let { viewModel.newRequest(it) }
+    LaunchedEffect(initialRequestType, state.isSessionRestoreResolved) {
+        if (!state.isSessionRestoreResolved) return@LaunchedEffect
+        when (initialRequestType) {
+            null -> viewModel.openSaved()
+            else -> viewModel.startNew(initialRequestType)
         }
     }
 
@@ -514,27 +516,6 @@ fun TarotScreen(
         }
     }
 
-    if (state.showDiscardDialog) {
-        Dialog(
-            onDismissRequest = viewModel::cancelDiscard,
-            properties = DialogProperties(dismissOnClickOutside = true),
-        ) {
-            Card {
-                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text(strings.discardPendingTitle, style = MaterialTheme.typography.titleMedium)
-                    Text(strings.discardPendingBody, style = MaterialTheme.typography.bodyMedium)
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                        TextButton(onClick = viewModel::cancelDiscard, modifier = Modifier.weight(1f)) {
-                            Text(strings.discardCancelCta)
-                        }
-                        Button(onClick = viewModel::confirmDiscardAndStart, modifier = Modifier.weight(1f)) {
-                            Text(strings.discardConfirmCta)
-                        }
-                    }
-                }
-            }
-        }
-    }
 }
 
 private const val OVERLAY_CARD_EXIT_DURATION_MS = 180

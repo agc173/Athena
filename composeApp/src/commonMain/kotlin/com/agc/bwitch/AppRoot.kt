@@ -284,7 +284,10 @@ fun AppRoot() {
                 contentPadding = padding,
                 onSelectRequestType = { requestType ->
                     navigator.navigate(Destination.Tarot(requestType = requestType))
-                }
+                },
+                onOpenLastReading = {
+                    navigator.navigate(Destination.Tarot())
+                },
             )
 
             Destination.Oracle -> OracleScreen(contentPadding = padding)

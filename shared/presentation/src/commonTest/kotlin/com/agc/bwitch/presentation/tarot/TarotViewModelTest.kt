@@ -54,7 +54,7 @@ class TarotViewModelTest {
                 spendMoonsUseCase = SpendMoonsUseCase(moonRepository),
             )
 
-            viewModel.newRequest(TarotRequestType.TAROT_1)
+            viewModel.startNew(TarotRequestType.TAROT_1)
             advanceUntilIdle()
 
             assertEquals("de", repo.lastLang)
@@ -83,7 +83,7 @@ class TarotViewModelTest {
                 analyticsTracker = analytics,
             )
 
-            viewModel.newRequest(TarotRequestType.TAROT_3)
+            viewModel.startNew(TarotRequestType.TAROT_3)
             advanceUntilIdle()
             viewModel.retry()
             advanceUntilIdle()
@@ -126,7 +126,7 @@ class TarotViewModelTest {
                 analyticsTracker = analytics,
             )
 
-            viewModel.newRequest(TarotRequestType.TAROT_3)
+            viewModel.startNew(TarotRequestType.TAROT_3)
             advanceUntilIdle()
 
             assertEquals(2, repo.callCount)
@@ -165,7 +165,7 @@ class TarotViewModelTest {
                 spendMoonsUseCase = SpendMoonsUseCase(moonRepository),
             )
 
-            viewModel.newRequest(TarotRequestType.TAROT_3)
+            viewModel.startNew(TarotRequestType.TAROT_3)
             advanceUntilIdle()
 
             assertEquals(TAROT_DRAW_ERROR_KEY, viewModel.uiState.value.error)
@@ -204,7 +204,7 @@ class TarotViewModelTest {
                 spendMoonsUseCase = SpendMoonsUseCase(moonRepository),
             )
 
-            viewModel.newRequest(TarotRequestType.TAROT_3)
+            viewModel.startNew(TarotRequestType.TAROT_3)
             advanceUntilIdle()
 
             assertEquals(0, moonRepository.spendCalls)
@@ -244,11 +244,11 @@ class TarotViewModelTest {
                 spendMoonsUseCase = SpendMoonsUseCase(moonRepository),
             )
 
-            viewModel.newRequest(TarotRequestType.TAROT_1)
+            viewModel.startNew(TarotRequestType.TAROT_1)
             advanceUntilIdle()
             assertEquals(TAROT_DRAW_ERROR_KEY, viewModel.uiState.value.error)
 
-            viewModel.newRequest(TarotRequestType.TAROT_3)
+            viewModel.startNew(TarotRequestType.TAROT_3)
             advanceUntilIdle()
             assertNull(viewModel.uiState.value.error)
             assertEquals("DONE", viewModel.uiState.value.response?.status)

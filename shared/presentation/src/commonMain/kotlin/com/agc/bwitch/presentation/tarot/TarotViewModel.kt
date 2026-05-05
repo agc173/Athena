@@ -64,8 +64,6 @@ data class TarotUiState(
     val moonBalance: Int = 0,
     val extraReadingCost: Int = MoonUnlockCostCatalog.costFor(MoonUnlockFeature.TarotExtraReading),
     val insufficientMoonsMessage: String? = null,
-    val showDiscardDialog: Boolean = false,
-    val pendingStartType: TarotRequestType? = null,
     val createdAtEpochMillis: Long? = null,
     val isSessionRestoreResolved: Boolean = false,
 ) {
@@ -121,13 +119,12 @@ class TarotViewModel(
         }
     }
 
-    fun newRequest(type: TarotRequestType) {
+    fun startNew(type: TarotRequestType) {
         if (_uiState.value.isLoading) return
-        if (_uiState.value.hasActiveRecoverableSession) {
-            _uiState.update { it.copy(showDiscardDialog = true, pendingStartType = type) }
-            return
+        scope.launch {
+            tarotSessionRepository.clearSession()
+            startNewRequest(type)
         }
-        startNewRequest(type)
     }
 
     private fun startNewRequest(type: TarotRequestType) {
@@ -157,8 +154,6 @@ class TarotViewModel(
                 overlayCardRevealed = false,
                 openedMiniCardIndex = null,
                 insufficientMoonsMessage = null,
-                showDiscardDialog = false,
-                pendingStartType = null,
                 createdAtEpochMillis = Clock.System.now().toEpochMilliseconds(),
             )
         }
@@ -168,15 +163,11 @@ class TarotViewModel(
         }
     }
 
-    fun confirmDiscardAndStart() {
-        val pendingType = _uiState.value.pendingStartType ?: return
-        scope.launch { tarotSessionRepository.clearSession() }
-        _uiState.update { it.copy(showDiscardDialog = false, pendingStartType = null, requestId = null, response = null, createdAtEpochMillis = null) }
-        startNewRequest(pendingType)
-    }
-
-    fun cancelDiscard() {
-        _uiState.update { it.copy(showDiscardDialog = false, pendingStartType = null) }
+    fun openSaved() {
+        if (_uiState.value.hasActiveRecoverableSession) return
+        scope.launch {
+            tarotSessionRepository.loadSession()?.let { restoreSession(it) }
+        }
     }
 
     fun startShuffle() {
@@ -238,7 +229,7 @@ class TarotViewModel(
     }
 
     fun retry() {
-        newRequest(_uiState.value.selectedType)
+        startNew(_uiState.value.selectedType)
     }
 
     fun toggleMiniCard(index: Int) {
