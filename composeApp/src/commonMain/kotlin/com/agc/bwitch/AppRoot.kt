@@ -428,7 +428,7 @@ private fun destinationTitle(
         Destination.BirthChart -> strings.birthChart
         Destination.Synastry -> strings.synastry
         Destination.UserProfile -> strings.profile
-        Destination.MoonStore -> strings.profile
+        Destination.MoonStore -> appStrings.profile.storeLabel
         Destination.Settings -> strings.settings
         Destination.Oracle -> strings.oracle
         Destination.OracleDebug -> strings.oracleDebug

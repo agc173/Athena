@@ -74,7 +74,7 @@ fun TarotHomeScreen(
 
         TarotOptionCard(
             title = strings.homeThreeCardTitle,
-            subtitle = "${strings.homeThreeCardSubtitle} · ${state.extraReadingCost} ${appStrings.profile.moonCreditsTitle}",
+            subtitle = strings.homeThreeCardSubtitle,
             costLabel = tarot3CostLabel,
             onClick = {
                 handleTarotSelection(
