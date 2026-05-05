@@ -59,7 +59,7 @@ data class DrawCardDto(
 
 @Serializable
 data class ReadingDto(
-    val type: String,
+    val type: String? = null,
     val interpretation: InterpretationDto? = null,
     val cards: List<ReadingCardDto>? = null,
     val summary: String? = null,

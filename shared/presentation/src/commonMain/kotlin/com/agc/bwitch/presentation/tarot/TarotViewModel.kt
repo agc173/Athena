@@ -345,7 +345,7 @@ class TarotViewModel(
                             error = if (economyError) {
                                 null
                             } else {
-                                TAROT_DRAW_ERROR_KEY
+                                result.error.message?.takeIf { it.isNotBlank() } ?: TAROT_DRAW_ERROR_KEY
                             },
                         )
                     }

@@ -125,28 +125,23 @@ fun TarotScreen(
 
             when (state.revealPhase) {
                 TarotRevealPhase.WAITING_TO_SHUFFLE -> {
-                    if (state.isLoading && state.response == null) {
-                        val loadingTitle = when (state.selectedType) {
-                            TarotRequestType.TAROT_1 -> strings.loadingSingleTitle
-                            TarotRequestType.TAROT_3 -> strings.loadingThreeTitle
-                        }
-                        val loadingSubtitle = when (state.selectedType) {
-                            TarotRequestType.TAROT_1 -> strings.loadingSingleSubtitle
-                            TarotRequestType.TAROT_3 -> strings.loadingThreeSubtitle
-                        }
-                        TarotLoadingDeck(
-                            title = loadingTitle,
-                            subtitle = loadingSubtitle,
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        TarotCardView(card = null, revealed = false, onClick = viewModel::startShuffle)
+                        Text(
+                            if (state.isLoading && state.response == null) {
+                                when (state.selectedType) {
+                                    TarotRequestType.TAROT_1 -> strings.loadingSingleSubtitle
+                                    TarotRequestType.TAROT_3 -> strings.loadingThreeSubtitle
+                                }
+                            } else {
+                                strings.tapDeckToShuffle
+                            },
+                            style = MaterialTheme.typography.bodyMedium,
                         )
-                    } else {
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                        ) {
-                            TarotCardView(card = null, revealed = false, onClick = viewModel::startShuffle)
-                            Text(strings.tapDeckToShuffle, style = MaterialTheme.typography.bodyMedium)
-                        }
                     }
                 }
 
@@ -344,12 +339,16 @@ fun TarotScreen(
 
             state.error?.let { _ ->
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    val errorMessage = strings.unknownErrorFallback
+                    val errorMessage = if (state.error == com.agc.bwitch.presentation.tarot.TAROT_DRAW_ERROR_KEY) {
+                        strings.unknownErrorFallback
+                    } else {
+                        state.error.orEmpty().ifBlank { strings.unknownErrorFallback }
+                    }
                     Text("${strings.errorPrefix} $errorMessage", color = MaterialTheme.colorScheme.error)
                     Button(
                         onClick = viewModel::retry,
                         modifier = Modifier.fillMaxWidth(),
-                        enabled = !state.isLoading && state.requestId != null,
+                        enabled = !state.isLoading,
                     ) {
                         Text(strings.retryCta)
                     }

@@ -37,13 +37,13 @@ fun TarotHomeScreen(
         economyStrings = appStrings.economy,
         fallbackCost = 1,
         freeLabelOverride = appStrings.economy.freeToday,
-    )
+    ) ?: appStrings.economy.moonCostFormat.replaceFirst("%d", "1")
     val tarot3CostLabel = resolveEconomyGateLabel(
         preview = economyState.modulePreviews.firstOrNull { it.module == "TAROT_3" },
         economyStrings = appStrings.economy,
         fallbackCost = 3,
         freeLabelOverride = appStrings.economy.freeThisWeek,
-    )
+    ) ?: appStrings.economy.moonCostFormat.replaceFirst("%d", "3")
     val tarot1Preview = economyState.modulePreviews.firstOrNull { it.module == "TAROT_1" }
     val tarot3Preview = economyState.modulePreviews.firstOrNull { it.module == "TAROT_3" }
     val hasSavedSession = state.hasActiveRecoverableSession
