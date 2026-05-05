@@ -71,11 +71,6 @@ fun MoonStoreScreen(
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text(
-            text = strings.storeLabel,
-            style = MaterialTheme.typography.headlineSmall,
-        )
-
         Card(modifier = Modifier.fillMaxWidth()) {
             Column(
                 modifier = Modifier.padding(12.dp),

@@ -198,7 +198,11 @@ fun AppRoot() {
     val currentMainTab = remember(dest) { MainTab.items.firstOrNull { it.matches(dest) } }
 
     AppScaffold(
-        title = destinationTitle(dest, navigationStrings),
+        title = destinationTitle(
+            destination = dest,
+            strings = navigationStrings,
+            moonStoreLabel = appStrings.profile.storeLabel,
+        ),
         topBarBadge = if (dest.showsTopBarMoonBalance() && economyState.hasUsableSnapshot) {
             {
                 MoonBalanceBadge(
@@ -420,6 +424,7 @@ private const val REWARDED_AD_PAYWALL_PLACEMENT = "contextual_paywall"
 private fun destinationTitle(
     destination: Destination,
     strings: NavigationStrings,
+    moonStoreLabel: String,
 ): String {
     return when (destination) {
         Destination.AuthGate -> ""
@@ -428,7 +433,7 @@ private fun destinationTitle(
         Destination.BirthChart -> strings.birthChart
         Destination.Synastry -> strings.synastry
         Destination.UserProfile -> strings.profile
-        Destination.MoonStore -> strings.profile
+        Destination.MoonStore -> moonStoreLabel
         Destination.Settings -> strings.settings
         Destination.Oracle -> strings.oracle
         Destination.OracleDebug -> strings.oracleDebug

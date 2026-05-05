@@ -29,22 +29,21 @@ fun TarotHomeScreen(
     economyViewModel: EconomyViewModel = koinInject(),
 ) {
     val strings = appStrings.tarot
-    val state by viewModel.uiState.collectAsState()
     val economyState by economyViewModel.uiState.collectAsState()
+    val tarot1Preview = economyState.modulePreviews.firstOrNull { it.module == "TAROT_1" }
+    val tarot3Preview = economyState.modulePreviews.firstOrNull { it.module == "TAROT_3" }
     val tarot1CostLabel = resolveEconomyGateLabel(
-        preview = economyState.modulePreviews.firstOrNull { it.module == "TAROT_1" },
+        preview = tarot1Preview,
         economyStrings = appStrings.economy,
         fallbackCost = 1,
         freeLabelOverride = appStrings.economy.freeToday,
-    )
+    ) ?: appStrings.economy.moonCostFormat.replaceFirst("%d", "1")
     val tarot3CostLabel = resolveEconomyGateLabel(
-        preview = economyState.modulePreviews.firstOrNull { it.module == "TAROT_3" },
+        preview = tarot3Preview,
         economyStrings = appStrings.economy,
         fallbackCost = 3,
         freeLabelOverride = appStrings.economy.freeThisWeek,
-    )
-    val tarot1Preview = economyState.modulePreviews.firstOrNull { it.module == "TAROT_1" }
-    val tarot3Preview = economyState.modulePreviews.firstOrNull { it.module == "TAROT_3" }
+    ) ?: appStrings.economy.moonCostFormat.replaceFirst("%d", "3")
 
     Column(
         modifier = Modifier
@@ -74,7 +73,7 @@ fun TarotHomeScreen(
 
         TarotOptionCard(
             title = strings.homeThreeCardTitle,
-            subtitle = "${strings.homeThreeCardSubtitle} · ${state.extraReadingCost} ${appStrings.profile.moonCreditsTitle}",
+            subtitle = strings.homeThreeCardSubtitle,
             costLabel = tarot3CostLabel,
             onClick = {
                 handleTarotSelection(
@@ -116,7 +115,7 @@ private fun handleTarotSelection(
 private fun TarotOptionCard(
     title: String,
     subtitle: String,
-    costLabel: String?,
+    costLabel: String,
     onClick: () -> Unit,
 ) {
     Card(onClick = onClick) {
@@ -126,13 +125,11 @@ private fun TarotOptionCard(
         ) {
             Text(title, style = MaterialTheme.typography.titleMedium)
             Text(subtitle, style = MaterialTheme.typography.bodyMedium)
-            costLabel?.let {
-                Text(
-                    text = it,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-            }
+            Text(
+                text = costLabel,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary,
+            )
         }
     }
 }
