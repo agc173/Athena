@@ -11,3 +11,8 @@ interface TarotRepository {
         question: String? = null,
     ): ApiResult<TarotDrawResponse>
 }
+
+interface LastTarotReadingRepository {
+    fun get(): TarotDrawResponse?
+    fun save(response: TarotDrawResponse)
+}

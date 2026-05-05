@@ -238,6 +238,9 @@ fun AppRoot() {
                             }
                         } else {
                             navigator.switchTopLevel(selected.rootDestination)
+                            if (selected == MainTab.guide && navigator.current.value is Destination.Tarot) {
+                                navigator.replace(Destination.TarotHome)
+                            }
                         }
                     }
                 )
@@ -284,7 +287,8 @@ fun AppRoot() {
                 contentPadding = padding,
                 onSelectRequestType = { requestType ->
                     navigator.navigate(Destination.Tarot(requestType = requestType))
-                }
+                },
+                onSelectLastReading = { navigator.navigate(Destination.Tarot(requestType = null)) },
             )
 
             Destination.Oracle -> OracleScreen(contentPadding = padding)
