@@ -61,7 +61,7 @@ data class TarotUiState(
     val openedMiniCardIndex: Int? = null,
     val moonBalance: Int = 0,
     val extraReadingCost: Int = MoonUnlockCostCatalog.costFor(MoonUnlockFeature.TarotExtraReading),
-    val insufficientMoonsMessage: String? = null,
+    val economyErrorMessageKey: String? = null,
     val createdAtEpochMillis: Long? = null,
     val isSessionRestoreResolved: Boolean = false,
 ) {
@@ -148,7 +148,7 @@ class TarotViewModel(
                 overlayCardIndex = null,
                 overlayCardRevealed = false,
                 openedMiniCardIndex = null,
-                insufficientMoonsMessage = null,
+                economyErrorMessageKey = null,
                 createdAtEpochMillis = Clock.System.now().toEpochMilliseconds(),
             )
         }
@@ -337,11 +337,7 @@ class TarotViewModel(
                             overlayCardIndex = null,
                             overlayCardRevealed = false,
                             openedMiniCardIndex = null,
-                            insufficientMoonsMessage = if (economyError) {
-                                TAROT_EXTRA_READING_NOT_ENOUGH_MOONS_KEY
-                            } else {
-                                null
-                            },
+                            economyErrorMessageKey = result.error.toTarotEconomyErrorMessageKey(),
                             error = if (economyError) {
                                 null
                             } else {
@@ -440,14 +436,31 @@ class TarotViewModel(
     }
 }
 
+const val TAROT_LIMIT_REACHED_KEY = "tarot.error.limit_reached"
 const val TAROT_EXTRA_READING_NOT_ENOUGH_MOONS_KEY = "tarot.error.not_enough_moons"
 const val TAROT_DRAW_ERROR_KEY = "tarot.error.draw_failed"
 
 private fun com.agc.bwitch.domain.shared.ApiError.isEconomyRestriction(): Boolean {
+    return toTarotEconomyErrorMessageKey() != null
+}
+
+private fun com.agc.bwitch.domain.shared.ApiError.toTarotEconomyErrorMessageKey(): String? {
     val normalizedMessage = message.orEmpty().lowercase()
-    return "insufficient_moons" in normalizedMessage ||
+    return when {
+        "tarot_1_daily_limit_reached" in normalizedMessage ||
+            "tarot_3_moon_daily_limit_reached" in normalizedMessage ||
+            "tarot_3_premium_daily_limit_reached" in normalizedMessage ||
+            "tarot_3_weekly_limit_reached" in normalizedMessage ->
+            TAROT_LIMIT_REACHED_KEY
+
+        "insufficient_moon_balance" in normalizedMessage ||
+            "insufficient_moons" in normalizedMessage ||
         "not_enough_moons" in normalizedMessage ||
         "not enough moons" in normalizedMessage ||
         "insufficient moons" in normalizedMessage ||
-        "moon_balance" in normalizedMessage
+        "moon_balance" in normalizedMessage ->
+            TAROT_EXTRA_READING_NOT_ENOUGH_MOONS_KEY
+
+        else -> null
+    }
 }

@@ -88,8 +88,8 @@ fun TarotScreen(
         }
     }
 
-    LaunchedEffect(state.isLoading, state.response, state.error, state.insufficientMoonsMessage) {
-        if (!state.isLoading && (state.response != null || state.error != null || state.insufficientMoonsMessage != null)) {
+    LaunchedEffect(state.isLoading, state.response, state.error, state.economyErrorMessageKey) {
+        if (!state.isLoading && (state.response != null || state.error != null || state.economyErrorMessageKey != null)) {
             economyViewModel.loadEconomy()
         }
     }
@@ -115,9 +115,14 @@ fun TarotScreen(
                 )
             }
 
-            state.insufficientMoonsMessage?.let {
+            state.economyErrorMessageKey?.let { errorKey ->
+                val localizedMessage = when (errorKey) {
+                    com.agc.bwitch.presentation.tarot.TAROT_LIMIT_REACHED_KEY -> strings.limitReachedMessage
+                    com.agc.bwitch.presentation.tarot.TAROT_EXTRA_READING_NOT_ENOUGH_MOONS_KEY -> strings.insufficientMoonsForExtraReading
+                    else -> strings.unknownErrorFallback
+                }
                 Text(
-                    text = strings.insufficientMoonsForExtraReading,
+                    text = localizedMessage,
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodyMedium,
                 )

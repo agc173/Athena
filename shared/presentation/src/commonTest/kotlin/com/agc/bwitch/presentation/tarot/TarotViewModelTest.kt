@@ -132,7 +132,7 @@ class TarotViewModelTest {
             assertEquals(2, repo.callCount)
             assertEquals(1, moonRepository.spendCalls)
             assertNull(viewModel.uiState.value.error)
-            assertNull(viewModel.uiState.value.insufficientMoonsMessage)
+            assertNull(viewModel.uiState.value.economyErrorMessageKey)
             assertEquals("DONE", viewModel.uiState.value.response?.status)
             assertEquals(7, viewModel.uiState.value.moonBalance)
             assertTrue(analytics.events.any { it is com.agc.bwitch.domain.analytics.AnalyticsEvent.ContentUnlocked })
@@ -168,8 +168,8 @@ class TarotViewModelTest {
             viewModel.startNew(TarotRequestType.TAROT_3)
             advanceUntilIdle()
 
-            assertEquals(TAROT_DRAW_ERROR_KEY, viewModel.uiState.value.error)
-            assertNull(viewModel.uiState.value.insufficientMoonsMessage)
+            assertNull(viewModel.uiState.value.error)
+            assertEquals(TAROT_LIMIT_REACHED_KEY, viewModel.uiState.value.economyErrorMessageKey)
         } finally {
             Dispatchers.resetMain()
         }
