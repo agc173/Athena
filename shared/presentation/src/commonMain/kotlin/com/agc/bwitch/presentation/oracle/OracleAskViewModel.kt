@@ -99,11 +99,11 @@ class OracleAskViewModel(
     }
 
     fun onQuestionChange(value: String) {
-        if (value.length > ORACLE_QUESTION_MAX_LENGTH) return
+        val limitedQuestion = value.take(ORACLE_QUESTION_MAX_LENGTH)
 
         _uiState.update {
             it.copy(
-                question = value,
+                question = limitedQuestion,
                 error = null,
                 answer = null,
                 quotaSnapshot = null,

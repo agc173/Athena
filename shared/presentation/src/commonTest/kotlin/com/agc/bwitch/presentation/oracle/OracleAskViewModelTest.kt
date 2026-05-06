@@ -251,6 +251,33 @@ class OracleAskViewModelTest {
         }
     }
 
+    @Test
+    fun `pasted over-limit question is capped before submit`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val repo = FakeOracleRepository()
+            val languageRepo = FakeLanguageRepository(MutableStateFlow(AppLanguage.English))
+            val viewModel = OracleAskViewModel(
+                oracleRepository = repo,
+                resolveCurrentLanguageUseCase = ResolveCurrentLanguageUseCase(languageRepo),
+                observeCurrentLanguageUseCase = ObserveCurrentLanguageUseCase(languageRepo),
+                economyRepository = FakeEconomyRepository(),
+            )
+            val longQuestion = "ж".repeat(ORACLE_QUESTION_MAX_LENGTH + 25)
+            val expectedQuestion = longQuestion.take(ORACLE_QUESTION_MAX_LENGTH)
+
+            viewModel.onQuestionChange(longQuestion)
+            viewModel.ask()
+            advanceUntilIdle()
+
+            assertEquals(expectedQuestion, viewModel.uiState.value.question)
+            assertEquals(expectedQuestion, repo.lastRequest?.question)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
     private class FakeOracleRepository : OracleRepository {
         constructor(scriptedResults: List<ApiResult<OracleAskResult>> = emptyList()) {
             results.addAll(scriptedResults)
