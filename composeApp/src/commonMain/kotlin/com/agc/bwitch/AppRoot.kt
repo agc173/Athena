@@ -124,15 +124,16 @@ fun AppRoot() {
     }
 
     val isAuthenticated = session.isLoggedIn && !session.isAnonymous
+    val authenticatedUid = session.uid.takeIf { isAuthenticated && !it.isNullOrBlank() }
 
     LaunchedEffect(isAuthenticated, session.isAnonymous, session.uid) {
-        if (session.isLoggedIn && !session.isAnonymous && !session.uid.isNullOrBlank()) {
+        if (authenticatedUid != null) {
             economyVm.loadEconomy()
         }
     }
 
-    LaunchedEffect(isAuthenticated, session.uid) {
-        if (!isAuthenticated || session.uid.isNullOrBlank()) {
+    LaunchedEffect(authenticatedUid) {
+        if (authenticatedUid == null) {
             profileForGate = null
             hasProfileGateSnapshot = false
             isProfileGateLoading = false
@@ -158,11 +159,18 @@ fun AppRoot() {
         }
     }
 
-    val hasMinimumProfile = profileForGate.hasMinimumProfileCompleted()
+    val hasMinimumProfile = if (authenticatedUid != null) {
+        profileForGate.hasMinimumProfileCompleted()
+    } else {
+        false
+    }
     val navigationStrings = appStrings.navigation
 
-    LaunchedEffect(isAuthenticated, isProfileGateLoading, hasProfileGateSnapshot, hasMinimumProfile, dest) {
-        if (!isAuthenticated) {
+    LaunchedEffect(authenticatedUid, isProfileGateLoading, hasProfileGateSnapshot, hasMinimumProfile, dest) {
+        if (authenticatedUid == null) {
+            profileForGate = null
+            hasProfileGateSnapshot = false
+            isProfileGateLoading = false
             if (dest != Destination.AuthGate) navigator.resetToRoot(Destination.AuthGate)
             return@LaunchedEffect
         }
@@ -181,16 +189,25 @@ fun AppRoot() {
         }
     }
 
-    LaunchedEffect(session.uid) {
-        if (session.uid == null || !isAuthenticated) return@LaunchedEffect
+    LaunchedEffect(authenticatedUid) {
+        if (authenticatedUid == null) return@LaunchedEffect
         runCatching { birthChartRepository.getBirthEssence() }
     }
 
 
-    LaunchedEffect(isAuthenticated, dest) {
-        if (!isAuthenticated) return@LaunchedEffect
+    LaunchedEffect(authenticatedUid, dest) {
+        if (authenticatedUid == null) return@LaunchedEffect
         if (!dest.requiresEconomyRefreshOnEnter()) return@LaunchedEffect
         economyVm.loadEconomy()
+    }
+
+    if (!isAuthenticated) {
+        if (dest == Destination.AuthGate) {
+            AuthScreen()
+        } else {
+            AuthBootstrapLoading()
+        }
+        return
     }
 
     if (dest == Destination.AuthGate) {
