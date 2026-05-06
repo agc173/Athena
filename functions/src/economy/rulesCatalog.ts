@@ -27,7 +27,7 @@ const ECONOMY_RULES: Record<EconomyModule, EconomyModuleRule> = {
     premiumIncludedDaily: 5,
     premiumDailyMax: 5,
     moonCostPerUse: 1,
-    moonExtraDailyMax: 2,
+    moonExtraDailyMax: 3,
   },
   TAROT_3: {
     module: 'TAROT_3',
