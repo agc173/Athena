@@ -5,21 +5,17 @@ import com.agc.bwitch.domain.auth.AuthUser
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseUser
+import dev.gitlive.firebase.auth.GoogleAuthProvider
 import dev.gitlive.firebase.auth.auth
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emitAll
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
-import dev.gitlive.firebase.auth.GoogleAuthProvider
 
 class FirebaseAuthRepository : AuthRepository {
 
     private val auth: FirebaseAuth = Firebase.auth
 
-    override val authState: Flow<AuthUser?> = flow {
-        emit(auth.currentUser.toDomain())
-        emitAll(auth.authStateChanged.map { user -> user.toDomain() })
-    }
+    override val authState: Flow<AuthUser?> =
+        auth.authStateChanged.map { user -> user.toDomain() }
 
     override suspend fun signInWithGoogleIdToken(idToken: String) {
         val credential = GoogleAuthProvider.credential(idToken, null)
