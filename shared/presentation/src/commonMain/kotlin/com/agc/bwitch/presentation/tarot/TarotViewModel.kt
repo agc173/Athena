@@ -403,6 +403,7 @@ class TarotViewModel(
                                             },
                                         )
                                     }
+                                    refreshMoonBalanceFromBackend()
                                     return@launch
                                 }
                             }
@@ -430,6 +431,7 @@ class TarotViewModel(
                                         error = null,
                                     )
                                 }
+                                refreshMoonBalanceFromBackend()
                                 return@launch
                             }
                         }
