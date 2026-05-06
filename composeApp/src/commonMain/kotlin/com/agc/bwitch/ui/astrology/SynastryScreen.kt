@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -42,6 +43,7 @@ import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -147,7 +149,12 @@ fun SynastryScreen(
             enabled = state.canGenerate,
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Text(if (state.isGenerating) synastryStrings.calculatingCta else synastryStrings.calculateCta)
+            Text(
+                text = if (state.isGenerating) synastryStrings.calculatingCta else synastryStrings.calculateCta,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                softWrap = false,
+            )
         }
 
         state.error?.let { error ->
@@ -192,6 +199,9 @@ private fun PersonFormCard(
                 text = synastryStrings.cardALabel,
                 style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
                 modifier = Modifier.weight(1f),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                softWrap = false,
             )
             Box(
                 modifier = Modifier
@@ -216,6 +226,9 @@ private fun PersonFormCard(
                 style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
                 textAlign = TextAlign.End,
                 modifier = Modifier.weight(1f),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                softWrap = false,
             )
         }
 
@@ -269,6 +282,9 @@ private fun ComparativeSignRow(
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.fillMaxWidth(),
             textAlign = TextAlign.Center,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            softWrap = false,
         )
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -373,10 +389,17 @@ private fun SynastryResultCard(reading: SynastryReading, strings: AppStrings, la
 private fun MetricStarsRow(dimension: SynastryDimension, stars: Double, strings: AppStrings) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(text = dimension.toUiLabel(strings), style = MaterialTheme.typography.bodyMedium)
+        Text(
+            text = dimension.toUiLabel(strings),
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.weight(1f),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            softWrap = false,
+        )
+        Spacer(modifier = Modifier.width(12.dp))
         StarRating(stars = stars)
     }
 }
@@ -428,53 +451,81 @@ private fun DailyEnergyAxisRow(axis: SynastryDailyAxisState, strings: AppStrings
     val axisRightColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.65f)
 
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(end = 4.dp),
-                contentAlignment = Alignment.CenterStart,
-            ) {
-                Text(
-                    text = axis.leftLabel(strings),
-                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-            }
+        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+            val isCompactHeader = maxWidth < 320.dp
+            val showDecorativeDots = maxWidth >= 280.dp
+            val labelStyle = if (maxWidth < 280.dp) {
+                MaterialTheme.typography.bodySmall
+            } else {
+                MaterialTheme.typography.bodyMedium
+            }.copy(fontWeight = FontWeight.Medium)
+            val horizontalGap = if (isCompactHeader) 6.dp else 8.dp
+            val sidePadding = if (isCompactHeader) 0.dp else 4.dp
 
             Row(
+                modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(horizontalGap),
             ) {
-                Text(
-                    text = "• •",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.outline,
-                )
-                AxisInfoButton(onClick = { showAxisInfo = true })
-                Text(
-                    text = "• •",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.outline,
-                )
-            }
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(end = sidePadding),
+                    contentAlignment = Alignment.CenterStart,
+                ) {
+                    Text(
+                        text = axis.leftLabel(strings),
+                        style = labelStyle,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.fillMaxWidth(),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        softWrap = false,
+                    )
+                }
 
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(start = 4.dp),
-                contentAlignment = Alignment.CenterEnd,
-            ) {
-                Text(
-                    text = axis.rightLabel(strings),
-                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
-                    color = MaterialTheme.colorScheme.onSurface,
-                    textAlign = TextAlign.End,
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(horizontalGap),
+                ) {
+                    if (showDecorativeDots) {
+                        Text(
+                            text = "• •",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.outline,
+                            maxLines = 1,
+                            softWrap = false,
+                        )
+                    }
+                    AxisInfoButton(onClick = { showAxisInfo = true })
+                    if (showDecorativeDots) {
+                        Text(
+                            text = "• •",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.outline,
+                            maxLines = 1,
+                            softWrap = false,
+                        )
+                    }
+                }
+
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(start = sidePadding),
+                    contentAlignment = Alignment.CenterEnd,
+                ) {
+                    Text(
+                        text = axis.rightLabel(strings),
+                        style = labelStyle,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.End,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        softWrap = false,
+                    )
+                }
             }
         }
 
@@ -690,6 +741,9 @@ private fun SignDropdown(
                 text = label,
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                softWrap = false,
             )
         }
 
@@ -701,6 +755,9 @@ private fun SignDropdown(
                 text = selected?.localizedLabel(strings) ?: strings.synastry.selectPlaceholder,
                 modifier = Modifier.fillMaxWidth(),
                 color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                softWrap = false,
             )
         }
 
@@ -747,14 +804,25 @@ private fun SignPickerDialog(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(spacing.spacingXs)
             ) {
-                Text(text = title, style = MaterialTheme.typography.titleMedium)
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    softWrap = false,
+                )
 
                 if (allowEmpty) {
                     OutlinedButton(
                         onClick = { onSelect(null) },
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Text(text = if (selected == null) "${strings.synastry.unspecifiedOption} ✓" else strings.synastry.unspecifiedOption)
+                        Text(
+                            text = if (selected == null) "${strings.synastry.unspecifiedOption} ✓" else strings.synastry.unspecifiedOption,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            softWrap = false,
+                        )
                     }
                 }
 
@@ -764,7 +832,10 @@ private fun SignPickerDialog(
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         Text(
-                            text = if (sign == selected) "${sign.localizedLabel(strings)} ✓" else sign.localizedLabel(strings)
+                            text = if (sign == selected) "${sign.localizedLabel(strings)} ✓" else sign.localizedLabel(strings),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            softWrap = false,
                         )
                     }
                 }
