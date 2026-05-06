@@ -7,6 +7,9 @@ interface AuthRepository {
 
     suspend fun signInWithEmail(email: String, password: String)
     suspend fun signUpWithEmail(email: String, password: String)
+    suspend fun sendPasswordResetEmail(email: String) {
+        error("Password reset is not supported by this auth repository.")
+    }
     suspend fun signOut()
     suspend fun signInWithGoogleIdToken(idToken: String)
 }

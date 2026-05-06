@@ -119,9 +119,7 @@ fun AppRoot() {
     var isProfileGateLoading by remember { mutableStateOf(false) }
 
     if (session.isLoading) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
-        }
+        AuthBootstrapLoading()
         return
     }
 
@@ -193,6 +191,15 @@ fun AppRoot() {
         if (!isAuthenticated) return@LaunchedEffect
         if (!dest.requiresEconomyRefreshOnEnter()) return@LaunchedEffect
         economyVm.loadEconomy()
+    }
+
+    if (dest == Destination.AuthGate) {
+        if (isAuthenticated) {
+            AuthBootstrapLoading()
+        } else {
+            AuthScreen()
+        }
+        return
     }
 
     val currentMainTab = remember(dest) { MainTab.items.firstOrNull { it.matches(dest) } }
@@ -385,6 +392,31 @@ fun AppRoot() {
     }
 }
 
+@Composable
+private fun AuthBootstrapLoading() {
+    val dimens = BWitchThemeTokens.dimens
+    val extras = BWitchThemeTokens.extras
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(extras.screenBackground),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(dimens.spacingSm),
+        ) {
+            Text(
+                text = appStrings.common.appName,
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center,
+            )
+            CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+        }
+    }
+}
 
 private fun Destination.requiresEconomyRefreshOnEnter(): Boolean {
     return when (this) {
