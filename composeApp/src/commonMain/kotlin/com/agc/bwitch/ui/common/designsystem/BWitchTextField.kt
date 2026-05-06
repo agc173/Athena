@@ -21,6 +21,8 @@ fun BWitchTextField(
     visualTransformation: VisualTransformation = VisualTransformation.None,
     label: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
+    isError: Boolean = false,
+    supportingText: @Composable (() -> Unit)? = null,
 ) {
     val extras = BWitchThemeTokens.extras
     val dimens = BWitchThemeTokens.dimens
@@ -35,6 +37,8 @@ fun BWitchTextField(
         visualTransformation = visualTransformation,
         label = label,
         trailingIcon = trailingIcon,
+        isError = isError,
+        supportingText = supportingText,
         shape = RoundedCornerShape(dimens.textFieldCornerRadius),
         textStyle = MaterialTheme.typography.bodyLarge,
         colors = OutlinedTextFieldDefaults.colors(

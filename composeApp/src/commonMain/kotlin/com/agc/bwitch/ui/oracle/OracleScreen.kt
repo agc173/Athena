@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -17,6 +18,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
@@ -24,6 +28,7 @@ import com.agc.bwitch.localization.OracleStrings
 import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.presentation.oracle.OracleAskMessage
 import com.agc.bwitch.presentation.oracle.OracleAskMessageId
+import com.agc.bwitch.presentation.oracle.ORACLE_QUESTION_MAX_LENGTH
 import com.agc.bwitch.presentation.oracle.OracleAskViewModel
 import com.agc.bwitch.presentation.economy.EconomyViewModel
 import com.agc.bwitch.presentation.economy.runWithEconomyGate
@@ -81,13 +86,38 @@ fun OracleScreen(
             )
         }
 
+        var questionLimitExceeded by remember { mutableStateOf(false) }
         BWitchTextField(
             value = state.question,
-            onValueChange = viewModel::onQuestionChange,
+            onValueChange = { value ->
+                if (value.length <= ORACLE_QUESTION_MAX_LENGTH) {
+                    questionLimitExceeded = false
+                    viewModel.onQuestionChange(value)
+                } else {
+                    questionLimitExceeded = true
+                }
+            },
             modifier = Modifier.fillMaxWidth(),
             label = { Text(strings.questionLabel) },
             enabled = !state.isLoading,
             minLines = 3,
+            isError = questionLimitExceeded,
+            supportingText = {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = if (questionLimitExceeded) strings.questionLimitError else "",
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                    Text(
+                        text = "${state.question.length}/$ORACLE_QUESTION_MAX_LENGTH",
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+            },
         )
 
         EconomyGateInfoRow(
@@ -250,6 +280,7 @@ fun OracleScreen(
 
 private fun OracleAskMessage.toUiText(strings: OracleStrings) = when (id) {
     OracleAskMessageId.EmptyQuestion -> strings.errorEmptyQuestion
+    OracleAskMessageId.QuestionTooLong -> strings.questionLimitError
     OracleAskMessageId.Unauthenticated -> strings.errorUnauthenticated
     OracleAskMessageId.PermissionDenied -> strings.errorPermissionDenied
     OracleAskMessageId.ResourceExhaustedWithAdUnlock -> strings.errorResourceExhaustedWithAdUnlock
