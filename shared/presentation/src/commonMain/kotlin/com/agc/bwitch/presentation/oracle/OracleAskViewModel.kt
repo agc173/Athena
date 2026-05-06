@@ -29,7 +29,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-private const val MAX_QUESTION_LENGTH = 400
+const val ORACLE_QUESTION_MAX_LENGTH = 150
 
 data class OracleAskUiState(
     val question: String = "",
@@ -50,6 +50,7 @@ data class OracleAskMessage(
 
 enum class OracleAskMessageId {
     EmptyQuestion,
+    QuestionTooLong,
     Unauthenticated,
     PermissionDenied,
     ResourceExhaustedWithAdUnlock,
@@ -98,6 +99,8 @@ class OracleAskViewModel(
     }
 
     fun onQuestionChange(value: String) {
+        if (value.length > ORACLE_QUESTION_MAX_LENGTH) return
+
         _uiState.update {
             it.copy(
                 question = value,
@@ -111,7 +114,18 @@ class OracleAskViewModel(
     }
 
     fun ask(topic: OracleTopic? = null, lang: String? = null) {
-        val trimmedQuestion = _uiState.value.question.trim().take(MAX_QUESTION_LENGTH)
+        val trimmedQuestion = _uiState.value.question.trim()
+        if (trimmedQuestion.length > ORACLE_QUESTION_MAX_LENGTH) {
+            _uiState.update {
+                it.copy(
+                    error = OracleAskMessage(
+                        id = OracleAskMessageId.QuestionTooLong,
+                    )
+                )
+            }
+            return
+        }
+
         if (trimmedQuestion.isBlank()) {
             _uiState.update {
                 it.copy(

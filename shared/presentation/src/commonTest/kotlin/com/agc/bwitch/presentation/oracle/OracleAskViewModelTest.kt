@@ -203,6 +203,54 @@ class OracleAskViewModelTest {
         }
     }
 
+    @Test
+    fun `question input accepts localized unicode characters`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val repo = FakeOracleRepository()
+            val languageRepo = FakeLanguageRepository(MutableStateFlow(AppLanguage.Spanish))
+            val viewModel = OracleAskViewModel(
+                oracleRepository = repo,
+                resolveCurrentLanguageUseCase = ResolveCurrentLanguageUseCase(languageRepo),
+                observeCurrentLanguageUseCase = ObserveCurrentLanguageUseCase(languageRepo),
+                economyRepository = FakeEconomyRepository(),
+            )
+
+            val question = "¿Cómo acompaño mi energía mañana? Привет, corazón."
+            viewModel.onQuestionChange(question)
+            viewModel.ask()
+            advanceUntilIdle()
+
+            assertEquals(question, repo.lastRequest?.question)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun `question input rejects values beyond max length without truncating current text`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val languageRepo = FakeLanguageRepository(MutableStateFlow(AppLanguage.English))
+            val viewModel = OracleAskViewModel(
+                oracleRepository = FakeOracleRepository(),
+                resolveCurrentLanguageUseCase = ResolveCurrentLanguageUseCase(languageRepo),
+                observeCurrentLanguageUseCase = ObserveCurrentLanguageUseCase(languageRepo),
+                economyRepository = FakeEconomyRepository(),
+            )
+            val acceptedQuestion = "ñ".repeat(ORACLE_QUESTION_MAX_LENGTH)
+
+            viewModel.onQuestionChange(acceptedQuestion)
+            viewModel.onQuestionChange(acceptedQuestion + "x")
+
+            assertEquals(acceptedQuestion, viewModel.uiState.value.question)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
     private class FakeOracleRepository : OracleRepository {
         constructor(scriptedResults: List<ApiResult<OracleAskResult>> = emptyList()) {
             results.addAll(scriptedResults)
