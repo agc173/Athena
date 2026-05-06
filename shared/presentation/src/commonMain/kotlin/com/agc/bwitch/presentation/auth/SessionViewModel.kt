@@ -53,6 +53,15 @@ class SessionViewModel(
             .onFailure { e -> _uiState.update { it.copy(error = e.message) } }
     }
 
+    fun sendPasswordResetEmail(email: String, onResult: (Boolean) -> Unit = {}) = scope.launch {
+        runCatching { authRepository.sendPasswordResetEmail(email) }
+            .onSuccess { onResult(true) }
+            .onFailure { e ->
+                _uiState.update { it.copy(error = e.message) }
+                onResult(false)
+            }
+    }
+
     fun signInWithGoogle(idToken: String) = scope.launch {
         runCatching { authRepository.signInWithGoogleIdToken(idToken) }
             .onFailure { e -> _uiState.update { it.copy(error = e.message) } }

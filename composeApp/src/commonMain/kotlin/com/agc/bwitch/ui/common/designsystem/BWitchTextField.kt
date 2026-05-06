@@ -20,6 +20,7 @@ fun BWitchTextField(
     minLines: Int = 1,
     visualTransformation: VisualTransformation = VisualTransformation.None,
     label: @Composable (() -> Unit)? = null,
+    trailingIcon: @Composable (() -> Unit)? = null,
 ) {
     val extras = BWitchThemeTokens.extras
     val dimens = BWitchThemeTokens.dimens
@@ -33,6 +34,7 @@ fun BWitchTextField(
         minLines = minLines,
         visualTransformation = visualTransformation,
         label = label,
+        trailingIcon = trailingIcon,
         shape = RoundedCornerShape(dimens.textFieldCornerRadius),
         textStyle = MaterialTheme.typography.bodyLarge,
         colors = OutlinedTextFieldDefaults.colors(
