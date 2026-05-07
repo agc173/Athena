@@ -21,6 +21,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.setValue
+import com.agc.bwitch.localization.ProfileStrings
 import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.presentation.economy.EconomyViewModel
 import com.agc.bwitch.presentation.moons.MoonStoreViewModel
@@ -159,8 +160,8 @@ fun MoonStoreScreen(
                     modifier = Modifier.padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    Text(text = pack.label, style = MaterialTheme.typography.titleMedium)
-                    Text(text = "${pack.moons} ${strings.moonCreditsTitle}")
+                    Text(text = pack.localizedLabel(strings), style = MaterialTheme.typography.titleMedium)
+                    Text(text = strings.storeMoonPackMoonsFormat.replaceFirst("%d", "${pack.moons}"))
                     Text(text = pack.displayPrice, color = MaterialTheme.colorScheme.primary)
                     Button(
                         onClick = { viewModel.onBuyPackClicked(pack.id) },
@@ -236,4 +237,12 @@ fun MoonStoreScreen(
             }
         }
     }
+}
+
+
+private fun com.agc.bwitch.domain.moons.MoonPack.localizedLabel(strings: ProfileStrings): String = when (id) {
+    "starter" -> strings.storeMoonPackStarterLabel
+    "mystic" -> strings.storeMoonPackMysticLabel
+    "coven" -> strings.storeMoonPackCovenLabel
+    else -> label
 }
