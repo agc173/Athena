@@ -2,9 +2,12 @@ package com.agc.bwitch.ui.tarot
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -12,6 +15,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.agc.bwitch.ui.common.designsystem.BWitchCard
+import com.agc.bwitch.ui.theme.BWitchThemeTokens
 import com.agc.bwitch.domain.economy.EconomyModulePreview
 import com.agc.bwitch.domain.tarot.TarotRequestType
 import com.agc.bwitch.localization.appStrings
@@ -128,20 +133,34 @@ private fun TarotOptionCard(
     costLabel: String?,
     onClick: () -> Unit,
 ) {
-    Card(onClick = onClick) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            Text(title, style = MaterialTheme.typography.titleMedium)
-            Text(subtitle, style = MaterialTheme.typography.bodyMedium)
-            costLabel?.let {
-                Text(
-                    text = it,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-            }
+    val dimens = BWitchThemeTokens.dimens
+
+    BWitchCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 112.dp),
+        onClick = onClick,
+        contentPadding = PaddingValues(dimens.spacingMd),
+        contentVerticalArrangement = Arrangement.spacedBy(dimens.spacingSm),
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        Text(
+            text = subtitle,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        if (costLabel != null) {
+            Text(
+                text = costLabel,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        } else {
+            Spacer(modifier = Modifier.height(20.dp))
         }
     }
 }
