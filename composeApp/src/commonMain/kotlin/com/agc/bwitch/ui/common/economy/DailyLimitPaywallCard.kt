@@ -1,6 +1,6 @@
 package com.agc.bwitch.ui.common.economy
 
-import androidx.compose.foundation.layout.Modifier
+import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
