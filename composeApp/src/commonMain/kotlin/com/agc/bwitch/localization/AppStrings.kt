@@ -440,6 +440,9 @@ data class EconomyStrings(
     val pendulumPaywallFreeUsedMessage: String,
     val synastryMoonPackCostFormat: String,
     val pendulumMoonPackCostFormat: String,
+    val dailyLimitPaywallTitle: String,
+    val dailyLimitPaywallBody: String,
+    val dailyLimitPaywallCta: String,
 )
 
 data class OracleStrings(
@@ -949,6 +952,9 @@ val fallbackAppStrings: AppStrings = AppStrings(
         pendulumPaywallFreeUsedMessage = "Has usado tus consultas gratis de hoy. Desbloquea %d usos por %d 🌙.",
         synastryMoonPackCostFormat = "%d 🌙 / %d usos",
         pendulumMoonPackCostFormat = "%d 🌙 / %d usos",
+        dailyLimitPaywallTitle = "Has alcanzado tu límite de hoy",
+        dailyLimitPaywallBody = "Vuelve mañana o visita la tienda para ver las opciones disponibles y seguir consultando.",
+        dailyLimitPaywallCta = "Ir a la tienda",
     ),
     oracle = OracleStrings(
         headerTitle = "Consulta intuitiva",
@@ -1447,6 +1453,9 @@ private val englishAppStrings = fallbackAppStrings.copy(
         pendulumPaywallFreeUsedMessage = "You have used your free consultations for today. Unlock %d uses for %d 🌙.",
         synastryMoonPackCostFormat = "%d 🌙 / %d uses",
         pendulumMoonPackCostFormat = "%d 🌙 / %d uses",
+        dailyLimitPaywallTitle = "You’ve reached today’s limit",
+        dailyLimitPaywallBody = "Come back tomorrow or go to the store to see available options and keep exploring.",
+        dailyLimitPaywallCta = "Go to store",
     ),
     oracle = fallbackAppStrings.oracle.copy(
         headerTitle = "Intuitive consultation",
@@ -1931,6 +1940,9 @@ private val portugueseAppStrings = fallbackAppStrings.copy(
         pendulumPaywallFreeUsedMessage = "Você usou suas consultas grátis de hoje. Desbloqueie %d usos por %d 🌙.",
         synastryMoonPackCostFormat = "%d 🌙 / %d usos",
         pendulumMoonPackCostFormat = "%d 🌙 / %d usos",
+        dailyLimitPaywallTitle = "Você atingiu seu limite de hoje",
+        dailyLimitPaywallBody = "Volte amanhã ou vá à loja para ver as opções disponíveis e continuar consultando.",
+        dailyLimitPaywallCta = "Ir para a loja",
     ),
     oracle = fallbackAppStrings.oracle.copy(
         headerTitle = "Consulta intuitiva",
@@ -2426,6 +2438,9 @@ private val russianAppStrings = fallbackAppStrings.copy(
         pendulumPaywallFreeUsedMessage = "Вы использовали бесплатные консультации на сегодня. Откройте %d использований за %d 🌙.",
         synastryMoonPackCostFormat = "%d 🌙 / %d использований",
         pendulumMoonPackCostFormat = "%d 🌙 / %d использований",
+        dailyLimitPaywallTitle = "Вы достигли лимита на сегодня",
+        dailyLimitPaywallBody = "Возвращайтесь завтра или перейдите в магазин, чтобы посмотреть доступные варианты и продолжить консультации.",
+        dailyLimitPaywallCta = "Перейти в магазин",
     ),
     oracle = fallbackAppStrings.oracle.copy(
         headerTitle = "Интуитивная консультация",
@@ -2914,6 +2929,9 @@ private val frenchAppStrings = fallbackAppStrings.copy(
         pendulumPaywallFreeUsedMessage = "Tu as utilisé tes consultations gratuites d'aujourd'hui. Débloque %d usages pour %d 🌙.",
         synastryMoonPackCostFormat = "%d 🌙 / %d usages",
         pendulumMoonPackCostFormat = "%d 🌙 / %d usages",
+        dailyLimitPaywallTitle = "Tu as atteint ta limite du jour",
+        dailyLimitPaywallBody = "Reviens demain ou va à la boutique pour voir les options disponibles et continuer tes consultations.",
+        dailyLimitPaywallCta = "Aller à la boutique",
     ),
     oracle = fallbackAppStrings.oracle.copy(
         headerTitle = "Consultation intuitive",
@@ -3401,6 +3419,9 @@ private val italianAppStrings = fallbackAppStrings.copy(
         pendulumPaywallFreeUsedMessage = "Hai usato le consultazioni gratuite di oggi. Sblocca %d usi per %d 🌙.",
         synastryMoonPackCostFormat = "%d 🌙 / %d usi",
         pendulumMoonPackCostFormat = "%d 🌙 / %d usi",
+        dailyLimitPaywallTitle = "Hai raggiunto il limite di oggi",
+        dailyLimitPaywallBody = "Torna domani o vai al negozio per vedere le opzioni disponibili e continuare le consultazioni.",
+        dailyLimitPaywallCta = "Vai al negozio",
     ),
     oracle = fallbackAppStrings.oracle.copy(
         headerTitle = "Consulto intuitivo",
@@ -3887,6 +3908,9 @@ private val germanAppStrings = fallbackAppStrings.copy(
         pendulumPaywallFreeUsedMessage = "Du hast deine kostenlosen Befragungen für heute genutzt. Schalte %d Nutzungen für %d 🌙 frei.",
         synastryMoonPackCostFormat = "%d 🌙 / %d Nutzungen",
         pendulumMoonPackCostFormat = "%d 🌙 / %d Nutzungen",
+        dailyLimitPaywallTitle = "Du hast dein heutiges Limit erreicht",
+        dailyLimitPaywallBody = "Komm morgen wieder oder gehe zum Store, um verfügbare Optionen anzusehen und weiter zu fragen.",
+        dailyLimitPaywallCta = "Zum Store",
     ),
     oracle = fallbackAppStrings.oracle.copy(
         headerTitle = "Intuitive Beratung",

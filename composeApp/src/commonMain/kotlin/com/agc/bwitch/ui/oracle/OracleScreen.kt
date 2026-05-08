@@ -36,7 +36,9 @@ import com.agc.bwitch.presentation.oracle.ORACLE_QUESTION_MAX_LENGTH
 import com.agc.bwitch.presentation.oracle.OracleAskViewModel
 import com.agc.bwitch.presentation.economy.EconomyViewModel
 import com.agc.bwitch.presentation.economy.runWithEconomyGate
+import com.agc.bwitch.ui.common.economy.DailyLimitPaywallCard
 import com.agc.bwitch.ui.common.economy.EconomyGateInfoRow
+import com.agc.bwitch.ui.common.economy.isDailyLimitRejected
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
 import com.agc.bwitch.ui.common.designsystem.BWitchPrimaryButton
 import com.agc.bwitch.ui.common.designsystem.BWitchSecondaryButton
@@ -52,6 +54,7 @@ fun OracleScreen(
     modifier: Modifier = Modifier,
     viewModel: OracleAskViewModel = koinInject(),
     economyViewModel: EconomyViewModel = koinInject(),
+    onOpenStore: () -> Unit = {},
 ) {
     val dimens = BWitchThemeTokens.dimens
     val colors = MaterialTheme.colorScheme
@@ -60,6 +63,7 @@ fun OracleScreen(
     val economyState by economyViewModel.uiState.collectAsState()
     val oraclePreview = economyState.modulePreviews
         .firstOrNull { it.module == "ORACLE_1Q" }
+    val showDailyLimitPaywall = oraclePreview.isDailyLimitRejected()
 
     LaunchedEffect(state.answer?.coreGuidance) {
         if (state.answer != null) {
@@ -140,6 +144,13 @@ fun OracleScreen(
             economyStrings = appStrings.economy,
             fallbackCost = 3,
         )
+
+        if (showDailyLimitPaywall) {
+            DailyLimitPaywallCard(
+                economyStrings = appStrings.economy,
+                onOpenStore = onOpenStore,
+            )
+        }
 
         BWitchPrimaryButton(
             onClick = {
@@ -258,7 +269,7 @@ fun OracleScreen(
             }
         }
 
-        state.error?.let { error ->
+        state.error?.takeUnless { showDailyLimitPaywall }?.let { error ->
             BWitchCard(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),

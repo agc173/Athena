@@ -34,7 +34,10 @@ class PendulumViewModel(
             if (!authorized) {
                 val normalized = (auth.exceptionOrNull()?.message ?: auth.getOrNull()?.status.orEmpty()).lowercase()
                 _uiState.update { it.copy(error = when {
-                    normalized.contains("daily_limit") || normalized.contains("pendulum_daily_limit_reached") -> "daily_limit"
+                    normalized.contains("daily_limit") ||
+                        normalized.contains("pendulum_daily_limit_reached") ||
+                        normalized.contains("pack_limit") ||
+                        normalized.contains("pendulum_pack_limit_reached") -> "daily_limit"
                     normalized.contains("insufficient_moons") || normalized.contains("insufficient_moon_balance") || normalized.contains("moon") -> "insufficient_moons"
                     else -> "insufficient_moons"
                 }) }

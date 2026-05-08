@@ -47,7 +47,9 @@ import com.agc.bwitch.presentation.astrology.birthchart.BIRTH_CHART_SYNC_UP_TO_D
 import com.agc.bwitch.presentation.economy.EconomyViewModel
 import com.agc.bwitch.presentation.economy.runWithEconomyGate
 import com.agc.bwitch.ui.common.toVisualResource
+import com.agc.bwitch.ui.common.economy.DailyLimitPaywallCard
 import com.agc.bwitch.ui.common.economy.EconomyGateInfoRow
+import com.agc.bwitch.ui.common.economy.isDailyLimitRejected
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
 import com.agc.bwitch.ui.common.designsystem.BWitchPrimaryButton
 import com.agc.bwitch.ui.theme.BWitchThemeTokens
@@ -60,6 +62,7 @@ fun BirthChartScreen(
     modifier: Modifier = Modifier,
     viewModel: BirthChartViewModel = koinInject(),
     economyViewModel: EconomyViewModel = koinInject(),
+    onOpenStore: () -> Unit = {},
 ) {
     val dimens = BWitchThemeTokens.dimens
     val extras = BWitchThemeTokens.extras
@@ -74,6 +77,7 @@ fun BirthChartScreen(
     var shareError by remember { mutableStateOf<String?>(null) }
     var sharePreviewEssence by remember { mutableStateOf<BirthEssenceProfile?>(null) }
     var wasGenerating by remember { mutableStateOf(false) }
+    val showDailyLimitPaywall = birthEssencePreview.isDailyLimitRejected() || state.error.isDailyLimitError()
 
     LaunchedEffect(state.isGenerating, state.hasGeneratedResult, state.error) {
         if (wasGenerating && !state.isGenerating) {
@@ -134,6 +138,13 @@ fun BirthChartScreen(
             economyStrings = appStrings.economy,
             fallbackCost = 5,
         )
+
+        if (showDailyLimitPaywall) {
+            DailyLimitPaywallCard(
+                economyStrings = strings.economy,
+                onOpenStore = onOpenStore,
+            )
+        }
 
         BWitchPrimaryButton(
             onClick = {
@@ -210,7 +221,9 @@ fun BirthChartScreen(
             Text(if (state.isRefreshing) birthChartStrings.syncLoading else birthChartStrings.syncCta)
         }
 
-        state.error?.let { Text(it.toBirthChartUiText(birthChartStrings), color = MaterialTheme.colorScheme.error) }
+        state.error?.takeUnless { it.isDailyLimitError() }?.let { error ->
+            Text(error.toBirthChartUiText(birthChartStrings), color = MaterialTheme.colorScheme.error)
+        }
         shareError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         state.savedSummary?.let { Text(it.toBirthChartUiText(birthChartStrings), color = MaterialTheme.colorScheme.onSurfaceVariant) }
     }
@@ -232,7 +245,14 @@ fun BirthChartScreen(
 private fun String?.isBirthEssenceEconomyError(): Boolean {
     val normalized = this?.trim()?.lowercase().orEmpty()
     if (normalized.isBlank()) return false
-    return normalized.contains("insufficient_moons")
+    return normalized.contains("insufficient_moons") || normalized.isDailyLimitError()
+}
+
+private fun String?.isDailyLimitError(): Boolean {
+    val normalized = this?.trim()?.lowercase().orEmpty()
+    return normalized.contains("daily_limit") ||
+        normalized.contains("limit_reached") ||
+        normalized.contains("resource_exhausted")
 }
 
 private fun String.toBirthChartUiText(strings: com.agc.bwitch.localization.BirthChartStrings): String {
