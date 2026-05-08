@@ -60,6 +60,7 @@ import com.agc.bwitch.presentation.tarot.TarotRevealPhase
 import com.agc.bwitch.presentation.tarot.TAROT_LIMIT_REACHED_ERROR_KEY
 import com.agc.bwitch.presentation.tarot.TarotViewModel
 import com.agc.bwitch.presentation.economy.EconomyViewModel
+import com.agc.bwitch.ui.common.economy.DailyLimitPaywallCard
 import com.agc.bwitch.ui.tarot.components.TarotCardView
 import com.agc.bwitch.ui.tarot.components.TarotLoadingDeck
 import com.agc.bwitch.ui.tarot.components.TarotMiniCard
@@ -74,11 +75,13 @@ fun TarotScreen(
     modifier: Modifier = Modifier,
     viewModel: TarotViewModel = koinInject(),
     economyViewModel: EconomyViewModel = koinInject(),
+    onOpenStore: () -> Unit = {},
     tarotSoundPlayer: TarotSoundPlayer = koinInject(),
     tarotHaptics: TarotHaptics = koinInject(),
 ) {
     val state by viewModel.uiState.collectAsState()
     val strings = appStrings.tarot
+    val showDailyLimitPaywall = state.error == TAROT_LIMIT_REACHED_ERROR_KEY
 
     LaunchedEffect(initialRequestType) {
         if (initialRequestType != null) {
@@ -322,14 +325,19 @@ fun TarotScreen(
                 }
             }
 
-            state.error?.let { _ ->
+            if (showDailyLimitPaywall) {
+                DailyLimitPaywallCard(
+                    economyStrings = appStrings.economy,
+                    onOpenStore = onOpenStore,
+                )
+            }
+
+            state.error?.takeUnless { it == TAROT_LIMIT_REACHED_ERROR_KEY }?.let {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    val errorMessage = if (state.error == TAROT_LIMIT_REACHED_ERROR_KEY) {
-                        strings.limitReachedError
-                    } else {
-                        strings.unknownErrorFallback
-                    }
-                    Text("${strings.errorPrefix} $errorMessage", color = MaterialTheme.colorScheme.error)
+                    Text(
+                        "${strings.errorPrefix} ${strings.unknownErrorFallback}",
+                        color = MaterialTheme.colorScheme.error,
+                    )
                     Button(
                         onClick = viewModel::retry,
                         modifier = Modifier.fillMaxWidth(),

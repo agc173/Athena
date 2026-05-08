@@ -65,19 +65,23 @@ import kotlin.math.roundToInt
 import kotlin.math.sin
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
+import com.agc.bwitch.ui.common.economy.DailyLimitPaywallCard
 import com.agc.bwitch.ui.common.economy.EconomyGateInfoRow
+import com.agc.bwitch.ui.common.economy.isDailyLimitRejected
 
 @Composable
 fun PendulumScreen(
     contentPadding: PaddingValues,
     viewModel: PendulumViewModel = koinInject(),
     economyViewModel: EconomyViewModel = koinInject(),
+    onOpenStore: () -> Unit = {},
 ) {
     val state by viewModel.uiState.collectAsState()
     val orbitProgress = remember { Animatable(0f) }
     val economyState by economyViewModel.uiState.collectAsState()
     val pendulumPreview = economyState.modulePreviews.firstOrNull { it.module == "PENDULUM" }
     val colors = MaterialTheme.colorScheme
+    val showDailyLimitPaywall = pendulumPreview.isDailyLimitRejected() || state.error == "daily_limit"
     LaunchedEffect(state.phase, state.selectedAnswer) {
         when (state.phase) {
             PendulumPhase.ANIMATING -> {
@@ -145,6 +149,13 @@ fun PendulumScreen(
             packUsesLabel = appStrings.economy.pendulumPackValueFormat,
         )
 
+        if (showDailyLimitPaywall) {
+            DailyLimitPaywallCard(
+                economyStrings = appStrings.economy,
+                onOpenStore = onOpenStore,
+            )
+        }
+
         PendulumBoard(
             modifier = Modifier
                 .fillMaxWidth()
@@ -163,8 +174,12 @@ fun PendulumScreen(
             strings = strings,
         )
 
-        state.error?.let {
-            Text(text = when (it) { "insufficient_moons" -> appStrings.economy.notEnoughMoons; "daily_limit" -> appStrings.economy.dailyLimitReached; else -> appStrings.economy.notEnoughMoons }, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+        state.error?.takeUnless { it == "daily_limit" }?.let {
+            Text(
+                text = appStrings.economy.notEnoughMoons,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+            )
         }
 
         if (state.phase == PendulumPhase.RESULT) {

@@ -63,7 +63,9 @@ import com.agc.bwitch.presentation.astrology.synastry.SynastryPersonForm
 import com.agc.bwitch.presentation.astrology.synastry.SynastryViewModel
 import com.agc.bwitch.presentation.economy.EconomyViewModel
 import com.agc.bwitch.presentation.economy.runWithEconomyGate
+import com.agc.bwitch.ui.common.economy.DailyLimitPaywallCard
 import com.agc.bwitch.ui.common.economy.EconomyGateInfoRow
+import com.agc.bwitch.ui.common.economy.isDailyLimitRejected
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
 import com.agc.bwitch.ui.common.designsystem.BWitchPrimaryButton
 import com.agc.bwitch.ui.theme.BWitchThemeTokens
@@ -75,6 +77,7 @@ fun SynastryScreen(
     modifier: Modifier = Modifier,
     viewModel: SynastryViewModel = koinInject(),
     economyViewModel: EconomyViewModel = koinInject(),
+    onOpenStore: () -> Unit = {},
 ) {
     val state by viewModel.uiState.collectAsState()
     val economyState by economyViewModel.uiState.collectAsState()
@@ -83,6 +86,7 @@ fun SynastryScreen(
     val strings = appStrings
     val synastryStrings = strings.synastry
     var wasGenerating by remember { mutableStateOf(false) }
+    val showDailyLimitPaywall = synastryPreview.isDailyLimitRejected() || state.error == "daily_limit"
 
     LaunchedEffect(state.isGenerating, state.reading, state.error) {
         if (wasGenerating && !state.isGenerating) {
@@ -137,6 +141,12 @@ fun SynastryScreen(
             fallbackCost = 1,
             packUsesLabel = strings.economy.synastryPackValueFormat,
         )
+        if (showDailyLimitPaywall) {
+            DailyLimitPaywallCard(
+                economyStrings = strings.economy,
+                onOpenStore = onOpenStore,
+            )
+        }
         BWitchPrimaryButton(
             onClick = {
                 runWithEconomyGate(
@@ -157,12 +167,11 @@ fun SynastryScreen(
             )
         }
 
-        state.error?.let { error ->
+        state.error?.takeUnless { it == "daily_limit" }?.let { error ->
             Text(
                 text = when (error) {
                     "required_sun_signs_error" -> synastryStrings.requiredSunSignsError
                     "insufficient_moons" -> strings.economy.notEnoughMoons
-                    "daily_limit" -> strings.economy.dailyLimitReached
                     "generic_generate_error" -> synastryStrings.genericGenerateError
                     else -> synastryStrings.genericGenerateError
                 },

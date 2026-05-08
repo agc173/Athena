@@ -281,9 +281,15 @@ fun AppRoot() {
                 onNavigate = { navigator.navigate(it) }
             )
 
-            Destination.BirthChart -> BirthChartScreen(contentPadding = padding)
+            Destination.BirthChart -> BirthChartScreen(
+                contentPadding = padding,
+                onOpenStore = { navigator.navigate(Destination.MoonStore) },
+            )
 
-            Destination.Synastry -> SynastryScreen(contentPadding = padding)
+            Destination.Synastry -> SynastryScreen(
+                contentPadding = padding,
+                onOpenStore = { navigator.navigate(Destination.MoonStore) },
+            )
 
             is Destination.HoroscopeDaily -> HoroscopeScreen(
                 contentPadding = padding,
@@ -315,16 +321,23 @@ fun AppRoot() {
                 onSelectLastReading = { navigator.navigate(Destination.Tarot(requestType = null)) },
             )
 
-            Destination.Oracle -> OracleScreen(contentPadding = padding)
+            Destination.Oracle -> OracleScreen(
+                contentPadding = padding,
+                onOpenStore = { navigator.navigate(Destination.MoonStore) },
+            )
 
             Destination.OracleDebug -> OracleDebugScreen(contentPadding = padding)
 
             is Destination.Tarot -> TarotScreen(
                 contentPadding = padding,
                 initialRequestType = (dest as Destination.Tarot).requestType,
+                onOpenStore = { navigator.navigate(Destination.MoonStore) },
             )
 
-            Destination.Pendulum -> PendulumScreen(contentPadding = padding)
+            Destination.Pendulum -> PendulumScreen(
+                contentPadding = padding,
+                onOpenStore = { navigator.navigate(Destination.MoonStore) },
+            )
 
             Destination.Rituals -> RitualsPlaceholderScreen(
                 contentPadding = padding,
