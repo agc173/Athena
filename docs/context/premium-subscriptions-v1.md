@@ -29,6 +29,16 @@ Este documento describe la base backend inicial para Premium Entitlements con Go
 - `restoreGooglePlayPurchases`: recibe un array de purchases, valida cada token de forma idempotente y devuelve el entitlement más favorable vigente junto con contadores de restore.
 - `refreshEntitlement`: lee el entitlement operativo. Si está stale y no puede revalidar server-side por ausencia de token plano, devuelve `needsRestore=true` sin conceder Premium nuevo.
 
+## Cliente KMP/Android Billing — PR 3
+
+- `BillingClient` en Android es proveedor local de catálogo (`BillingProduct`) y tokens (`BillingPurchaseToken`) únicamente. No decide Premium, no desbloquea features y no escribe `subscription_status` como autoridad.
+- El catálogo visible de v1 consulta solo el producto mensual `bwitch_premium_monthly` (`ProductType.SUBS`). El plan anual queda reservado para una fase posterior y no se muestra en UI.
+- `launchPurchaseFlow` distingue `Purchased(token)`, `Pending(token)`, `Cancelled`, `Failed(reason/code)` y `Unsupported`; `Purchased` significa token local listo para backend, no entitlement activo, y `Pending` no debe tratarse como compra completada.
+- La capa presentation ya puede transportar tokens en `SubscriptionPurchaseOutcome.Purchased/Pending`, pero PR 3 no invoca backend validation; PR 4 debe conectar `purchaseToken` con `validateGooglePlaySubscription`.
+- Restore usa `queryPurchasesAsync(ProductType.SUBS)` y devuelve tokens restaurables para que PR 4 invoque `restoreGooglePlayPurchases`; restore local no promueve Premium ni escribe estado activo.
+- La cache legacy `subscription_status` se conserva solo como migración/información no autoritativa: valores activos locales no deben mostrarse como Premium real.
+- Analytics no debe emitir `premium_purchase_completed` hasta que la validación backend confirme el entitlement.
+
 ## Variables de entorno
 
 - `PURCHASE_TOKEN_HASH_SECRET`: secreto HMAC-SHA256 obligatorio fuera de dev/mock. Debe tener al menos 16 caracteres y rotarse como secreto backend.

@@ -102,6 +102,7 @@ fun SettingsScreen(contentPadding: PaddingValues) {
         val message = when (feedback) {
             SettingsFeedback.SubscriptionSubscribeComingSoon -> strings.subscriptionSubscribeComingSoon
             SettingsFeedback.SubscriptionManageComingSoon -> strings.subscriptionManageComingSoon
+            SettingsFeedback.SubscriptionValidationPending -> strings.subscriptionSubscribeComingSoon
             SettingsFeedback.SubscriptionPurchaseFailed -> strings.subscriptionPurchaseFailed
             SettingsFeedback.RestorePurchasesSuccess -> strings.subscriptionRestoreSuccess
             SettingsFeedback.RestorePurchasesNoPurchases -> strings.subscriptionRestoreNoPurchases
@@ -161,7 +162,7 @@ fun SettingsScreen(contentPadding: PaddingValues) {
             },
             onAnnualSelected = {
                 showSubscriptionPlanDialog = false
-                settingsVm.onSubscribeClicked(SubscriptionPlanSelection.Annual)
+                settingsVm.onSubscribeClicked(SubscriptionPlanSelection.Monthly)
             },
             onCatalogPlanSelected = { plan ->
                 showSubscriptionPlanDialog = false
@@ -432,9 +433,7 @@ private fun SubscriptionPlanDialog(
                     TextButton(onClick = onMonthlySelected, modifier = Modifier.fillMaxWidth()) {
                         Text(text = monthlyLabelFallback)
                     }
-                    TextButton(onClick = onAnnualSelected, modifier = Modifier.fillMaxWidth()) {
-                        Text(text = annualLabelFallback)
-                    }
+                    // Annual plan is intentionally hidden in Premium v1.
                 }
             }
         },

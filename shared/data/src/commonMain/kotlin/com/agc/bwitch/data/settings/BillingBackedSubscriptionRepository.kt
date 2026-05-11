@@ -2,11 +2,12 @@ package com.agc.bwitch.data.settings
 
 import com.agc.bwitch.data.settings.billing.SubscriptionBillingDataSource
 import com.agc.bwitch.data.storage.SettingsFactory
+import com.agc.bwitch.domain.settings.BillingProduct
 import com.agc.bwitch.domain.settings.RestorePurchasesResult
 import com.agc.bwitch.domain.settings.SubscriptionPlan
+import com.agc.bwitch.domain.settings.SubscriptionPlanType
 import com.agc.bwitch.domain.settings.SubscriptionRepository
 import com.agc.bwitch.domain.settings.SubscriptionStatus
-import com.agc.bwitch.domain.settings.isActive
 import com.russhwolf.settings.Settings
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,62 +31,54 @@ class BillingBackedSubscriptionRepository private constructor(
         @Suppress("UNUSED_PARAMETER") forTests: Unit,
     ) : this(settings, billingDataSource)
 
-    private val status = MutableStateFlow(readCurrentStatus())
+    private val status = MutableStateFlow(readNonAuthoritativeStatus())
 
     override suspend fun getStatus(): SubscriptionStatus {
-        val resolvedStatus = resolveStatusFromStoreOrFallback()
-        status.value = resolvedStatus
-        persistCurrentStatus(resolvedStatus)
-        return resolvedStatus
+        val currentStatus = readNonAuthoritativeStatus()
+        status.value = currentStatus
+        return currentStatus
     }
 
     override fun observeStatus(): Flow<SubscriptionStatus> = status
 
     override suspend fun getCatalog(): List<SubscriptionPlan> {
         if (!billingDataSource.isSupported) return emptyList()
-        return runCatching { billingDataSource.querySubscriptionCatalog() }
+        return runCatching { billingDataSource.getProducts().map { product -> product.toSubscriptionPlan() } }
             .getOrDefault(emptyList())
     }
 
     override suspend fun restorePurchases(): RestorePurchasesResult {
-        if (!billingDataSource.isSupported) {
-            return if (status.value.isActive) {
-                RestorePurchasesResult.Restored(status.value)
-            } else {
-                RestorePurchasesResult.NoPurchasesFound
-            }
-        }
+        if (!billingDataSource.isSupported) return RestorePurchasesResult.NoPurchasesFound
 
-        val resolvedStatus = runCatching { billingDataSource.restoreSubscriptionStatus() }
-            .getOrElse { readCurrentStatus() }
+        val tokens = runCatching { billingDataSource.queryRestorablePurchases() }
+            .getOrDefault(emptyList())
 
-        status.value = resolvedStatus
-        persistCurrentStatus(resolvedStatus)
-
-        return if (resolvedStatus.isActive) {
-            RestorePurchasesResult.Restored(resolvedStatus)
-        } else {
+        return if (tokens.isEmpty()) {
             RestorePurchasesResult.NoPurchasesFound
+        } else {
+            RestorePurchasesResult.RestorableTokens(tokens)
         }
     }
 
-    private suspend fun resolveStatusFromStoreOrFallback(): SubscriptionStatus {
-        if (!billingDataSource.isSupported) return status.value
-
-        return runCatching { billingDataSource.querySubscriptionStatus() }
-            .getOrElse { readCurrentStatus() }
-    }
-
-    private fun readCurrentStatus(): SubscriptionStatus {
+    /**
+     * Legacy local subscription_status is retained only as informational migration state.
+     * Active values from this cache are deliberately not surfaced as Premium authority.
+     */
+    private fun readNonAuthoritativeStatus(): SubscriptionStatus {
         val persistedStatus = settings.getStringOrNull(SUBSCRIPTION_STATUS_KEY)
             ?: return SubscriptionStatus.Unknown
 
-        return SubscriptionStatus.entries.firstOrNull { it.name == persistedStatus }
-            ?: SubscriptionStatus.Unknown
-    }
+        val parsed = SubscriptionStatus.entries.firstOrNull { it.name == persistedStatus }
+            ?: return SubscriptionStatus.Unknown
 
-    private fun persistCurrentStatus(status: SubscriptionStatus) {
-        settings.putString(SUBSCRIPTION_STATUS_KEY, status.name)
+        return when (parsed) {
+            SubscriptionStatus.ActiveMonthly,
+            SubscriptionStatus.ActiveAnnual,
+            -> SubscriptionStatus.Unknown
+            SubscriptionStatus.Unknown,
+            SubscriptionStatus.Inactive,
+            -> parsed
+        }
     }
 
     private companion object {
@@ -93,3 +86,14 @@ class BillingBackedSubscriptionRepository private constructor(
         private const val SUBSCRIPTION_STATUS_KEY = "subscription_status"
     }
 }
+
+private fun BillingProduct.toSubscriptionPlan(): SubscriptionPlan = SubscriptionPlan(
+    productId = productId,
+    title = title.takeUnless(String::isBlank) ?: productId,
+    formattedPrice = formattedPrice,
+    type = when {
+        billingPeriod?.contains("P1M", ignoreCase = true) == true -> SubscriptionPlanType.Monthly
+        billingPeriod?.contains("P1Y", ignoreCase = true) == true -> SubscriptionPlanType.Annual
+        else -> SubscriptionPlanType.Unknown
+    },
+)
