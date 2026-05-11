@@ -79,13 +79,19 @@ class SettingsViewModelAnalyticsTest {
                 validateEntitlement = pendingEntitlement(),
             ),
         ) { viewModel, analytics, _, _ ->
+            val effects = mutableListOf<SettingsUiEffect>()
+            val job = launch { viewModel.uiEffects.collect { effects.add(it) } }
+            advanceUntilIdle()
+
             viewModel.onSubscriptionPrimaryActionClicked()
             viewModel.onSubscriptionPurchaseCompleted(SubscriptionPurchaseOutcome.Purchased(testPurchaseToken()))
             advanceUntilIdle()
 
             assertTrue(analytics.events.any { it is AnalyticsEvent.PremiumPurchasePending })
             assertFalse(analytics.events.any { it is AnalyticsEvent.PremiumPurchaseCompleted })
+            assertFalse(effects.any { it is SettingsUiEffect.RefreshEconomySnapshot })
             assertEquals(SubscriptionStatus.Inactive, viewModel.uiState.value.subscriptionStatus)
+            job.cancel()
         }
     }
 
@@ -112,13 +118,19 @@ class SettingsViewModelAnalyticsTest {
                 validateError = IllegalStateException("validation failed"),
             ),
         ) { viewModel, analytics, _, _ ->
+            val effects = mutableListOf<SettingsUiEffect>()
+            val job = launch { viewModel.uiEffects.collect { effects.add(it) } }
+            advanceUntilIdle()
+
             viewModel.onSubscriptionPrimaryActionClicked()
             viewModel.onSubscriptionPurchaseCompleted(SubscriptionPurchaseOutcome.Purchased(testPurchaseToken()))
             advanceUntilIdle()
 
             assertTrue(analytics.events.any { it is AnalyticsEvent.PremiumPurchaseFailed })
             assertFalse(analytics.events.any { it is AnalyticsEvent.PremiumPurchaseCompleted })
+            assertFalse(effects.any { it is SettingsUiEffect.RefreshEconomySnapshot })
             assertEquals(SubscriptionStatus.Inactive, viewModel.uiState.value.subscriptionStatus)
+            job.cancel()
         }
     }
 
@@ -158,12 +170,18 @@ class SettingsViewModelAnalyticsTest {
                 ),
             ),
         ) { viewModel, analytics, _, _ ->
+            val effects = mutableListOf<SettingsUiEffect>()
+            val job = launch { viewModel.uiEffects.collect { effects.add(it) } }
+            advanceUntilIdle()
+
             viewModel.onRestorePurchasesClicked()
             advanceUntilIdle()
 
             assertTrue(analytics.events.any { it is AnalyticsEvent.PremiumRestoreEmpty })
             assertFalse(analytics.events.any { it is AnalyticsEvent.PremiumRestoreCompleted })
+            assertFalse(effects.any { it is SettingsUiEffect.RefreshEconomySnapshot })
             assertEquals(SubscriptionStatus.Inactive, viewModel.uiState.value.subscriptionStatus)
+            job.cancel()
         }
     }
 

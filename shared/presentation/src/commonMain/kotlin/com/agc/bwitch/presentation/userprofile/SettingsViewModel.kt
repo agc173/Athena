@@ -152,7 +152,7 @@ class SettingsViewModel(
     private val _uiState = MutableStateFlow(SettingsUiState())
     val uiState: StateFlow<SettingsUiState> = _uiState
 
-    private val _uiEffects = MutableSharedFlow<SettingsUiEffect>(extraBufferCapacity = 1)
+    private val _uiEffects = MutableSharedFlow<SettingsUiEffect>(extraBufferCapacity = 2)
     val uiEffects: SharedFlow<SettingsUiEffect> = _uiEffects
     private var pendingPremiumProductId: String? = null
 
@@ -586,7 +586,9 @@ class SettingsViewModel(
     }
 
     private fun requestEconomySnapshotRefresh() {
-        _uiEffects.tryEmit(SettingsUiEffect.RefreshEconomySnapshot)
+        if (!_uiEffects.tryEmit(SettingsUiEffect.RefreshEconomySnapshot)) {
+            scope.launch { _uiEffects.emit(SettingsUiEffect.RefreshEconomySnapshot) }
+        }
     }
 
     private fun updateNotificationSettings(update: (NotificationSettings) -> NotificationSettings) {
