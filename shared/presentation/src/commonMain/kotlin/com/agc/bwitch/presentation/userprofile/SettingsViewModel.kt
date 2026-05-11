@@ -55,6 +55,7 @@ data class SettingsUiState(
     val habitsEnabled: Boolean = false,
     val appVersion: String = "",
     val subscriptionStatus: SubscriptionStatus = SubscriptionStatus.Unknown,
+    val premiumSubscriptionStatus: PremiumSubscriptionStatus = PremiumSubscriptionStatus.Unknown,
     val subscriptionCatalog: List<SubscriptionPlanUi> = emptyList(),
     val subscriptionPrimaryAction: SubscriptionPrimaryAction = SubscriptionPrimaryAction.Subscribe,
     val isDeleteAccountConfirmationVisible: Boolean = false,
@@ -103,6 +104,8 @@ sealed interface SettingsUiEffect {
     data class LaunchManageSubscription(
         val productId: String?,
     ) : SettingsUiEffect
+
+    data object RefreshEconomySnapshot : SettingsUiEffect
 }
 
 sealed interface SubscriptionPurchaseOutcome {
@@ -149,7 +152,7 @@ class SettingsViewModel(
     private val _uiState = MutableStateFlow(SettingsUiState())
     val uiState: StateFlow<SettingsUiState> = _uiState
 
-    private val _uiEffects = MutableSharedFlow<SettingsUiEffect>()
+    private val _uiEffects = MutableSharedFlow<SettingsUiEffect>(extraBufferCapacity = 1)
     val uiEffects: SharedFlow<SettingsUiEffect> = _uiEffects
     private var pendingPremiumProductId: String? = null
 
@@ -272,11 +275,11 @@ class SettingsViewModel(
         updateNotificationSettings { it.copy(habitsEnabled = enabled) }
     }
 
-    fun onSubscriptionPrimaryActionClicked() {
+    fun onSubscriptionPrimaryActionClicked(originPlacement: String = "settings") {
         if (_uiState.value.isLoading) return
-        analyticsTracker.track(AnalyticsEvent.PremiumCtaClicked(placement = "settings_primary", originPlacement = "settings"))
+        analyticsTracker.track(AnalyticsEvent.PremiumCtaClicked(placement = "${originPlacement}_primary", originPlacement = originPlacement))
         when (_uiState.value.subscriptionPrimaryAction) {
-            SubscriptionPrimaryAction.Subscribe -> onSubscribeClicked()
+            SubscriptionPrimaryAction.Subscribe -> onSubscribeClicked(originPlacement = originPlacement)
             SubscriptionPrimaryAction.Manage -> {
                 pendingPremiumProductId = null
                 scope.launch {
@@ -290,15 +293,18 @@ class SettingsViewModel(
         }
     }
 
-    fun onSubscribeClicked(plan: SubscriptionPlanSelection = SubscriptionPlanSelection.Monthly) {
+    fun onSubscribeClicked(
+        plan: SubscriptionPlanSelection = SubscriptionPlanSelection.Monthly,
+        originPlacement: String = "settings",
+    ) {
         if (_uiState.value.isLoading) return
-        analyticsTracker.track(AnalyticsEvent.PremiumCtaClicked(placement = "settings_subscribe", originPlacement = "settings"))
+        analyticsTracker.track(AnalyticsEvent.PremiumCtaClicked(placement = "${originPlacement}_subscribe", originPlacement = originPlacement))
         val productId = when (plan) {
             SubscriptionPlanSelection.Monthly -> KnownSubscriptionProducts.MONTHLY
             SubscriptionPlanSelection.Annual -> KnownSubscriptionProducts.ANNUAL
         }
         pendingPremiumProductId = productId
-        analyticsTracker.track(AnalyticsEvent.PremiumPurchaseStarted(productId = productId, originPlacement = "settings"))
+        analyticsTracker.track(AnalyticsEvent.PremiumPurchaseStarted(productId = productId, originPlacement = originPlacement))
         scope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
             _uiEffects.emit(SettingsUiEffect.LaunchSubscriptionPurchase(plan))
@@ -378,19 +384,42 @@ class SettingsViewModel(
         }
     }
 
-    fun onCatalogSubscriptionSelected(productId: String) {
+    fun onCatalogSubscriptionSelected(
+        productId: String,
+        originPlacement: String = "settings",
+    ) {
         if (_uiState.value.isLoading) return
-        analyticsTracker.track(AnalyticsEvent.PremiumCtaClicked(placement = "settings_catalog", originPlacement = "settings"))
+        analyticsTracker.track(AnalyticsEvent.PremiumCtaClicked(placement = "${originPlacement}_catalog", originPlacement = originPlacement))
         pendingPremiumProductId = productId
-        analyticsTracker.track(AnalyticsEvent.PremiumPurchaseStarted(productId = productId, originPlacement = "settings"))
+        analyticsTracker.track(AnalyticsEvent.PremiumPurchaseStarted(productId = productId, originPlacement = originPlacement))
         scope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
             _uiEffects.emit(SettingsUiEffect.LaunchSubscriptionPurchaseWithProduct(productId))
         }
     }
 
-    fun onPremiumCtaShown(placement: String) {
-        analyticsTracker.track(AnalyticsEvent.PremiumCtaShown(placement = placement, originPlacement = "settings"))
+    fun onPremiumCtaShown(
+        placement: String,
+        originPlacement: String = placement.substringBefore('_'),
+    ) {
+        if (!_uiState.value.canTrackPremiumPaywall) return
+        analyticsTracker.track(AnalyticsEvent.PremiumCtaShown(placement = placement, originPlacement = originPlacement))
+    }
+
+    fun onPremiumPaywallShown(
+        placement: String,
+        originPlacement: String = placement,
+    ) {
+        if (!_uiState.value.canTrackPremiumPaywall) return
+        analyticsTracker.track(AnalyticsEvent.PremiumPaywallShown(placement = placement, originPlacement = originPlacement))
+    }
+
+    fun onPremiumProductLoaded(
+        productId: String,
+        price: String?,
+        originPlacement: String,
+    ) {
+        analyticsTracker.track(AnalyticsEvent.PremiumProductLoaded(productId = productId, price = price, originPlacement = originPlacement))
     }
 
     fun onSubscriptionManagementCompleted(outcome: SubscriptionManagementOutcome) {
@@ -474,7 +503,6 @@ class SettingsViewModel(
                         currency = null,
                     ),
                 )
-                // TODO(PR5): trigger EconomyViewModel/global economy refresh after backend entitlement activation.
                 pendingPremiumProductId = null
                 _uiState.update {
                     it.copyWithEntitlement(entitlement).copy(
@@ -482,6 +510,7 @@ class SettingsViewModel(
                         feedback = SettingsFeedback.SubscriptionPurchaseActivated,
                     )
                 }
+                requestEconomySnapshotRefresh()
             }
             entitlement.status == PremiumSubscriptionStatus.Pending -> {
                 analyticsTracker.track(AnalyticsEvent.PremiumPurchasePending(productId = productId, reason = "backend_pending"))
@@ -523,13 +552,13 @@ class SettingsViewModel(
                             productId = entitlement.productId,
                         ),
                     )
-                    // TODO(PR5): trigger EconomyViewModel/global economy refresh after backend restore activation.
                     _uiState.update {
                         it.copyWithEntitlement(entitlement).copy(
                             isLoading = false,
                             feedback = SettingsFeedback.RestorePurchasesSuccess,
                         )
                     }
+                    requestEconomySnapshotRefresh()
                 } else {
                     val reason = if (entitlement.status == PremiumSubscriptionStatus.Pending) "backend_pending" else "no_active_backend_entitlement"
                     analyticsTracker.track(
@@ -554,6 +583,10 @@ class SettingsViewModel(
                 analyticsTracker.track(AnalyticsEvent.PremiumRestoreEmpty(reason = error.message ?: "backend_restore_failed"))
                 _uiState.update { it.copy(isLoading = false, feedback = SettingsFeedback.RestorePurchasesNoPurchases) }
             }
+    }
+
+    private fun requestEconomySnapshotRefresh() {
+        _uiEffects.tryEmit(SettingsUiEffect.RefreshEconomySnapshot)
     }
 
     private fun updateNotificationSettings(update: (NotificationSettings) -> NotificationSettings) {
@@ -591,6 +624,11 @@ private fun SubscriptionStatus.nonAuthoritativeLocalStatus(): SubscriptionStatus
 
 private fun SettingsUiState.copyWithSubscription(subscriptionStatus: SubscriptionStatus): SettingsUiState = copy(
     subscriptionStatus = subscriptionStatus,
+    premiumSubscriptionStatus = if (subscriptionStatus == SubscriptionStatus.Unknown) {
+        PremiumSubscriptionStatus.Unknown
+    } else {
+        premiumSubscriptionStatus
+    },
     subscriptionPrimaryAction = if (subscriptionStatus.isActive) {
         SubscriptionPrimaryAction.Manage
     } else {
@@ -599,8 +637,12 @@ private fun SettingsUiState.copyWithSubscription(subscriptionStatus: Subscriptio
 )
 
 private fun SettingsUiState.copyWithEntitlement(entitlement: PremiumEntitlement): SettingsUiState =
-    copyWithSubscription(entitlement.toSubscriptionStatus())
+    copyWithSubscription(entitlement.toSubscriptionStatus()).copy(
+        premiumSubscriptionStatus = entitlement.status,
+    )
 
+private val SettingsUiState.canTrackPremiumPaywall: Boolean
+    get() = !subscriptionStatus.isActive && premiumSubscriptionStatus != PremiumSubscriptionStatus.Unknown
 
 private fun SubscriptionPlan.toUiPlan(): SubscriptionPlanUi = SubscriptionPlanUi(
     productId = productId,

@@ -146,6 +146,30 @@ sealed interface AnalyticsEvent {
         }
     }
 
+    data class PremiumPaywallShown(
+        val placement: String,
+        val originPlacement: String? = null,
+    ) : AnalyticsEvent {
+        override val name: String = "premium_paywall_shown"
+        override fun params(): Map<String, String> = buildMap {
+            put("placement", placement)
+            originPlacement?.let { put("origin_placement", it) }
+        }
+    }
+
+    data class PremiumProductLoaded(
+        val productId: String,
+        val price: String?,
+        val originPlacement: String? = null,
+    ) : AnalyticsEvent {
+        override val name: String = "premium_product_loaded"
+        override fun params(): Map<String, String> = buildMap {
+            put("product_id", productId)
+            price?.let { put("price", it) }
+            originPlacement?.let { put("origin_placement", it) }
+        }
+    }
+
     data class PremiumCtaShown(
         val placement: String,
         val originPlacement: String? = null,

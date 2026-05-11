@@ -351,7 +351,7 @@ class EconomyViewModel(
                         ),
                     )
                 }
-                refreshEconomySnapshot()
+                refreshEconomySnapshotInternal()
             }.onFailure { error ->
                 println("[EconomyViewModel] claimDailyLogin failed requestId=$requestId: ${error.message}")
                 _uiState.update {
@@ -441,7 +441,7 @@ class EconomyViewModel(
                         ),
                     )
                 }
-                refreshEconomySnapshot()
+                refreshEconomySnapshotInternal()
             }.onFailure { error ->
                 println("[EconomyViewModel] claimRewardedAd failed requestId=$requestId: ${error.message}")
                 analyticsTracker.track(
@@ -471,7 +471,11 @@ class EconomyViewModel(
         val dailyLoginClaimed: Boolean,
     )
 
-    private suspend fun refreshEconomySnapshot() {
+    fun refreshEconomySnapshot() {
+        scope.launch { refreshEconomySnapshotInternal() }
+    }
+
+    private suspend fun refreshEconomySnapshotInternal() {
         val statusResult = runCatching { economyRepository.getStatus() }
         val balanceResult = runCatching { economyRepository.getBalance() }
 

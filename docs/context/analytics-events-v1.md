@@ -56,9 +56,11 @@ Valores permitidos:
 | `content_unlock_attempt` | `module`, `cost`, `has_enough_moons`, `is_premium`, `unlock_flow_origin?`, `paywall_impression_id?` | Intentos explícitos de unlock (paywall/unlock actions). |
 | `content_unlocked` | `module`, `method`, `cost_charged`, `balance_after`, `unlock_flow_origin?`, `paywall_impression_id?` | Unlock exitoso de contenido. |
 | `content_unlock_failed` | `module`, `reason`, `unlock_flow_origin?`, `paywall_impression_id?` | Unlock fallido por backend/saldo. |
-| `premium_cta_shown` | `placement`, `origin_placement?` | CTA premium expuesto en Settings subscribe. |
+| `premium_paywall_shown` | `placement`, `origin_placement?` | Paywall/card Premium mostrado en Settings o MoonStore con key estable de UI; no se emite cuando Premium backend ya está activo. |
+| `premium_product_loaded` | `product_id`, `price?`, `origin_placement?` | Producto mensual Premium cargado desde el catálogo Billing para mostrar precio informativo. |
+| `premium_cta_shown` | `placement`, `origin_placement?` | CTA premium expuesto en Settings/MoonStore. |
 | `premium_cta_clicked` | `placement`, `origin_placement?` | Click explícito sobre CTA premium. |
-| `premium_purchase_started` | `product_id`, `origin_placement?` | Inicio de compra premium desde Settings. |
+| `premium_purchase_started` | `product_id`, `origin_placement?` | Inicio de compra premium desde Settings/MoonStore. |
 | `premium_purchase_completed` | `product_id`, `price`, `currency` | Flujo premium completado solo tras entitlement backend activo. |
 | `premium_purchase_pending` | `product_id`, `reason?` | Compra premium pendiente en Billing o backend; no activa Premium. |
 | `premium_purchase_failed` | `product_id`, `reason` | Flujo premium con error de Billing o validación backend. |

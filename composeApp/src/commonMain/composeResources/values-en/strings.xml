@@ -38,4 +38,22 @@
     <string name="nav_title_onboarding_profile">Complete your profile</string>
     <string name="nav_title_user_profile">Profile</string>
     <string name="nav_title_settings">Settings</string>
+    <string name="premium_title">BWitch Premium</string>
+    <string name="premium_limits_title">Premium increases your limits</string>
+    <string name="premium_not_unlimited">It is not unlimited use</string>
+    <string name="premium_moons_extra">Moons still cover extra uses</string>
+    <string name="premium_subscribe">Subscribe</string>
+    <string name="premium_restore_purchases">Restore purchases</string>
+    <string name="premium_manage_subscription">Manage subscription</string>
+    <string name="premium_active">Premium active</string>
+    <string name="premium_purchase_pending">Purchase pending</string>
+    <string name="premium_benefits_title">Premium benefits</string>
+    <string name="premium_benefit_horoscope">Horoscope: future, weekly, and monthly unlocked.</string>
+    <string name="premium_benefit_birth_essence">Birth essence: 1 per month.</string>
+    <string name="premium_benefit_synastry">Synastry: 10 per day included.</string>
+    <string name="premium_benefit_tarot_one">Tarot 1: 5 per day.</string>
+    <string name="premium_benefit_tarot_three">Tarot 3: 1 per day included, maximum 3 per day.</string>
+    <string name="premium_benefit_oracle">Oracle: 3 per day included, maximum 15 per day.</string>
+    <string name="premium_benefit_pendulum">Pendulum: 50 per day.</string>
+    <string name="premium_benefit_moons_extra">Moons for extra uses.</string>
 </resources>

@@ -38,4 +38,22 @@
     <string name="nav_title_onboarding_profile">Заполните профиль</string>
     <string name="nav_title_user_profile">Профиль</string>
     <string name="nav_title_settings">Настройки</string>
+    <string name="premium_title">BWitch Premium</string>
+    <string name="premium_limits_title">Premium повышает ваши лимиты</string>
+    <string name="premium_not_unlimited">Это не безлимитное использование</string>
+    <string name="premium_moons_extra">Луны по-прежнему нужны для дополнительных использований</string>
+    <string name="premium_subscribe">Подписаться</string>
+    <string name="premium_restore_purchases">Восстановить покупки</string>
+    <string name="premium_manage_subscription">Управлять подпиской</string>
+    <string name="premium_active">Premium активен</string>
+    <string name="premium_purchase_pending">Покупка в ожидании</string>
+    <string name="premium_benefits_title">Преимущества Premium</string>
+    <string name="premium_benefit_horoscope">Гороскоп: будущее, неделя и месяц разблокированы.</string>
+    <string name="premium_benefit_birth_essence">Натальная эссенция: 1 в месяц.</string>
+    <string name="premium_benefit_synastry">Синастрия: 10 в день включено.</string>
+    <string name="premium_benefit_tarot_one">Таро 1: 5 в день.</string>
+    <string name="premium_benefit_tarot_three">Таро 3: 1 в день включено, максимум 3 в день.</string>
+    <string name="premium_benefit_oracle">Оракул: 3 в день включено, максимум 15 в день.</string>
+    <string name="premium_benefit_pendulum">Маятник: 50 в день.</string>
+    <string name="premium_benefit_moons_extra">Луны для дополнительных использований.</string>
 </resources>
