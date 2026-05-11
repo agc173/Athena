@@ -310,20 +310,10 @@ export const tarotDraw = onCall(
             intent = ConsumeIntent.FREE_DAILY;
             nextDaily.freeTarot1Remaining -= 1;
           } else {
-            if (!data.adUnlock?.rewardedProof || data.adUnlock.rewardedProof.trim().length === 0) {
-              throw new HttpsError('failed-precondition', 'rewardedProof is required for AD_UNLOCK');
-            }
-
-            const effectiveAdUnlockRemaining = systemMode === 'DEGRADED' ?
-              Math.min(nextDaily.adUnlockRemaining, 1) :
-              nextDaily.adUnlockRemaining;
-
-            if (effectiveAdUnlockRemaining <= 0) {
-              throw new HttpsError('resource-exhausted', 'Daily ad unlock quota exhausted');
-            }
-
-            intent = ConsumeIntent.AD_UNLOCK;
-            nextDaily.adUnlockRemaining -= 1;
+            throw new HttpsError(
+                'failed-precondition',
+                'Legacy AD_UNLOCK is disabled; use claimRewardedAd to earn Lunas and retry with economy v2'
+            );
           }
 
           nextDaily.maxRequestsRemaining -= 1;

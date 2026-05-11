@@ -94,6 +94,7 @@ function normalizeReason(reason: string | undefined): string | undefined {
   if (!reason) return undefined;
   if (reason === 'INSUFFICIENT_MOON_BALANCE') return 'insufficient_moons';
   if (reason === 'SYNASTRY_DAILY_LIMIT_REACHED') return 'daily_limit';
+  if (reason === 'SYNASTRY_MOON_PACK_DAILY_LIMIT_REACHED') return 'daily_limit';
   if (reason === 'PENDULUM_DAILY_LIMIT_REACHED') return 'daily_limit';
   if (reason === 'MODULE_NOT_CONFIGURED') return 'module_not_configured';
   if (reason === 'RULE_CONFIGURED_NOT_WIRED') return 'rule_configured_not_wired';
@@ -213,7 +214,7 @@ export async function getEconomyModulePreviewsCore(uid: string, modulesInput?: u
       const rule = getEconomyModuleRule(module);
       const freeUsed = intValue(daily.synastryFreeUsed);
       const freeDaily = intValue(rule.freeDaily);
-      const freeRemaining = Math.max(0, freeDaily - freeUsed);
+      const freeRemaining = premium.isPremium ? undefined : Math.max(0, freeDaily - freeUsed);
       if (!synastryEconomyV2Enabled) {
         return {
           module,
@@ -225,7 +226,9 @@ export async function getEconomyModulePreviewsCore(uid: string, modulesInput?: u
           reasonIfRejected: 'rule_configured_not_wired',
           freeRemaining,
           moonPackUsesPerMoon: rule.moonPackUsesPerMoon,
-          dailyCap: rule.maxTotalDaily,
+          dailyCap: premium.isPremium ?
+            (intValue(rule.premiumIncludedDaily) + intValue(rule.premiumMoonExtraDailyMax) * Math.max(1, intValue(rule.moonPackUsesPerMoon))) :
+            (intValue(rule.freeDaily) + intValue(rule.moonExtraDailyMax) * Math.max(1, intValue(rule.moonPackUsesPerMoon))),
         };
       }
       const decision = resolveSynastryDecision({
@@ -248,7 +251,9 @@ export async function getEconomyModulePreviewsCore(uid: string, modulesInput?: u
         freeRemaining,
         moonRemaining,
         moonPackUsesPerMoon: rule.moonPackUsesPerMoon,
-        dailyCap: rule.maxTotalDaily,
+        dailyCap: premium.isPremium ?
+          (intValue(rule.premiumIncludedDaily) + intValue(rule.premiumMoonExtraDailyMax) * packUses) :
+          (intValue(rule.freeDaily) + intValue(rule.moonExtraDailyMax) * packUses),
       };
     }
 

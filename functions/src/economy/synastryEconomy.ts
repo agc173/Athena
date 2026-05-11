@@ -36,24 +36,25 @@ export function resolveSynastryDecision(params: {isPremium: boolean; balance: nu
   const moonUsesUsed = intValue(params.dailyUsage.synastryMoonUsesUsed);
   const packUses = Math.max(1, intValue(rule.moonPackUsesPerMoon));
   const freeDaily = intValue(rule.freeDaily);
-  const dailyCap = intValue(rule.maxTotalDaily);
-  const premiumDailyMax = intValue(rule.premiumDailyMax);
-  const totalUsed = freeUsed + premiumUsed + moonUsesUsed;
+  const premiumIncludedDaily = intValue(rule.premiumIncludedDaily);
+  const moonPackDailyMax = params.isPremium ?
+    intValue(rule.premiumMoonExtraDailyMax) :
+    intValue(rule.moonExtraDailyMax);
   const packUsesTotal = moonPacksPurchased * packUses;
   const packUsesRemaining = Math.max(0, packUsesTotal - moonUsesUsed);
 
-  if (dailyCap > 0 && totalUsed >= dailyCap) return {source: 'REJECT', moonCost: 0, reason: 'SYNASTRY_DAILY_LIMIT_REACHED'};
-  if (params.isPremium && premiumDailyMax > 0 && premiumUsed >= premiumDailyMax) {
-    return {source: 'REJECT', moonCost: 0, reason: 'SYNASTRY_PREMIUM_DAILY_LIMIT_REACHED'};
+  if (params.isPremium && premiumUsed < premiumIncludedDaily) {
+    return {source: 'PREMIUM_INCLUDED', moonCost: 0, usageCounters: ['synastryPremiumUsed']};
   }
-  if (params.isPremium) return {source: 'PREMIUM_INCLUDED', moonCost: 0, usageCounters: ['synastryPremiumUsed']};
-  if (freeUsed < freeDaily) return {source: 'FREE', moonCost: 0, usageCounters: ['synastryFreeUsed']};
+  if (!params.isPremium && freeUsed < freeDaily) return {source: 'FREE', moonCost: 0, usageCounters: ['synastryFreeUsed']};
 
-  const remainingForCap = dailyCap > 0 ? dailyCap - totalUsed : 1;
-  if (remainingForCap <= 0) return {source: 'REJECT', moonCost: 0, reason: 'SYNASTRY_DAILY_LIMIT_REACHED'};
   if (packUsesRemaining > 0) {
     return {source: 'MOON', moonCost: 0, usageCounters: ['synastryMoonUsesUsed'], packUsesRemainingAfter: packUsesRemaining - 1};
   }
+  if (moonPackDailyMax > 0 && moonPacksPurchased >= moonPackDailyMax) {
+    return {source: 'REJECT', moonCost: 0, reason: 'SYNASTRY_MOON_PACK_DAILY_LIMIT_REACHED'};
+  }
+
   const cost = intValue(rule.moonCostPerUse);
   if (params.balance < cost) return {source: 'REJECT', moonCost: 0, reason: 'INSUFFICIENT_MOON_BALANCE'};
   return {

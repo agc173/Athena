@@ -105,7 +105,7 @@ export function resolveBirthEssenceDecision(params: {
     };
   }
 
-  const moonCost = isPremium ? 3 : (rule.moonCostPerUse ?? 0);
+  const moonCost = rule.moonCostPerUse ?? 0;
   if (balance < moonCost) {
     return {
       source: 'REJECT',

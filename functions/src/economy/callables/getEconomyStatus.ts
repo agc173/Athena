@@ -108,12 +108,15 @@ function pickModuleStatuses(params: {
     },
     {
       module: 'ORACLE_1Q',
-      freeRemaining: remainingFromRule(oracleRule.freeDaily, daily.oracleFreeUsed),
+      freeRemaining: params.isPremium ? undefined : remainingFromRule(oracleRule.freeDaily, daily.oracleFreeUsed),
       premiumIncludedRemaining: remainingFromRule(
           params.isPremium ? oracleRule.premiumIncludedDaily : undefined,
           daily.oraclePremiumUsed
       ),
-      moonExtraRemaining: remainingFromRule(oracleRule.moonExtraDailyMax, daily.oracleMoonUsed),
+      moonExtraRemaining: remainingFromRule(
+          params.isPremium ? oracleRule.premiumMoonExtraDailyMax : oracleRule.moonExtraDailyMax,
+          daily.oracleMoonUsed
+      ),
       moonCostPerUse: oracleRule.moonCostPerUse,
       maxTotalRemaining: remainingFromRule(
           params.isPremium ? oracleRule.premiumDailyMax : undefined,
@@ -130,27 +133,27 @@ function pickModuleStatuses(params: {
           monthly.birthEssencePremiumIncludedUsed
       ),
       moonExtraRemaining: remainingFromRule(birthEssenceRule.moonExtraDailyMax, daily.birthEssenceMoonUsed),
-      moonCostPerUse: params.isPremium ? 3 : birthEssenceRule.moonCostPerUse,
+      moonCostPerUse: birthEssenceRule.moonCostPerUse,
       notes: params.isPremium ?
-        'premium extras beyond monthly included cost 3 moons; total daily max not exposed in phase 1' :
+        'premium extras beyond monthly included cost 5 moons; Premium is not unlimited; total daily max not exposed in phase 1' :
         'total daily max not exposed in phase 1 due partial counters',
     },
     {
       module: 'SYNASTRY',
-      freeRemaining: remainingFromRule(synastryRule.freeDaily, daily.synastryFreeUsed),
+      freeRemaining: params.isPremium ? undefined : remainingFromRule(synastryRule.freeDaily, daily.synastryFreeUsed),
       premiumIncludedRemaining: remainingFromRule(
-          params.isPremium ? synastryRule.premiumDailyMax : undefined,
+          params.isPremium ? synastryRule.premiumIncludedDaily : undefined,
           daily.synastryPremiumUsed
       ),
       moonCostPerUse: synastryRule.moonCostPerUse,
       moonPackUsesPerMoon: synastryRule.moonPackUsesPerMoon,
-      maxTotalRemaining: remainingFromRule(
-          params.isPremium ? synastryRule.premiumDailyMax : undefined,
-          daily.synastryPremiumUsed
+      moonExtraRemaining: remainingFromRule(
+          params.isPremium ? synastryRule.premiumMoonExtraDailyMax : synastryRule.moonExtraDailyMax,
+          daily.synastryMoonPacksPurchased
       ),
       notes: params.isPremium ?
-        undefined :
-        'free total cap is 30/day but precise remaining requires per-use counter in phase 1',
+        'Premium is not unlimited: 10/day included, plus max 10 moon packs/day' :
+        'Free has 2/day included, plus max 5 moon packs/day',
     },
     {
       module: 'PENDULUM',

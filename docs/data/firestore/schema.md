@@ -409,12 +409,14 @@ Campos:
 ## Economy backend (fase 5: rewarded ads claim backend)
 
 ### /config/economy
-Flags runtime para rollout gradual de economía backend.
+Flags runtime para rollout gradual/rollback controlado de economía backend. En producción la economía v2 debe estar activa; los defaults backend son `true`.
 
 Campos:
-- tarotEconomyV2Enabled: boolean (default `false`)
-- oracleEconomyV2Enabled: boolean (default `false`)
-- birthEssenceEconomyV2Enabled: boolean (default `false`)
+- tarotEconomyV2Enabled: boolean (default `true`)
+- oracleEconomyV2Enabled: boolean (default `true`)
+- birthEssenceEconomyV2Enabled: boolean (default `true`)
+- synastryEconomyV2Enabled: boolean (default `true`)
+- pendulumEconomyV2Enabled: boolean (default `true`)
 
 ### /economyBalances/{uid}
 Saldo de Lunas del usuario.
@@ -453,10 +455,15 @@ Campos (fase 1):
   - oracleFreeUsed, oraclePremiumUsed, oracleMoonUsed
   - birthEssenceTotalUsed, birthEssenceMoonUsed, birthEssencePremiumExtraMoonUsed
   - birthEssencePremiumIncludedUsed (legacy/compat opcional)
-  - synastryFreeUsed, synastryMoonPacksUsed, synastryPremiumUsed
-  - pendulumFreeUsed, pendulumMoonPacksUsed, pendulumPremiumUsed
+  - synastryFreeUsed, synastryMoonPacksPurchased, synastryMoonUsesUsed, synastryPremiumUsed
+  - pendulumFreeUsed, pendulumMoonPacksPurchased, pendulumMoonUsesUsed, pendulumPremiumUsed
   - horoscopeFutureDayMoonUsed, horoscopeWeeklyMoonUsed, horoscopeMonthlyMoonUsed
 - updatedAt: timestamp (opcional)
+
+Notas:
+- `rewardedAdsClaimed` limita anuncios recompensados a `3/día`; cada claim suma `+1` Luna en `/economyBalances/{uid}`.
+- Rewarded ads no desbloquean contenido directamente; Tarot/Oráculo deben autorizarse por economía (`FREE`, `PREMIUM_INCLUDED` o `MOON`).
+- Premium no es ilimitado: los contadores premium aplican límites diarios/mensuales según `docs/context/economy-v1-final.md`.
 
 ### /economyUsageWeekly/{weekKey}/users/{uid}
 Uso semanal de economía por usuario.
@@ -481,7 +488,7 @@ Control de idempotencia para callables de economía.
 
 Campos (fase 6):
 - requestId: string
-- type: string (`CLAIM_DAILY_LOGIN` | `CLAIM_REWARDED_AD` | `TAROT_1` | `TAROT_3` | `ORACLE_1Q` | `BIRTH_ESSENCE` | `HOROSCOPE_UNLOCK_DAY` | `HOROSCOPE_UNLOCK_WEEKLY` | `HOROSCOPE_UNLOCK_MONTHLY`)
+- type: string (`CLAIM_DAILY_LOGIN` | `CLAIM_REWARDED_AD` | `TAROT_1` | `TAROT_3` | `ORACLE_1Q` | `BIRTH_ESSENCE` | `SYNASTRY` | `PENDULUM` | `HOROSCOPE_UNLOCK_DAY` | `HOROSCOPE_UNLOCK_WEEKLY` | `HOROSCOPE_UNLOCK_MONTHLY`)
 - result: string (`CLAIMED` | `DAILY_LIMIT_REACHED` | `ALREADY_CLAIMED` | `RESERVED` | `COMPLETED_SUCCESS` | `REFUNDED` | `FAILED`)
 - status: string opcional (`PROCESSING` | `FAILED` | `COMPLETED_SUCCESS`)
 - decisionSource: string opcional (`FREE` | `PREMIUM_INCLUDED` | `MOON` | `REJECT`)

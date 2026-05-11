@@ -141,6 +141,12 @@ export const oracleAsk = onCall(
         if (!data.requestId || typeof data.requestId !== 'string' || data.requestId.trim().length === 0) {
           throw new HttpsError('invalid-argument', 'requestId is required');
         }
+        if (hasRewardedProof) {
+          throw new HttpsError(
+              'failed-precondition',
+              'Legacy AD_UNLOCK is disabled; use claimRewardedAd to earn Lunas and retry with economy v2'
+          );
+        }
 
         const requestId = data.requestId.trim();
         const lang = normalizeLang(data.lang);
