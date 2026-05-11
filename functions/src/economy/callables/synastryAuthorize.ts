@@ -41,7 +41,11 @@ export const synastryAuthorize = onCall({
         if (error.message === 'INSUFFICIENT_MOON_BALANCE') {
           throw new HttpsError(error.code, 'insufficient_moons');
         }
-        if (error.message === 'SYNASTRY_DAILY_LIMIT_REACHED' || error.message === 'SYNASTRY_PREMIUM_DAILY_LIMIT_REACHED') {
+        if (
+          error.message === 'SYNASTRY_DAILY_LIMIT_REACHED' ||
+          error.message === 'SYNASTRY_PREMIUM_DAILY_LIMIT_REACHED' ||
+          error.message === 'SYNASTRY_MOON_PACK_DAILY_LIMIT_REACHED'
+        ) {
           throw new HttpsError(error.code, 'daily_limit');
         }
       }

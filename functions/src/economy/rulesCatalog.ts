@@ -16,6 +16,7 @@ type EconomyModuleRule = {
   moonCostPerUse?: number;
   moonPackUsesPerMoon?: number;
   moonExtraDailyMax?: number;
+  premiumMoonExtraDailyMax?: number;
   maxTotalDaily?: number;
   notes?: string;
 };
@@ -44,6 +45,7 @@ const ECONOMY_RULES: Record<EconomyModule, EconomyModuleRule> = {
     premiumDailyMax: 15,
     moonCostPerUse: 3,
     moonExtraDailyMax: 10,
+    premiumMoonExtraDailyMax: 12,
   },
   BIRTH_ESSENCE: {
     module: 'BIRTH_ESSENCE',
@@ -52,15 +54,16 @@ const ECONOMY_RULES: Record<EconomyModule, EconomyModuleRule> = {
     moonCostPerUse: 5,
     moonExtraDailyMax: 2,
     maxTotalDaily: 2,
-    notes: 'Premium extras beyond included monthly cost 3 moons',
+    notes: 'Premium extras beyond included monthly cost 5 moons; Premium is not unlimited',
   },
   SYNASTRY: {
     module: 'SYNASTRY',
     freeDaily: 2,
+    premiumIncludedDaily: 10,
     moonCostPerUse: 1,
     moonPackUsesPerMoon: 3,
-    maxTotalDaily: 30,
-    premiumDailyMax: 30,
+    moonExtraDailyMax: 5,
+    premiumMoonExtraDailyMax: 10,
   },
   PENDULUM: {
     module: 'PENDULUM',
@@ -77,12 +80,12 @@ const ECONOMY_RULES: Record<EconomyModule, EconomyModuleRule> = {
   },
   HOROSCOPE_WEEKLY: {
     module: 'HOROSCOPE_WEEKLY',
-    moonCostPerUse: 2,
+    moonCostPerUse: 3,
     notes: 'Premium unlocks all horoscope variants',
   },
   HOROSCOPE_MONTHLY: {
     module: 'HOROSCOPE_MONTHLY',
-    moonCostPerUse: 3,
+    moonCostPerUse: 5,
     notes: 'Premium unlocks all horoscope variants',
   },
 };
@@ -102,8 +105,8 @@ export function getEconomyRulesSnapshot(modules: EconomyModuleStatus[]): Economy
       todayFree: true,
       costs: {
         futureDay: ECONOMY_RULES.HOROSCOPE_FUTURE_DAY.moonCostPerUse ?? 1,
-        weekly: ECONOMY_RULES.HOROSCOPE_WEEKLY.moonCostPerUse ?? 2,
-        monthly: ECONOMY_RULES.HOROSCOPE_MONTHLY.moonCostPerUse ?? 3,
+        weekly: ECONOMY_RULES.HOROSCOPE_WEEKLY.moonCostPerUse ?? 3,
+        monthly: ECONOMY_RULES.HOROSCOPE_MONTHLY.moonCostPerUse ?? 5,
       },
       premiumUnlockAll: true,
     },

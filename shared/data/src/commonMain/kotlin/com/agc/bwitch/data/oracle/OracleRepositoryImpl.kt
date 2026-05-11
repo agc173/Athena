@@ -1,10 +1,8 @@
 package com.agc.bwitch.data.oracle
 
 import com.agc.bwitch.data.functions.FunctionsClient
-import com.agc.bwitch.data.oracle.dto.AdUnlockDto
 import com.agc.bwitch.data.oracle.dto.OracleAskRequestDto
 import com.agc.bwitch.data.oracle.dto.OracleAskResponseDto
-import com.agc.bwitch.data.platform.BuildInfo
 import com.agc.bwitch.domain.localization.AppLanguage
 import com.agc.bwitch.domain.oracle.OracleAnswer
 import com.agc.bwitch.domain.oracle.OracleAskRequest
@@ -49,7 +47,7 @@ class OracleRepositoryImpl(
             question = request.question,
             topic = request.topic?.name,
             lang = normalizeLanguageCode(request.lang),
-            adUnlock = if (BuildInfo.isDebug) AdUnlockDto(rewardedProof = "dev-test-proof") else null,
+            adUnlock = null,
         )
 
         return when (

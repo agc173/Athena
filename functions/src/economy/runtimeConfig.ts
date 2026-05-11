@@ -9,11 +9,11 @@ export type EconomyRuntimeConfig = {
 };
 
 const DEFAULT_CONFIG: EconomyRuntimeConfig = {
-  tarotEconomyV2Enabled: false,
-  oracleEconomyV2Enabled: false,
-  birthEssenceEconomyV2Enabled: false,
-  synastryEconomyV2Enabled: false,
-  pendulumEconomyV2Enabled: false,
+  tarotEconomyV2Enabled: true,
+  oracleEconomyV2Enabled: true,
+  birthEssenceEconomyV2Enabled: true,
+  synastryEconomyV2Enabled: true,
+  pendulumEconomyV2Enabled: true,
 };
 
 const CONFIG_DOC_PATH = 'config/economy';

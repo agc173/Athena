@@ -1,8 +1,6 @@
 package com.agc.bwitch.data.tarot
 
 import com.agc.bwitch.data.functions.FunctionsClient
-import com.agc.bwitch.data.platform.BuildInfo
-import com.agc.bwitch.data.tarot.dto.AdUnlockDto
 import com.agc.bwitch.data.tarot.dto.DrawDto
 import com.agc.bwitch.data.tarot.dto.ReadingDto
 import com.agc.bwitch.data.tarot.dto.TarotDrawRequestDto
@@ -36,7 +34,7 @@ class TarotRepositoryImpl(
             requestId = requestId,
             lang = normalizedLang,
             question = question,
-            adUnlock = if (BuildInfo.isDebug) AdUnlockDto(rewardedProof = "dev-test-proof") else null,
+            adUnlock = null,
         )
 
         return when (

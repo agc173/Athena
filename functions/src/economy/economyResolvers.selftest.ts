@@ -3,10 +3,15 @@ import assert from 'node:assert/strict';
 import {resolveBirthEssenceDecision} from './birthEssenceEconomy';
 import {resolveHoroscopeUnlockDecision} from './horoscopeEconomy';
 import {resolveOracleDecision} from './oracleEconomy';
-import {REWARDED_AD_DAILY_MAX, REWARDED_AD_REWARD} from './rulesCatalog';
+import {getEconomyModuleRule, REWARDED_AD_DAILY_MAX, REWARDED_AD_REWARD} from './rulesCatalog';
 import {resolveTarotDecision} from './tarotEconomy';
 import {resolveSynastryDecision} from './synastryEconomy';
 import {RequestType} from '../oracle/types';
+
+test('horoscope weekly/monthly costs are 3/5 moons', () => {
+  assert.equal(getEconomyModuleRule('HOROSCOPE_WEEKLY').moonCostPerUse, 3);
+  assert.equal(getEconomyModuleRule('HOROSCOPE_MONTHLY').moonCostPerUse, 5);
+});
 
 test('tarot resolver uses FREE first', () => {
   const decision = resolveTarotDecision({
@@ -68,7 +73,7 @@ test('resolver rejects when over limit or insufficient balance', () => {
     requestType: RequestType.TAROT_1,
     isPremium: false,
     balance: 10,
-    dailyUsage: {tarot1FreeUsed: 1, tarot1MoonUsed: 2},
+    dailyUsage: {tarot1FreeUsed: 1, tarot1MoonUsed: 3},
     weeklyUsage: {},
   });
   assert.equal(dailyLimitReached.source, 'REJECT');
@@ -81,18 +86,26 @@ test('resolver rejects when over limit or insufficient balance', () => {
   assert.equal(insufficient.source, 'REJECT');
 });
 
-test('oracle premium rejects when premium hard cap is reached', () => {
-  const decision = resolveOracleDecision({
-    isPremium: true,
-    balance: 50,
-    dailyUsage: {
-      oracleFreeUsed: 1,
-      oraclePremiumUsed: 3,
-      oracleMoonUsed: 12,
-    },
+test('birth essence extra costs 5 moons for free and premium users', () => {
+  const freeDecision = resolveBirthEssenceDecision({
+    isPremium: false,
+    balance: 5,
+    dailyUsage: {birthEssenceTotalUsed: 1},
+    monthlyUsage: {},
+    lifetimeUsage: {birthEssenceFreeClaimed: true},
   });
+  assert.equal(freeDecision.source, 'MOON');
+  assert.equal(freeDecision.moonCost, 5);
 
-  assert.equal(decision.source, 'REJECT');
+  const premiumDecision = resolveBirthEssenceDecision({
+    isPremium: true,
+    balance: 5,
+    dailyUsage: {birthEssenceTotalUsed: 1},
+    monthlyUsage: {birthEssencePremiumIncludedUsed: 1},
+    lifetimeUsage: {birthEssenceFreeClaimed: true},
+  });
+  assert.equal(premiumDecision.source, 'MOON');
+  assert.equal(premiumDecision.moonCost, 5);
 });
 
 test('birth essence maxTotalDaily blocks mixed premium plus moon path', () => {
@@ -136,7 +149,7 @@ test('horoscope premium unlock does not charge moons', () => {
   const decision = resolveHoroscopeUnlockDecision({
     isPremium: true,
     balance: 0,
-    moonCost: 3,
+    moonCost: 5,
   });
 
   assert.equal(decision.source, 'PREMIUM_INCLUDED');
@@ -146,17 +159,38 @@ test('horoscope premium unlock does not charge moons', () => {
 test('horoscope free charges moon when balance is enough', () => {
   const decision = resolveHoroscopeUnlockDecision({
     isPremium: false,
-    balance: 3,
-    moonCost: 2,
+    balance: 5,
+    moonCost: getEconomyModuleRule('HOROSCOPE_MONTHLY').moonCostPerUse ?? 0,
   });
 
   assert.equal(decision.source, 'MOON');
-  assert.equal(decision.moonCost, 2);
+  assert.equal(decision.moonCost, 5);
 });
 
 test('rewarded ads keep +1 reward and max 3 per day', () => {
   assert.equal(REWARDED_AD_REWARD, 1);
   assert.equal(REWARDED_AD_DAILY_MAX, 3);
+});
+
+
+test('ads only grant moons and do not directly unlock tarot/oracle content', () => {
+  const tarotAfterFreeWithoutMoons = resolveTarotDecision({
+    requestType: RequestType.TAROT_1,
+    isPremium: false,
+    balance: 0,
+    dailyUsage: {tarot1FreeUsed: 1},
+    weeklyUsage: {},
+  });
+  assert.equal(tarotAfterFreeWithoutMoons.source, 'REJECT');
+  assert.equal(tarotAfterFreeWithoutMoons.reason, 'INSUFFICIENT_MOON_BALANCE');
+
+  const oracleAfterFreeWithoutMoons = resolveOracleDecision({
+    isPremium: false,
+    balance: 0,
+    dailyUsage: {oracleFreeUsed: 1},
+  });
+  assert.equal(oracleAfterFreeWithoutMoons.source, 'REJECT');
+  assert.equal(oracleAfterFreeWithoutMoons.reason, 'INSUFFICIENT_MOON_BALANCE');
 });
 
 
@@ -170,44 +204,97 @@ test('oracle free first call works without rewarded proof semantics', () => {
   assert.equal(decision.source, 'FREE');
 });
 
-test('oracle second call spends moon when free is exhausted', () => {
-  const decision = resolveOracleDecision({
+test('oracle free allows 1 included plus 10 moon extras', () => {
+  const tenthExtra = resolveOracleDecision({
     isPremium: false,
-    balance: 10,
-    dailyUsage: {oracleFreeUsed: 1, oracleMoonUsed: 0},
+    balance: 3,
+    dailyUsage: {oracleFreeUsed: 1, oracleMoonUsed: 9},
   });
+  assert.equal(tenthExtra.source, 'MOON');
+  assert.equal(tenthExtra.moonCost, 3);
 
-  assert.equal(decision.source, 'MOON');
-  assert.equal(decision.moonCost, 3);
+  const eleventhExtra = resolveOracleDecision({
+    isPremium: false,
+    balance: 3,
+    dailyUsage: {oracleFreeUsed: 1, oracleMoonUsed: 10},
+  });
+  assert.equal(eleventhExtra.source, 'REJECT');
+  assert.equal(eleventhExtra.reason, 'ORACLE_MOON_DAILY_LIMIT_REACHED');
 });
 
-test('oracle premium uses subscription before free quota', () => {
-  const decision = resolveOracleDecision({
+test('oracle premium allows 3 included plus 12 moon extras and total 15', () => {
+  const included = resolveOracleDecision({
     isPremium: true,
     balance: 0,
-    dailyUsage: {},
+    dailyUsage: {oraclePremiumUsed: 2},
   });
+  assert.equal(included.source, 'PREMIUM_INCLUDED');
 
-  assert.equal(decision.source, 'PREMIUM_INCLUDED');
+  const twelfthExtra = resolveOracleDecision({
+    isPremium: true,
+    balance: 3,
+    dailyUsage: {oraclePremiumUsed: 3, oracleMoonUsed: 11},
+  });
+  assert.equal(twelfthExtra.source, 'MOON');
+  assert.equal(twelfthExtra.moonCost, 3);
+
+  const overTotal = resolveOracleDecision({
+    isPremium: true,
+    balance: 3,
+    dailyUsage: {oraclePremiumUsed: 3, oracleMoonUsed: 12},
+  });
+  assert.equal(overTotal.source, 'REJECT');
+  assert.equal(overTotal.reason, 'ORACLE_MOON_DAILY_LIMIT_REACHED');
 });
 
-test('synastry free path while below freeDaily limit', () => {
-  const decision = resolveSynastryDecision({
+test('synastry free allows 2 included plus max 5 moon packs', () => {
+  const freeIncluded = resolveSynastryDecision({
     isPremium: false,
     balance: 0,
-    dailyUsage: {synastryFreeUsed: 0},
+    dailyUsage: {synastryFreeUsed: 1},
   });
-  assert.equal(decision.source, 'FREE');
-});
+  assert.equal(freeIncluded.source, 'FREE');
 
-test('synastry buys pack after free exhausted when balance is enough', () => {
-  const decision = resolveSynastryDecision({
+  const fifthPack = resolveSynastryDecision({
     isPremium: false,
     balance: 1,
-    dailyUsage: {synastryFreeUsed: 2, synastryMoonPacksPurchased: 0, synastryMoonUsesUsed: 0},
+    dailyUsage: {synastryFreeUsed: 2, synastryMoonPacksPurchased: 4, synastryMoonUsesUsed: 12},
   });
-  assert.equal(decision.source, 'MOON');
-  assert.equal(decision.moonCost, 1);
+  assert.equal(fifthPack.source, 'MOON');
+  assert.equal(fifthPack.moonCost, 1);
+
+  const sixthPack = resolveSynastryDecision({
+    isPremium: false,
+    balance: 1,
+    dailyUsage: {synastryFreeUsed: 2, synastryMoonPacksPurchased: 5, synastryMoonUsesUsed: 15},
+  });
+  assert.equal(sixthPack.source, 'REJECT');
+  assert.equal(sixthPack.reason, 'SYNASTRY_MOON_PACK_DAILY_LIMIT_REACHED');
+});
+
+test('synastry premium allows 10 included plus max 10 moon packs', () => {
+  const tenthIncluded = resolveSynastryDecision({
+    isPremium: true,
+    balance: 0,
+    dailyUsage: {synastryPremiumUsed: 9},
+  });
+  assert.equal(tenthIncluded.source, 'PREMIUM_INCLUDED');
+
+  const tenthPack = resolveSynastryDecision({
+    isPremium: true,
+    balance: 1,
+    dailyUsage: {synastryPremiumUsed: 10, synastryMoonPacksPurchased: 9, synastryMoonUsesUsed: 27},
+  });
+  assert.equal(tenthPack.source, 'MOON');
+  assert.equal(tenthPack.moonCost, 1);
+
+  const eleventhPack = resolveSynastryDecision({
+    isPremium: true,
+    balance: 1,
+    dailyUsage: {synastryPremiumUsed: 10, synastryMoonPacksPurchased: 10, synastryMoonUsesUsed: 30},
+  });
+  assert.equal(eleventhPack.source, 'REJECT');
+  assert.equal(eleventhPack.reason, 'SYNASTRY_MOON_PACK_DAILY_LIMIT_REACHED');
 });
 
 test('synastry consumes existing pack use without charging moon', () => {
@@ -228,14 +315,4 @@ test('synastry rejects insufficient moons when pack exhausted', () => {
   });
   assert.equal(decision.source, 'REJECT');
   assert.equal(decision.reason, 'INSUFFICIENT_MOON_BALANCE');
-});
-
-test('synastry rejects on daily hard cap', () => {
-  const decision = resolveSynastryDecision({
-    isPremium: false,
-    balance: 10,
-    dailyUsage: {synastryFreeUsed: 2, synastryMoonUsesUsed: 28},
-  });
-  assert.equal(decision.source, 'REJECT');
-  assert.equal(decision.reason, 'SYNASTRY_DAILY_LIMIT_REACHED');
 });
