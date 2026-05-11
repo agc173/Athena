@@ -35,3 +35,8 @@ Archivo fuente de reglas: `firestore.rules`.
    - `A` puede leer `usernames/{any}` ✅
    - `A` **no** puede escribir `usernames/{any}` ❌
 3. Probar callable `saveUserProfile` y revisar logs sanitizados para errores inesperados.
+
+## Premium entitlements y receipts
+- `/userEntitlements/{uid}`, `/purchaseReceipts/{uid}/items/{purchaseTokenHash}` y `/purchaseTokenIndex/{purchaseTokenHash}` son documentos backend-owned.
+- El cliente debe consumir el estado Premium mediante callables (`validateGooglePlaySubscription`, `restoreGooglePlayPurchases`, `refreshEntitlement`) y no mediante lectura/escritura directa de receipts.
+- Mantener `deny by default` para estas rutas; Cloud Functions con Admin SDK actualiza los documentos tras validar Google Play.
