@@ -15,11 +15,17 @@ import com.agc.bwitch.domain.settings.ObserveNotificationSettingsUseCase
 import com.agc.bwitch.domain.settings.ObserveSubscriptionStatusUseCase
 import com.agc.bwitch.domain.settings.RestorePurchasesResult
 import com.agc.bwitch.domain.settings.RestorePurchasesUseCase
+import com.agc.bwitch.domain.settings.RefreshPremiumEntitlementUseCase
+import com.agc.bwitch.domain.settings.RestoreGooglePlayPurchasesUseCase
+import com.agc.bwitch.domain.settings.ValidateGooglePlayPurchaseUseCase
 import com.agc.bwitch.domain.settings.SubscriptionStatus
+import com.agc.bwitch.domain.settings.PremiumEntitlement
+import com.agc.bwitch.domain.settings.PremiumSubscriptionStatus
 import com.agc.bwitch.domain.settings.SubscriptionPlanType
 import com.agc.bwitch.domain.settings.SubscriptionPlan
 import com.agc.bwitch.domain.settings.UpdateNotificationSettingsUseCase
 import com.agc.bwitch.domain.settings.isActive
+import com.agc.bwitch.domain.settings.toSubscriptionStatus
 import com.agc.bwitch.domain.userprofile.GetUserProfileUseCase
 import com.agc.bwitch.domain.userprofile.ObserveUserProfileUseCase
 import com.agc.bwitch.presentation.auth.SessionViewModel
@@ -64,7 +70,9 @@ enum class SubscriptionPrimaryAction {
 enum class SettingsFeedback {
     SubscriptionSubscribeComingSoon,
     SubscriptionManageComingSoon,
+    SubscriptionValidating,
     SubscriptionValidationPending,
+    SubscriptionPurchaseActivated,
     SubscriptionPurchaseFailed,
     RestorePurchasesSuccess,
     RestorePurchasesNoPurchases,
@@ -131,6 +139,9 @@ class SettingsViewModel(
     private val getSubscriptionStatus: GetSubscriptionStatusUseCase,
     private val getSubscriptionCatalog: GetSubscriptionCatalogUseCase,
     private val restorePurchases: RestorePurchasesUseCase,
+    private val refreshPremiumEntitlement: RefreshPremiumEntitlementUseCase,
+    private val validateGooglePlayPurchase: ValidateGooglePlayPurchaseUseCase,
+    private val restoreGooglePlayPurchases: RestoreGooglePlayPurchasesUseCase,
     private val analyticsTracker: AnalyticsTracker = NoOpAnalyticsTracker,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -216,16 +227,32 @@ class SettingsViewModel(
             observeSubscriptionStatus()
                 .catch { error -> _uiState.update { it.copy(error = error.message) } }
                 .collect { subscriptionStatus ->
-                    _uiState.update { it.copyWithSubscription(subscriptionStatus) }
+                    _uiState.update { it.copyWithSubscription(subscriptionStatus.nonAuthoritativeLocalStatus()) }
                 }
         }
 
         scope.launch {
             runCatching { getSubscriptionStatus() }
                 .onSuccess { subscriptionStatus ->
-                    _uiState.update { it.copyWithSubscription(subscriptionStatus) }
+                    _uiState.update { it.copyWithSubscription(subscriptionStatus.nonAuthoritativeLocalStatus()) }
                 }
                 .onFailure { error -> _uiState.update { it.copy(error = error.message) } }
+        }
+
+        scope.launch {
+            runCatching { refreshPremiumEntitlement(force = false) }
+                .onSuccess { entitlement ->
+                    analyticsTracker.track(
+                        AnalyticsEvent.EntitlementRefreshed(
+                            isSubscriber = entitlement.isSubscriber,
+                            status = entitlement.status.name,
+                        ),
+                    )
+                    _uiState.update { it.copyWithEntitlement(entitlement) }
+                }
+                .onFailure { error ->
+                    analyticsTracker.track(AnalyticsEvent.EntitlementRefreshFailed(reason = error.message ?: "unknown"))
+                }
         }
     }
 
@@ -281,18 +308,34 @@ class SettingsViewModel(
     fun onSubscriptionPurchaseCompleted(outcome: SubscriptionPurchaseOutcome) {
         when (outcome) {
             is SubscriptionPurchaseOutcome.Purchased -> {
-                // TODO(PR4): send outcome.token.purchaseToken to validateGooglePlaySubscription before unlocking Premium.
-                pendingPremiumProductId = null
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        feedback = SettingsFeedback.SubscriptionValidationPending,
-                    )
+                scope.launch {
+                    _uiState.update { it.copy(isLoading = true, feedback = SettingsFeedback.SubscriptionValidating, error = null) }
+                    runCatching { validateGooglePlayPurchase(outcome.token) }
+                        .onSuccess { entitlement ->
+                            handleValidatedPurchaseEntitlement(outcome.token, entitlement)
+                        }
+                        .onFailure { error ->
+                            val productId = pendingPremiumProductId ?: outcome.token.productId
+                            analyticsTracker.track(
+                                AnalyticsEvent.PremiumPurchaseFailed(
+                                    productId = productId,
+                                    reason = error.message ?: "backend_validation_failed",
+                                ),
+                            )
+                            pendingPremiumProductId = null
+                            _uiState.update {
+                                it.copy(
+                                    isLoading = false,
+                                    feedback = SettingsFeedback.SubscriptionPurchaseFailed,
+                                )
+                            }
+                        }
                 }
             }
 
             is SubscriptionPurchaseOutcome.Pending -> {
-                // Pending means Play has not completed payment. Do not validate, complete analytics, or unlock Premium.
+                val productId = pendingPremiumProductId ?: outcome.token.productId
+                analyticsTracker.track(AnalyticsEvent.PremiumPurchasePending(productId = productId, reason = "billing_pending"))
                 pendingPremiumProductId = null
                 _uiState.update {
                     it.copy(
@@ -367,18 +410,27 @@ class SettingsViewModel(
     }
 
     fun onRestorePurchasesClicked() {
+        analyticsTracker.track(AnalyticsEvent.PremiumRestoreClicked)
         scope.launch {
+            _uiState.update { it.copy(isLoading = true, error = null) }
             runCatching { restorePurchases() }
                 .onSuccess { result ->
-                    val feedback = when (result) {
-                        is RestorePurchasesResult.NoPurchasesFound -> SettingsFeedback.RestorePurchasesNoPurchases
-                        // TODO(PR4): send result.tokens to restoreGooglePlayPurchases before restoring Premium.
-                        is RestorePurchasesResult.RestorableTokens -> SettingsFeedback.SubscriptionValidationPending
-                        is RestorePurchasesResult.Restored -> SettingsFeedback.RestorePurchasesNoPurchases
+                    when (result) {
+                        is RestorePurchasesResult.NoPurchasesFound -> {
+                            analyticsTracker.track(AnalyticsEvent.PremiumRestoreEmpty(reason = "no_local_tokens"))
+                            _uiState.update { it.copy(isLoading = false, feedback = SettingsFeedback.RestorePurchasesNoPurchases) }
+                        }
+                        is RestorePurchasesResult.RestorableTokens -> restoreBackendPurchases(result.tokens)
+                        is RestorePurchasesResult.Restored -> {
+                            analyticsTracker.track(AnalyticsEvent.PremiumRestoreEmpty(reason = "legacy_local_restore_ignored"))
+                            _uiState.update { it.copy(isLoading = false, feedback = SettingsFeedback.RestorePurchasesNoPurchases) }
+                        }
                     }
-                    _uiState.update { it.copy(feedback = feedback) }
                 }
-                .onFailure { error -> _uiState.update { it.copy(error = error.message) } }
+                .onFailure { error ->
+                    analyticsTracker.track(AnalyticsEvent.PremiumRestoreEmpty(reason = error.message ?: "local_restore_failed"))
+                    _uiState.update { it.copy(isLoading = false, error = error.message) }
+                }
         }
     }
 
@@ -408,6 +460,102 @@ class SettingsViewModel(
         _uiState.update { it.copy(appVersion = appVersion) }
     }
 
+    private fun handleValidatedPurchaseEntitlement(
+        token: BillingPurchaseToken,
+        entitlement: PremiumEntitlement,
+    ) {
+        val productId = pendingPremiumProductId ?: entitlement.productId ?: token.productId
+        when {
+            entitlement.isSubscriber -> {
+                analyticsTracker.track(
+                    AnalyticsEvent.PremiumPurchaseCompleted(
+                        productId = productId,
+                        price = null,
+                        currency = null,
+                    ),
+                )
+                // TODO(PR5): trigger EconomyViewModel/global economy refresh after backend entitlement activation.
+                pendingPremiumProductId = null
+                _uiState.update {
+                    it.copyWithEntitlement(entitlement).copy(
+                        isLoading = false,
+                        feedback = SettingsFeedback.SubscriptionPurchaseActivated,
+                    )
+                }
+            }
+            entitlement.status == PremiumSubscriptionStatus.Pending -> {
+                analyticsTracker.track(AnalyticsEvent.PremiumPurchasePending(productId = productId, reason = "backend_pending"))
+                pendingPremiumProductId = null
+                _uiState.update {
+                    it.copyWithEntitlement(entitlement).copy(
+                        isLoading = false,
+                        feedback = SettingsFeedback.SubscriptionValidationPending,
+                    )
+                }
+            }
+            else -> {
+                analyticsTracker.track(AnalyticsEvent.PremiumPurchaseFailed(productId = productId, reason = "backend_not_active"))
+                pendingPremiumProductId = null
+                _uiState.update {
+                    it.copyWithEntitlement(entitlement).copy(
+                        isLoading = false,
+                        feedback = SettingsFeedback.SubscriptionPurchaseFailed,
+                    )
+                }
+            }
+        }
+    }
+
+    private suspend fun restoreBackendPurchases(tokens: List<BillingPurchaseToken>) {
+        if (tokens.isEmpty()) {
+            analyticsTracker.track(AnalyticsEvent.PremiumRestoreEmpty(reason = "empty_local_tokens"))
+            _uiState.update { it.copy(isLoading = false, feedback = SettingsFeedback.RestorePurchasesNoPurchases) }
+            return
+        }
+
+        runCatching { restoreGooglePlayPurchases(tokens) }
+            .onSuccess { result ->
+                val entitlement = result.entitlement
+                if (result.activeTokenFound && entitlement.isSubscriber) {
+                    analyticsTracker.track(
+                        AnalyticsEvent.PremiumRestoreCompleted(
+                            restoredCount = result.restoredCount,
+                            productId = entitlement.productId,
+                        ),
+                    )
+                    // TODO(PR5): trigger EconomyViewModel/global economy refresh after backend restore activation.
+                    _uiState.update {
+                        it.copyWithEntitlement(entitlement).copy(
+                            isLoading = false,
+                            feedback = SettingsFeedback.RestorePurchasesSuccess,
+                        )
+                    }
+                } else {
+                    val reason = if (entitlement.status == PremiumSubscriptionStatus.Pending) "backend_pending" else "no_active_backend_entitlement"
+                    analyticsTracker.track(
+                        AnalyticsEvent.PremiumRestoreEmpty(
+                            reason = reason,
+                            restoredCount = result.restoredCount,
+                        ),
+                    )
+                    _uiState.update {
+                        it.copyWithEntitlement(entitlement).copy(
+                            isLoading = false,
+                            feedback = if (entitlement.status == PremiumSubscriptionStatus.Pending) {
+                                SettingsFeedback.SubscriptionValidationPending
+                            } else {
+                                SettingsFeedback.RestorePurchasesNoPurchases
+                            },
+                        )
+                    }
+                }
+            }
+            .onFailure { error ->
+                analyticsTracker.track(AnalyticsEvent.PremiumRestoreEmpty(reason = error.message ?: "backend_restore_failed"))
+                _uiState.update { it.copy(isLoading = false, feedback = SettingsFeedback.RestorePurchasesNoPurchases) }
+            }
+    }
+
     private fun updateNotificationSettings(update: (NotificationSettings) -> NotificationSettings) {
         scope.launch {
             val current = NotificationSettings(
@@ -432,6 +580,15 @@ private fun SettingsUiState.copyFrom(settings: NotificationSettings): SettingsUi
     habitsEnabled = settings.habitsEnabled,
 )
 
+private fun SubscriptionStatus.nonAuthoritativeLocalStatus(): SubscriptionStatus = when (this) {
+    SubscriptionStatus.ActiveMonthly,
+    SubscriptionStatus.ActiveAnnual,
+    -> SubscriptionStatus.Inactive
+    SubscriptionStatus.Unknown,
+    SubscriptionStatus.Inactive,
+    -> this
+}
+
 private fun SettingsUiState.copyWithSubscription(subscriptionStatus: SubscriptionStatus): SettingsUiState = copy(
     subscriptionStatus = subscriptionStatus,
     subscriptionPrimaryAction = if (subscriptionStatus.isActive) {
@@ -440,6 +597,10 @@ private fun SettingsUiState.copyWithSubscription(subscriptionStatus: Subscriptio
         SubscriptionPrimaryAction.Subscribe
     },
 )
+
+private fun SettingsUiState.copyWithEntitlement(entitlement: PremiumEntitlement): SettingsUiState =
+    copyWithSubscription(entitlement.toSubscriptionStatus())
+
 
 private fun SubscriptionPlan.toUiPlan(): SubscriptionPlanUi = SubscriptionPlanUi(
     productId = productId,

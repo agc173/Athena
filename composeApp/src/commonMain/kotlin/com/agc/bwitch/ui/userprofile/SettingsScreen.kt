@@ -102,7 +102,9 @@ fun SettingsScreen(contentPadding: PaddingValues) {
         val message = when (feedback) {
             SettingsFeedback.SubscriptionSubscribeComingSoon -> strings.subscriptionSubscribeComingSoon
             SettingsFeedback.SubscriptionManageComingSoon -> strings.subscriptionManageComingSoon
-            SettingsFeedback.SubscriptionValidationPending -> strings.subscriptionSubscribeComingSoon
+            SettingsFeedback.SubscriptionValidating -> strings.subscriptionValidating
+            SettingsFeedback.SubscriptionValidationPending -> strings.subscriptionPurchasePending
+            SettingsFeedback.SubscriptionPurchaseActivated -> strings.subscriptionPurchaseActivated
             SettingsFeedback.SubscriptionPurchaseFailed -> strings.subscriptionPurchaseFailed
             SettingsFeedback.RestorePurchasesSuccess -> strings.subscriptionRestoreSuccess
             SettingsFeedback.RestorePurchasesNoPurchases -> strings.subscriptionRestoreNoPurchases

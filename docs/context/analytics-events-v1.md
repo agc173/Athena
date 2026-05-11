@@ -59,8 +59,14 @@ Valores permitidos:
 | `premium_cta_shown` | `placement`, `origin_placement?` | CTA premium expuesto en Settings subscribe. |
 | `premium_cta_clicked` | `placement`, `origin_placement?` | Click explícito sobre CTA premium. |
 | `premium_purchase_started` | `product_id`, `origin_placement?` | Inicio de compra premium desde Settings. |
-| `premium_purchase_completed` | `product_id`, `price`, `currency` | Flujo premium completado. |
-| `premium_purchase_failed` | `product_id`, `reason` | Flujo premium con error. |
+| `premium_purchase_completed` | `product_id`, `price`, `currency` | Flujo premium completado solo tras entitlement backend activo. |
+| `premium_purchase_pending` | `product_id`, `reason?` | Compra premium pendiente en Billing o backend; no activa Premium. |
+| `premium_purchase_failed` | `product_id`, `reason` | Flujo premium con error de Billing o validación backend. |
+| `premium_restore_clicked` | — | Click explícito en restaurar compras Premium. |
+| `premium_restore_completed` | `restored_count`, `product_id?` | Restore completado solo tras entitlement backend activo. |
+| `premium_restore_empty` | `reason`, `restored_count` | Restore sin tokens locales o sin entitlement activo backend. |
+| `entitlement_refreshed` | `is_subscriber`, `status` | Refresh de entitlement backend completado. |
+| `entitlement_refresh_failed` | `reason` | Error al refrescar entitlement backend. |
 | `moon_pack_viewed` | `pack_id`, `moons`, `price` | Carga de packs en Moon Store. |
 | `moon_pack_selected` | `pack_id`, `moons`, `price` | Selección de pack por usuario. |
 | `moon_pack_purchase_started` | `pack_id` | Inicio de compra real de pack (pendiente de wiring en flujo real). |
