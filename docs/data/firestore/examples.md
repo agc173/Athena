@@ -112,3 +112,54 @@
 "completedCycles": 1,
 "updatedAtEpochMillis": 1775529600000
 }
+
+## userEntitlements/{uid}
+```json
+{
+  "isSubscriber": true,
+  "tier": "premium",
+  "platform": "google_play",
+  "environment": "production",
+  "productId": "bwitch_premium_monthly",
+  "basePlanId": "monthly",
+  "purchaseTokenHash": "<hmac-sha256>",
+  "activeReceiptPath": "purchaseReceipts/uid_123/items/<hmac-sha256>",
+  "subscriptionStatus": "ACTIVE",
+  "premiumUntil": "<timestamp>",
+  "autoRenewing": true,
+  "lastValidatedAt": "<timestamp>",
+  "source": "google_play_validation",
+  "updatedAt": "<timestamp>",
+  "createdAt": "<timestamp>",
+  "schemaVersion": 1
+}
+```
+
+## purchaseReceipts/{uid}/items/{purchaseTokenHash}
+```json
+{
+  "uid": "uid_123",
+  "purchaseTokenHash": "<hmac-sha256>",
+  "platform": "google_play",
+  "environment": "production",
+  "packageName": "com.bwitch.app",
+  "productId": "bwitch_premium_monthly",
+  "subscriptionStatus": "ACTIVE",
+  "google": {
+    "rawState": "SUBSCRIPTION_STATE_ACTIVE",
+    "acknowledgementState": "ACKNOWLEDGEMENT_STATE_ACKNOWLEDGED",
+    "lineItemExpiryTime": "2026-06-11T00:00:00.000Z",
+    "autoRenewing": true,
+    "latestOrderId": "<order-id>",
+    "regionCode": "ES",
+    "testPurchase": false
+  },
+  "acknowledged": true,
+  "premiumUntil": "<timestamp>",
+  "lastValidatedAt": "<timestamp>",
+  "firstSeenAt": "<timestamp>",
+  "updatedAt": "<timestamp>",
+  "validationCount": 1,
+  "schemaVersion": 1
+}
+```

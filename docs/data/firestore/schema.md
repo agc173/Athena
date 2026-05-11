@@ -534,3 +534,83 @@ Campos:
 - costCharged: number
 - premiumIncluded: boolean
 - contextSign: string opcional (auditoría; unlock sigue siendo por período)
+
+### /userEntitlements/{uid}
+Entitlement operativo backend-owned para economía y Premium. Es la fuente de verdad que consume el backend para saber si un usuario es suscriptor; el cliente no debe escribirlo ni desbloquear Premium solo por estado local de Billing.
+
+Campos (schemaVersion `1`):
+- isSubscriber: boolean
+- tier: string enum (`free` | `premium`)
+- platform: string enum (`google_play` | `app_store` | `admin` | `none`)
+- environment: string enum (`production` | `sandbox` | `test`)
+- productId: string (opcional)
+- basePlanId: string (opcional)
+- offerId: string (opcional)
+- purchaseTokenHash: string (opcional; HMAC-SHA256, nunca token plano)
+- activeReceiptPath: string (opcional; ruta a `/purchaseReceipts/{uid}/items/{purchaseTokenHash}`)
+- subscriptionStatus: string enum (`NONE` | `ACTIVE` | `PENDING` | `EXPIRED` | `CANCELED` | `GRACE_PERIOD` | `ACCOUNT_HOLD` | `PAUSED` | `REVOKED` | `UNKNOWN`)
+- premiumUntil: timestamp (opcional)
+- autoRenewing: boolean (opcional)
+- startedAt: timestamp (opcional)
+- lastValidatedAt: timestamp (opcional)
+- gracePeriodUntil: timestamp (opcional)
+- cancelReason: string (opcional)
+- source: string enum (`google_play_validation` | `restore` | `refresh` | `admin`)
+- updatedAt: timestamp
+- createdAt: timestamp (opcional)
+- schemaVersion: number (`1`)
+
+Notas:
+- Estados `ACTIVE` y `GRACE_PERIOD` pueden producir `isSubscriber=true`; `PENDING`, `EXPIRED`, `REVOKED`, `ACCOUNT_HOLD` y demás estados no activos mantienen `isSubscriber=false`.
+- En Google Play, cancelar la renovación (`SUBSCRIPTION_STATE_CANCELED`) no corta Premium antes de terminar el periodo pagado: si `lineItems.expiryTime` está en el futuro, v1 guarda el entitlement como activo hasta `premiumUntil` y con `autoRenewing=false`; si ya venció, queda inactivo/expirado.
+- `purchaseTokenHash` no se expone al cliente y no permite revalidación server-side futura sin que el usuario restaure, porque el token plano no se guarda en v1.
+
+### /purchaseReceipts/{uid}/items/{purchaseTokenHash}
+Recibo normalizado backend-owned por compra Google Play validada. Sirve para idempotencia, auditoría y mapeo de estado sin exponer recibos completos al cliente.
+
+Campos (schemaVersion `1`):
+- uid: string
+- purchaseTokenHash: string
+- platform: string (`google_play`)
+- environment: string enum (`production` | `sandbox` | `test`)
+- packageName: string
+- productId: string
+- basePlanId: string (opcional)
+- offerId: string (opcional)
+- subscriptionStatus: string enum igual que `/userEntitlements/{uid}.subscriptionStatus`
+- linkedPurchaseTokenHash: string (opcional; hash HMAC-SHA256)
+- google.rawState: string (opcional)
+- google.acknowledgementState: string (opcional)
+- google.lineItemExpiryTime: string ISO (opcional)
+- google.autoRenewing: boolean (opcional)
+- google.cancelReason: string (opcional)
+- google.orderId: string (opcional)
+- google.latestOrderId: string (opcional)
+- google.regionCode: string (opcional)
+- google.testPurchase: boolean (opcional)
+- acknowledged: boolean
+- acknowledgedAt: timestamp (opcional)
+- acknowledgementError: string (opcional)
+- premiumUntil: timestamp (opcional)
+- startedAt: timestamp (opcional)
+- lastValidatedAt: timestamp
+- firstSeenAt: timestamp
+- updatedAt: timestamp
+- validationCount: number
+- lastValidationRequestId: string (opcional)
+- schemaVersion: number (`1`)
+
+Notas:
+- No guardar `purchaseToken` plano. En v1 se usa únicamente `purchaseTokenHash` con HMAC-SHA256 y secreto backend.
+- Los recibos son backend-owned y no deben leerse directamente desde cliente.
+
+### /purchaseTokenIndex/{purchaseTokenHash}
+Índice backend-owned para impedir que un mismo token de compra se vincule a más de una cuenta.
+
+Campos:
+- uid: string
+- receiptPath: string
+- productId: string
+- platform: string (`google_play`)
+- firstSeenAt: timestamp
+- updatedAt: timestamp
