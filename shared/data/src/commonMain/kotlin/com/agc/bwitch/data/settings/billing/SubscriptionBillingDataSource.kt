@@ -1,24 +1,20 @@
 package com.agc.bwitch.data.settings.billing
 
-import com.agc.bwitch.domain.settings.SubscriptionStatus
-import com.agc.bwitch.domain.settings.SubscriptionPlan
+import com.agc.bwitch.domain.settings.BillingProduct
+import com.agc.bwitch.domain.settings.BillingPurchaseToken
 
 interface SubscriptionBillingDataSource {
     val isSupported: Boolean
 
-    suspend fun querySubscriptionStatus(): SubscriptionStatus
+    suspend fun getProducts(): List<BillingProduct>
 
-    suspend fun querySubscriptionCatalog(): List<SubscriptionPlan>
-
-    suspend fun restoreSubscriptionStatus(): SubscriptionStatus
+    suspend fun queryRestorablePurchases(): List<BillingPurchaseToken>
 }
 
 object UnsupportedSubscriptionBillingDataSource : SubscriptionBillingDataSource {
     override val isSupported: Boolean = false
 
-    override suspend fun querySubscriptionStatus(): SubscriptionStatus = SubscriptionStatus.Unknown
+    override suspend fun getProducts(): List<BillingProduct> = emptyList()
 
-    override suspend fun querySubscriptionCatalog(): List<SubscriptionPlan> = emptyList()
-
-    override suspend fun restoreSubscriptionStatus(): SubscriptionStatus = SubscriptionStatus.Unknown
+    override suspend fun queryRestorablePurchases(): List<BillingPurchaseToken> = emptyList()
 }

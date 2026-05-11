@@ -5,6 +5,7 @@ import com.agc.bwitch.domain.analytics.AnalyticsTracker
 import com.agc.bwitch.domain.analytics.NoOpAnalyticsTracker
 import com.agc.bwitch.domain.localization.AppLanguage
 import com.agc.bwitch.domain.localization.ObserveCurrentLanguageUseCase
+import com.agc.bwitch.domain.settings.BillingPurchaseToken
 import com.agc.bwitch.domain.settings.GetNotificationSettingsUseCase
 import com.agc.bwitch.domain.settings.GetSubscriptionCatalogUseCase
 import com.agc.bwitch.domain.settings.GetSubscriptionStatusUseCase
@@ -63,6 +64,7 @@ enum class SubscriptionPrimaryAction {
 enum class SettingsFeedback {
     SubscriptionSubscribeComingSoon,
     SubscriptionManageComingSoon,
+    SubscriptionValidationPending,
     SubscriptionPurchaseFailed,
     RestorePurchasesSuccess,
     RestorePurchasesNoPurchases,
@@ -96,7 +98,16 @@ sealed interface SettingsUiEffect {
 }
 
 sealed interface SubscriptionPurchaseOutcome {
-    data object Success : SubscriptionPurchaseOutcome
+    /**
+     * Play Billing returned a purchase token. PR 4 must send this token to validateGooglePlaySubscription.
+     */
+    data class Purchased(val token: BillingPurchaseToken) : SubscriptionPurchaseOutcome
+
+    /**
+     * Play Billing returned a pending token. This is never a completed purchase nor Premium authority.
+     */
+    data class Pending(val token: BillingPurchaseToken) : SubscriptionPurchaseOutcome
+
     data object Cancelled : SubscriptionPurchaseOutcome
     data object Unsupported : SubscriptionPurchaseOutcome
     data object Failed : SubscriptionPurchaseOutcome
@@ -269,26 +280,25 @@ class SettingsViewModel(
 
     fun onSubscriptionPurchaseCompleted(outcome: SubscriptionPurchaseOutcome) {
         when (outcome) {
-            SubscriptionPurchaseOutcome.Success -> {
-                val productId = pendingPremiumProductId ?: _uiState.value.resolveManageSubscriptionProductId().orEmpty()
-                analyticsTracker.track(
-                    AnalyticsEvent.PremiumPurchaseCompleted(
-                        productId = productId,
-                        price = null,
-                        currency = null,
-                    ),
-                )
+            is SubscriptionPurchaseOutcome.Purchased -> {
+                // TODO(PR4): send outcome.token.purchaseToken to validateGooglePlaySubscription before unlocking Premium.
                 pendingPremiumProductId = null
-                scope.launch {
-                    runCatching { getSubscriptionStatus() }
-                        .onSuccess { subscriptionStatus ->
-                            _uiState.update {
-                                it.copyWithSubscription(subscriptionStatus).copy(isLoading = false, error = null)
-                            }
-                        }
-                        .onFailure { error ->
-                            _uiState.update { it.copy(isLoading = false, error = error.message) }
-                        }
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        feedback = SettingsFeedback.SubscriptionValidationPending,
+                    )
+                }
+            }
+
+            is SubscriptionPurchaseOutcome.Pending -> {
+                // Pending means Play has not completed payment. Do not validate, complete analytics, or unlock Premium.
+                pendingPremiumProductId = null
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        feedback = SettingsFeedback.SubscriptionValidationPending,
+                    )
                 }
             }
 
@@ -362,7 +372,9 @@ class SettingsViewModel(
                 .onSuccess { result ->
                     val feedback = when (result) {
                         is RestorePurchasesResult.NoPurchasesFound -> SettingsFeedback.RestorePurchasesNoPurchases
-                        is RestorePurchasesResult.Restored -> SettingsFeedback.RestorePurchasesSuccess
+                        // TODO(PR4): send result.tokens to restoreGooglePlayPurchases before restoring Premium.
+                        is RestorePurchasesResult.RestorableTokens -> SettingsFeedback.SubscriptionValidationPending
+                        is RestorePurchasesResult.Restored -> SettingsFeedback.RestorePurchasesNoPurchases
                     }
                     _uiState.update { it.copy(feedback = feedback) }
                 }

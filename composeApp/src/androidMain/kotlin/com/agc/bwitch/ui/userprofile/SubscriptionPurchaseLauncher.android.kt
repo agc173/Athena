@@ -6,10 +6,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import com.agc.bwitch.data.settings.billing.googleplay.GooglePlayBillingSubscriptionProducts
 import com.agc.bwitch.data.settings.billing.googleplay.GooglePlaySubscriptionBillingDataSource
+import com.agc.bwitch.domain.settings.BillingPurchaseResult
 import com.agc.bwitch.presentation.userprofile.SubscriptionManagementOutcome
 import com.agc.bwitch.presentation.userprofile.SubscriptionPlanSelection
 import com.agc.bwitch.presentation.userprofile.SubscriptionPurchaseOutcome
-import kotlinx.coroutines.CancellationException
 import org.koin.compose.koinInject
 
 @Composable
@@ -34,18 +34,9 @@ actual fun rememberSubscriptionPurchaseLauncher(): SubscriptionPurchaseLauncher 
 
                 return runCatching {
                     billingDataSource.launchPurchaseFlow(activity = activity, productId = productId)
-                }.getOrElse { error ->
-                    Result.failure(error)
-                }.fold(
-                    onSuccess = { SubscriptionPurchaseOutcome.Success },
-                    onFailure = { error ->
-                        if (error is CancellationException) {
-                            SubscriptionPurchaseOutcome.Cancelled
-                        } else {
-                            SubscriptionPurchaseOutcome.Failed
-                        }
-                    },
-                )
+                }.getOrElse {
+                    BillingPurchaseResult.Failed(reason = it.message.orEmpty())
+                }.toPresentationOutcome()
             }
         }
     }
@@ -68,4 +59,12 @@ actual fun rememberSubscriptionManagementLauncher(): SubscriptionManagementLaunc
             }
         }
     }
+}
+
+private fun BillingPurchaseResult.toPresentationOutcome(): SubscriptionPurchaseOutcome = when (this) {
+    is BillingPurchaseResult.Purchased -> SubscriptionPurchaseOutcome.Purchased(token)
+    is BillingPurchaseResult.Pending -> SubscriptionPurchaseOutcome.Pending(token)
+    BillingPurchaseResult.Cancelled -> SubscriptionPurchaseOutcome.Cancelled
+    is BillingPurchaseResult.Failed -> SubscriptionPurchaseOutcome.Failed
+    BillingPurchaseResult.Unsupported -> SubscriptionPurchaseOutcome.Unsupported
 }

@@ -1,93 +1,123 @@
 package com.agc.bwitch.data.settings
 
 import com.agc.bwitch.data.settings.billing.SubscriptionBillingDataSource
+import com.agc.bwitch.domain.settings.BillingProduct
+import com.agc.bwitch.domain.settings.BillingPurchaseToken
+import com.agc.bwitch.domain.settings.KnownSubscriptionProducts
+import com.agc.bwitch.domain.settings.PurchaseState
 import com.agc.bwitch.domain.settings.RestorePurchasesResult
-import com.agc.bwitch.domain.settings.SubscriptionPlan
 import com.agc.bwitch.domain.settings.SubscriptionPlanType
 import com.agc.bwitch.domain.settings.SubscriptionStatus
 import com.russhwolf.settings.MapSettings
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 
 class BillingBackedSubscriptionRepositoryTest {
 
     @Test
-    fun `getStatus usa billing cuando esta soportado`() = runTest {
+    fun `billing local purchased no implica premium activo`() = runTest {
+        val token = BillingPurchaseToken(
+            productId = KnownSubscriptionProducts.MONTHLY,
+            purchaseToken = "token-1",
+            purchaseState = PurchaseState.Purchased,
+            acknowledged = false,
+            packageName = "com.bwitch.app",
+        )
         val repository = repository(
             billing = FakeBillingDataSource(
                 isSupported = true,
-                statusFromQuery = SubscriptionStatus.ActiveAnnual,
+                restorableTokens = listOf(token),
             ),
         )
 
         val status = repository.getStatus()
+        val restore = repository.restorePurchases()
 
-        assertEquals(SubscriptionStatus.ActiveAnnual, status)
+        assertEquals(SubscriptionStatus.Unknown, status)
+        assertIs<RestorePurchasesResult.RestorableTokens>(restore)
+        assertEquals(listOf(token), restore.tokens)
     }
 
     @Test
-    fun `getStatus usa fallback persistido cuando billing falla`() = runTest {
+    fun `cache activa local no se usa como autoridad premium`() = runTest {
         val settings = MapSettings().apply {
             putString("subscription_status", SubscriptionStatus.ActiveMonthly.name)
         }
         val repository = repository(
             settings = settings,
-            billing = FakeBillingDataSource(
-                isSupported = true,
-                queryError = IllegalStateException("setup failed"),
-            ),
+            billing = FakeBillingDataSource(isSupported = false),
         )
 
         val status = repository.getStatus()
+        val restore = repository.restorePurchases()
 
-        assertEquals(SubscriptionStatus.ActiveMonthly, status)
+        assertEquals(SubscriptionStatus.Unknown, status)
+        assertEquals(RestorePurchasesResult.NoPurchasesFound, restore)
     }
 
     @Test
-    fun `restore en plataforma no soportada devuelve no purchases si no hay activo`() = runTest {
+    fun `restore devuelve tokens no entitlement`() = runTest {
+        val tokens = listOf(
+            BillingPurchaseToken(
+                productId = KnownSubscriptionProducts.MONTHLY,
+                purchaseToken = "token-restore",
+                purchaseState = PurchaseState.Purchased,
+                acknowledged = true,
+                packageName = "com.bwitch.app",
+            ),
+        )
         val repository = repository(
-            billing = FakeBillingDataSource(isSupported = false),
+            billing = FakeBillingDataSource(isSupported = true, restorableTokens = tokens),
         )
 
         val result = repository.restorePurchases()
 
-        assertEquals(RestorePurchasesResult.NoPurchasesFound, result)
+        assertIs<RestorePurchasesResult.RestorableTokens>(result)
+        assertEquals(tokens, result.tokens)
     }
 
     @Test
-    fun `restore en plataforma no soportada conserva estado activo persistido`() = runTest {
-        val settings = MapSettings().apply {
-            putString("subscription_status", SubscriptionStatus.ActiveAnnual.name)
-        }
+    fun `unsupported no devuelve premium activo`() = runTest {
         val repository = repository(
-            settings = settings,
             billing = FakeBillingDataSource(isSupported = false),
         )
 
-        val result = repository.restorePurchases()
-
-        assertEquals(
-            RestorePurchasesResult.Restored(SubscriptionStatus.ActiveAnnual),
-            result,
-        )
+        assertEquals(SubscriptionStatus.Unknown, repository.getStatus())
+        assertEquals(emptyList(), repository.getCatalog())
+        assertEquals(RestorePurchasesResult.NoPurchasesFound, repository.restorePurchases())
     }
 
     @Test
-    fun `getCatalog usa billing cuando esta soportado`() = runTest {
-        val plan = SubscriptionPlan(
-            productId = "monthly",
+    fun `catalogo solo muestra monthly en v1`() = runTest {
+        assertEquals(listOf(KnownSubscriptionProducts.MONTHLY), KnownSubscriptionProducts.ordered)
+        assertEquals(setOf(KnownSubscriptionProducts.MONTHLY), KnownSubscriptionProducts.all)
+    }
+
+    @Test
+    fun `getCatalog mapea BillingProduct a SubscriptionPlan`() = runTest {
+        val product = BillingProduct(
+            productId = KnownSubscriptionProducts.MONTHLY,
+            basePlanId = "monthly-base",
+            offerToken = "offer-token",
             title = "Monthly",
             formattedPrice = "$4.99",
-            type = SubscriptionPlanType.Monthly,
+            priceAmountMicros = 4_990_000,
+            priceCurrencyCode = "USD",
+            billingPeriod = "P1M",
         )
         val repository = repository(
-            billing = FakeBillingDataSource(isSupported = true, catalogFromQuery = listOf(plan)),
+            billing = FakeBillingDataSource(isSupported = true, products = listOf(product)),
         )
 
         val catalog = repository.getCatalog()
 
-        assertEquals(listOf(plan), catalog)
+        assertEquals(1, catalog.size)
+        assertEquals(KnownSubscriptionProducts.MONTHLY, catalog.single().productId)
+        assertEquals("Monthly", catalog.single().title)
+        assertEquals("$4.99", catalog.single().formattedPrice)
+        assertEquals(SubscriptionPlanType.Monthly, catalog.single().type)
     }
 
     private fun repository(
@@ -102,21 +132,10 @@ class BillingBackedSubscriptionRepositoryTest {
 
 private class FakeBillingDataSource(
     override val isSupported: Boolean,
-    private val statusFromQuery: SubscriptionStatus = SubscriptionStatus.Inactive,
-    private val statusFromRestore: SubscriptionStatus = statusFromQuery,
-    private val queryError: Throwable? = null,
-    private val restoreError: Throwable? = null,
-    private val catalogFromQuery: List<SubscriptionPlan> = emptyList(),
+    private val products: List<BillingProduct> = emptyList(),
+    private val restorableTokens: List<BillingPurchaseToken> = emptyList(),
 ) : SubscriptionBillingDataSource {
-    override suspend fun querySubscriptionStatus(): SubscriptionStatus {
-        queryError?.let { throw it }
-        return statusFromQuery
-    }
+    override suspend fun getProducts(): List<BillingProduct> = products
 
-    override suspend fun querySubscriptionCatalog(): List<SubscriptionPlan> = catalogFromQuery
-
-    override suspend fun restoreSubscriptionStatus(): SubscriptionStatus {
-        restoreError?.let { throw it }
-        return statusFromRestore
-    }
+    override suspend fun queryRestorablePurchases(): List<BillingPurchaseToken> = restorableTokens
 }

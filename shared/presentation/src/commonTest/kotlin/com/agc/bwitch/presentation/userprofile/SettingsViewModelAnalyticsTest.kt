@@ -5,10 +5,12 @@ import com.agc.bwitch.domain.auth.AuthRepository
 import com.agc.bwitch.domain.localization.AppLanguage
 import com.agc.bwitch.domain.localization.AppLanguageRepository
 import com.agc.bwitch.domain.localization.ObserveCurrentLanguageUseCase
+import com.agc.bwitch.domain.settings.BillingPurchaseToken
 import com.agc.bwitch.domain.settings.GetNotificationSettingsUseCase
 import com.agc.bwitch.domain.settings.GetSubscriptionCatalogUseCase
 import com.agc.bwitch.domain.settings.GetSubscriptionStatusUseCase
 import com.agc.bwitch.domain.settings.NotificationSettings
+import com.agc.bwitch.domain.settings.PurchaseState
 import com.agc.bwitch.domain.settings.NotificationSettingsRepository
 import com.agc.bwitch.domain.settings.ObserveNotificationSettingsUseCase
 import com.agc.bwitch.domain.settings.ObserveSubscriptionStatusUseCase
@@ -43,7 +45,7 @@ import kotlin.test.assertTrue
 class SettingsViewModelAnalyticsTest {
 
     @Test
-    fun `premium CTA click and purchase success emit analytics`() = runTest {
+    fun `premium CTA click and purchase success does not emit completed analytics before backend validation`() = runTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
         Dispatchers.setMain(dispatcher)
         try {
@@ -69,7 +71,7 @@ class SettingsViewModelAnalyticsTest {
             advanceUntilIdle()
             viewModel.onSubscriptionPrimaryActionClicked()
             viewModel.onPremiumCtaShown("settings_subscribe")
-            viewModel.onSubscriptionPurchaseCompleted(SubscriptionPurchaseOutcome.Success)
+            viewModel.onSubscriptionPurchaseCompleted(SubscriptionPurchaseOutcome.Purchased(testPurchaseToken()))
             advanceUntilIdle()
 
             val premiumClickedEvents = analytics.events.filterIsInstance<AnalyticsEvent.PremiumCtaClicked>()
@@ -77,7 +79,7 @@ class SettingsViewModelAnalyticsTest {
             val premiumStartedEvents = analytics.events.filterIsInstance<AnalyticsEvent.PremiumPurchaseStarted>()
 
             assertTrue(analytics.events.any { it is AnalyticsEvent.PremiumCtaClicked })
-            assertTrue(analytics.events.any { it is AnalyticsEvent.PremiumPurchaseCompleted })
+            assertTrue(analytics.events.none { it is AnalyticsEvent.PremiumPurchaseCompleted })
             assertTrue(premiumShownEvents.isNotEmpty())
             assertTrue(premiumStartedEvents.isNotEmpty())
             assertTrue(premiumClickedEvents.all { it.originPlacement == "settings" })
@@ -88,6 +90,52 @@ class SettingsViewModelAnalyticsTest {
             Dispatchers.resetMain()
         }
     }
+
+    @Test
+    fun `pending purchase is not treated as completed analytics`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val subscriptionRepo = FakeSubscriptionRepository()
+            val notificationRepo = FakeNotificationSettingsRepository()
+            val analytics = FakeAnalyticsTracker()
+            val viewModel = SettingsViewModel(
+                observeUserProfile = ObserveUserProfileUseCase(FakeUserProfileRepository()),
+                getUserProfile = GetUserProfileUseCase(FakeUserProfileRepository()),
+                sessionViewModel = SessionViewModel(FakeAuthRepository()),
+                observeCurrentLanguage = ObserveCurrentLanguageUseCase(FakeLanguageRepository()),
+                observeNotificationSettings = ObserveNotificationSettingsUseCase(notificationRepo),
+                getNotificationSettings = GetNotificationSettingsUseCase(notificationRepo),
+                updateNotificationSettings = UpdateNotificationSettingsUseCase(notificationRepo),
+                observeSubscriptionStatus = ObserveSubscriptionStatusUseCase(subscriptionRepo),
+                getSubscriptionStatus = GetSubscriptionStatusUseCase(subscriptionRepo),
+                getSubscriptionCatalog = GetSubscriptionCatalogUseCase(subscriptionRepo),
+                restorePurchases = RestorePurchasesUseCase(subscriptionRepo),
+                analyticsTracker = analytics,
+            )
+
+            advanceUntilIdle()
+            viewModel.onSubscriptionPrimaryActionClicked()
+            viewModel.onSubscriptionPurchaseCompleted(
+                SubscriptionPurchaseOutcome.Pending(testPurchaseToken(purchaseState = PurchaseState.Pending)),
+            )
+            advanceUntilIdle()
+
+            assertTrue(analytics.events.none { it is AnalyticsEvent.PremiumPurchaseCompleted })
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    private fun testPurchaseToken(
+        purchaseState: PurchaseState = PurchaseState.Purchased,
+    ): BillingPurchaseToken = BillingPurchaseToken(
+        productId = "premium.monthly",
+        purchaseToken = "purchase-token",
+        purchaseState = purchaseState,
+        acknowledged = false,
+        packageName = "com.bwitch.app",
+    )
 
     private class FakeSubscriptionRepository : SubscriptionRepository {
         private val status = MutableStateFlow<SubscriptionStatus>(SubscriptionStatus.Inactive)
