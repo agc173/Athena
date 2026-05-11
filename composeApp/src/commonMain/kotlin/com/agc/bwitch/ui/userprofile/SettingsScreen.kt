@@ -27,7 +27,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,14 +38,17 @@ import androidx.compose.ui.unit.dp
 import com.agc.bwitch.config.SettingsLinks
 import com.agc.bwitch.domain.localization.AppLanguage
 import com.agc.bwitch.domain.session.ClearLocalUserDataUseCase
+import com.agc.bwitch.domain.settings.KnownSubscriptionProducts
+import com.agc.bwitch.domain.settings.PremiumSubscriptionStatus
 import com.agc.bwitch.domain.settings.SubscriptionStatus
+import com.agc.bwitch.domain.settings.isActive
 import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.localization.SettingsStrings
 import com.agc.bwitch.platform.getAppVersionLabel
 import com.agc.bwitch.presentation.auth.SessionViewModel
+import com.agc.bwitch.presentation.economy.EconomyViewModel
 import com.agc.bwitch.presentation.localization.AppLanguageViewModel
 import com.agc.bwitch.presentation.userprofile.SettingsFeedback
-import com.agc.bwitch.presentation.userprofile.SubscriptionPlanUi
 import com.agc.bwitch.presentation.userprofile.SettingsUiEffect
 import com.agc.bwitch.presentation.userprofile.SettingsViewModel
 import com.agc.bwitch.presentation.userprofile.SubscriptionPlanSelection
@@ -54,6 +56,7 @@ import com.agc.bwitch.presentation.userprofile.SubscriptionPrimaryAction
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
 import com.agc.bwitch.ui.common.designsystem.BWitchScreen
 import com.agc.bwitch.ui.common.designsystem.BWitchSectionHeader
+import com.agc.bwitch.ui.premium.PremiumCard
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
@@ -63,11 +66,13 @@ fun SettingsScreen(contentPadding: PaddingValues) {
     val settingsVm: SettingsViewModel = koinInject()
     val sessionVm: SessionViewModel = koinInject()
     val appLanguageVm: AppLanguageViewModel = koinInject()
+    val economyViewModel: EconomyViewModel = koinInject()
     val clearLocalUserData: ClearLocalUserDataUseCase = koinInject()
 
     val settingsState by settingsVm.uiState.collectAsState()
 
     val strings = appStrings.settings
+    val premiumStrings = appStrings.premium
     val commonStrings = appStrings.common
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -76,12 +81,15 @@ fun SettingsScreen(contentPadding: PaddingValues) {
     val purchaseLauncher = rememberSubscriptionPurchaseLauncher()
     val managementLauncher = rememberSubscriptionManagementLauncher()
 
-    var showLanguageDialog by rememberSaveable { mutableStateOf(false) }
-    var showSubscriptionPlanDialog by rememberSaveable { mutableStateOf(false) }
+    var showLanguageDialog by remember { mutableStateOf(false) }
+    var premiumPaywallTracked by remember { mutableStateOf(false) }
 
     val username = settingsState.username?.takeUnless { it.isBlank() } ?: strings.notAvailable
     val email = settingsState.email?.takeUnless { it.isBlank() } ?: strings.notAvailable
     val birthDate = settingsState.birthDate ?: strings.notAvailable
+    val monthlyPlan = settingsState.subscriptionCatalog.firstOrNull { it.productId == KnownSubscriptionProducts.MONTHLY }
+        ?: settingsState.subscriptionCatalog.firstOrNull { it.type == SubscriptionPlanSelection.Monthly }
+    val premiumStatusLabel = settingsState.toPremiumStatusLabel(strings, premiumStrings)
 
     LaunchedEffect(appVersionLabel) {
         settingsVm.onAppVersionResolved(appVersionLabel)
@@ -91,10 +99,30 @@ fun SettingsScreen(contentPadding: PaddingValues) {
         val error = settingsState.error ?: return@LaunchedEffect
         snackbarHostState.showSnackbar(error)
     }
-    LaunchedEffect(settingsState.subscriptionPrimaryAction) {
-        if (settingsState.subscriptionPrimaryAction == SubscriptionPrimaryAction.Subscribe) {
-            settingsVm.onPremiumCtaShown("settings_subscribe")
+    LaunchedEffect(
+        settingsState.subscriptionStatus,
+        settingsState.premiumSubscriptionStatus,
+        settingsState.subscriptionPrimaryAction,
+    ) {
+        val shouldTrackPaywall = !settingsState.subscriptionStatus.isActive &&
+            settingsState.premiumSubscriptionStatus != PremiumSubscriptionStatus.Unknown
+        if (shouldTrackPaywall && !premiumPaywallTracked) {
+            settingsVm.onPremiumPaywallShown(placement = "settings", originPlacement = "settings")
+            if (settingsState.subscriptionPrimaryAction == SubscriptionPrimaryAction.Subscribe &&
+                settingsState.premiumSubscriptionStatus != PremiumSubscriptionStatus.Pending
+            ) {
+                settingsVm.onPremiumCtaShown("settings_subscribe", originPlacement = "settings")
+            }
+            premiumPaywallTracked = true
         }
+    }
+    LaunchedEffect(monthlyPlan?.productId, monthlyPlan?.formattedPrice) {
+        val plan = monthlyPlan ?: return@LaunchedEffect
+        settingsVm.onPremiumProductLoaded(
+            productId = plan.productId,
+            price = plan.formattedPrice,
+            originPlacement = "settings",
+        )
     }
 
     LaunchedEffect(settingsState.feedback) {
@@ -131,6 +159,10 @@ fun SettingsScreen(contentPadding: PaddingValues) {
                     val outcome = managementLauncher.launch(effect.productId)
                     settingsVm.onSubscriptionManagementCompleted(outcome)
                 }
+
+                SettingsUiEffect.RefreshEconomySnapshot -> {
+                    economyViewModel.refreshEconomySnapshot()
+                }
             }
         }
     }
@@ -146,29 +178,6 @@ fun SettingsScreen(contentPadding: PaddingValues) {
             onLanguageSelected = { language ->
                 appLanguageVm.onLanguageSelected(language)
                 showLanguageDialog = false
-            },
-        )
-    }
-
-    if (showSubscriptionPlanDialog) {
-        SubscriptionPlanDialog(
-            title = strings.subscriptionActionSubscribe,
-            closeLabel = strings.close,
-            plans = settingsState.subscriptionCatalog,
-            monthlyLabelFallback = strings.subscriptionPlanMonthlyLabel,
-            annualLabelFallback = strings.subscriptionPlanAnnualLabel,
-            onDismiss = { showSubscriptionPlanDialog = false },
-            onMonthlySelected = {
-                showSubscriptionPlanDialog = false
-                settingsVm.onSubscribeClicked(SubscriptionPlanSelection.Monthly)
-            },
-            onAnnualSelected = {
-                showSubscriptionPlanDialog = false
-                settingsVm.onSubscribeClicked(SubscriptionPlanSelection.Monthly)
-            },
-            onCatalogPlanSelected = { plan ->
-                showSubscriptionPlanDialog = false
-                settingsVm.onCatalogSubscriptionSelected(plan.productId)
             },
         )
     }
@@ -243,30 +252,24 @@ fun SettingsScreen(contentPadding: PaddingValues) {
                 )
             }
 
-            SettingsSectionCard(title = strings.sectionPurchasesSubscription) {
-                SettingsRow(
-                    label = strings.subscriptionStatus,
-                    value = settingsState.subscriptionStatus.toLocalizedLabel(strings),
-                )
-                SettingsRow(
-                    label = when (settingsState.subscriptionPrimaryAction) {
-                        SubscriptionPrimaryAction.Subscribe -> strings.subscriptionActionSubscribe
-                        SubscriptionPrimaryAction.Manage -> strings.subscriptionActionManage
-                    },
-                    onClick = {
-                        if (settingsState.subscriptionPrimaryAction == SubscriptionPrimaryAction.Subscribe) {
-                            showSubscriptionPlanDialog = true
-                        } else {
-                            settingsVm.onSubscriptionPrimaryActionClicked()
-                        }
-                    },
-                )
-                SettingsRow(
-                    label = strings.restorePurchases,
-                    showDivider = false,
-                    onClick = settingsVm::onRestorePurchasesClicked,
-                )
-            }
+            PremiumCard(
+                strings = premiumStrings,
+                priceLabel = monthlyPlan?.formattedPrice,
+                statusLabel = premiumStatusLabel,
+                isActive = settingsState.subscriptionStatus.isActive,
+                isPending = settingsState.premiumSubscriptionStatus == PremiumSubscriptionStatus.Pending,
+                isLoading = settingsState.isLoading,
+                onSubscribeClick = {
+                    val productId = monthlyPlan?.productId
+                    if (productId != null) {
+                        settingsVm.onCatalogSubscriptionSelected(productId, originPlacement = "settings")
+                    } else {
+                        settingsVm.onSubscribeClicked(originPlacement = "settings")
+                    }
+                },
+                onRestoreClick = settingsVm::onRestorePurchasesClicked,
+                onManageClick = { settingsVm.onSubscriptionPrimaryActionClicked(originPlacement = "settings") },
+            )
 
             SettingsSectionCard(title = strings.sectionHelpSupport) {
                 SettingsRow(
@@ -334,6 +337,16 @@ fun SettingsScreen(contentPadding: PaddingValues) {
     }
 }
 
+private fun com.agc.bwitch.presentation.userprofile.SettingsUiState.toPremiumStatusLabel(
+    settingsStrings: SettingsStrings,
+    premiumStrings: com.agc.bwitch.localization.PremiumStrings,
+): String = when {
+    subscriptionStatus.isActive -> premiumStrings.active
+    premiumSubscriptionStatus == PremiumSubscriptionStatus.Pending -> premiumStrings.pending
+    premiumSubscriptionStatus == PremiumSubscriptionStatus.Unknown -> settingsStrings.subscriptionStatusUnknown
+    else -> settingsStrings.subscriptionStatusInactive
+}
+
 @Composable
 private fun DeleteAccountConfirmationDialog(
     title: String,
@@ -393,54 +406,6 @@ private fun LanguageSelectorDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(closeLabel)
-            }
-        },
-    )
-}
-
-@Composable
-private fun SubscriptionPlanDialog(
-    title: String,
-    closeLabel: String,
-    plans: List<SubscriptionPlanUi>,
-    monthlyLabelFallback: String,
-    annualLabelFallback: String,
-    onDismiss: () -> Unit,
-    onMonthlySelected: () -> Unit,
-    onAnnualSelected: () -> Unit,
-    onCatalogPlanSelected: (SubscriptionPlanUi) -> Unit,
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(text = title) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (plans.isNotEmpty()) {
-                    plans.forEach { plan ->
-                        TextButton(
-                            onClick = { onCatalogPlanSelected(plan) },
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            val label = if (plan.formattedPrice.isBlank()) {
-                                plan.title
-                            } else {
-                                "${plan.title} · ${plan.formattedPrice}"
-                            }
-                            Text(text = label)
-                        }
-                    }
-                } else {
-                    TextButton(onClick = onMonthlySelected, modifier = Modifier.fillMaxWidth()) {
-                        Text(text = monthlyLabelFallback)
-                    }
-                    // Annual plan is intentionally hidden in Premium v1.
-                }
-            }
-        },
-        confirmButton = {},
-        dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text(closeLabel)
             }

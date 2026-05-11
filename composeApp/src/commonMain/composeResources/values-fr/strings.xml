@@ -38,4 +38,22 @@
     <string name="nav_title_onboarding_profile">Complétez votre profil</string>
     <string name="nav_title_user_profile">Profil</string>
     <string name="nav_title_settings">Paramètres</string>
+    <string name="premium_title">Premium BWitch</string>
+    <string name="premium_limits_title">Premium augmente vos limites</string>
+    <string name="premium_not_unlimited">Ce n’est pas un usage illimité</string>
+    <string name="premium_moons_extra">Les Lunes servent toujours aux usages extra</string>
+    <string name="premium_subscribe">S’abonner</string>
+    <string name="premium_restore_purchases">Restaurer les achats</string>
+    <string name="premium_manage_subscription">Gérer l’abonnement</string>
+    <string name="premium_active">Premium actif</string>
+    <string name="premium_purchase_pending">Achat en attente</string>
+    <string name="premium_benefits_title">Avantages Premium</string>
+    <string name="premium_benefit_horoscope">Horoscope : futur, hebdomadaire et mensuel débloqués.</string>
+    <string name="premium_benefit_birth_essence">Essence natale : 1 par mois.</string>
+    <string name="premium_benefit_synastry">Synastrie : 10 par jour incluses.</string>
+    <string name="premium_benefit_tarot_one">Tarot 1 : 5 par jour.</string>
+    <string name="premium_benefit_tarot_three">Tarot 3 : 1 par jour incluse, maximum 3 par jour.</string>
+    <string name="premium_benefit_oracle">Oracle : 3 par jour incluses, maximum 15 par jour.</string>
+    <string name="premium_benefit_pendulum">Pendule : 50 par jour.</string>
+    <string name="premium_benefit_moons_extra">Lunes pour les usages extra.</string>
 </resources>

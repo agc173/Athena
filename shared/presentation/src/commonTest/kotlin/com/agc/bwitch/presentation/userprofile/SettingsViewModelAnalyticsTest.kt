@@ -40,6 +40,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -174,6 +175,80 @@ class SettingsViewModelAnalyticsTest {
 
             assertTrue(analytics.events.any { it is AnalyticsEvent.PremiumRestoreEmpty })
             assertEquals(0, premiumRepo.restoreCalls)
+        }
+    }
+
+
+    @Test
+    fun `active backend purchase requests economy refresh effect`() = runTest {
+        withViewModel(
+            premiumRepo = FakePremiumEntitlementRepository(
+                validateEntitlement = activeEntitlement(),
+            ),
+        ) { viewModel, _, _, _ ->
+            val effects = mutableListOf<SettingsUiEffect>()
+            val job = launch { viewModel.uiEffects.collect { effects.add(it) } }
+            advanceUntilIdle()
+
+            viewModel.onSubscriptionPrimaryActionClicked()
+            viewModel.onSubscriptionPurchaseCompleted(SubscriptionPurchaseOutcome.Purchased(testPurchaseToken()))
+            advanceUntilIdle()
+
+            assertTrue(effects.any { it is SettingsUiEffect.RefreshEconomySnapshot })
+            job.cancel()
+        }
+    }
+
+    @Test
+    fun `active backend restore requests economy refresh effect`() = runTest {
+        withViewModel(
+            subscriptionRepo = FakeSubscriptionRepository(
+                restoreResult = RestorePurchasesResult.RestorableTokens(listOf(testPurchaseToken())),
+            ),
+            premiumRepo = FakePremiumEntitlementRepository(
+                restoreResult = PremiumRestoreResult(
+                    entitlement = activeEntitlement(),
+                    restoredCount = 1,
+                    activeTokenFound = true,
+                ),
+            ),
+        ) { viewModel, _, _, _ ->
+            val effects = mutableListOf<SettingsUiEffect>()
+            val job = launch { viewModel.uiEffects.collect { effects.add(it) } }
+            advanceUntilIdle()
+
+            viewModel.onRestorePurchasesClicked()
+            advanceUntilIdle()
+
+            assertTrue(effects.any { it is SettingsUiEffect.RefreshEconomySnapshot })
+            job.cancel()
+        }
+    }
+
+    @Test
+    fun `premium paywall shown analytics is explicit and not emitted by init`() = runTest {
+        withViewModel { viewModel, analytics, _, _ ->
+            assertFalse(analytics.events.any { it is AnalyticsEvent.PremiumPaywallShown })
+
+            viewModel.onPremiumPaywallShown(placement = "settings", originPlacement = "settings")
+            advanceUntilIdle()
+
+            assertEquals(1, analytics.events.count { it is AnalyticsEvent.PremiumPaywallShown })
+        }
+    }
+
+
+    @Test
+    fun `premium paywall shown is ignored when backend entitlement is active`() = runTest {
+        withViewModel(
+            premiumRepo = FakePremiumEntitlementRepository(
+                refreshEntitlement = activeEntitlement(),
+            ),
+        ) { viewModel, analytics, _, _ ->
+            viewModel.onPremiumPaywallShown(placement = "settings", originPlacement = "settings")
+            advanceUntilIdle()
+
+            assertFalse(analytics.events.any { it is AnalyticsEvent.PremiumPaywallShown })
         }
     }
 
