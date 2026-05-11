@@ -46,3 +46,12 @@ Este documento describe la base backend inicial para Premium Entitlements con Go
 - `GOOGLE_PLAY_PRODUCT_ALLOWLIST`: CSV de productos aceptados. En v1 solo mensual Premium (por defecto `bwitch_premium_monthly,premium_monthly`).
 - `GOOGLE_PLAY_PACKAGE_NAME`: package Android esperado; fallback temporal `com.bwitch.app`.
 - `GOOGLE_PLAY_ACCESS_TOKEN`: token de acceso para el adapter real actual. Pendiente sustituir por credenciales de servicio/ADC gestionadas en despliegue.
+
+## Cliente KMP/Android Billing — PR 4
+
+- `PremiumEntitlementRepository` es la autoridad cliente para hablar con backend Premium desde shared/data. Expone `refreshPremiumEntitlement(force)`, `validateGooglePlayPurchase(token)` y `restoreGooglePlayPurchases(tokens)` sobre los callables `refreshEntitlement`, `validateGooglePlaySubscription` y `restoreGooglePlayPurchases`.
+- `SubscriptionRepository` sigue limitado a catálogo/tokens locales de Billing. Sus estados locales activos se tratan como no autoritativos en Settings y no pueden marcar Premium activo por sí solos.
+- `SubscriptionPurchaseOutcome.Purchased(token)` muestra estado de validación y solo emite `premium_purchase_completed`/estado activo cuando backend devuelve `entitlement.isSubscriber=true`.
+- `SubscriptionPurchaseOutcome.Pending(token)` emite `premium_purchase_pending` y no activa Premium ni dispara completed.
+- Restore local solo envía tokens al backend. `premium_restore_completed` y estado activo requieren `activeTokenFound=true` e `entitlement.isSubscriber=true`; sin tokens o sin entitlement activo se informa como restore vacío/no activo.
+- La UI final de Premium, Moon packs, App Store, plan anual y RTDN siguen fuera de alcance. El refresh de Economy tras activación queda documentado como pendiente para PR 5 por falta de un hook global limpio desde Settings.

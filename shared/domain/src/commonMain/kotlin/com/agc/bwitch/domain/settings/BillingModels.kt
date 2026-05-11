@@ -36,11 +36,40 @@ sealed interface BillingPurchaseResult {
     data object Unsupported : BillingPurchaseResult
 }
 
-/** Future backend-owned entitlement shape. BillingClient must not construct this as local authority. */
+/** Backend-owned subscription status. BillingClient must not construct this as local authority. */
+enum class PremiumSubscriptionStatus {
+    None,
+    Active,
+    Pending,
+    Expired,
+    Canceled,
+    GracePeriod,
+    AccountHold,
+    Paused,
+    Revoked,
+    Unknown,
+}
+
+/** Backend-owned entitlement shape. BillingClient must not construct this as local authority. */
 data class PremiumEntitlement(
     val isSubscriber: Boolean,
-    val subscriptionStatus: String,
-    val productId: String? = null,
-    val premiumUntilEpochMillis: Long? = null,
+    val status: PremiumSubscriptionStatus,
     val needsRestore: Boolean = false,
+    val premiumUntilEpochMillis: Long? = null,
+    val productId: String? = null,
+    val basePlanId: String? = null,
+    val platform: String? = null,
+    val environment: String? = null,
+    val autoRenewing: Boolean? = null,
 )
+
+data class PremiumRestoreResult(
+    val entitlement: PremiumEntitlement,
+    val restoredCount: Int,
+    val activeTokenFound: Boolean,
+)
+
+fun PremiumEntitlement.toSubscriptionStatus(): SubscriptionStatus = when {
+    isSubscriber -> SubscriptionStatus.ActiveMonthly
+    else -> SubscriptionStatus.Inactive
+}

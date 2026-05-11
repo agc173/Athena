@@ -192,6 +192,17 @@ sealed interface AnalyticsEvent {
         }
     }
 
+    data class PremiumPurchasePending(
+        val productId: String,
+        val reason: String? = null,
+    ) : AnalyticsEvent {
+        override val name: String = "premium_purchase_pending"
+        override fun params(): Map<String, String> = buildMap {
+            put("product_id", productId)
+            reason?.let { put("reason", it) }
+        }
+    }
+
     data class PremiumPurchaseFailed(
         val productId: String,
         val reason: String,
@@ -201,6 +212,51 @@ sealed interface AnalyticsEvent {
             "product_id" to productId,
             "reason" to reason,
         )
+    }
+
+    data object PremiumRestoreClicked : AnalyticsEvent {
+        override val name: String = "premium_restore_clicked"
+        override fun params(): Map<String, String> = emptyMap()
+    }
+
+    data class PremiumRestoreCompleted(
+        val restoredCount: Int,
+        val productId: String?,
+    ) : AnalyticsEvent {
+        override val name: String = "premium_restore_completed"
+        override fun params(): Map<String, String> = buildMap {
+            put("restored_count", restoredCount.toString())
+            productId?.let { put("product_id", it) }
+        }
+    }
+
+    data class PremiumRestoreEmpty(
+        val reason: String,
+        val restoredCount: Int = 0,
+    ) : AnalyticsEvent {
+        override val name: String = "premium_restore_empty"
+        override fun params(): Map<String, String> = mapOf(
+            "reason" to reason,
+            "restored_count" to restoredCount.toString(),
+        )
+    }
+
+    data class EntitlementRefreshed(
+        val isSubscriber: Boolean,
+        val status: String,
+    ) : AnalyticsEvent {
+        override val name: String = "entitlement_refreshed"
+        override fun params(): Map<String, String> = mapOf(
+            "is_subscriber" to isSubscriber.toString(),
+            "status" to status,
+        )
+    }
+
+    data class EntitlementRefreshFailed(
+        val reason: String,
+    ) : AnalyticsEvent {
+        override val name: String = "entitlement_refresh_failed"
+        override fun params(): Map<String, String> = mapOf("reason" to reason)
     }
 
     data class MoonPackViewed(

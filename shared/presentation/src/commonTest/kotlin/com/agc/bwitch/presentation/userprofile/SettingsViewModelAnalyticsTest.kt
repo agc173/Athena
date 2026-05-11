@@ -9,13 +9,21 @@ import com.agc.bwitch.domain.settings.BillingPurchaseToken
 import com.agc.bwitch.domain.settings.GetNotificationSettingsUseCase
 import com.agc.bwitch.domain.settings.GetSubscriptionCatalogUseCase
 import com.agc.bwitch.domain.settings.GetSubscriptionStatusUseCase
+import com.agc.bwitch.domain.settings.KnownSubscriptionProducts
 import com.agc.bwitch.domain.settings.NotificationSettings
 import com.agc.bwitch.domain.settings.PurchaseState
+import com.agc.bwitch.domain.settings.PremiumEntitlement
+import com.agc.bwitch.domain.settings.PremiumEntitlementRepository
+import com.agc.bwitch.domain.settings.PremiumRestoreResult
+import com.agc.bwitch.domain.settings.PremiumSubscriptionStatus
 import com.agc.bwitch.domain.settings.NotificationSettingsRepository
 import com.agc.bwitch.domain.settings.ObserveNotificationSettingsUseCase
 import com.agc.bwitch.domain.settings.ObserveSubscriptionStatusUseCase
 import com.agc.bwitch.domain.settings.RestorePurchasesResult
 import com.agc.bwitch.domain.settings.RestorePurchasesUseCase
+import com.agc.bwitch.domain.settings.RefreshPremiumEntitlementUseCase
+import com.agc.bwitch.domain.settings.RestoreGooglePlayPurchasesUseCase
+import com.agc.bwitch.domain.settings.ValidateGooglePlayPurchaseUseCase
 import com.agc.bwitch.domain.settings.SubscriptionPlan
 import com.agc.bwitch.domain.settings.SubscriptionRepository
 import com.agc.bwitch.domain.settings.SubscriptionStatus
@@ -33,6 +41,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -40,88 +49,176 @@ import kotlinx.coroutines.test.setMain
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import kotlin.test.assertFalse
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SettingsViewModelAnalyticsTest {
 
     @Test
-    fun `premium CTA click and purchase success does not emit completed analytics before backend validation`() = runTest {
-        val dispatcher = StandardTestDispatcher(testScheduler)
-        Dispatchers.setMain(dispatcher)
-        try {
-            val subscriptionRepo = FakeSubscriptionRepository()
-            val notificationRepo = FakeNotificationSettingsRepository()
-            val analytics = FakeAnalyticsTracker()
-            val profileRepo = FakeUserProfileRepository()
-            val viewModel = SettingsViewModel(
-                observeUserProfile = ObserveUserProfileUseCase(profileRepo),
-                getUserProfile = GetUserProfileUseCase(profileRepo),
-                sessionViewModel = SessionViewModel(FakeAuthRepository()),
-                observeCurrentLanguage = ObserveCurrentLanguageUseCase(FakeLanguageRepository()),
-                observeNotificationSettings = ObserveNotificationSettingsUseCase(notificationRepo),
-                getNotificationSettings = GetNotificationSettingsUseCase(notificationRepo),
-                updateNotificationSettings = UpdateNotificationSettingsUseCase(notificationRepo),
-                observeSubscriptionStatus = ObserveSubscriptionStatusUseCase(subscriptionRepo),
-                getSubscriptionStatus = GetSubscriptionStatusUseCase(subscriptionRepo),
-                getSubscriptionCatalog = GetSubscriptionCatalogUseCase(subscriptionRepo),
-                restorePurchases = RestorePurchasesUseCase(subscriptionRepo),
-                analyticsTracker = analytics,
-            )
-
-            advanceUntilIdle()
+    fun `purchased token plus backend active emits completed and marks premium active`() = runTest {
+        withViewModel(
+            premiumRepo = FakePremiumEntitlementRepository(
+                validateEntitlement = activeEntitlement(),
+            ),
+        ) { viewModel, analytics, _, _ ->
             viewModel.onSubscriptionPrimaryActionClicked()
-            viewModel.onPremiumCtaShown("settings_subscribe")
             viewModel.onSubscriptionPurchaseCompleted(SubscriptionPurchaseOutcome.Purchased(testPurchaseToken()))
             advanceUntilIdle()
 
-            val premiumClickedEvents = analytics.events.filterIsInstance<AnalyticsEvent.PremiumCtaClicked>()
-            val premiumShownEvents = analytics.events.filterIsInstance<AnalyticsEvent.PremiumCtaShown>()
-            val premiumStartedEvents = analytics.events.filterIsInstance<AnalyticsEvent.PremiumPurchaseStarted>()
-
-            assertTrue(analytics.events.any { it is AnalyticsEvent.PremiumCtaClicked })
-            assertTrue(analytics.events.none { it is AnalyticsEvent.PremiumPurchaseCompleted })
-            assertTrue(premiumShownEvents.isNotEmpty())
-            assertTrue(premiumStartedEvents.isNotEmpty())
-            assertTrue(premiumClickedEvents.all { it.originPlacement == "settings" })
-            assertTrue(premiumShownEvents.all { it.originPlacement == "settings" })
-            assertTrue(premiumStartedEvents.all { it.originPlacement == "settings" })
-            assertEquals("settings", premiumClickedEvents.first().originPlacement)
-        } finally {
-            Dispatchers.resetMain()
+            assertTrue(analytics.events.any { it is AnalyticsEvent.PremiumPurchaseCompleted })
+            assertFalse(analytics.events.any { it is AnalyticsEvent.PremiumPurchasePending })
+            assertEquals(SubscriptionStatus.ActiveMonthly, viewModel.uiState.value.subscriptionStatus)
         }
     }
 
     @Test
-    fun `pending purchase is not treated as completed analytics`() = runTest {
-        val dispatcher = StandardTestDispatcher(testScheduler)
-        Dispatchers.setMain(dispatcher)
-        try {
-            val subscriptionRepo = FakeSubscriptionRepository()
-            val notificationRepo = FakeNotificationSettingsRepository()
-            val analytics = FakeAnalyticsTracker()
-            val viewModel = SettingsViewModel(
-                observeUserProfile = ObserveUserProfileUseCase(FakeUserProfileRepository()),
-                getUserProfile = GetUserProfileUseCase(FakeUserProfileRepository()),
-                sessionViewModel = SessionViewModel(FakeAuthRepository()),
-                observeCurrentLanguage = ObserveCurrentLanguageUseCase(FakeLanguageRepository()),
-                observeNotificationSettings = ObserveNotificationSettingsUseCase(notificationRepo),
-                getNotificationSettings = GetNotificationSettingsUseCase(notificationRepo),
-                updateNotificationSettings = UpdateNotificationSettingsUseCase(notificationRepo),
-                observeSubscriptionStatus = ObserveSubscriptionStatusUseCase(subscriptionRepo),
-                getSubscriptionStatus = GetSubscriptionStatusUseCase(subscriptionRepo),
-                getSubscriptionCatalog = GetSubscriptionCatalogUseCase(subscriptionRepo),
-                restorePurchases = RestorePurchasesUseCase(subscriptionRepo),
-                analyticsTracker = analytics,
-            )
-
+    fun `purchased token plus backend pending emits pending and does not mark premium active`() = runTest {
+        withViewModel(
+            premiumRepo = FakePremiumEntitlementRepository(
+                validateEntitlement = pendingEntitlement(),
+            ),
+        ) { viewModel, analytics, _, _ ->
+            viewModel.onSubscriptionPrimaryActionClicked()
+            viewModel.onSubscriptionPurchaseCompleted(SubscriptionPurchaseOutcome.Purchased(testPurchaseToken()))
             advanceUntilIdle()
+
+            assertTrue(analytics.events.any { it is AnalyticsEvent.PremiumPurchasePending })
+            assertFalse(analytics.events.any { it is AnalyticsEvent.PremiumPurchaseCompleted })
+            assertEquals(SubscriptionStatus.Inactive, viewModel.uiState.value.subscriptionStatus)
+        }
+    }
+
+    @Test
+    fun `pending billing purchase emits pending without completed analytics`() = runTest {
+        withViewModel { viewModel, analytics, _, premiumRepo ->
             viewModel.onSubscriptionPrimaryActionClicked()
             viewModel.onSubscriptionPurchaseCompleted(
                 SubscriptionPurchaseOutcome.Pending(testPurchaseToken(purchaseState = PurchaseState.Pending)),
             )
             advanceUntilIdle()
 
-            assertTrue(analytics.events.none { it is AnalyticsEvent.PremiumPurchaseCompleted })
+            assertTrue(analytics.events.any { it is AnalyticsEvent.PremiumPurchasePending })
+            assertFalse(analytics.events.any { it is AnalyticsEvent.PremiumPurchaseCompleted })
+            assertEquals(0, premiumRepo.validateCalls)
+            assertEquals(SubscriptionStatus.Inactive, viewModel.uiState.value.subscriptionStatus)
+        }
+    }
+
+    @Test
+    fun `backend validation failure emits failed analytics`() = runTest {
+        withViewModel(
+            premiumRepo = FakePremiumEntitlementRepository(
+                validateError = IllegalStateException("validation failed"),
+            ),
+        ) { viewModel, analytics, _, _ ->
+            viewModel.onSubscriptionPrimaryActionClicked()
+            viewModel.onSubscriptionPurchaseCompleted(SubscriptionPurchaseOutcome.Purchased(testPurchaseToken()))
+            advanceUntilIdle()
+
+            assertTrue(analytics.events.any { it is AnalyticsEvent.PremiumPurchaseFailed })
+            assertFalse(analytics.events.any { it is AnalyticsEvent.PremiumPurchaseCompleted })
+            assertEquals(SubscriptionStatus.Inactive, viewModel.uiState.value.subscriptionStatus)
+        }
+    }
+
+    @Test
+    fun `restore tokens plus active entitlement emits restore completed and marks premium active`() = runTest {
+        withViewModel(
+            subscriptionRepo = FakeSubscriptionRepository(
+                restoreResult = RestorePurchasesResult.RestorableTokens(listOf(testPurchaseToken())),
+            ),
+            premiumRepo = FakePremiumEntitlementRepository(
+                restoreResult = PremiumRestoreResult(
+                    entitlement = activeEntitlement(),
+                    restoredCount = 1,
+                    activeTokenFound = true,
+                ),
+            ),
+        ) { viewModel, analytics, _, _ ->
+            viewModel.onRestorePurchasesClicked()
+            advanceUntilIdle()
+
+            assertTrue(analytics.events.any { it is AnalyticsEvent.PremiumRestoreCompleted })
+            assertEquals(SubscriptionStatus.ActiveMonthly, viewModel.uiState.value.subscriptionStatus)
+        }
+    }
+
+    @Test
+    fun `restore tokens plus no active entitlement emits restore empty and does not mark premium active`() = runTest {
+        withViewModel(
+            subscriptionRepo = FakeSubscriptionRepository(
+                restoreResult = RestorePurchasesResult.RestorableTokens(listOf(testPurchaseToken())),
+            ),
+            premiumRepo = FakePremiumEntitlementRepository(
+                restoreResult = PremiumRestoreResult(
+                    entitlement = inactiveEntitlement(),
+                    restoredCount = 1,
+                    activeTokenFound = false,
+                ),
+            ),
+        ) { viewModel, analytics, _, _ ->
+            viewModel.onRestorePurchasesClicked()
+            advanceUntilIdle()
+
+            assertTrue(analytics.events.any { it is AnalyticsEvent.PremiumRestoreEmpty })
+            assertFalse(analytics.events.any { it is AnalyticsEvent.PremiumRestoreCompleted })
+            assertEquals(SubscriptionStatus.Inactive, viewModel.uiState.value.subscriptionStatus)
+        }
+    }
+
+    @Test
+    fun `no local restore tokens emits restore empty`() = runTest {
+        withViewModel { viewModel, analytics, _, premiumRepo ->
+            viewModel.onRestorePurchasesClicked()
+            advanceUntilIdle()
+
+            assertTrue(analytics.events.any { it is AnalyticsEvent.PremiumRestoreEmpty })
+            assertEquals(0, premiumRepo.restoreCalls)
+        }
+    }
+
+    @Test
+    fun `local billing active status never directly sets premium`() = runTest {
+        withViewModel(
+            subscriptionRepo = FakeSubscriptionRepository(initialStatus = SubscriptionStatus.ActiveMonthly),
+            premiumRepo = FakePremiumEntitlementRepository(refreshEntitlement = inactiveEntitlement()),
+        ) { viewModel, _, _, _ ->
+            advanceUntilIdle()
+
+            assertEquals(SubscriptionStatus.Inactive, viewModel.uiState.value.subscriptionStatus)
+        }
+    }
+
+    private suspend fun TestScope.withViewModel(
+        subscriptionRepo: FakeSubscriptionRepository = FakeSubscriptionRepository(),
+        premiumRepo: FakePremiumEntitlementRepository = FakePremiumEntitlementRepository(),
+        block: suspend TestScope.(SettingsViewModel, FakeAnalyticsTracker, FakeSubscriptionRepository, FakePremiumEntitlementRepository) -> Unit,
+    ) {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val notificationRepo = FakeNotificationSettingsRepository()
+            val userProfileRepository = FakeUserProfileRepository()
+            val analytics = FakeAnalyticsTracker()
+            val viewModel = SettingsViewModel(
+                observeUserProfile = ObserveUserProfileUseCase(userProfileRepository),
+                getUserProfile = GetUserProfileUseCase(userProfileRepository),
+                sessionViewModel = SessionViewModel(FakeAuthRepository()),
+                observeCurrentLanguage = ObserveCurrentLanguageUseCase(FakeLanguageRepository()),
+                observeNotificationSettings = ObserveNotificationSettingsUseCase(notificationRepo),
+                getNotificationSettings = GetNotificationSettingsUseCase(notificationRepo),
+                updateNotificationSettings = UpdateNotificationSettingsUseCase(notificationRepo),
+                observeSubscriptionStatus = ObserveSubscriptionStatusUseCase(subscriptionRepo),
+                getSubscriptionStatus = GetSubscriptionStatusUseCase(subscriptionRepo),
+                getSubscriptionCatalog = GetSubscriptionCatalogUseCase(subscriptionRepo),
+                restorePurchases = RestorePurchasesUseCase(subscriptionRepo),
+                refreshPremiumEntitlement = RefreshPremiumEntitlementUseCase(premiumRepo),
+                validateGooglePlayPurchase = ValidateGooglePlayPurchaseUseCase(premiumRepo),
+                restoreGooglePlayPurchases = RestoreGooglePlayPurchasesUseCase(premiumRepo),
+                analyticsTracker = analytics,
+            )
+            advanceUntilIdle()
+            block(viewModel, analytics, subscriptionRepo, premiumRepo)
         } finally {
             Dispatchers.resetMain()
         }
@@ -130,22 +227,76 @@ class SettingsViewModelAnalyticsTest {
     private fun testPurchaseToken(
         purchaseState: PurchaseState = PurchaseState.Purchased,
     ): BillingPurchaseToken = BillingPurchaseToken(
-        productId = "premium.monthly",
+        productId = KnownSubscriptionProducts.MONTHLY,
         purchaseToken = "purchase-token",
         purchaseState = purchaseState,
         acknowledged = false,
         packageName = "com.bwitch.app",
     )
 
-    private class FakeSubscriptionRepository : SubscriptionRepository {
-        private val status = MutableStateFlow<SubscriptionStatus>(SubscriptionStatus.Inactive)
+    private fun activeEntitlement(): PremiumEntitlement = PremiumEntitlement(
+        isSubscriber = true,
+        status = PremiumSubscriptionStatus.Active,
+        productId = KnownSubscriptionProducts.MONTHLY,
+        platform = "google_play",
+        environment = "test",
+    )
+
+    private fun pendingEntitlement(): PremiumEntitlement = PremiumEntitlement(
+        isSubscriber = false,
+        status = PremiumSubscriptionStatus.Pending,
+        productId = KnownSubscriptionProducts.MONTHLY,
+        platform = "google_play",
+        environment = "test",
+    )
+
+    private fun inactiveEntitlement(): PremiumEntitlement = PremiumEntitlement(
+        isSubscriber = false,
+        status = PremiumSubscriptionStatus.None,
+    )
+
+    private class FakeSubscriptionRepository(
+        initialStatus: SubscriptionStatus = SubscriptionStatus.Inactive,
+        private val restoreResult: RestorePurchasesResult = RestorePurchasesResult.NoPurchasesFound,
+    ) : SubscriptionRepository {
+        private val status = MutableStateFlow(initialStatus)
 
         override suspend fun getStatus(): SubscriptionStatus = status.value
         override suspend fun getCatalog(): List<SubscriptionPlan> = listOf(
-            SubscriptionPlan("premium.monthly", "Monthly", "$4.99", SubscriptionPlanType.Monthly),
+            SubscriptionPlan(KnownSubscriptionProducts.MONTHLY, "Monthly", "$4.99", SubscriptionPlanType.Monthly),
         )
         override fun observeStatus(): Flow<SubscriptionStatus> = status
-        override suspend fun restorePurchases(): RestorePurchasesResult = RestorePurchasesResult.NoPurchasesFound
+        override suspend fun restorePurchases(): RestorePurchasesResult = restoreResult
+    }
+
+    private class FakePremiumEntitlementRepository(
+        private val refreshEntitlement: PremiumEntitlement = defaultInactiveEntitlement(),
+        private val validateEntitlement: PremiumEntitlement = defaultInactiveEntitlement(),
+        private val validateError: Throwable? = null,
+        private val restoreResult: PremiumRestoreResult = PremiumRestoreResult(defaultInactiveEntitlement(), 0, false),
+    ) : PremiumEntitlementRepository {
+        var validateCalls = 0
+        var restoreCalls = 0
+
+        override suspend fun refreshPremiumEntitlement(force: Boolean): PremiumEntitlement = refreshEntitlement
+
+        override suspend fun validateGooglePlayPurchase(token: BillingPurchaseToken): PremiumEntitlement {
+            validateCalls += 1
+            validateError?.let { throw it }
+            return validateEntitlement
+        }
+
+        override suspend fun restoreGooglePlayPurchases(tokens: List<BillingPurchaseToken>): PremiumRestoreResult {
+            restoreCalls += 1
+            return restoreResult
+        }
+
+        companion object {
+            private fun defaultInactiveEntitlement(): PremiumEntitlement = PremiumEntitlement(
+                isSubscriber = false,
+                status = PremiumSubscriptionStatus.None,
+            )
+        }
     }
 
     private class FakeNotificationSettingsRepository : NotificationSettingsRepository {

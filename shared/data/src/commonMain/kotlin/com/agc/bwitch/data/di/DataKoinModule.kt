@@ -8,6 +8,8 @@ import com.agc.bwitch.data.functions.FunctionsClient
 import com.agc.bwitch.data.functions.GitLiveFunctionsClient
 import com.agc.bwitch.data.oracle.OracleRepositoryImpl
 import com.agc.bwitch.data.remote.economy.EconomyRemoteDataSource
+import com.agc.bwitch.data.remote.premium.PremiumRemoteDataSource
+import com.agc.bwitch.data.premium.PremiumEntitlementRepositoryImpl
 import com.agc.bwitch.data.localization.SettingsAppLanguageRepository
 import com.agc.bwitch.data.localization.SystemLanguageCodeProvider
 import com.agc.bwitch.data.moons.BackendFirstMoonRepository
@@ -44,6 +46,7 @@ import com.agc.bwitch.domain.rituals.RitualCatalogRepository
 import com.agc.bwitch.domain.session.LocalUserDataRepository
 import com.agc.bwitch.domain.settings.NotificationSettingsRepository
 import com.agc.bwitch.domain.settings.SubscriptionRepository
+import com.agc.bwitch.domain.settings.PremiumEntitlementRepository
 import com.agc.bwitch.domain.tarot.TarotRepository
 import com.agc.bwitch.domain.tarot.LastTarotReadingRepository
 import com.agc.bwitch.domain.userprofile.AvatarRepository
@@ -136,7 +139,9 @@ val dataKoinModule: Module = module {
      */
     single<FunctionsClient> { GitLiveFunctionsClient() }
     single { EconomyRemoteDataSource(get()) }
+    single { PremiumRemoteDataSource(get()) }
     single<EconomyRepository> { EconomyRepositoryImpl(get()) }
+    single<PremiumEntitlementRepository> { PremiumEntitlementRepositoryImpl(get()) }
     single<OracleRepository> { OracleRepositoryImpl(get()) }
     single<TarotRepository> { TarotRepositoryImpl(get()) }
     single<LastTarotReadingRepository> { SettingsLastTarotReadingRepository(get()) }
