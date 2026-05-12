@@ -340,11 +340,34 @@ Campos:
 - updatedAt: timestamp (opcional)
 
 ### /userEntitlements/{uid}
-Entitlements económicos del usuario.
+Entitlements económicos del usuario. Documento backend-owned escrito por Cloud Functions.
 
 Campos:
 - isSubscriber: boolean (default false)
+- status: string (`active` | `inactive`; fase Premium Google Play escribe `active` cuando Play valida una suscripción vigente)
+- productId: string (opcional; fase actual solo `bwitch_premium_monthly`)
+- basePlanId: string (opcional; fase actual solo `monthly`)
+- source: string (opcional; fase actual `google_play`)
+- purchaseTokenHash: string (opcional; SHA-256 del token, no token raw)
+- packageName: string (opcional; fase actual `com.agc.bwitch`)
 - updatedAt: timestamp (opcional)
+- expiresAt: timestamp (opcional; cuando Google Play devuelve fecha de expiración)
+
+Notas:
+- Premium no debe activarse por estado local de Billing: requiere validación backend contra Google Play Developer API.
+- El token raw no se documenta ni se almacena en este documento; `refreshEntitlement` actual lee el entitlement persistido y no revalida Play todavía.
+
+### /purchaseTokenIndex/{hash}
+Índice backend-owned para ownership de tokens Google Play (`hash` = SHA-256 del `purchaseToken`).
+
+Campos:
+- uid: string
+- productId: string
+- packageName: string
+- updatedAt: timestamp
+
+Notas:
+- Cloud Functions rechaza activar una compra si el hash del token ya está asociado a otro `uid`.
 
 ### /oracleUserDaily/{dateIso}/users/{uid}
 Cuotas diarias por usuario y día (timezone Europe/Madrid).
