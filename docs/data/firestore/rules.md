@@ -18,7 +18,7 @@ Archivo fuente de reglas: `firestore.rules`.
 - `usernames`:
   - Permitir **read** autenticado (`/usernames/{username}`)
   - Denegar **write** desde cliente (el índice lo mantiene backend)
-- Mantener `deny by default` para el resto de documentos (incluyendo economy/entitlements backend-owned).
+- Mantener `deny by default` para el resto de documentos (incluyendo economy, `/userEntitlements/{uid}` y `/purchaseTokenIndex/{hash}` backend-owned).
 
 ## Nota backend/admin
 - Cloud Functions con Admin SDK **bypassean** Firestore Rules, por lo que la denegación de `write` al cliente no bloquea procesos backend como `saveUserProfile`.
