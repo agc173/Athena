@@ -45,6 +45,7 @@ import kotlinx.coroutines.test.setMain
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -66,6 +67,8 @@ class SettingsViewModelAnalyticsTest {
             advanceUntilIdle()
             viewModel.onSubscriptionPrimaryActionClicked()
             viewModel.onPremiumCtaShown("settings_subscribe")
+            advanceUntilIdle()
+
             viewModel.onSubscriptionPurchaseCompleted(SubscriptionPurchaseOutcome.Purchased(googlePlayPurchase()))
             advanceUntilIdle()
 
@@ -75,8 +78,10 @@ class SettingsViewModelAnalyticsTest {
 
             assertEquals("token-123", entitlements.lastValidatedPurchase?.purchaseToken)
             assertTrue(analytics.events.any { it is AnalyticsEvent.PremiumPurchaseCompleted })
+            assertTrue(effects.any { it is SettingsUiEffect.LaunchSubscriptionPurchase })
             assertTrue(effects.any { it is SettingsUiEffect.RefreshEconomy })
             assertTrue(effects.any { it is SettingsUiEffect.AcknowledgeGooglePlayPurchase })
+            assertEquals(SubscriptionStatus.ActiveMonthly, viewModel.uiState.value.subscriptionStatus)
             assertTrue(analytics.events.any { it is AnalyticsEvent.PremiumCtaClicked })
             assertTrue(premiumShownEvents.isNotEmpty())
             assertTrue(premiumStartedEvents.isNotEmpty())
@@ -122,12 +127,15 @@ class SettingsViewModelAnalyticsTest {
         Dispatchers.setMain(dispatcher)
         try {
             val analytics = FakeAnalyticsTracker()
-            val viewModel = viewModel(analytics = analytics)
+            val entitlements = FakePremiumEntitlementRepository()
+            val viewModel = viewModel(analytics = analytics, entitlements = entitlements)
             val effects = mutableListOf<SettingsUiEffect>()
             val collectJob = backgroundScope.launch { viewModel.uiEffects.collect { effects += it } }
 
             advanceUntilIdle()
             viewModel.onSubscribeClicked()
+            advanceUntilIdle()
+
             viewModel.onSubscriptionPurchaseCompleted(
                 SubscriptionPurchaseOutcome.Pending(googlePlayPurchase(state = GooglePlayPurchaseState.Pending)),
             )
@@ -135,6 +143,9 @@ class SettingsViewModelAnalyticsTest {
 
             assertFalse(analytics.events.any { it is AnalyticsEvent.PremiumPurchaseCompleted })
             assertFalse(effects.any { it is SettingsUiEffect.RefreshEconomy })
+            assertFalse(effects.any { it is SettingsUiEffect.AcknowledgeGooglePlayPurchase })
+            assertNull(entitlements.lastValidatedPurchase)
+            assertNull(viewModel.uiState.value.feedback)
             assertEquals(SubscriptionStatus.Inactive, viewModel.uiState.value.subscriptionStatus)
             collectJob.cancel()
         } finally {
