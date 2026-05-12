@@ -28,6 +28,7 @@ import com.agc.bwitch.presentation.auth.SessionViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -138,7 +139,7 @@ class SettingsViewModel(
     private val _uiState = MutableStateFlow(SettingsUiState())
     val uiState: StateFlow<SettingsUiState> = _uiState
 
-    private val _uiEffects = MutableSharedFlow<SettingsUiEffect>()
+    private val _uiEffects = MutableSharedFlow<SettingsUiEffect>(extraBufferCapacity = 16)
     val uiEffects: SharedFlow<SettingsUiEffect> = _uiEffects
     private var pendingPremiumProductId: String? = null
 
@@ -453,6 +454,10 @@ class SettingsViewModel(
     fun onAppVersionResolved(appVersion: String) {
         if (_uiState.value.appVersion == appVersion) return
         _uiState.update { it.copy(appVersion = appVersion) }
+    }
+
+    fun clear() {
+        scope.cancel()
     }
 
     private fun updateNotificationSettings(update: (NotificationSettings) -> NotificationSettings) {

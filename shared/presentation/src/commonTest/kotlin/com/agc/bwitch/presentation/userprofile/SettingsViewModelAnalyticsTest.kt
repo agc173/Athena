@@ -38,6 +38,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -62,10 +63,12 @@ class SettingsViewModelAnalyticsTest {
             )
             val viewModel = viewModel(analytics = analytics, entitlements = entitlements)
             val effects = mutableListOf<SettingsUiEffect>()
-            val collectJob = backgroundScope.launch { viewModel.uiEffects.collect { effects += it } }
+            val collectJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiEffects.collect { effects += it }
+            }
 
             advanceUntilIdle()
-            viewModel.onSubscriptionPrimaryActionClicked()
+            viewModel.onSubscribeClicked()
             viewModel.onPremiumCtaShown("settings_subscribe")
             advanceUntilIdle()
 
@@ -76,6 +79,7 @@ class SettingsViewModelAnalyticsTest {
             val premiumShownEvents = analytics.events.filterIsInstance<AnalyticsEvent.PremiumCtaShown>()
             val premiumStartedEvents = analytics.events.filterIsInstance<AnalyticsEvent.PremiumPurchaseStarted>()
 
+            assertEquals(1, entitlements.validateCallCount)
             assertEquals("token-123", entitlements.lastValidatedPurchase?.purchaseToken)
             assertTrue(analytics.events.any { it is AnalyticsEvent.PremiumPurchaseCompleted })
             assertTrue(effects.any { it is SettingsUiEffect.LaunchSubscriptionPurchase })
@@ -90,6 +94,7 @@ class SettingsViewModelAnalyticsTest {
             assertTrue(premiumStartedEvents.all { it.originPlacement == "settings" })
             assertEquals("settings", premiumClickedEvents.first().originPlacement)
             collectJob.cancel()
+            viewModel.clear()
         } finally {
             Dispatchers.resetMain()
         }
@@ -116,6 +121,7 @@ class SettingsViewModelAnalyticsTest {
             assertFalse(analytics.events.any { it is AnalyticsEvent.PremiumPurchaseCompleted })
             assertTrue(analytics.events.any { it is AnalyticsEvent.PremiumPurchaseFailed })
             assertEquals(SubscriptionStatus.Inactive, viewModel.uiState.value.subscriptionStatus)
+            viewModel.clear()
         } finally {
             Dispatchers.resetMain()
         }
@@ -130,7 +136,9 @@ class SettingsViewModelAnalyticsTest {
             val entitlements = FakePremiumEntitlementRepository()
             val viewModel = viewModel(analytics = analytics, entitlements = entitlements)
             val effects = mutableListOf<SettingsUiEffect>()
-            val collectJob = backgroundScope.launch { viewModel.uiEffects.collect { effects += it } }
+            val collectJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiEffects.collect { effects += it }
+            }
 
             advanceUntilIdle()
             viewModel.onSubscribeClicked()
@@ -144,10 +152,12 @@ class SettingsViewModelAnalyticsTest {
             assertFalse(analytics.events.any { it is AnalyticsEvent.PremiumPurchaseCompleted })
             assertFalse(effects.any { it is SettingsUiEffect.RefreshEconomy })
             assertFalse(effects.any { it is SettingsUiEffect.AcknowledgeGooglePlayPurchase })
+            assertEquals(0, entitlements.validateCallCount)
             assertNull(entitlements.lastValidatedPurchase)
             assertNull(viewModel.uiState.value.feedback)
             assertEquals(SubscriptionStatus.Inactive, viewModel.uiState.value.subscriptionStatus)
             collectJob.cancel()
+            viewModel.clear()
         } finally {
             Dispatchers.resetMain()
         }
@@ -161,7 +171,9 @@ class SettingsViewModelAnalyticsTest {
             val analytics = FakeAnalyticsTracker()
             val viewModel = viewModel(analytics = analytics)
             val effects = mutableListOf<SettingsUiEffect>()
-            val collectJob = backgroundScope.launch { viewModel.uiEffects.collect { effects += it } }
+            val collectJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiEffects.collect { effects += it }
+            }
 
             advanceUntilIdle()
             viewModel.onSubscribeClicked(SubscriptionPlanSelection.Annual)
@@ -170,6 +182,7 @@ class SettingsViewModelAnalyticsTest {
             assertFalse(effects.any { it is SettingsUiEffect.LaunchSubscriptionPurchase })
             assertFalse(analytics.events.any { it is AnalyticsEvent.PremiumPurchaseStarted })
             collectJob.cancel()
+            viewModel.clear()
         } finally {
             Dispatchers.resetMain()
         }
@@ -192,6 +205,7 @@ class SettingsViewModelAnalyticsTest {
             advanceUntilIdle()
 
             assertEquals(listOf("bwitch_premium_monthly"), viewModel.uiState.value.subscriptionCatalog.map { it.productId })
+            viewModel.clear()
         } finally {
             Dispatchers.resetMain()
         }
@@ -245,8 +259,10 @@ class SettingsViewModelAnalyticsTest {
         private val validateEntitlement: PremiumEntitlement = PremiumEntitlement(false, SubscriptionStatus.Inactive),
     ) : PremiumEntitlementRepository {
         var lastValidatedPurchase: GooglePlayPurchase? = null
+        var validateCallCount: Int = 0
 
         override suspend fun validateGooglePlayPurchase(purchase: GooglePlayPurchase): PremiumEntitlement {
+            validateCallCount += 1
             lastValidatedPurchase = purchase
             return validateEntitlement
         }
@@ -291,7 +307,7 @@ class SettingsViewModelAnalyticsTest {
 private fun googlePlayPurchase(
     state: GooglePlayPurchaseState = GooglePlayPurchaseState.Purchased,
 ): GooglePlayPurchase = GooglePlayPurchase(
-    productId = "bwitch_premium_monthly",
+    productId = KnownSubscriptionProducts.MONTHLY,
     purchaseToken = "token-123",
     purchaseState = state,
     isAcknowledged = false,
