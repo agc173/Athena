@@ -21,11 +21,20 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.setValue
+import com.agc.bwitch.domain.settings.SubscriptionStatus
 import com.agc.bwitch.localization.ProfileStrings
+import com.agc.bwitch.localization.SettingsStrings
 import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.presentation.economy.EconomyViewModel
 import com.agc.bwitch.presentation.moons.MoonStoreViewModel
 import com.agc.bwitch.presentation.moons.STORE_COMING_SOON_KEY
+import com.agc.bwitch.presentation.userprofile.SettingsUiEffect
+import com.agc.bwitch.presentation.userprofile.SettingsViewModel
+import com.agc.bwitch.presentation.userprofile.SubscriptionPrimaryAction
+import com.agc.bwitch.ui.common.premium.PremiumCard
+import com.agc.bwitch.ui.userprofile.rememberSubscriptionManagementLauncher
+import com.agc.bwitch.ui.userprofile.rememberSubscriptionPurchaseLauncher
+import kotlinx.coroutines.flow.collect
 import org.koin.compose.koinInject
 
 @Composable
@@ -33,10 +42,15 @@ fun MoonStoreScreen(
     contentPadding: PaddingValues,
     viewModel: MoonStoreViewModel = koinInject(),
     economyViewModel: EconomyViewModel = koinInject(),
+    settingsViewModel: SettingsViewModel = koinInject(),
 ) {
     val strings = appStrings.profile
+    val settingsStrings = appStrings.settings
     val state by viewModel.uiState.collectAsState()
     val economyState by economyViewModel.uiState.collectAsState()
+    val settingsState by settingsViewModel.uiState.collectAsState()
+    val purchaseLauncher = rememberSubscriptionPurchaseLauncher()
+    val managementLauncher = rememberSubscriptionManagementLauncher()
     // TODO(store): esta pantalla ya funciona como hub general de Store; renombrar archivo/composable en una pasada posterior.
 
     LaunchedEffect(economyState.isLoading, economyState.error, economyState.balance) {
@@ -46,6 +60,40 @@ fun MoonStoreScreen(
     }
     LaunchedEffect(Unit) {
         economyViewModel.loadEconomy()
+    }
+
+    LaunchedEffect(settingsState.subscriptionPrimaryAction) {
+        if (settingsState.subscriptionPrimaryAction == SubscriptionPrimaryAction.Subscribe) {
+            settingsViewModel.onPremiumCtaShown("moon_store_subscribe")
+        }
+    }
+    LaunchedEffect(Unit) {
+        settingsViewModel.uiEffects.collect { effect ->
+            when (effect) {
+                is SettingsUiEffect.LaunchSubscriptionPurchase -> {
+                    val outcome = purchaseLauncher.launch(effect.plan)
+                    settingsViewModel.onSubscriptionPurchaseCompleted(outcome)
+                }
+
+                is SettingsUiEffect.LaunchSubscriptionPurchaseWithProduct -> {
+                    val outcome = purchaseLauncher.launch(effect.productId)
+                    settingsViewModel.onSubscriptionPurchaseCompleted(outcome)
+                }
+
+                is SettingsUiEffect.LaunchManageSubscription -> {
+                    val outcome = managementLauncher.launch(effect.productId)
+                    settingsViewModel.onSubscriptionManagementCompleted(outcome)
+                }
+
+                is SettingsUiEffect.AcknowledgeGooglePlayPurchase -> {
+                    purchaseLauncher.acknowledge(effect.purchaseToken)
+                }
+
+                SettingsUiEffect.RefreshEconomy -> {
+                    economyViewModel.loadEconomy()
+                }
+            }
+        }
     }
 
     var rewardedCtaTracked by rememberSaveable { mutableStateOf(false) }
@@ -177,25 +225,16 @@ fun MoonStoreScreen(
             text = strings.storeFutureContentTitle,
             style = MaterialTheme.typography.titleSmall,
         )
-        Card(modifier = Modifier.fillMaxWidth()) {
-            Column(
-                modifier = Modifier.padding(12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Text(
-                    text = strings.storeSubscriptionTitle,
-                    style = MaterialTheme.typography.titleSmall,
-                )
-                Text(
-                    text = strings.storeSubscriptionPlaceholderDescription,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Text(
-                    text = strings.storeSoon,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-            }
-        }
+        PremiumCard(
+            title = strings.storeSubscriptionTitle,
+            subtitle = strings.storeSubscriptionPlaceholderDescription,
+            statusLabel = settingsState.subscriptionStatus.toLocalizedLabel(settingsStrings),
+            primaryActionLabel = when (settingsState.subscriptionPrimaryAction) {
+                SubscriptionPrimaryAction.Subscribe -> settingsStrings.subscriptionActionSubscribe
+                SubscriptionPrimaryAction.Manage -> settingsStrings.subscriptionActionManage
+            },
+            onPrimaryActionClick = settingsViewModel::onSubscriptionPrimaryActionClicked,
+        )
 
         Card(modifier = Modifier.fillMaxWidth()) {
             Column(
@@ -245,4 +284,12 @@ private fun com.agc.bwitch.domain.moons.MoonPack.localizedLabel(strings: Profile
     "mystic" -> strings.storeMoonPackMysticLabel
     "coven" -> strings.storeMoonPackCovenLabel
     else -> label
+}
+
+
+private fun SubscriptionStatus.toLocalizedLabel(strings: SettingsStrings): String = when (this) {
+    SubscriptionStatus.Unknown -> strings.subscriptionStatusUnknown
+    SubscriptionStatus.Inactive -> strings.subscriptionStatusInactive
+    SubscriptionStatus.ActiveMonthly -> strings.subscriptionStatusActiveMonthly
+    SubscriptionStatus.ActiveAnnual -> strings.subscriptionStatusActiveAnnual
 }
