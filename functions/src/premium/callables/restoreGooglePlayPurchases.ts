@@ -1,6 +1,6 @@
 import {HttpsError, onCall} from 'firebase-functions/v2/https';
 import {ENV} from '../../config/env';
-import {googlePlayAndroidPublisherProvider} from '../googlePlayProvider';
+import {getGooglePlayAndroidPublisherProvider} from '../googlePlayProvider';
 import {restoreGooglePlayPurchasesForUid} from '../service';
 import type {PremiumEntitlementResponse} from '../types';
 
@@ -23,7 +23,7 @@ export const restoreGooglePlayPurchases = onCall(
       return restoreGooglePlayPurchasesForUid({
         uid,
         purchases: data.purchases,
-        provider: googlePlayAndroidPublisherProvider,
+        provider: getGooglePlayAndroidPublisherProvider(),
       });
     }
 );

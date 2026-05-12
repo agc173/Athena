@@ -1,4 +1,4 @@
-import {GoogleAuth} from 'google-auth-library';
+import type {GoogleAuth} from 'google-auth-library';
 import type {AndroidPublisherProvider, GooglePlayValidationResult} from './types';
 
 const ANDROID_PUBLISHER_SCOPE = 'https://www.googleapis.com/auth/androidpublisher';
@@ -35,8 +35,21 @@ function pickLineItem(
   }) ?? null;
 }
 
+type GoogleAuthClient = {
+  request<T>(options: {url: string; method: 'GET'}): Promise<{data: T}>;
+};
+
 export class GooglePlayAndroidPublisherProvider implements AndroidPublisherProvider {
-  private readonly auth = new GoogleAuth({scopes: [ANDROID_PUBLISHER_SCOPE]});
+  private auth: GoogleAuth | null = null;
+
+  private async getAuthClient(): Promise<GoogleAuthClient> {
+    if (this.auth == null) {
+      const {GoogleAuth: GoogleAuthConstructor} = await import('google-auth-library');
+      this.auth = new GoogleAuthConstructor({scopes: [ANDROID_PUBLISHER_SCOPE]});
+    }
+
+    return await this.auth.getClient() as GoogleAuthClient;
+  }
 
   async validateSubscription(input: {
     packageName: string;
@@ -44,7 +57,7 @@ export class GooglePlayAndroidPublisherProvider implements AndroidPublisherProvi
     basePlanId: string | null;
     purchaseToken: string;
   }): Promise<GooglePlayValidationResult> {
-    const client = await this.auth.getClient();
+    const client = await this.getAuthClient();
     const encodedPackageName = encodeURIComponent(input.packageName);
     const encodedToken = encodeURIComponent(input.purchaseToken);
     const url = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${encodedPackageName}/purchases/subscriptionsv2/tokens/${encodedToken}`;
@@ -83,4 +96,12 @@ export class GooglePlayAndroidPublisherProvider implements AndroidPublisherProvi
   }
 }
 
-export const googlePlayAndroidPublisherProvider = new GooglePlayAndroidPublisherProvider();
+let googlePlayAndroidPublisherProvider: GooglePlayAndroidPublisherProvider | null = null;
+
+export function getGooglePlayAndroidPublisherProvider(): GooglePlayAndroidPublisherProvider {
+  if (googlePlayAndroidPublisherProvider == null) {
+    googlePlayAndroidPublisherProvider = new GooglePlayAndroidPublisherProvider();
+  }
+
+  return googlePlayAndroidPublisherProvider;
+}
