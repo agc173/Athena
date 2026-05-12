@@ -7,6 +7,7 @@ import com.agc.bwitch.domain.localization.AppLanguage
 import com.agc.bwitch.domain.localization.ObserveCurrentLanguageUseCase
 import com.agc.bwitch.domain.settings.GetNotificationSettingsUseCase
 import com.agc.bwitch.domain.settings.GooglePlayPurchase
+import com.agc.bwitch.domain.settings.GooglePlayPurchaseState
 import com.agc.bwitch.domain.settings.GetSubscriptionCatalogUseCase
 import com.agc.bwitch.domain.settings.GetSubscriptionStatusUseCase
 import com.agc.bwitch.domain.settings.KnownSubscriptionProducts
@@ -27,6 +28,7 @@ import com.agc.bwitch.presentation.auth.SessionViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -137,7 +139,7 @@ class SettingsViewModel(
     private val _uiState = MutableStateFlow(SettingsUiState())
     val uiState: StateFlow<SettingsUiState> = _uiState
 
-    private val _uiEffects = MutableSharedFlow<SettingsUiEffect>()
+    private val _uiEffects = MutableSharedFlow<SettingsUiEffect>(extraBufferCapacity = 16)
     val uiEffects: SharedFlow<SettingsUiEffect> = _uiEffects
     private var pendingPremiumProductId: String? = null
 
@@ -281,11 +283,15 @@ class SettingsViewModel(
 
     fun onSubscriptionPurchaseCompleted(outcome: SubscriptionPurchaseOutcome) {
         when (outcome) {
-            is SubscriptionPurchaseOutcome.Purchased -> handlePurchasedSubscription(outcome.purchase)
-            is SubscriptionPurchaseOutcome.Pending -> {
-                pendingPremiumProductId = null
-                _uiState.update { it.copy(isLoading = false, error = null) }
+            is SubscriptionPurchaseOutcome.Purchased -> {
+                when (outcome.purchase.purchaseState) {
+                    GooglePlayPurchaseState.Purchased -> handlePurchasedSubscription(outcome.purchase)
+                    GooglePlayPurchaseState.Pending -> handlePendingSubscriptionPurchase()
+                    GooglePlayPurchaseState.Unknown -> handleUnverifiedSubscriptionPurchase()
+                }
             }
+
+            is SubscriptionPurchaseOutcome.Pending -> handlePendingSubscriptionPurchase()
 
             SubscriptionPurchaseOutcome.Cancelled -> {
                 pendingPremiumProductId = null
@@ -315,6 +321,22 @@ class SettingsViewModel(
         }
     }
 
+
+    private fun handlePendingSubscriptionPurchase() {
+        pendingPremiumProductId = null
+        _uiState.update { it.copy(isLoading = false, error = null) }
+    }
+
+    private fun handleUnverifiedSubscriptionPurchase() {
+        trackPremiumPurchaseFailed(reason = "unverified_purchase_state")
+        pendingPremiumProductId = null
+        _uiState.update {
+            it.copy(
+                isLoading = false,
+                feedback = SettingsFeedback.SubscriptionPurchaseFailed,
+            )
+        }
+    }
 
     private fun handlePurchasedSubscription(purchase: GooglePlayPurchase) {
         scope.launch {
@@ -432,6 +454,10 @@ class SettingsViewModel(
     fun onAppVersionResolved(appVersion: String) {
         if (_uiState.value.appVersion == appVersion) return
         _uiState.update { it.copy(appVersion = appVersion) }
+    }
+
+    fun clear() {
+        scope.cancel()
     }
 
     private fun updateNotificationSettings(update: (NotificationSettings) -> NotificationSettings) {
