@@ -14,6 +14,7 @@ import com.agc.bwitch.domain.settings.KnownSubscriptionProducts
 import com.agc.bwitch.domain.settings.NotificationSettings
 import com.agc.bwitch.domain.settings.ObserveNotificationSettingsUseCase
 import com.agc.bwitch.domain.settings.ObserveSubscriptionStatusUseCase
+import com.agc.bwitch.domain.settings.RefreshPremiumEntitlementUseCase
 import com.agc.bwitch.domain.settings.RestorePurchasesResult
 import com.agc.bwitch.domain.settings.RestorePurchasesUseCase
 import com.agc.bwitch.domain.settings.SubscriptionStatus
@@ -131,6 +132,7 @@ class SettingsViewModel(
     private val getSubscriptionStatus: GetSubscriptionStatusUseCase,
     private val getSubscriptionCatalog: GetSubscriptionCatalogUseCase,
     private val restorePurchases: RestorePurchasesUseCase,
+    private val refreshPremiumEntitlement: RefreshPremiumEntitlementUseCase,
     private val validateGooglePlayPurchase: ValidateGooglePlayPurchaseUseCase,
     private val analyticsTracker: AnalyticsTracker = NoOpAnalyticsTracker,
 ) {
@@ -142,6 +144,7 @@ class SettingsViewModel(
     private val _uiEffects = MutableSharedFlow<SettingsUiEffect>(extraBufferCapacity = 16)
     val uiEffects: SharedFlow<SettingsUiEffect> = _uiEffects
     private var pendingPremiumProductId: String? = null
+    private var lastRefreshedUserId: String? = null
 
     init {
         scope.launch {
@@ -175,6 +178,20 @@ class SettingsViewModel(
                             email = current.email?.takeUnless(String::isBlank)
                                 ?: sessionEmail?.takeUnless(String::isBlank),
                         )
+                    }
+                }
+        }
+
+        scope.launch {
+            sessionViewModel.uiState
+                .map { it.uid }
+                .distinctUntilChanged()
+                .collect { uid ->
+                    if (uid.isNullOrBlank()) {
+                        lastRefreshedUserId = null
+                    } else if (uid != lastRefreshedUserId) {
+                        lastRefreshedUserId = uid
+                        refreshBackendEntitlement()
                     }
                 }
         }
@@ -222,17 +239,42 @@ class SettingsViewModel(
             observeSubscriptionStatus()
                 .catch { error -> _uiState.update { it.copy(error = error.message) } }
                 .collect { subscriptionStatus ->
-                    _uiState.update { it.copyWithSubscription(subscriptionStatus) }
+                    _uiState.update { it.copyWithRepositorySubscription(subscriptionStatus) }
                 }
         }
 
         scope.launch {
             runCatching { getSubscriptionStatus() }
                 .onSuccess { subscriptionStatus ->
-                    _uiState.update { it.copyWithSubscription(subscriptionStatus) }
+                    _uiState.update { it.copyWithRepositorySubscription(subscriptionStatus) }
                 }
                 .onFailure { error -> _uiState.update { it.copy(error = error.message) } }
         }
+    }
+
+    private suspend fun refreshBackendEntitlement() {
+        runCatching { refreshPremiumEntitlement() }
+            .onSuccess { entitlement ->
+                analyticsTracker.track(
+                    AnalyticsEvent.EntitlementRefreshed(
+                        status = entitlement.status.name,
+                        isActive = entitlement.isActive,
+                    ),
+                )
+                _uiState.update { current ->
+                    if (entitlement.isActive) {
+                        current.copyWithSubscription(entitlement.status).copy(isLoading = false, error = null)
+                    } else {
+                        current.copyWithSubscription(SubscriptionStatus.Inactive).copy(isLoading = false, error = null)
+                    }
+                }
+            }
+            .onFailure { error ->
+                analyticsTracker.track(
+                    AnalyticsEvent.EntitlementRefreshFailed(reason = error.message ?: "unknown"),
+                )
+                _uiState.update { it.copy(isLoading = false, error = error.message) }
+            }
     }
 
     fun onNotificationsEnabledChanged(enabled: Boolean) {
@@ -492,6 +534,16 @@ private fun SettingsUiState.copyWithSubscription(subscriptionStatus: Subscriptio
         SubscriptionPrimaryAction.Subscribe
     },
 )
+
+
+private fun SettingsUiState.copyWithRepositorySubscription(subscriptionStatus: SubscriptionStatus): SettingsUiState {
+    val resolvedStatus = if (this.subscriptionStatus.isActive && !subscriptionStatus.isActive) {
+        this.subscriptionStatus
+    } else {
+        subscriptionStatus
+    }
+    return copyWithSubscription(resolvedStatus)
+}
 
 private fun SubscriptionPlan.toUiPlan(): SubscriptionPlanUi = SubscriptionPlanUi(
     productId = productId,

@@ -203,6 +203,25 @@ sealed interface AnalyticsEvent {
         )
     }
 
+
+    data class EntitlementRefreshed(
+        val status: String,
+        val isActive: Boolean,
+    ) : AnalyticsEvent {
+        override val name: String = "entitlement_refreshed"
+        override fun params(): Map<String, String> = mapOf(
+            "status" to status,
+            "is_active" to isActive.toString(),
+        )
+    }
+
+    data class EntitlementRefreshFailed(
+        val reason: String,
+    ) : AnalyticsEvent {
+        override val name: String = "entitlement_refresh_failed"
+        override fun params(): Map<String, String> = mapOf("reason" to reason)
+    }
+
     data class MoonPackViewed(
         val packId: String,
         val moons: Int,

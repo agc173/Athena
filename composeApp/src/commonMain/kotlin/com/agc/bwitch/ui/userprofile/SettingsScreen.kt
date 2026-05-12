@@ -54,6 +54,7 @@ import com.agc.bwitch.presentation.userprofile.SubscriptionPrimaryAction
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
 import com.agc.bwitch.ui.common.designsystem.BWitchScreen
 import com.agc.bwitch.ui.common.designsystem.BWitchSectionHeader
+import com.agc.bwitch.ui.common.premium.PremiumCard
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
@@ -240,30 +241,23 @@ fun SettingsScreen(contentPadding: PaddingValues) {
                 )
             }
 
-            SettingsSectionCard(title = strings.sectionPurchasesSubscription) {
-                SettingsRow(
-                    label = strings.subscriptionStatus,
-                    value = settingsState.subscriptionStatus.toLocalizedLabel(strings),
-                )
-                SettingsRow(
-                    label = when (settingsState.subscriptionPrimaryAction) {
-                        SubscriptionPrimaryAction.Subscribe -> strings.subscriptionActionSubscribe
-                        SubscriptionPrimaryAction.Manage -> strings.subscriptionActionManage
-                    },
-                    onClick = {
-                        if (settingsState.subscriptionPrimaryAction == SubscriptionPrimaryAction.Subscribe) {
-                            showSubscriptionPlanDialog = true
-                        } else {
-                            settingsVm.onSubscriptionPrimaryActionClicked()
-                        }
-                    },
-                )
-                SettingsRow(
-                    label = strings.restorePurchases,
-                    showDivider = false,
-                    onClick = settingsVm::onRestorePurchasesClicked,
-                )
-            }
+            PremiumCard(
+                title = strings.sectionPurchasesSubscription,
+                statusLabel = settingsState.subscriptionStatus.toLocalizedLabel(strings),
+                primaryActionLabel = when (settingsState.subscriptionPrimaryAction) {
+                    SubscriptionPrimaryAction.Subscribe -> strings.subscriptionActionSubscribe
+                    SubscriptionPrimaryAction.Manage -> strings.subscriptionActionManage
+                },
+                restoreActionLabel = strings.restorePurchases,
+                onPrimaryActionClick = {
+                    if (settingsState.subscriptionPrimaryAction == SubscriptionPrimaryAction.Subscribe) {
+                        showSubscriptionPlanDialog = true
+                    } else {
+                        settingsVm.onSubscriptionPrimaryActionClicked()
+                    }
+                },
+                onRestoreActionClick = settingsVm::onRestorePurchasesClicked,
+            )
 
             SettingsSectionCard(title = strings.sectionHelpSupport) {
                 SettingsRow(

@@ -2,6 +2,7 @@ package com.agc.bwitch.presentation.userprofile
 
 import com.agc.bwitch.domain.analytics.AnalyticsEvent
 import com.agc.bwitch.domain.auth.AuthRepository
+import com.agc.bwitch.domain.auth.AuthUser
 import com.agc.bwitch.domain.localization.AppLanguage
 import com.agc.bwitch.domain.localization.AppLanguageRepository
 import com.agc.bwitch.domain.localization.ObserveCurrentLanguageUseCase
@@ -17,6 +18,7 @@ import com.agc.bwitch.domain.settings.ObserveNotificationSettingsUseCase
 import com.agc.bwitch.domain.settings.ObserveSubscriptionStatusUseCase
 import com.agc.bwitch.domain.settings.PremiumEntitlement
 import com.agc.bwitch.domain.settings.PremiumEntitlementRepository
+import com.agc.bwitch.domain.settings.RefreshPremiumEntitlementUseCase
 import com.agc.bwitch.domain.settings.RestorePurchasesResult
 import com.agc.bwitch.domain.settings.RestorePurchasesUseCase
 import com.agc.bwitch.domain.settings.SubscriptionPlan
@@ -35,7 +37,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -47,6 +48,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -164,6 +166,95 @@ class SettingsViewModelAnalyticsTest {
     }
 
     @Test
+    fun `init con backend entitlement active marca ActiveMonthly y Manage`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val analytics = FakeAnalyticsTracker()
+            val entitlements = FakePremiumEntitlementRepository(
+                refreshEntitlement = PremiumEntitlement(isActive = true, status = SubscriptionStatus.ActiveMonthly),
+            )
+            val subscriptionRepo = FakeSubscriptionRepository()
+            val viewModel = viewModel(
+                analytics = analytics,
+                entitlements = entitlements,
+                subscriptionRepo = subscriptionRepo,
+                authUser = AuthUser(uid = "user-1", email = "user@example.com", isAnonymous = false),
+            )
+
+            advanceUntilIdle()
+
+            assertEquals(1, entitlements.refreshCallCount)
+            assertEquals(0, subscriptionRepo.restoreCallCount)
+            assertEquals(SubscriptionStatus.ActiveMonthly, viewModel.uiState.value.subscriptionStatus)
+            assertEquals(SubscriptionPrimaryAction.Manage, viewModel.uiState.value.subscriptionPrimaryAction)
+            assertTrue(analytics.events.any { it is AnalyticsEvent.EntitlementRefreshed })
+            viewModel.clear()
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun `init con backend entitlement inactive mantiene Inactive y Subscribe`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val entitlements = FakePremiumEntitlementRepository(
+                refreshEntitlement = PremiumEntitlement(isActive = false, status = SubscriptionStatus.Inactive),
+            )
+            val subscriptionRepo = FakeSubscriptionRepository()
+            val viewModel = viewModel(
+                entitlements = entitlements,
+                subscriptionRepo = subscriptionRepo,
+                authUser = AuthUser(uid = "user-1", email = "user@example.com", isAnonymous = false),
+            )
+
+            advanceUntilIdle()
+
+            assertEquals(1, entitlements.refreshCallCount)
+            assertEquals(0, subscriptionRepo.restoreCallCount)
+            assertEquals(SubscriptionStatus.Inactive, viewModel.uiState.value.subscriptionStatus)
+            assertEquals(SubscriptionPrimaryAction.Subscribe, viewModel.uiState.value.subscriptionPrimaryAction)
+            viewModel.clear()
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun `fallo de refresh en init no rompe UI ni llama restore`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val analytics = FakeAnalyticsTracker()
+            val entitlements = FakePremiumEntitlementRepository(
+                refreshError = IllegalStateException("backend failed"),
+            )
+            val subscriptionRepo = FakeSubscriptionRepository()
+            val viewModel = viewModel(
+                analytics = analytics,
+                entitlements = entitlements,
+                subscriptionRepo = subscriptionRepo,
+                authUser = AuthUser(uid = "user-1", email = "user@example.com", isAnonymous = false),
+            )
+
+            advanceUntilIdle()
+
+            assertEquals(1, entitlements.refreshCallCount)
+            assertEquals(0, subscriptionRepo.restoreCallCount)
+            assertEquals(SubscriptionStatus.Inactive, viewModel.uiState.value.subscriptionStatus)
+            assertEquals(SubscriptionPrimaryAction.Subscribe, viewModel.uiState.value.subscriptionPrimaryAction)
+            assertFalse(viewModel.uiState.value.isLoading)
+            assertNotNull(viewModel.uiState.value.error)
+            assertTrue(analytics.events.any { it is AnalyticsEvent.EntitlementRefreshFailed })
+            viewModel.clear()
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
     fun `annual selection is not purchasable`() = runTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
         Dispatchers.setMain(dispatcher)
@@ -222,13 +313,14 @@ class SettingsViewModelAnalyticsTest {
         analytics: FakeAnalyticsTracker = FakeAnalyticsTracker(),
         entitlements: FakePremiumEntitlementRepository = FakePremiumEntitlementRepository(),
         subscriptionRepo: FakeSubscriptionRepository = FakeSubscriptionRepository(),
+        authUser: AuthUser? = null,
     ): SettingsViewModel {
         val notificationRepo = FakeNotificationSettingsRepository()
         val profileRepo = FakeUserProfileRepository()
         return SettingsViewModel(
             observeUserProfile = ObserveUserProfileUseCase(profileRepo),
             getUserProfile = GetUserProfileUseCase(profileRepo),
-            sessionViewModel = SessionViewModel(FakeAuthRepository()),
+            sessionViewModel = SessionViewModel(FakeAuthRepository(authUser)),
             observeCurrentLanguage = ObserveCurrentLanguageUseCase(FakeLanguageRepository()),
             observeNotificationSettings = ObserveNotificationSettingsUseCase(notificationRepo),
             getNotificationSettings = GetNotificationSettingsUseCase(notificationRepo),
@@ -237,6 +329,7 @@ class SettingsViewModelAnalyticsTest {
             getSubscriptionStatus = GetSubscriptionStatusUseCase(subscriptionRepo),
             getSubscriptionCatalog = GetSubscriptionCatalogUseCase(subscriptionRepo),
             restorePurchases = RestorePurchasesUseCase(subscriptionRepo),
+            refreshPremiumEntitlement = RefreshPremiumEntitlementUseCase(entitlements),
             validateGooglePlayPurchase = ValidateGooglePlayPurchaseUseCase(entitlements),
             analyticsTracker = analytics,
         )
@@ -251,15 +344,23 @@ class SettingsViewModelAnalyticsTest {
 
         override suspend fun getStatus(): SubscriptionStatus = status.value
         override suspend fun getCatalog(): List<SubscriptionPlan> = catalog
+        var restoreCallCount: Int = 0
+
         override fun observeStatus(): Flow<SubscriptionStatus> = status
-        override suspend fun restorePurchases(): RestorePurchasesResult = RestorePurchasesResult.NoPurchasesFound
+        override suspend fun restorePurchases(): RestorePurchasesResult {
+            restoreCallCount += 1
+            return RestorePurchasesResult.NoPurchasesFound
+        }
     }
 
     private class FakePremiumEntitlementRepository(
         private val validateEntitlement: PremiumEntitlement = PremiumEntitlement(false, SubscriptionStatus.Inactive),
+        private val refreshEntitlement: PremiumEntitlement = PremiumEntitlement(false, SubscriptionStatus.Inactive),
+        private val refreshError: Throwable? = null,
     ) : PremiumEntitlementRepository {
         var lastValidatedPurchase: GooglePlayPurchase? = null
         var validateCallCount: Int = 0
+        var refreshCallCount: Int = 0
 
         override suspend fun validateGooglePlayPurchase(purchase: GooglePlayPurchase): PremiumEntitlement {
             validateCallCount += 1
@@ -270,7 +371,11 @@ class SettingsViewModelAnalyticsTest {
         override suspend fun restoreGooglePlayPurchases(purchases: List<GooglePlayPurchase>): PremiumEntitlement =
             PremiumEntitlement(false, SubscriptionStatus.Inactive)
 
-        override suspend fun refreshEntitlement(): PremiumEntitlement = PremiumEntitlement(false, SubscriptionStatus.Inactive)
+        override suspend fun refreshEntitlement(): PremiumEntitlement {
+            refreshCallCount += 1
+            refreshError?.let { throw it }
+            return refreshEntitlement
+        }
     }
 
     private class FakeNotificationSettingsRepository : NotificationSettingsRepository {
@@ -295,8 +400,8 @@ class SettingsViewModelAnalyticsTest {
         override fun observeCurrentLanguage(): Flow<AppLanguage> = MutableStateFlow(AppLanguage.English)
     }
 
-    private class FakeAuthRepository : AuthRepository {
-        override val authState: Flow<com.agc.bwitch.domain.auth.AuthUser?> = emptyFlow()
+    private class FakeAuthRepository(user: AuthUser?) : AuthRepository {
+        override val authState: Flow<AuthUser?> = MutableStateFlow(user)
         override suspend fun signInWithEmail(email: String, password: String) = Unit
         override suspend fun signUpWithEmail(email: String, password: String) = Unit
         override suspend fun signOut() = Unit
