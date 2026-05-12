@@ -7,6 +7,7 @@ import com.agc.bwitch.domain.localization.AppLanguage
 import com.agc.bwitch.domain.localization.ObserveCurrentLanguageUseCase
 import com.agc.bwitch.domain.settings.GetNotificationSettingsUseCase
 import com.agc.bwitch.domain.settings.GooglePlayPurchase
+import com.agc.bwitch.domain.settings.GooglePlayPurchaseState
 import com.agc.bwitch.domain.settings.GetSubscriptionCatalogUseCase
 import com.agc.bwitch.domain.settings.GetSubscriptionStatusUseCase
 import com.agc.bwitch.domain.settings.KnownSubscriptionProducts
@@ -281,11 +282,15 @@ class SettingsViewModel(
 
     fun onSubscriptionPurchaseCompleted(outcome: SubscriptionPurchaseOutcome) {
         when (outcome) {
-            is SubscriptionPurchaseOutcome.Purchased -> handlePurchasedSubscription(outcome.purchase)
-            is SubscriptionPurchaseOutcome.Pending -> {
-                pendingPremiumProductId = null
-                _uiState.update { it.copy(isLoading = false, error = null) }
+            is SubscriptionPurchaseOutcome.Purchased -> {
+                when (outcome.purchase.purchaseState) {
+                    GooglePlayPurchaseState.Purchased -> handlePurchasedSubscription(outcome.purchase)
+                    GooglePlayPurchaseState.Pending -> handlePendingSubscriptionPurchase()
+                    GooglePlayPurchaseState.Unknown -> handleUnverifiedSubscriptionPurchase()
+                }
             }
+
+            is SubscriptionPurchaseOutcome.Pending -> handlePendingSubscriptionPurchase()
 
             SubscriptionPurchaseOutcome.Cancelled -> {
                 pendingPremiumProductId = null
@@ -315,6 +320,22 @@ class SettingsViewModel(
         }
     }
 
+
+    private fun handlePendingSubscriptionPurchase() {
+        pendingPremiumProductId = null
+        _uiState.update { it.copy(isLoading = false, error = null) }
+    }
+
+    private fun handleUnverifiedSubscriptionPurchase() {
+        trackPremiumPurchaseFailed(reason = "unverified_purchase_state")
+        pendingPremiumProductId = null
+        _uiState.update {
+            it.copy(
+                isLoading = false,
+                feedback = SettingsFeedback.SubscriptionPurchaseFailed,
+            )
+        }
+    }
 
     private fun handlePurchasedSubscription(purchase: GooglePlayPurchase) {
         scope.launch {
