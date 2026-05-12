@@ -6,6 +6,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import com.agc.bwitch.data.settings.billing.googleplay.GooglePlayBillingSubscriptionProducts
 import com.agc.bwitch.data.settings.billing.googleplay.GooglePlaySubscriptionBillingDataSource
+import com.agc.bwitch.domain.settings.GooglePlayPurchaseState
 import com.agc.bwitch.presentation.userprofile.SubscriptionManagementOutcome
 import com.agc.bwitch.presentation.userprofile.SubscriptionPlanSelection
 import com.agc.bwitch.presentation.userprofile.SubscriptionPurchaseOutcome
@@ -23,7 +24,7 @@ actual fun rememberSubscriptionPurchaseLauncher(): SubscriptionPurchaseLauncher 
                 val activity = context as? Activity ?: return SubscriptionPurchaseOutcome.Unsupported
                 val productId = when (plan) {
                     SubscriptionPlanSelection.Monthly -> GooglePlayBillingSubscriptionProducts.MONTHLY
-                    SubscriptionPlanSelection.Annual -> GooglePlayBillingSubscriptionProducts.ANNUAL
+                    SubscriptionPlanSelection.Annual -> return SubscriptionPurchaseOutcome.Unsupported
                 }
 
                 return launch(productId)
@@ -37,7 +38,13 @@ actual fun rememberSubscriptionPurchaseLauncher(): SubscriptionPurchaseLauncher 
                 }.getOrElse { error ->
                     Result.failure(error)
                 }.fold(
-                    onSuccess = { SubscriptionPurchaseOutcome.Success },
+                    onSuccess = { purchase ->
+                        when (purchase.purchaseState) {
+                            GooglePlayPurchaseState.Purchased -> SubscriptionPurchaseOutcome.Purchased(purchase)
+                            GooglePlayPurchaseState.Pending -> SubscriptionPurchaseOutcome.Pending(purchase)
+                            GooglePlayPurchaseState.Unknown -> SubscriptionPurchaseOutcome.Failed
+                        }
+                    },
                     onFailure = { error ->
                         if (error is CancellationException) {
                             SubscriptionPurchaseOutcome.Cancelled
@@ -47,6 +54,9 @@ actual fun rememberSubscriptionPurchaseLauncher(): SubscriptionPurchaseLauncher 
                     },
                 )
             }
+
+            override suspend fun acknowledge(purchaseToken: String): Boolean =
+                billingDataSource.acknowledgePurchase(purchaseToken).isSuccess
         }
     }
 }

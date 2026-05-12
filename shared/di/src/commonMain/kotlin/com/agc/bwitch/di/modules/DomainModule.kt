@@ -32,8 +32,10 @@ import com.agc.bwitch.domain.settings.GetSubscriptionCatalogUseCase
 import com.agc.bwitch.domain.settings.GetSubscriptionStatusUseCase
 import com.agc.bwitch.domain.settings.ObserveNotificationSettingsUseCase
 import com.agc.bwitch.domain.settings.ObserveSubscriptionStatusUseCase
+import com.agc.bwitch.domain.settings.RestoreGooglePlayPurchasesUseCase
 import com.agc.bwitch.domain.settings.RestorePurchasesUseCase
 import com.agc.bwitch.domain.settings.UpdateNotificationSettingsUseCase
+import com.agc.bwitch.domain.settings.ValidateGooglePlayPurchaseUseCase
 import com.agc.bwitch.domain.userprofile.GetUserProfileUseCase
 import com.agc.bwitch.domain.userprofile.ObserveUserProfileUseCase
 import com.agc.bwitch.domain.userprofile.PullUserProfileUseCase
@@ -83,6 +85,8 @@ val domainModule: Module = module {
     factory { GetSubscriptionStatusUseCase(get()) }
     factory { GetSubscriptionCatalogUseCase(get()) }
     factory { RestorePurchasesUseCase(get()) }
+    factory { RestoreGooglePlayPurchasesUseCase(get()) }
+    factory { ValidateGooglePlayPurchaseUseCase(get()) }
 
     // Moons
     factory { GetMoonBalanceUseCase(get()) }

@@ -44,12 +44,12 @@ import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.localization.SettingsStrings
 import com.agc.bwitch.platform.getAppVersionLabel
 import com.agc.bwitch.presentation.auth.SessionViewModel
+import com.agc.bwitch.presentation.economy.EconomyViewModel
 import com.agc.bwitch.presentation.localization.AppLanguageViewModel
 import com.agc.bwitch.presentation.userprofile.SettingsFeedback
 import com.agc.bwitch.presentation.userprofile.SubscriptionPlanUi
 import com.agc.bwitch.presentation.userprofile.SettingsUiEffect
 import com.agc.bwitch.presentation.userprofile.SettingsViewModel
-import com.agc.bwitch.presentation.userprofile.SubscriptionPlanSelection
 import com.agc.bwitch.presentation.userprofile.SubscriptionPrimaryAction
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
 import com.agc.bwitch.ui.common.designsystem.BWitchScreen
@@ -63,6 +63,7 @@ fun SettingsScreen(contentPadding: PaddingValues) {
     val settingsVm: SettingsViewModel = koinInject()
     val sessionVm: SessionViewModel = koinInject()
     val appLanguageVm: AppLanguageViewModel = koinInject()
+    val economyVm: EconomyViewModel = koinInject()
     val clearLocalUserData: ClearLocalUserDataUseCase = koinInject()
 
     val settingsState by settingsVm.uiState.collectAsState()
@@ -128,6 +129,14 @@ fun SettingsScreen(contentPadding: PaddingValues) {
                     val outcome = managementLauncher.launch(effect.productId)
                     settingsVm.onSubscriptionManagementCompleted(outcome)
                 }
+
+                is SettingsUiEffect.AcknowledgeGooglePlayPurchase -> {
+                    purchaseLauncher.acknowledge(effect.purchaseToken)
+                }
+
+                SettingsUiEffect.RefreshEconomy -> {
+                    economyVm.loadEconomy()
+                }
             }
         }
     }
@@ -153,16 +162,7 @@ fun SettingsScreen(contentPadding: PaddingValues) {
             closeLabel = strings.close,
             plans = settingsState.subscriptionCatalog,
             monthlyLabelFallback = strings.subscriptionPlanMonthlyLabel,
-            annualLabelFallback = strings.subscriptionPlanAnnualLabel,
             onDismiss = { showSubscriptionPlanDialog = false },
-            onMonthlySelected = {
-                showSubscriptionPlanDialog = false
-                settingsVm.onSubscribeClicked(SubscriptionPlanSelection.Monthly)
-            },
-            onAnnualSelected = {
-                showSubscriptionPlanDialog = false
-                settingsVm.onSubscribeClicked(SubscriptionPlanSelection.Annual)
-            },
             onCatalogPlanSelected = { plan ->
                 showSubscriptionPlanDialog = false
                 settingsVm.onCatalogSubscriptionSelected(plan.productId)
@@ -403,10 +403,7 @@ private fun SubscriptionPlanDialog(
     closeLabel: String,
     plans: List<SubscriptionPlanUi>,
     monthlyLabelFallback: String,
-    annualLabelFallback: String,
     onDismiss: () -> Unit,
-    onMonthlySelected: () -> Unit,
-    onAnnualSelected: () -> Unit,
     onCatalogPlanSelected: (SubscriptionPlanUi) -> Unit,
 ) {
     AlertDialog(
@@ -429,12 +426,11 @@ private fun SubscriptionPlanDialog(
                         }
                     }
                 } else {
-                    TextButton(onClick = onMonthlySelected, modifier = Modifier.fillMaxWidth()) {
-                        Text(text = monthlyLabelFallback)
-                    }
-                    TextButton(onClick = onAnnualSelected, modifier = Modifier.fillMaxWidth()) {
-                        Text(text = annualLabelFallback)
-                    }
+                    Text(
+                        text = monthlyLabelFallback,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
             }
         },

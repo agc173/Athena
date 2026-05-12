@@ -6,6 +6,7 @@ import com.agc.bwitch.domain.analytics.NoOpAnalyticsTracker
 import com.agc.bwitch.domain.localization.AppLanguage
 import com.agc.bwitch.domain.localization.ObserveCurrentLanguageUseCase
 import com.agc.bwitch.domain.settings.GetNotificationSettingsUseCase
+import com.agc.bwitch.domain.settings.GooglePlayPurchase
 import com.agc.bwitch.domain.settings.GetSubscriptionCatalogUseCase
 import com.agc.bwitch.domain.settings.GetSubscriptionStatusUseCase
 import com.agc.bwitch.domain.settings.KnownSubscriptionProducts
@@ -18,6 +19,7 @@ import com.agc.bwitch.domain.settings.SubscriptionStatus
 import com.agc.bwitch.domain.settings.SubscriptionPlanType
 import com.agc.bwitch.domain.settings.SubscriptionPlan
 import com.agc.bwitch.domain.settings.UpdateNotificationSettingsUseCase
+import com.agc.bwitch.domain.settings.ValidateGooglePlayPurchaseUseCase
 import com.agc.bwitch.domain.settings.isActive
 import com.agc.bwitch.domain.userprofile.GetUserProfileUseCase
 import com.agc.bwitch.domain.userprofile.ObserveUserProfileUseCase
@@ -93,10 +95,17 @@ sealed interface SettingsUiEffect {
     data class LaunchManageSubscription(
         val productId: String?,
     ) : SettingsUiEffect
+
+    data class AcknowledgeGooglePlayPurchase(
+        val purchaseToken: String,
+    ) : SettingsUiEffect
+
+    data object RefreshEconomy : SettingsUiEffect
 }
 
 sealed interface SubscriptionPurchaseOutcome {
-    data object Success : SubscriptionPurchaseOutcome
+    data class Purchased(val purchase: GooglePlayPurchase) : SubscriptionPurchaseOutcome
+    data class Pending(val purchase: GooglePlayPurchase) : SubscriptionPurchaseOutcome
     data object Cancelled : SubscriptionPurchaseOutcome
     data object Unsupported : SubscriptionPurchaseOutcome
     data object Failed : SubscriptionPurchaseOutcome
@@ -120,6 +129,7 @@ class SettingsViewModel(
     private val getSubscriptionStatus: GetSubscriptionStatusUseCase,
     private val getSubscriptionCatalog: GetSubscriptionCatalogUseCase,
     private val restorePurchases: RestorePurchasesUseCase,
+    private val validateGooglePlayPurchase: ValidateGooglePlayPurchaseUseCase,
     private val analyticsTracker: AnalyticsTracker = NoOpAnalyticsTracker,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -195,7 +205,12 @@ class SettingsViewModel(
             runCatching { getSubscriptionCatalog() }
                 .onSuccess { plans ->
                     _uiState.update {
-                        it.copy(subscriptionCatalog = plans.sortedForUi().map { plan -> plan.toUiPlan() })
+                        it.copy(
+                            subscriptionCatalog = plans
+                                .filter { plan -> plan.type == SubscriptionPlanType.Monthly }
+                                .sortedForUi()
+                                .map { plan -> plan.toUiPlan() },
+                        )
                     }
                 }
                 .onFailure { error -> _uiState.update { it.copy(error = error.message) } }
@@ -253,12 +268,9 @@ class SettingsViewModel(
     }
 
     fun onSubscribeClicked(plan: SubscriptionPlanSelection = SubscriptionPlanSelection.Monthly) {
-        if (_uiState.value.isLoading) return
+        if (_uiState.value.isLoading || plan != SubscriptionPlanSelection.Monthly) return
         analyticsTracker.track(AnalyticsEvent.PremiumCtaClicked(placement = "settings_subscribe", originPlacement = "settings"))
-        val productId = when (plan) {
-            SubscriptionPlanSelection.Monthly -> KnownSubscriptionProducts.MONTHLY
-            SubscriptionPlanSelection.Annual -> KnownSubscriptionProducts.ANNUAL
-        }
+        val productId = KnownSubscriptionProducts.MONTHLY
         pendingPremiumProductId = productId
         analyticsTracker.track(AnalyticsEvent.PremiumPurchaseStarted(productId = productId, originPlacement = "settings"))
         scope.launch {
@@ -269,27 +281,10 @@ class SettingsViewModel(
 
     fun onSubscriptionPurchaseCompleted(outcome: SubscriptionPurchaseOutcome) {
         when (outcome) {
-            SubscriptionPurchaseOutcome.Success -> {
-                val productId = pendingPremiumProductId ?: _uiState.value.resolveManageSubscriptionProductId().orEmpty()
-                analyticsTracker.track(
-                    AnalyticsEvent.PremiumPurchaseCompleted(
-                        productId = productId,
-                        price = null,
-                        currency = null,
-                    ),
-                )
+            is SubscriptionPurchaseOutcome.Purchased -> handlePurchasedSubscription(outcome.purchase)
+            is SubscriptionPurchaseOutcome.Pending -> {
                 pendingPremiumProductId = null
-                scope.launch {
-                    runCatching { getSubscriptionStatus() }
-                        .onSuccess { subscriptionStatus ->
-                            _uiState.update {
-                                it.copyWithSubscription(subscriptionStatus).copy(isLoading = false, error = null)
-                            }
-                        }
-                        .onFailure { error ->
-                            _uiState.update { it.copy(isLoading = false, error = error.message) }
-                        }
-                }
+                _uiState.update { it.copy(isLoading = false, error = null) }
             }
 
             SubscriptionPurchaseOutcome.Cancelled -> {
@@ -308,12 +303,7 @@ class SettingsViewModel(
             }
 
             SubscriptionPurchaseOutcome.Failed -> {
-                analyticsTracker.track(
-                    AnalyticsEvent.PremiumPurchaseFailed(
-                        productId = pendingPremiumProductId ?: _uiState.value.resolveManageSubscriptionProductId().orEmpty(),
-                        reason = "failed",
-                    ),
-                )
+                trackPremiumPurchaseFailed(reason = "failed")
                 pendingPremiumProductId = null
                 _uiState.update {
                     it.copy(
@@ -323,6 +313,54 @@ class SettingsViewModel(
                 }
             }
         }
+    }
+
+
+    private fun handlePurchasedSubscription(purchase: GooglePlayPurchase) {
+        scope.launch {
+            runCatching { validateGooglePlayPurchase(purchase) }
+                .onSuccess { entitlement ->
+                    if (entitlement.isActive) {
+                        analyticsTracker.track(
+                            AnalyticsEvent.PremiumPurchaseCompleted(
+                                productId = purchase.productId,
+                                price = null,
+                                currency = null,
+                            ),
+                        )
+                        pendingPremiumProductId = null
+                        _uiState.update {
+                            it.copyWithSubscription(entitlement.status).copy(isLoading = false, error = null)
+                        }
+                        if (!purchase.isAcknowledged) {
+                            _uiEffects.emit(SettingsUiEffect.AcknowledgeGooglePlayPurchase(purchase.purchaseToken))
+                        }
+                        _uiEffects.emit(SettingsUiEffect.RefreshEconomy)
+                    } else {
+                        trackPremiumPurchaseFailed(reason = "backend_inactive")
+                        pendingPremiumProductId = null
+                        _uiState.update {
+                            it.copy(isLoading = false, feedback = SettingsFeedback.SubscriptionPurchaseFailed)
+                        }
+                    }
+                }
+                .onFailure { error ->
+                    trackPremiumPurchaseFailed(reason = "backend_validation_failed")
+                    pendingPremiumProductId = null
+                    _uiState.update {
+                        it.copy(isLoading = false, feedback = SettingsFeedback.SubscriptionPurchaseFailed, error = error.message)
+                    }
+                }
+        }
+    }
+
+    private fun trackPremiumPurchaseFailed(reason: String) {
+        analyticsTracker.track(
+            AnalyticsEvent.PremiumPurchaseFailed(
+                productId = pendingPremiumProductId ?: _uiState.value.resolveManageSubscriptionProductId().orEmpty(),
+                reason = reason,
+            ),
+        )
     }
 
     fun onCatalogSubscriptionSelected(productId: String) {
@@ -435,15 +473,14 @@ private fun SubscriptionPlan.toUiPlan(): SubscriptionPlanUi = SubscriptionPlanUi
     formattedPrice = formattedPrice,
     type = when (type) {
         SubscriptionPlanType.Monthly -> SubscriptionPlanSelection.Monthly
-        SubscriptionPlanType.Annual -> SubscriptionPlanSelection.Annual
-        SubscriptionPlanType.Unknown -> null
+        SubscriptionPlanType.Annual, SubscriptionPlanType.Unknown -> null
     },
 )
 
 private fun SettingsUiState.resolveManageSubscriptionProductId(): String? {
     val preferredType = when (subscriptionStatus) {
         SubscriptionStatus.ActiveMonthly -> SubscriptionPlanSelection.Monthly
-        SubscriptionStatus.ActiveAnnual -> SubscriptionPlanSelection.Annual
+        SubscriptionStatus.ActiveAnnual -> null
         SubscriptionStatus.Unknown,
         SubscriptionStatus.Inactive,
         -> null
@@ -455,7 +492,7 @@ private fun SettingsUiState.resolveManageSubscriptionProductId(): String? {
 
     return when (subscriptionStatus) {
         SubscriptionStatus.ActiveMonthly -> KnownSubscriptionProducts.MONTHLY
-        SubscriptionStatus.ActiveAnnual -> KnownSubscriptionProducts.ANNUAL
+        SubscriptionStatus.ActiveAnnual -> null
         SubscriptionStatus.Unknown,
         SubscriptionStatus.Inactive,
         -> null

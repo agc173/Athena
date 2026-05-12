@@ -14,6 +14,8 @@ actual fun rememberSubscriptionPurchaseLauncher(): SubscriptionPurchaseLauncher 
 
         override suspend fun launch(productId: String): SubscriptionPurchaseOutcome =
             SubscriptionPurchaseOutcome.Unsupported
+
+        override suspend fun acknowledge(purchaseToken: String): Boolean = false
     }
 }
 

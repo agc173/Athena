@@ -14,6 +14,7 @@ expect fun rememberSubscriptionManagementLauncher(): SubscriptionManagementLaunc
 interface SubscriptionPurchaseLauncher {
     suspend fun launch(plan: SubscriptionPlanSelection): SubscriptionPurchaseOutcome
     suspend fun launch(productId: String): SubscriptionPurchaseOutcome
+    suspend fun acknowledge(purchaseToken: String): Boolean
 }
 
 interface SubscriptionManagementLauncher {

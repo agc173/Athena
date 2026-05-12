@@ -22,6 +22,7 @@ import com.agc.bwitch.data.rituals.SyncHabitsRepository
 import com.agc.bwitch.data.session.LocalUserDataRepositoryImpl
 import com.agc.bwitch.data.settings.SettingsNotificationSettingsRepository
 import com.agc.bwitch.data.settings.BillingBackedSubscriptionRepository
+import com.agc.bwitch.data.settings.entitlement.FunctionsPremiumEntitlementRepository
 import com.agc.bwitch.data.settings.billing.SubscriptionBillingDataSource
 import com.agc.bwitch.data.settings.billing.UnsupportedSubscriptionBillingDataSource
 import com.agc.bwitch.data.tarot.TarotRepositoryImpl
@@ -43,6 +44,7 @@ import com.agc.bwitch.domain.rituals.HabitsRepository
 import com.agc.bwitch.domain.rituals.RitualCatalogRepository
 import com.agc.bwitch.domain.session.LocalUserDataRepository
 import com.agc.bwitch.domain.settings.NotificationSettingsRepository
+import com.agc.bwitch.domain.settings.PremiumEntitlementRepository
 import com.agc.bwitch.domain.settings.SubscriptionRepository
 import com.agc.bwitch.domain.tarot.TarotRepository
 import com.agc.bwitch.domain.tarot.LastTarotReadingRepository
@@ -71,7 +73,8 @@ val dataKoinModule: Module = module {
 
     single<NotificationSettingsRepository> { SettingsNotificationSettingsRepository(get()) }
     single<SubscriptionBillingDataSource> { UnsupportedSubscriptionBillingDataSource }
-    single<SubscriptionRepository> { BillingBackedSubscriptionRepository(get(), get()) }
+    single<PremiumEntitlementRepository> { FunctionsPremiumEntitlementRepository(get()) }
+    single<SubscriptionRepository> { BillingBackedSubscriptionRepository(get(), get(), get()) }
     single { SettingsMoonRepository(get()) }
     single<MoonRepository> { BackendFirstMoonRepository(localRepository = get<SettingsMoonRepository>(), economyRepository = get()) }
     single<MoonPackRepository> { MockMoonPackRepository() }

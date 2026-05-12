@@ -1,6 +1,10 @@
 package com.agc.bwitch.data.settings
 
 import com.agc.bwitch.data.settings.billing.SubscriptionBillingDataSource
+import com.agc.bwitch.domain.settings.GooglePlayPurchase
+import com.agc.bwitch.domain.settings.GooglePlayPurchaseState
+import com.agc.bwitch.domain.settings.PremiumEntitlement
+import com.agc.bwitch.domain.settings.PremiumEntitlementRepository
 import com.agc.bwitch.domain.settings.RestorePurchasesResult
 import com.agc.bwitch.domain.settings.SubscriptionPlan
 import com.agc.bwitch.domain.settings.SubscriptionPlanType
@@ -13,41 +17,62 @@ import kotlin.test.assertEquals
 class BillingBackedSubscriptionRepositoryTest {
 
     @Test
-    fun `getStatus usa billing cuando esta soportado`() = runTest {
+    fun `getStatus usa backend entitlement y no billing local`() = runTest {
         val repository = repository(
             billing = FakeBillingDataSource(
                 isSupported = true,
-                statusFromQuery = SubscriptionStatus.ActiveAnnual,
+                statusFromQuery = SubscriptionStatus.ActiveMonthly,
+            ),
+            entitlements = FakePremiumEntitlementRepository(
+                refreshEntitlement = PremiumEntitlement(isActive = false, status = SubscriptionStatus.Inactive),
             ),
         )
 
         val status = repository.getStatus()
 
-        assertEquals(SubscriptionStatus.ActiveAnnual, status)
+        assertEquals(SubscriptionStatus.Inactive, status)
     }
 
     @Test
-    fun `getStatus usa fallback persistido cuando billing falla`() = runTest {
+    fun `getStatus no conserva activo persistido cuando backend falla`() = runTest {
         val settings = MapSettings().apply {
             putString("subscription_status", SubscriptionStatus.ActiveMonthly.name)
         }
         val repository = repository(
             settings = settings,
-            billing = FakeBillingDataSource(
-                isSupported = true,
-                queryError = IllegalStateException("setup failed"),
-            ),
+            billing = FakeBillingDataSource(isSupported = true),
+            entitlements = FakePremiumEntitlementRepository(refreshError = IllegalStateException("backend failed")),
         )
 
         val status = repository.getStatus()
 
-        assertEquals(SubscriptionStatus.ActiveMonthly, status)
+        assertEquals(SubscriptionStatus.Unknown, status)
     }
 
     @Test
-    fun `restore en plataforma no soportada devuelve no purchases si no hay activo`() = runTest {
+    fun `restore envia compras Google Play al backend y restaura solo si entitlement activo`() = runTest {
+        val purchase = googlePlayPurchase()
+        val entitlements = FakePremiumEntitlementRepository(
+            restoreEntitlement = PremiumEntitlement(isActive = true, status = SubscriptionStatus.ActiveMonthly),
+        )
         val repository = repository(
-            billing = FakeBillingDataSource(isSupported = false),
+            billing = FakeBillingDataSource(isSupported = true, purchases = listOf(purchase)),
+            entitlements = entitlements,
+        )
+
+        val result = repository.restorePurchases()
+
+        assertEquals(listOf(purchase), entitlements.lastRestorePurchases)
+        assertEquals(RestorePurchasesResult.Restored(SubscriptionStatus.ActiveMonthly), result)
+    }
+
+    @Test
+    fun `restore sin backend active no activa premium aunque billing tenga compra`() = runTest {
+        val repository = repository(
+            billing = FakeBillingDataSource(isSupported = true, purchases = listOf(googlePlayPurchase())),
+            entitlements = FakePremiumEntitlementRepository(
+                restoreEntitlement = PremiumEntitlement(isActive = false, status = SubscriptionStatus.Inactive),
+            ),
         )
 
         val result = repository.restorePurchases()
@@ -56,33 +81,17 @@ class BillingBackedSubscriptionRepositoryTest {
     }
 
     @Test
-    fun `restore en plataforma no soportada conserva estado activo persistido`() = runTest {
-        val settings = MapSettings().apply {
-            putString("subscription_status", SubscriptionStatus.ActiveAnnual.name)
-        }
-        val repository = repository(
-            settings = settings,
-            billing = FakeBillingDataSource(isSupported = false),
-        )
-
-        val result = repository.restorePurchases()
-
-        assertEquals(
-            RestorePurchasesResult.Restored(SubscriptionStatus.ActiveAnnual),
-            result,
-        )
-    }
-
-    @Test
     fun `getCatalog usa billing cuando esta soportado`() = runTest {
         val plan = SubscriptionPlan(
-            productId = "monthly",
+            productId = "bwitch_premium_monthly",
             title = "Monthly",
             formattedPrice = "$4.99",
             type = SubscriptionPlanType.Monthly,
+            basePlanId = "monthly",
         )
         val repository = repository(
             billing = FakeBillingDataSource(isSupported = true, catalogFromQuery = listOf(plan)),
+            entitlements = FakePremiumEntitlementRepository(),
         )
 
         val catalog = repository.getCatalog()
@@ -93,9 +102,11 @@ class BillingBackedSubscriptionRepositoryTest {
     private fun repository(
         settings: MapSettings = MapSettings(),
         billing: SubscriptionBillingDataSource,
+        entitlements: PremiumEntitlementRepository,
     ): BillingBackedSubscriptionRepository = BillingBackedSubscriptionRepository(
         settings = settings,
         billingDataSource = billing,
+        premiumEntitlementRepository = entitlements,
         forTests = Unit,
     )
 }
@@ -107,6 +118,7 @@ private class FakeBillingDataSource(
     private val queryError: Throwable? = null,
     private val restoreError: Throwable? = null,
     private val catalogFromQuery: List<SubscriptionPlan> = emptyList(),
+    private val purchases: List<GooglePlayPurchase> = emptyList(),
 ) : SubscriptionBillingDataSource {
     override suspend fun querySubscriptionStatus(): SubscriptionStatus {
         queryError?.let { throw it }
@@ -115,8 +127,40 @@ private class FakeBillingDataSource(
 
     override suspend fun querySubscriptionCatalog(): List<SubscriptionPlan> = catalogFromQuery
 
+    override suspend fun queryGooglePlayPurchases(): List<GooglePlayPurchase> = purchases
+
     override suspend fun restoreSubscriptionStatus(): SubscriptionStatus {
         restoreError?.let { throw it }
         return statusFromRestore
     }
 }
+
+private class FakePremiumEntitlementRepository(
+    private val validateEntitlement: PremiumEntitlement = PremiumEntitlement(false, SubscriptionStatus.Inactive),
+    private val restoreEntitlement: PremiumEntitlement = PremiumEntitlement(false, SubscriptionStatus.Inactive),
+    private val refreshEntitlement: PremiumEntitlement = PremiumEntitlement(false, SubscriptionStatus.Inactive),
+    private val refreshError: Throwable? = null,
+) : PremiumEntitlementRepository {
+    var lastRestorePurchases: List<GooglePlayPurchase> = emptyList()
+
+    override suspend fun validateGooglePlayPurchase(purchase: GooglePlayPurchase): PremiumEntitlement = validateEntitlement
+
+    override suspend fun restoreGooglePlayPurchases(purchases: List<GooglePlayPurchase>): PremiumEntitlement {
+        lastRestorePurchases = purchases
+        return restoreEntitlement
+    }
+
+    override suspend fun refreshEntitlement(): PremiumEntitlement {
+        refreshError?.let { throw it }
+        return refreshEntitlement
+    }
+}
+
+private fun googlePlayPurchase(): GooglePlayPurchase = GooglePlayPurchase(
+    productId = "bwitch_premium_monthly",
+    purchaseToken = "token-123",
+    purchaseState = GooglePlayPurchaseState.Purchased,
+    isAcknowledged = false,
+    orderId = "order-123",
+    packageName = "com.agc.bwitch",
+)
