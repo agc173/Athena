@@ -5,9 +5,13 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import com.agc.bwitch.data.settings.billing.SubscriptionBillingDataSource
+import com.agc.bwitch.domain.settings.GooglePlayPurchase
+import com.agc.bwitch.domain.settings.GooglePlayPurchaseState
+import com.agc.bwitch.domain.settings.KnownSubscriptionProducts
 import com.agc.bwitch.domain.settings.SubscriptionPlan
 import com.agc.bwitch.domain.settings.SubscriptionPlanType
 import com.agc.bwitch.domain.settings.SubscriptionStatus
+import com.android.billingclient.api.AcknowledgePurchaseParams
 import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingClientStateListener
 import com.android.billingclient.api.BillingResult
@@ -24,7 +28,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 
 class GooglePlaySubscriptionBillingDataSource(
-    appContext: Context,
+    private val appContext: Context,
 ) : SubscriptionBillingDataSource {
 
     override val isSupported: Boolean = true
@@ -41,18 +45,18 @@ class GooglePlaySubscriptionBillingDataSource(
             val deferred = purchaseFlowResult
             if (deferred == null || deferred.isCompleted) return@setListener
 
-            val hasRelevantPurchasedSubscription = purchases
+            val relevantPurchase = purchases
                 .orEmpty()
-                .any { purchase ->
-                    purchase.purchaseState == Purchase.PurchaseState.PURCHASED &&
+                .firstOrNull { purchase ->
+                    purchase.purchaseState in setOf(Purchase.PurchaseState.PURCHASED, Purchase.PurchaseState.PENDING) &&
                         purchase.products.any { productId ->
                             productId in GooglePlayBillingSubscriptionProducts.knownProducts
                         }
                 }
 
             when {
-                result.responseCode == BillingClient.BillingResponseCode.OK && hasRelevantPurchasedSubscription ->
-                    deferred.complete(Result.success(Unit))
+                result.responseCode == BillingClient.BillingResponseCode.OK && relevantPurchase != null ->
+                    deferred.complete(Result.success(checkNotNull(relevantPurchase.toGooglePlayPurchase(packageName = appContext.packageName))))
                 result.responseCode == BillingClient.BillingResponseCode.USER_CANCELED ->
                     deferred.complete(Result.failure(PurchaseFlowCancelledException))
                 else -> deferred.complete(
@@ -67,7 +71,7 @@ class GooglePlaySubscriptionBillingDataSource(
             }
         }
         .build()
-    private var purchaseFlowResult: CompletableDeferred<Result<Unit>>? = null
+    private var purchaseFlowResult: CompletableDeferred<Result<GooglePlayPurchase>>? = null
 
     override suspend fun querySubscriptionStatus(): SubscriptionStatus =
         queryStatusWithConnection()
@@ -85,8 +89,22 @@ class GooglePlaySubscriptionBillingDataSource(
             }
     }
 
+    override suspend fun queryGooglePlayPurchases(): List<GooglePlayPurchase> = connectionMutex.withLock {
+        ensureReadyConnection()
+        querySubscriptionPurchases().mapNotNull { purchase ->
+            purchase.toGooglePlayPurchase(packageName = appContext.packageName)
+        }
+    }
+
     override suspend fun restoreSubscriptionStatus(): SubscriptionStatus =
         queryStatusWithConnection()
+
+    suspend fun acknowledgePurchase(purchaseToken: String): Result<Unit> = runCatching {
+        connectionMutex.withLock {
+            ensureReadyConnection()
+            acknowledgePurchaseWithConnection(purchaseToken)
+        }
+    }
 
     fun launchManageSubscriptions(
         activity: Activity,
@@ -115,7 +133,7 @@ class GooglePlaySubscriptionBillingDataSource(
     suspend fun launchPurchaseFlow(
         activity: Activity,
         productId: String,
-    ): Result<Unit> = runCatching {
+    ): Result<GooglePlayPurchase> = runCatching {
         val deferred = connectionMutex.withLock {
             ensureReadyConnection()
 
@@ -126,9 +144,7 @@ class GooglePlaySubscriptionBillingDataSource(
                     responseCode = BillingClient.BillingResponseCode.ITEM_UNAVAILABLE,
                     debugMessage = "Configured product not returned by Play Billing",
                 )
-            val offerToken = productDetails.subscriptionOfferDetails
-                ?.firstOrNull()
-                ?.offerToken
+            val offerToken = productDetails.selectedMonthlyOffer()?.offerToken
                 ?: throw GooglePlayBillingException(
                     phase = "queryProductDetailsMissingOffer",
                     responseCode = BillingClient.BillingResponseCode.ITEM_UNAVAILABLE,
@@ -143,7 +159,7 @@ class GooglePlaySubscriptionBillingDataSource(
                 .setProductDetailsParamsList(listOf(productParams))
                 .build()
 
-            val purchaseDeferred = CompletableDeferred<Result<Unit>>()
+            val purchaseDeferred = CompletableDeferred<Result<GooglePlayPurchase>>()
             purchaseFlowResult = purchaseDeferred
             purchaseDeferred.invokeOnCompletion { purchaseFlowResult = null }
             val launchResult = billingClient.launchBillingFlow(activity, flowParams)
@@ -219,6 +235,30 @@ class GooglePlaySubscriptionBillingDataSource(
             }
         }
 
+    private suspend fun acknowledgePurchaseWithConnection(purchaseToken: String): Unit =
+        suspendCancellableCoroutine { continuation ->
+            val params = AcknowledgePurchaseParams.newBuilder()
+                .setPurchaseToken(purchaseToken)
+                .build()
+
+            billingClient.acknowledgePurchase(params) { result ->
+                if (continuation.isCompleted) return@acknowledgePurchase
+                if (result.responseCode == BillingClient.BillingResponseCode.OK) {
+                    continuation.resume(Unit)
+                } else {
+                    continuation.resumeWith(
+                        Result.failure(
+                            GooglePlayBillingException(
+                                phase = "acknowledgePurchase",
+                                responseCode = result.responseCode,
+                                debugMessage = result.debugMessage,
+                            ),
+                        ),
+                    )
+                }
+            }
+        }
+
     private suspend fun querySubscriptionProductDetails():
             List<com.android.billingclient.api.ProductDetails> =
         suspendCancellableCoroutine { continuation ->
@@ -285,36 +325,20 @@ internal class GooglePlayBillingException(
 private object PurchaseFlowCancelledException : CancellationException("Purchase flow cancelled by user")
 
 private fun List<Purchase>.toSubscriptionStatus(): SubscriptionStatus {
-    val activePurchases = this.filter { purchase ->
-        // Foundation real: PURCHASED ya representa entitlement activo.
-        // No exigimos `isAcknowledged` para evitar falsos negativos temporales
-        // mientras aún no implementamos flujo completo de compra/ack backend.
-        purchase.purchaseState == Purchase.PurchaseState.PURCHASED
-    }
-
-    if (activePurchases.isEmpty()) return SubscriptionStatus.Inactive
-
-    val activeProductIds = activePurchases.flatMap { it.products }.toSet()
+    // El entitlement real lo decide backend. Este método solo conserva compatibilidad interna
+    // para consultas locales antiguas y no debe activar Premium en el flujo de Settings.
+    val activeProductIds = filter { purchase -> purchase.purchaseState == Purchase.PurchaseState.PURCHASED }
+        .flatMap { it.products }
+        .toSet()
 
     return when {
-        GooglePlayBillingSubscriptionProducts.ANNUAL in activeProductIds -> SubscriptionStatus.ActiveAnnual
         GooglePlayBillingSubscriptionProducts.MONTHLY in activeProductIds -> SubscriptionStatus.ActiveMonthly
-        activeProductIds.intersect(GooglePlayBillingSubscriptionProducts.knownProducts).isNotEmpty() -> SubscriptionStatus.ActiveMonthly
         else -> SubscriptionStatus.Inactive
     }
 }
 
 private fun com.android.billingclient.api.ProductDetails.toSubscriptionPlan(): SubscriptionPlan? {
-    val offer = subscriptionOfferDetails
-        ?.firstOrNull { details ->
-            details.pricingPhases.pricingPhaseList.any { phase ->
-                phase.formattedPrice.isNotBlank() && phase.billingPeriod.isNotBlank()
-            }
-        }
-        ?: subscriptionOfferDetails?.firstOrNull { details ->
-            details.pricingPhases.pricingPhaseList.any { phase -> phase.formattedPrice.isNotBlank() }
-        }
-        ?: return null
+    val offer = selectedMonthlyOffer() ?: return null
 
     val pricingPhase = offer.pricingPhases.pricingPhaseList
         .firstOrNull { phase ->
@@ -336,6 +360,7 @@ private fun com.android.billingclient.api.ProductDetails.toSubscriptionPlan(): S
         title = resolvedTitle,
         formattedPrice = pricingPhase.formattedPrice,
         type = resolvedType,
+        basePlanId = offer.basePlanId,
     )
 }
 
@@ -348,7 +373,6 @@ private fun resolveSubscriptionPlanType(
 
     return when (productId) {
         GooglePlayBillingSubscriptionProducts.MONTHLY -> SubscriptionPlanType.Monthly
-        GooglePlayBillingSubscriptionProducts.ANNUAL -> SubscriptionPlanType.Annual
         else -> SubscriptionPlanType.Unknown
     }
 }
@@ -357,4 +381,39 @@ private fun String.toSubscriptionPlanType(): SubscriptionPlanType = when {
     contains("P1Y", ignoreCase = true) -> SubscriptionPlanType.Annual
     contains("P1M", ignoreCase = true) -> SubscriptionPlanType.Monthly
     else -> SubscriptionPlanType.Unknown
+}
+
+private fun com.android.billingclient.api.ProductDetails.selectedMonthlyOffer(): com.android.billingclient.api.ProductDetails.SubscriptionOfferDetails? {
+    val offers = subscriptionOfferDetails.orEmpty()
+    return offers.firstOrNull { offer ->
+        offer.basePlanId == KnownSubscriptionProducts.MONTHLY_BASE_PLAN_ID && offer.hasUsablePrice()
+    } ?: offers.firstOrNull { offer ->
+        offer.basePlanId == KnownSubscriptionProducts.MONTHLY_BASE_PLAN_ID
+    }
+}
+
+private fun com.android.billingclient.api.ProductDetails.SubscriptionOfferDetails.hasUsablePrice(): Boolean =
+    pricingPhases.pricingPhaseList.any { phase ->
+        phase.formattedPrice.isNotBlank() && phase.billingPeriod.isNotBlank()
+    } || pricingPhases.pricingPhaseList.any { phase -> phase.formattedPrice.isNotBlank() }
+
+private fun Purchase.toGooglePlayPurchase(packageName: String): GooglePlayPurchase? {
+    val productId = products.firstOrNull { productId ->
+        productId in GooglePlayBillingSubscriptionProducts.knownProducts
+    } ?: return null
+
+    return GooglePlayPurchase(
+        productId = productId,
+        purchaseToken = purchaseToken,
+        purchaseState = purchaseState.toGooglePlayPurchaseState(),
+        isAcknowledged = isAcknowledged,
+        orderId = orderId,
+        packageName = packageName,
+    )
+}
+
+private fun Int.toGooglePlayPurchaseState(): GooglePlayPurchaseState = when (this) {
+    Purchase.PurchaseState.PURCHASED -> GooglePlayPurchaseState.Purchased
+    Purchase.PurchaseState.PENDING -> GooglePlayPurchaseState.Pending
+    else -> GooglePlayPurchaseState.Unknown
 }

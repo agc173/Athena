@@ -2,16 +2,18 @@ package com.agc.bwitch.domain.settings
 
 object KnownSubscriptionProducts {
     /**
-     * IDs actuales de suscripción Android (Google Play Billing).
-     * Reemplazar estos valores por los IDs reales de Play Console cuando estén listos.
+     * ID real de suscripción mensual Android (Google Play Billing) para internal testing sandbox.
      */
-    const val MONTHLY = "bwitch_subscription_monthly"
-    const val ANNUAL = "bwitch_subscription_annual"
+    const val MONTHLY = "bwitch_premium_monthly"
+    const val MONTHLY_BASE_PLAN_ID = "monthly"
+
+    /** Reservado para una fase futura; no se consulta ni se renderiza en esta integración mensual. */
+    const val ANNUAL = "bwitch_premium_annual_reserved"
 
     /**
-     * Orden canónico para query/render (mensual -> anual).
+     * Orden canónico para query/render de la fase sandbox actual: solo mensual.
      */
-    val ordered: List<String> = listOf(MONTHLY, ANNUAL)
+    val ordered: List<String> = listOf(MONTHLY)
 
-    val all: Set<String> = setOf(MONTHLY, ANNUAL)
+    val all: Set<String> = setOf(MONTHLY)
 }

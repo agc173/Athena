@@ -11,4 +11,5 @@ data class SubscriptionPlan(
     val title: String,
     val formattedPrice: String,
     val type: SubscriptionPlanType,
+    val basePlanId: String? = null,
 )

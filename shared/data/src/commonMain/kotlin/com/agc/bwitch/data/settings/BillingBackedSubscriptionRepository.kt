@@ -2,6 +2,7 @@ package com.agc.bwitch.data.settings
 
 import com.agc.bwitch.data.settings.billing.SubscriptionBillingDataSource
 import com.agc.bwitch.data.storage.SettingsFactory
+import com.agc.bwitch.domain.settings.PremiumEntitlementRepository
 import com.agc.bwitch.domain.settings.RestorePurchasesResult
 import com.agc.bwitch.domain.settings.SubscriptionPlan
 import com.agc.bwitch.domain.settings.SubscriptionRepository
@@ -14,21 +15,25 @@ import kotlinx.coroutines.flow.MutableStateFlow
 class BillingBackedSubscriptionRepository private constructor(
     private val settings: Settings,
     private val billingDataSource: SubscriptionBillingDataSource,
+    private val premiumEntitlementRepository: PremiumEntitlementRepository,
 ) : SubscriptionRepository {
 
     constructor(
         settingsFactory: SettingsFactory,
         billingDataSource: SubscriptionBillingDataSource,
+        premiumEntitlementRepository: PremiumEntitlementRepository,
     ) : this(
         settings = settingsFactory.create(SETTINGS_NAME),
         billingDataSource = billingDataSource,
+        premiumEntitlementRepository = premiumEntitlementRepository,
     )
 
     internal constructor(
         settings: Settings,
         billingDataSource: SubscriptionBillingDataSource,
+        premiumEntitlementRepository: PremiumEntitlementRepository,
         @Suppress("UNUSED_PARAMETER") forTests: Unit,
-    ) : this(settings, billingDataSource)
+    ) : this(settings, billingDataSource, premiumEntitlementRepository)
 
     private val status = MutableStateFlow(readCurrentStatus())
 
@@ -48,16 +53,15 @@ class BillingBackedSubscriptionRepository private constructor(
     }
 
     override suspend fun restorePurchases(): RestorePurchasesResult {
-        if (!billingDataSource.isSupported) {
-            return if (status.value.isActive) {
-                RestorePurchasesResult.Restored(status.value)
-            } else {
-                RestorePurchasesResult.NoPurchasesFound
-            }
+        val purchases = if (billingDataSource.isSupported) {
+            runCatching { billingDataSource.queryGooglePlayPurchases() }.getOrDefault(emptyList())
+        } else {
+            emptyList()
         }
 
-        val resolvedStatus = runCatching { billingDataSource.restoreSubscriptionStatus() }
-            .getOrElse { readCurrentStatus() }
+        val resolvedStatus = runCatching {
+            premiumEntitlementRepository.restoreGooglePlayPurchases(purchases).status
+        }.getOrElse { readCurrentStatus().takeUnless { status -> status.isActive } ?: SubscriptionStatus.Unknown }
 
         status.value = resolvedStatus
         persistCurrentStatus(resolvedStatus)
@@ -70,18 +74,18 @@ class BillingBackedSubscriptionRepository private constructor(
     }
 
     private suspend fun resolveStatusFromStoreOrFallback(): SubscriptionStatus {
-        if (!billingDataSource.isSupported) return status.value
-
-        return runCatching { billingDataSource.querySubscriptionStatus() }
-            .getOrElse { readCurrentStatus() }
+        return runCatching { premiumEntitlementRepository.refreshEntitlement().status }
+            .getOrElse { readCurrentStatus().takeUnless { status -> status.isActive } ?: SubscriptionStatus.Unknown }
     }
 
     private fun readCurrentStatus(): SubscriptionStatus {
         val persistedStatus = settings.getStringOrNull(SUBSCRIPTION_STATUS_KEY)
             ?: return SubscriptionStatus.Unknown
 
-        return SubscriptionStatus.entries.firstOrNull { it.name == persistedStatus }
-            ?: SubscriptionStatus.Unknown
+        val resolved = SubscriptionStatus.entries.firstOrNull { it.name == persistedStatus }
+            ?: return SubscriptionStatus.Unknown
+
+        return resolved.takeUnless { it.isActive } ?: SubscriptionStatus.Unknown
     }
 
     private fun persistCurrentStatus(status: SubscriptionStatus) {
