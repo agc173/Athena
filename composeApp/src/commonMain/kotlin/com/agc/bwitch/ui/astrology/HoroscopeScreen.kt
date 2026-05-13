@@ -349,124 +349,197 @@ private fun HoroscopeScreenContent(
 
     }
 
-    val overlay = state.overlay
-    if (overlay != null) {
-        if (overlay is HoroscopeOverlayUi.DailyOverlay && overlay.isLocked) {
-            AlertDialog(
-                onDismissRequest = onCloseOverlay,
-                title = { Text(strings.horoscope.lockedTitle) },
-                text = {
-                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Text("${overlay.sign.localizedLabel(strings)} · ${overlay.dateIso}\n${strings.horoscope.unlockMessage}")
-                        overlay.unlockErrorMessage?.let { unlockError ->
-                            Text(
-                                text = unlockError.toLocalizedMessage(strings),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.error,
-                                fontWeight = FontWeight.SemiBold,
-                            )
-                        }
-                    }
-                },
-                confirmButton = {
-                    BWitchPrimaryButton(onClick = onUnlock, enabled = !state.isUnlocking) {
-                        Text(strings.horoscope.unlockForMoonFormat.replaceFirst("%d", "${state.futureDayCost}"))
-                    }
-                },
-                dismissButton = { BWitchSecondaryButton(onClick = onCloseOverlay) { Text(strings.horoscope.closeCta) } },
+    state.overlay?.let { overlay ->
+        HoroscopeOverlayDialog(
+            overlay = overlay,
+            state = state,
+            strings = strings,
+            onCloseOverlay = onCloseOverlay,
+            onUnlock = onUnlock,
+        )
+    }
+}
+
+@Composable
+private fun HoroscopeOverlayDialog(
+    overlay: HoroscopeOverlayUi,
+    state: HoroscopeUiState,
+    strings: AppStrings,
+    onCloseOverlay: () -> Unit,
+    onUnlock: () -> Unit,
+) {
+    if (overlay is HoroscopeOverlayUi.DailyOverlay && overlay.isLocked) {
+        LockedDailyHoroscopeDialog(
+            overlay = overlay,
+            strings = strings,
+            isUnlocking = state.isUnlocking,
+            unlockCost = state.futureDayCost,
+            onCloseOverlay = onCloseOverlay,
+            onUnlock = onUnlock,
+        )
+    } else {
+        HoroscopeContentDialog(
+            overlay = overlay,
+            strings = strings,
+            onCloseOverlay = onCloseOverlay,
+        )
+    }
+}
+
+@Composable
+private fun LockedDailyHoroscopeDialog(
+    overlay: HoroscopeOverlayUi.DailyOverlay,
+    strings: AppStrings,
+    isUnlocking: Boolean,
+    unlockCost: Int,
+    onCloseOverlay: () -> Unit,
+    onUnlock: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onCloseOverlay,
+        title = { Text(strings.horoscope.lockedTitle) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text("${overlay.sign.localizedLabel(strings)} · ${overlay.dateIso}\n${strings.horoscope.unlockMessage}")
+                overlay.unlockErrorMessage?.let { unlockError ->
+                    Text(
+                        text = unlockError.toLocalizedMessage(strings),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            BWitchPrimaryButton(onClick = onUnlock, enabled = !isUnlocking) {
+                Text(strings.horoscope.unlockForMoonFormat.replaceFirst("%d", "$unlockCost"))
+            }
+        },
+        dismissButton = { BWitchSecondaryButton(onClick = onCloseOverlay) { Text(strings.horoscope.closeCta) } },
+    )
+}
+
+@Composable
+private fun HoroscopeContentDialog(
+    overlay: HoroscopeOverlayUi,
+    strings: AppStrings,
+    onCloseOverlay: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onCloseOverlay,
+        modifier = Modifier.widthIn(min = 320.dp, max = 520.dp),
+        title = {
+            HoroscopeOverlayHeader(
+                sign = overlay.sign,
+                periodLabel = overlay.periodLabel,
+                strings = strings,
             )
-        } else {
-            AlertDialog(
-                onDismissRequest = onCloseOverlay,
-                modifier = Modifier.widthIn(min = 320.dp, max = 520.dp),
-                title = {
-                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Image(
-                                painter = painterResource(overlay.sign.artResource()),
-                                contentDescription = overlay.sign.localizedLabel(strings),
-                                contentScale = ContentScale.Fit,
-                                modifier = Modifier.size(48.dp),
-                            )
-                            Text(
-                                text = overlay.sign.localizedLabel(strings),
-                                style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.SemiBold,
-                            )
-                        }
-                        Text(
-                            text = overlay.periodLabel,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                },
-                text = {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = 220.dp, max = 420.dp)
-                            .verticalScroll(rememberScrollState()),
-                        verticalArrangement = Arrangement.spacedBy(14.dp),
-                    ) {
-                        if (overlay.isLoading) {
-                            Text(strings.horoscope.loading)
-                        } else {
-                            when (overlay) {
-                                is HoroscopeOverlayUi.DailyOverlay -> {
-                                    val horoscope = overlay.horoscope
-                                    FlowRow(
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                                    ) {
-                                        HoroscopeMetaChip(label = strings.horoscope.moodLabel, value = horoscope?.mood ?: "-")
-                                        HoroscopeMetaChip(label = strings.horoscope.luckyNumberLabel, value = horoscope?.luckyNumber?.toString() ?: "-")
-                                        HoroscopeMetaChip(label = strings.horoscope.luckyColorLabel, value = horoscope?.luckyColor ?: "-")
-                                    }
-                                    Text(
-                                        text = horoscope?.text ?: strings.horoscope.noContentYet,
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        lineHeight = MaterialTheme.typography.bodyLarge.lineHeight * 1.2f,
-                                    )
-                                }
-                                is HoroscopeOverlayUi.WeeklyOverlay -> {
-                                    val horoscope = overlay.horoscope
-                                    Text(
-                                        text = horoscope?.title ?: strings.horoscope.noContentYet,
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold,
-                                    )
-                                    OverlaySection(strings.horoscope.weekOverviewTitle, horoscope?.overview)
-                                    OverlaySection(strings.horoscope.loveAndRelationshipsTitle, horoscope?.loveAndRelationships)
-                                    OverlaySection(strings.horoscope.workAndMoneyTitle, horoscope?.workAndMoney)
-                                    OverlaySection(strings.horoscope.spiritualEnergyTitle, horoscope?.spiritualEnergy)
-                                    OverlaySection(strings.horoscope.weeklyAdviceTitle, horoscope?.weeklyAdvice)
-                                    OverlaySection(strings.horoscope.mantraTitle, horoscope?.mantra)
-                                }
-                                is HoroscopeOverlayUi.MonthlyOverlay -> {
-                                    val horoscope = overlay.horoscope
-                                    Text(
-                                        text = horoscope?.title ?: strings.horoscope.noContentYet,
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold,
-                                    )
-                                    OverlaySection(strings.horoscope.monthThemeTitle, horoscope?.monthTheme)
-                                    OverlaySection(strings.horoscope.loveAndRelationshipsTitle, horoscope?.loveAndRelationships)
-                                    OverlaySection(strings.horoscope.workAndMoneyTitle, horoscope?.workAndMoney)
-                                    OverlaySection(strings.horoscope.personalGrowthTitle, horoscope?.personalGrowth)
-                                    OverlaySection(strings.horoscope.ritualSuggestionTitle, horoscope?.ritualSuggestion)
-                                    OverlaySection(strings.horoscope.mantraTitle, horoscope?.mantra)
-                                }
-                            }
-                        }
-                    }
-                },
-                confirmButton = { BWitchSecondaryButton(onClick = {}, enabled = false) { Text(strings.horoscope.shareCta) } },
-                dismissButton = { BWitchPrimaryButton(onClick = onCloseOverlay) { Text(strings.horoscope.closeCta) } },
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 220.dp, max = 420.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                HoroscopeOverlayBody(
+                    overlay = overlay,
+                    strings = strings,
+                )
+            }
+        },
+        confirmButton = { BWitchSecondaryButton(onClick = {}, enabled = false) { Text(strings.horoscope.shareCta) } },
+        dismissButton = { BWitchPrimaryButton(onClick = onCloseOverlay) { Text(strings.horoscope.closeCta) } },
+    )
+}
+
+@Composable
+private fun HoroscopeOverlayHeader(
+    sign: ZodiacSign,
+    periodLabel: String,
+    strings: AppStrings,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Image(
+                painter = painterResource(sign.artResource()),
+                contentDescription = sign.localizedLabel(strings),
+                contentScale = ContentScale.Fit,
+                modifier = Modifier.size(48.dp),
             )
+            Text(
+                text = sign.localizedLabel(strings),
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
+        Text(
+            text = periodLabel,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun HoroscopeOverlayBody(
+    overlay: HoroscopeOverlayUi,
+    strings: AppStrings,
+) {
+    if (overlay.isLoading) {
+        Text(strings.horoscope.loading)
+    } else {
+        when (overlay) {
+            is HoroscopeOverlayUi.DailyOverlay -> {
+                val horoscope = overlay.horoscope
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    HoroscopeMetaChip(label = strings.horoscope.moodLabel, value = horoscope?.mood ?: "-")
+                    HoroscopeMetaChip(label = strings.horoscope.luckyNumberLabel, value = horoscope?.luckyNumber?.toString() ?: "-")
+                    HoroscopeMetaChip(label = strings.horoscope.luckyColorLabel, value = horoscope?.luckyColor ?: "-")
+                }
+                Text(
+                    text = horoscope?.text ?: strings.horoscope.noContentYet,
+                    style = MaterialTheme.typography.bodyLarge,
+                    lineHeight = MaterialTheme.typography.bodyLarge.lineHeight * 1.2f,
+                )
+            }
+            is HoroscopeOverlayUi.WeeklyOverlay -> {
+                val horoscope = overlay.horoscope
+                Text(
+                    text = horoscope?.title ?: strings.horoscope.noContentYet,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                )
+                OverlaySection(strings.horoscope.weekOverviewTitle, horoscope?.overview)
+                OverlaySection(strings.horoscope.loveAndRelationshipsTitle, horoscope?.loveAndRelationships)
+                OverlaySection(strings.horoscope.workAndMoneyTitle, horoscope?.workAndMoney)
+                OverlaySection(strings.horoscope.spiritualEnergyTitle, horoscope?.spiritualEnergy)
+                OverlaySection(strings.horoscope.weeklyAdviceTitle, horoscope?.weeklyAdvice)
+                OverlaySection(strings.horoscope.mantraTitle, horoscope?.mantra)
+            }
+            is HoroscopeOverlayUi.MonthlyOverlay -> {
+                val horoscope = overlay.horoscope
+                Text(
+                    text = horoscope?.title ?: strings.horoscope.noContentYet,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                )
+                OverlaySection(strings.horoscope.monthThemeTitle, horoscope?.monthTheme)
+                OverlaySection(strings.horoscope.loveAndRelationshipsTitle, horoscope?.loveAndRelationships)
+                OverlaySection(strings.horoscope.workAndMoneyTitle, horoscope?.workAndMoney)
+                OverlaySection(strings.horoscope.personalGrowthTitle, horoscope?.personalGrowth)
+                OverlaySection(strings.horoscope.ritualSuggestionTitle, horoscope?.ritualSuggestion)
+                OverlaySection(strings.horoscope.mantraTitle, horoscope?.mantra)
+            }
         }
     }
 }
