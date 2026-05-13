@@ -19,6 +19,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -36,8 +38,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.Modifier
@@ -78,6 +82,7 @@ import com.agc.bwitch.presentation.economy.UNLOCK_FLOW_ORIGIN_DIRECT_BALANCE
 import com.agc.bwitch.presentation.economy.UNLOCK_FLOW_ORIGIN_PREMIUM
 import com.agc.bwitch.ui.common.designsystem.BWitchPrimaryButton
 import com.agc.bwitch.ui.common.designsystem.BWitchSecondaryButton
+import kotlinx.coroutines.flow.distinctUntilChanged
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
@@ -178,6 +183,7 @@ fun HoroscopeScreen(
                 }
             },
             onCloseOverlay = viewModel::onCloseOverlay,
+            onOverlaySignChanged = viewModel::onOverlaySignChanged,
         )
     }
 }
@@ -200,6 +206,7 @@ private fun HoroscopeScreenContent(
     onUnlockWeek: () -> Unit,
     onUnlockMonth: () -> Unit,
     onCloseOverlay: () -> Unit,
+    onOverlaySignChanged: (ZodiacSign) -> Unit,
 ) {
     Column(
         modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
@@ -356,6 +363,7 @@ private fun HoroscopeScreenContent(
             strings = strings,
             onCloseOverlay = onCloseOverlay,
             onUnlock = onUnlock,
+            onOverlaySignChanged = onOverlaySignChanged,
         )
     }
 }
@@ -367,6 +375,7 @@ private fun HoroscopeOverlayDialog(
     strings: AppStrings,
     onCloseOverlay: () -> Unit,
     onUnlock: () -> Unit,
+    onOverlaySignChanged: (ZodiacSign) -> Unit,
 ) {
     if (overlay is HoroscopeOverlayUi.DailyOverlay && overlay.isLocked) {
         LockedDailyHoroscopeDialog(
@@ -382,6 +391,7 @@ private fun HoroscopeOverlayDialog(
             overlay = overlay,
             strings = strings,
             onCloseOverlay = onCloseOverlay,
+            onOverlaySignChanged = onOverlaySignChanged,
         )
     }
 }
@@ -425,34 +435,72 @@ private fun HoroscopeContentDialog(
     overlay: HoroscopeOverlayUi,
     strings: AppStrings,
     onCloseOverlay: () -> Unit,
+    onOverlaySignChanged: (ZodiacSign) -> Unit,
 ) {
+    val signs = remember { ZodiacSign.values().toList() }
+    val initialPage = signs.indexOf(overlay.sign).coerceAtLeast(0)
+    val pagerState = rememberPagerState(initialPage = initialPage) { signs.size }
+    val visibleSign = signs.getOrNull(pagerState.currentPage) ?: overlay.sign
+
+    LaunchedEffect(pagerState, signs) {
+        snapshotFlow { pagerState.currentPage }
+            .distinctUntilChanged()
+            .collect { page ->
+                signs.getOrNull(page)?.let(onOverlaySignChanged)
+            }
+    }
+
+    LaunchedEffect(overlay.sign, signs) {
+        val targetPage = signs.indexOf(overlay.sign)
+        if (targetPage >= 0 && pagerState.currentPage != targetPage) {
+            pagerState.scrollToPage(targetPage)
+        }
+    }
+
     AlertDialog(
         onDismissRequest = onCloseOverlay,
         modifier = Modifier.widthIn(min = 320.dp, max = 520.dp),
         title = {
             HoroscopeOverlayHeader(
-                sign = overlay.sign,
+                sign = visibleSign,
                 periodLabel = overlay.periodLabel,
                 strings = strings,
             )
         },
         text = {
-            Column(
+            HorizontalPager(
+                state = pagerState,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(min = 220.dp, max = 420.dp)
-                    .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(14.dp),
-            ) {
-                HoroscopeOverlayBody(
-                    overlay = overlay,
-                    strings = strings,
-                )
+                    .heightIn(min = 220.dp, max = 420.dp),
+            ) { page ->
+                val pageOverlay = overlay.forVisibleSign(signs[page])
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 220.dp, max = 420.dp)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                ) {
+                    HoroscopeOverlayBody(
+                        overlay = pageOverlay,
+                        strings = strings,
+                    )
+                }
             }
         },
         confirmButton = { BWitchSecondaryButton(onClick = {}, enabled = false) { Text(strings.horoscope.shareCta) } },
         dismissButton = { BWitchPrimaryButton(onClick = onCloseOverlay) { Text(strings.horoscope.closeCta) } },
     )
+}
+
+private fun HoroscopeOverlayUi.forVisibleSign(sign: ZodiacSign): HoroscopeOverlayUi {
+    if (this.sign == sign) return this
+    return when (this) {
+        is HoroscopeOverlayUi.DailyOverlay -> copy(sign = sign, isLoading = true, horoscope = null)
+        is HoroscopeOverlayUi.WeeklyOverlay -> copy(sign = sign, isLoading = true, horoscope = null)
+        is HoroscopeOverlayUi.MonthlyOverlay -> copy(sign = sign, isLoading = true, horoscope = null)
+    }
 }
 
 @Composable

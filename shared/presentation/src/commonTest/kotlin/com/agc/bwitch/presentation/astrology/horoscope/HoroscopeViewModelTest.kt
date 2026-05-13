@@ -392,6 +392,155 @@ class HoroscopeViewModelTest {
     }
 
     @Test
+    fun overlaySignChanged_dailyUnlocked_keepsDateAndLoadsNewSign() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val unlockRepository = FakeUnlockRepository()
+        val repo = FakeRepo()
+        val viewModel = createViewModel(dispatcher, unlockRepository, repo)
+        advanceUntilIdle()
+
+        viewModel.onOpenSign(ZodiacSign.aries)
+        advanceUntilIdle()
+        val initialOverlay = viewModel.uiState.value.overlay as? HoroscopeOverlayUi.DailyOverlay
+        assertNotNull(initialOverlay)
+
+        repo.emit(
+            DailyHoroscope(
+                sign = ZodiacSign.taurus,
+                dateIso = initialOverlay.dateIso,
+                languageCode = "es",
+                text = "Texto Tauro",
+                mood = "Calma",
+                luckyNumber = 2,
+                luckyColor = "Verde",
+            )
+        )
+        viewModel.onOverlaySignChanged(ZodiacSign.taurus)
+        advanceUntilIdle()
+
+        val overlay = viewModel.uiState.value.overlay as? HoroscopeOverlayUi.DailyOverlay
+        assertNotNull(overlay)
+        assertEquals(ZodiacSign.taurus, overlay.sign)
+        assertEquals(initialOverlay.dateIso, overlay.dateIso)
+        assertEquals(ZodiacSign.taurus, viewModel.uiState.value.selectedSign)
+        assertFalse(overlay.isLocked)
+        assertFalse(overlay.isLoading)
+        assertEquals("Texto Tauro", overlay.horoscope?.text)
+    }
+
+    @Test
+    fun overlaySignChanged_weeklyUnlocked_keepsWeekAndObservesNewSign() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val unlockRepository = FakeUnlockRepository(unlockQueriedWeeks = true)
+        val repo = FakeRepo().apply {
+            emitWeekly(
+                WeeklyHoroscope(
+                    sign = ZodiacSign.aries,
+                    weekKey = "2026-W10",
+                    languageCode = "es",
+                    title = "Semana Aries",
+                    overview = "Resumen",
+                    loveAndRelationships = "Amor",
+                    workAndMoney = "Trabajo",
+                    spiritualEnergy = "Energía",
+                    weeklyAdvice = "Consejo",
+                    mantra = "Mantra",
+                )
+            )
+        }
+        val viewModel = createViewModel(dispatcher, unlockRepository, repo)
+        advanceUntilIdle()
+
+        viewModel.onSelectTab(HoroscopeTab.Weekly)
+        advanceUntilIdle()
+        viewModel.onOpenSign(ZodiacSign.aries)
+        advanceUntilIdle()
+        val initialOverlay = viewModel.uiState.value.overlay as? HoroscopeOverlayUi.WeeklyOverlay
+        assertNotNull(initialOverlay)
+
+        repo.emitWeekly(
+            WeeklyHoroscope(
+                sign = ZodiacSign.taurus,
+                weekKey = initialOverlay.weekKey,
+                languageCode = "es",
+                title = "Semana Tauro",
+                overview = "Resumen Tauro",
+                loveAndRelationships = "Amor",
+                workAndMoney = "Trabajo",
+                spiritualEnergy = "Energía",
+                weeklyAdvice = "Consejo",
+                mantra = "Mantra",
+            )
+        )
+        viewModel.onOverlaySignChanged(ZodiacSign.taurus)
+        advanceUntilIdle()
+
+        val overlay = viewModel.uiState.value.overlay as? HoroscopeOverlayUi.WeeklyOverlay
+        assertNotNull(overlay)
+        assertEquals(ZodiacSign.taurus, overlay.sign)
+        assertEquals(initialOverlay.weekKey, overlay.weekKey)
+        assertEquals(ZodiacSign.taurus, viewModel.uiState.value.selectedSign)
+        assertFalse(overlay.isLoading)
+        assertEquals("Semana Tauro", overlay.horoscope?.title)
+    }
+
+    @Test
+    fun overlaySignChanged_monthlyUnlocked_keepsMonthAndObservesNewSign() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val unlockRepository = FakeUnlockRepository(unlockQueriedMonths = true)
+        val repo = FakeRepo().apply {
+            emitMonthly(
+                MonthlyHoroscope(
+                    sign = ZodiacSign.aries,
+                    monthKey = "2026-03",
+                    languageCode = "es",
+                    title = "Mes Aries",
+                    monthTheme = "Tema",
+                    loveAndRelationships = "Amor",
+                    workAndMoney = "Trabajo",
+                    personalGrowth = "Crecimiento",
+                    ritualSuggestion = "Ritual",
+                    mantra = "Mantra",
+                )
+            )
+        }
+        val viewModel = createViewModel(dispatcher, unlockRepository, repo)
+        advanceUntilIdle()
+
+        viewModel.onSelectTab(HoroscopeTab.Monthly)
+        advanceUntilIdle()
+        viewModel.onOpenSign(ZodiacSign.aries)
+        advanceUntilIdle()
+        val initialOverlay = viewModel.uiState.value.overlay as? HoroscopeOverlayUi.MonthlyOverlay
+        assertNotNull(initialOverlay)
+
+        repo.emitMonthly(
+            MonthlyHoroscope(
+                sign = ZodiacSign.taurus,
+                monthKey = initialOverlay.monthKey,
+                languageCode = "es",
+                title = "Mes Tauro",
+                monthTheme = "Tema Tauro",
+                loveAndRelationships = "Amor",
+                workAndMoney = "Trabajo",
+                personalGrowth = "Crecimiento",
+                ritualSuggestion = "Ritual",
+                mantra = "Mantra",
+            )
+        )
+        viewModel.onOverlaySignChanged(ZodiacSign.taurus)
+        advanceUntilIdle()
+
+        val overlay = viewModel.uiState.value.overlay as? HoroscopeOverlayUi.MonthlyOverlay
+        assertNotNull(overlay)
+        assertEquals(ZodiacSign.taurus, overlay.sign)
+        assertEquals(initialOverlay.monthKey, overlay.monthKey)
+        assertEquals(ZodiacSign.taurus, viewModel.uiState.value.selectedSign)
+        assertFalse(overlay.isLoading)
+        assertEquals("Mes Tauro", overlay.horoscope?.title)
+    }
+
+    @Test
     fun weeklyAndMonthly_locked_doNotOpenOverlay() = runTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
         val unlockRepository = FakeUnlockRepository()
