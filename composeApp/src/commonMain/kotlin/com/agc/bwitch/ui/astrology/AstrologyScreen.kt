@@ -47,7 +47,7 @@ fun AstrologyScreen(
             title = strings.headerTitle,
             subtitle = strings.headerSubtitle,
             titleStyle = MaterialTheme.typography.headlineSmall,
-            subtitleStyle = MaterialTheme.typography.bodyLarge,
+            subtitleStyle = MaterialTheme.typography.bodyMedium,
         )
 
         AstrologyFeatureCard(

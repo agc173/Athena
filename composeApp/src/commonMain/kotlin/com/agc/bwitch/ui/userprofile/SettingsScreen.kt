@@ -53,7 +53,6 @@ import com.agc.bwitch.presentation.userprofile.SettingsViewModel
 import com.agc.bwitch.presentation.userprofile.SubscriptionPrimaryAction
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
 import com.agc.bwitch.ui.common.designsystem.BWitchScreen
-import com.agc.bwitch.ui.common.designsystem.BWitchSectionHeader
 import com.agc.bwitch.ui.common.premium.PremiumCard
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
@@ -187,11 +186,6 @@ fun SettingsScreen(contentPadding: PaddingValues) {
             contentPadding = contentPadding,
             modifier = Modifier.verticalScroll(rememberScrollState()),
         ) {
-            BWitchSectionHeader(
-                title = appStrings.navigation.settings,
-                subtitle = strings.subtitle,
-            )
-
             SettingsSectionCard(title = strings.sectionAccount) {
                 SettingsRow(label = strings.username, value = username)
                 SettingsRow(label = strings.email, value = email)
