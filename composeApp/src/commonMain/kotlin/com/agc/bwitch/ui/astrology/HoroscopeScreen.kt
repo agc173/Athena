@@ -1,8 +1,10 @@
 package com.agc.bwitch.ui.astrology
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -36,6 +38,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.semantics.Role
@@ -45,6 +48,19 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import bwitch.composeapp.generated.resources.Res
+import bwitch.composeapp.generated.resources.zodiac_aquarius_art
+import bwitch.composeapp.generated.resources.zodiac_aries_art
+import bwitch.composeapp.generated.resources.zodiac_cancer_art
+import bwitch.composeapp.generated.resources.zodiac_capricorn_art
+import bwitch.composeapp.generated.resources.zodiac_gemini_art
+import bwitch.composeapp.generated.resources.zodiac_leo_art
+import bwitch.composeapp.generated.resources.zodiac_libra_art
+import bwitch.composeapp.generated.resources.zodiac_pisces_art
+import bwitch.composeapp.generated.resources.zodiac_sagittarius_art
+import bwitch.composeapp.generated.resources.zodiac_scorpio_art
+import bwitch.composeapp.generated.resources.zodiac_taurus_art
+import bwitch.composeapp.generated.resources.zodiac_virgo_art
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
 import com.agc.bwitch.localization.AppStrings
 import com.agc.bwitch.localization.appStrings
@@ -61,6 +77,8 @@ import com.agc.bwitch.presentation.economy.UNLOCK_FLOW_ORIGIN_DIRECT_BALANCE
 import com.agc.bwitch.presentation.economy.UNLOCK_FLOW_ORIGIN_PREMIUM
 import com.agc.bwitch.ui.common.designsystem.BWitchPrimaryButton
 import com.agc.bwitch.ui.common.designsystem.BWitchSecondaryButton
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 
 @Composable
@@ -270,19 +288,30 @@ private fun HoroscopeScreenContent(
         Box(
             modifier = Modifier.fillMaxWidth(),
         ) {
-            FlowRow(
-                modifier = Modifier.alpha(if (periodLocked || unlockedButMissingContent) 0.35f else 1f),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-                maxItemsInEachRow = 3,
+            BoxWithConstraints(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .alpha(if (periodLocked || unlockedButMissingContent) 0.35f else 1f),
             ) {
-                ZodiacSign.values().forEach { sign ->
-                    ZodiacSignCard(
-                        sign = sign,
-                        strings = strings,
-                        enabled = !periodLocked && !unlockedButMissingContent,
-                        onClick = { if (!periodLocked && !unlockedButMissingContent) onOpenSign(sign) },
-                    )
+                val spacing = 10.dp
+                val columns = if (maxWidth < 320.dp) 2 else 3
+                val cardSize = ((maxWidth - spacing * (columns - 1)) / columns).coerceIn(88.dp, 112.dp)
+
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(spacing),
+                    verticalArrangement = Arrangement.spacedBy(spacing),
+                    maxItemsInEachRow = columns,
+                ) {
+                    ZodiacSign.values().forEach { sign ->
+                        ZodiacSignCard(
+                            sign = sign,
+                            strings = strings,
+                            enabled = !periodLocked && !unlockedButMissingContent,
+                            onClick = { if (!periodLocked && !unlockedButMissingContent) onOpenSign(sign) },
+                            modifier = Modifier.size(cardSize),
+                        )
+                    }
                 }
             }
 
@@ -327,7 +356,7 @@ private fun HoroscopeScreenContent(
                 title = { Text(strings.horoscope.lockedTitle) },
                 text = {
                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Text("${overlay.sign.symbol()} ${overlay.sign.localizedLabel(strings)} · ${overlay.dateIso}\n${strings.horoscope.unlockMessage}")
+                        Text("${overlay.sign.localizedLabel(strings)} · ${overlay.dateIso}\n${strings.horoscope.unlockMessage}")
                         overlay.unlockErrorMessage?.let { unlockError ->
                             Text(
                                 text = unlockError.toLocalizedMessage(strings),
@@ -355,11 +384,11 @@ private fun HoroscopeScreenContent(
                             horizontalArrangement = Arrangement.spacedBy(10.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Text(
-                                text = overlay.sign.symbol(),
-                                style = MaterialTheme.typography.headlineMedium,
-                                modifier = Modifier.size(40.dp),
-                                textAlign = TextAlign.Center,
+                            Image(
+                                painter = painterResource(overlay.sign.artResource()),
+                                contentDescription = overlay.sign.localizedLabel(strings),
+                                contentScale = ContentScale.Fit,
+                                modifier = Modifier.size(48.dp),
                             )
                             Text(
                                 text = overlay.sign.localizedLabel(strings),
@@ -516,33 +545,38 @@ private fun ZodiacSignCard(
     strings: AppStrings,
     enabled: Boolean,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val colors = MaterialTheme.colorScheme
+    val label = sign.localizedLabel(strings)
     Card(
         onClick = onClick,
-        modifier = Modifier
-            .width(108.dp)
+        modifier = modifier
             .aspectRatio(1f)
             .semantics {
                 role = Role.Button
-                contentDescription = sign.localizedLabel(strings)
+                contentDescription = label
             },
         colors = CardDefaults.cardColors(containerColor = colors.surfaceVariant.copy(alpha = if (enabled) 0.55f else 0.22f)),
         border = BorderStroke(1.dp, colors.outlineVariant),
     ) {
-        Box(modifier = Modifier.fillMaxSize().padding(10.dp)) {
+        Box(modifier = Modifier.fillMaxSize().padding(8.dp)) {
             Column(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Text(
-                    text = sign.symbol(),
-                    style = MaterialTheme.typography.headlineLarge,
-                    textAlign = TextAlign.Center,
+                Image(
+                    painter = painterResource(sign.artResource()),
+                    contentDescription = label,
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .padding(bottom = 4.dp),
                 )
                 Text(
-                    text = sign.localizedLabel(strings),
+                    text = label,
                     style = MaterialTheme.typography.titleSmall,
                     textAlign = TextAlign.Center,
                     fontWeight = FontWeight.Medium,
@@ -759,19 +793,19 @@ private fun monthNameGerman(month: Int): String = when (month) {
     else -> "Dezember"
 }
 
-private fun ZodiacSign.symbol(): String = when (this) {
-    ZodiacSign.aries -> "♈"
-    ZodiacSign.taurus -> "♉"
-    ZodiacSign.gemini -> "♊"
-    ZodiacSign.cancer -> "♋"
-    ZodiacSign.leo -> "♌"
-    ZodiacSign.virgo -> "♍"
-    ZodiacSign.libra -> "♎"
-    ZodiacSign.scorpio -> "♏"
-    ZodiacSign.sagittarius -> "♐"
-    ZodiacSign.capricorn -> "♑"
-    ZodiacSign.aquarius -> "♒"
-    ZodiacSign.pisces -> "♓"
+private fun ZodiacSign.artResource(): DrawableResource = when (this) {
+    ZodiacSign.aries -> Res.drawable.zodiac_aries_art
+    ZodiacSign.taurus -> Res.drawable.zodiac_taurus_art
+    ZodiacSign.gemini -> Res.drawable.zodiac_gemini_art
+    ZodiacSign.cancer -> Res.drawable.zodiac_cancer_art
+    ZodiacSign.leo -> Res.drawable.zodiac_leo_art
+    ZodiacSign.virgo -> Res.drawable.zodiac_virgo_art
+    ZodiacSign.libra -> Res.drawable.zodiac_libra_art
+    ZodiacSign.scorpio -> Res.drawable.zodiac_scorpio_art
+    ZodiacSign.sagittarius -> Res.drawable.zodiac_sagittarius_art
+    ZodiacSign.capricorn -> Res.drawable.zodiac_capricorn_art
+    ZodiacSign.aquarius -> Res.drawable.zodiac_aquarius_art
+    ZodiacSign.pisces -> Res.drawable.zodiac_pisces_art
 }
 
 private fun ZodiacSign.localizedLabel(strings: AppStrings): String = when (this) {
