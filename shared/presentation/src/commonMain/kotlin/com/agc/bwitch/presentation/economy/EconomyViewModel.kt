@@ -178,6 +178,34 @@ class EconomyViewModel(
         )
     }
 
+    fun onDailyLimitPaywallShown(
+        module: String,
+        placement: String,
+        reason: String,
+    ) {
+        analyticsTracker.track(
+            AnalyticsEvent.PaywallShown(
+                placement = placement,
+                module = module,
+                reason = reason,
+            ),
+        )
+    }
+
+    fun onDailyLimitPaywallActionClicked(
+        module: String,
+        placement: String,
+        action: String,
+    ) {
+        analyticsTracker.track(
+            AnalyticsEvent.PaywallActionClicked(
+                placement = placement,
+                module = module,
+                action = action,
+            ),
+        )
+    }
+
     fun onRewardedAdCtaShown(
         placement: String,
         rewardedAdsRemaining: Int?,

@@ -221,10 +221,6 @@ fun MoonStoreScreen(
             }
         }
 
-        Text(
-            text = strings.storeFutureContentTitle,
-            style = MaterialTheme.typography.titleSmall,
-        )
         PremiumCard(
             title = strings.storeSubscriptionTitle,
             subtitle = strings.storeSubscriptionPlaceholderDescription,
@@ -233,9 +229,15 @@ fun MoonStoreScreen(
                 SubscriptionPrimaryAction.Subscribe -> settingsStrings.subscriptionActionSubscribe
                 SubscriptionPrimaryAction.Manage -> settingsStrings.subscriptionActionManage
             },
+            restoreActionLabel = settingsStrings.restorePurchases,
             onPrimaryActionClick = settingsViewModel::onSubscriptionPrimaryActionClicked,
+            onRestoreActionClick = settingsViewModel::onRestorePurchasesClicked,
         )
 
+        Text(
+            text = strings.storeFutureContentTitle,
+            style = MaterialTheme.typography.titleSmall,
+        )
         Card(modifier = Modifier.fillMaxWidth()) {
             Column(
                 modifier = Modifier.padding(12.dp),

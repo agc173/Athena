@@ -21,6 +21,9 @@ Eventos:
 - `premium_purchase_started`
 - `premium_purchase_completed`
 - `premium_purchase_failed`
+- `premium_restore_clicked`
+- `premium_restore_completed`
+- `premium_restore_empty`
 
 Params clave:
 - `paywall_impression_id`

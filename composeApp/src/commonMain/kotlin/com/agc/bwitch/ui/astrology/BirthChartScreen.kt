@@ -50,6 +50,7 @@ import com.agc.bwitch.ui.common.toVisualResource
 import com.agc.bwitch.ui.common.economy.DailyLimitPaywallCard
 import com.agc.bwitch.ui.common.economy.EconomyGateInfoRow
 import com.agc.bwitch.ui.common.economy.isDailyLimitRejected
+import com.agc.bwitch.ui.common.economy.hasPremiumBenefit
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
 import com.agc.bwitch.ui.common.designsystem.BWitchPrimaryButton
 import com.agc.bwitch.ui.theme.BWitchThemeTokens
@@ -143,6 +144,12 @@ fun BirthChartScreen(
             DailyLimitPaywallCard(
                 economyStrings = strings.economy,
                 onOpenStore = onOpenStore,
+                module = birthEssencePreview?.module ?: "BIRTH_ESSENCE",
+                placement = "birth_essence_daily_limit",
+                reason = birthEssencePreview?.reasonIfRejected ?: "daily_limit",
+                hasPremiumBenefit = birthEssencePreview.hasPremiumBenefit(),
+                onPaywallShown = economyViewModel::onDailyLimitPaywallShown,
+                onPaywallActionClicked = economyViewModel::onDailyLimitPaywallActionClicked,
             )
         }
 

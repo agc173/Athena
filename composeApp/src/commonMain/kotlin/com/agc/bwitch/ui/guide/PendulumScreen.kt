@@ -68,6 +68,7 @@ import org.koin.compose.koinInject
 import com.agc.bwitch.ui.common.economy.DailyLimitPaywallCard
 import com.agc.bwitch.ui.common.economy.EconomyGateInfoRow
 import com.agc.bwitch.ui.common.economy.isDailyLimitRejected
+import com.agc.bwitch.ui.common.economy.hasPremiumBenefit
 
 @Composable
 fun PendulumScreen(
@@ -153,6 +154,12 @@ fun PendulumScreen(
             DailyLimitPaywallCard(
                 economyStrings = appStrings.economy,
                 onOpenStore = onOpenStore,
+                module = pendulumPreview?.module ?: "PENDULUM",
+                placement = "pendulum_daily_limit",
+                reason = pendulumPreview?.reasonIfRejected ?: "daily_limit",
+                hasPremiumBenefit = pendulumPreview.hasPremiumBenefit(),
+                onPaywallShown = economyViewModel::onDailyLimitPaywallShown,
+                onPaywallActionClicked = economyViewModel::onDailyLimitPaywallActionClicked,
             )
         }
 

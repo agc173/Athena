@@ -459,19 +459,35 @@ class SettingsViewModel(
     }
 
     fun onRestorePurchasesClicked() {
+        analyticsTracker.track(AnalyticsEvent.PremiumRestoreClicked(placement = "settings_restore"))
         scope.launch {
             runCatching { restorePurchases() }
                 .onSuccess { result ->
                     val feedback = when (result) {
-                        is RestorePurchasesResult.NoPurchasesFound -> SettingsFeedback.RestorePurchasesNoPurchases
-                        is RestorePurchasesResult.Restored -> SettingsFeedback.RestorePurchasesSuccess
+                        is RestorePurchasesResult.NoPurchasesFound -> {
+                            analyticsTracker.track(AnalyticsEvent.PremiumRestoreEmpty(reason = "no_purchases_or_backend_inactive"))
+                            SettingsFeedback.RestorePurchasesNoPurchases
+                        }
+
+                        is RestorePurchasesResult.Restored -> {
+                            if (result.status.isActive) {
+                                analyticsTracker.track(AnalyticsEvent.PremiumRestoreCompleted(status = result.status.name))
+                                SettingsFeedback.RestorePurchasesSuccess
+                            } else {
+                                analyticsTracker.track(AnalyticsEvent.PremiumRestoreEmpty(reason = "backend_inactive"))
+                                SettingsFeedback.RestorePurchasesNoPurchases
+                            }
+                        }
                     }
                     _uiState.update { it.copy(feedback = feedback) }
                     if (result is RestorePurchasesResult.Restored && result.status.isActive) {
                         _uiEffects.emit(SettingsUiEffect.RefreshEconomy)
                     }
                 }
-                .onFailure { error -> _uiState.update { it.copy(error = error.message) } }
+                .onFailure { error ->
+                    analyticsTracker.track(AnalyticsEvent.PremiumRestoreEmpty(reason = error.message ?: "restore_failed"))
+                    _uiState.update { it.copy(error = error.message) }
+                }
         }
     }
 
