@@ -2,6 +2,7 @@ package com.agc.bwitch.ui.astrology
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -547,42 +548,44 @@ private fun ZodiacSignCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val colors = MaterialTheme.colorScheme
     val label = sign.localizedLabel(strings)
-    Card(
-        onClick = onClick,
+    Column(
         modifier = modifier
             .aspectRatio(1f)
+            .clickable(
+                enabled = enabled,
+                role = Role.Button,
+                onClick = onClick,
+            )
             .semantics {
                 role = Role.Button
                 contentDescription = label
-            },
-        colors = CardDefaults.cardColors(containerColor = colors.surfaceVariant.copy(alpha = if (enabled) 0.55f else 0.22f)),
-        border = BorderStroke(1.dp, colors.outlineVariant),
-    ) {
-        Box(modifier = Modifier.fillMaxSize().padding(8.dp)) {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Image(
-                    painter = painterResource(sign.artResource()),
-                    contentDescription = label,
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth()
-                        .padding(bottom = 4.dp),
-                )
-                Text(
-                    text = label,
-                    style = MaterialTheme.typography.titleSmall,
-                    textAlign = TextAlign.Center,
-                    fontWeight = FontWeight.Medium,
-                )
             }
+            .alpha(if (enabled) 1f else 0.42f)
+            .padding(2.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth(0.94f),
+            contentAlignment = Alignment.Center,
+        ) {
+            Image(
+                painter = painterResource(sign.artResource()),
+                contentDescription = label,
+                contentScale = ContentScale.Fit,
+                modifier = Modifier.fillMaxSize(),
+            )
         }
+        Text(
+            text = label,
+            modifier = Modifier.fillMaxWidth(),
+            style = MaterialTheme.typography.titleMedium,
+            textAlign = TextAlign.Center,
+            fontWeight = FontWeight.SemiBold,
+        )
     }
 }
 
