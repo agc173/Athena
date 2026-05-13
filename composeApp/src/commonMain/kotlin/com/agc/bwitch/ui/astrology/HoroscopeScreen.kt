@@ -465,8 +465,8 @@ private fun HoroscopeContentDialog(
     BasicAlertDialog(
         onDismissRequest = onCloseOverlay,
         modifier = Modifier
-            .fillMaxWidth(0.94f)
-            .widthIn(max = 620.dp),
+            .fillMaxWidth(0.97f)
+            .widthIn(max = 720.dp),
     ) {
         Surface(
             modifier = Modifier.fillMaxWidth(),
@@ -487,13 +487,13 @@ private fun HoroscopeContentDialog(
                     state = pagerState,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(420.dp),
+                        .height(520.dp),
                 ) { page ->
                     val pageOverlay = overlay.forVisibleSign(signs[page])
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(420.dp)
+                            .height(520.dp)
                             .verticalScroll(rememberScrollState()),
                         verticalArrangement = Arrangement.spacedBy(14.dp),
                     ) {
