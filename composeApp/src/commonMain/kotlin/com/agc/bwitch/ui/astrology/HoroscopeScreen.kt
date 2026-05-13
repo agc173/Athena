@@ -55,7 +55,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import bwitch.composeapp.generated.resources.Res
 import bwitch.composeapp.generated.resources.zodiac_aquarius_art
@@ -464,12 +463,14 @@ private fun HoroscopeContentDialog(
 
     BasicAlertDialog(
         onDismissRequest = onCloseOverlay,
-        modifier = Modifier.widthIn(min = 320.dp, max = 520.dp),
+        modifier = Modifier
+            .fillMaxWidth(0.94f)
+            .widthIn(max = 620.dp),
     ) {
         Surface(
             modifier = Modifier.fillMaxWidth(),
             shape = MaterialTheme.shapes.extraLarge,
-            color = MaterialTheme.colorScheme.surface,
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
             tonalElevation = 6.dp,
         ) {
             Column(
@@ -521,14 +522,17 @@ private fun HoroscopeOverlayHeader(
     periodLabel: String,
     strings: AppStrings,
 ) {
-    Column(
+    Row(
         modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.Top,
     ) {
-        Box(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+            horizontalAlignment = Alignment.Start,
+        ) {
             Row(
-                modifier = Modifier.align(Alignment.Center),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -544,20 +548,18 @@ private fun HoroscopeOverlayHeader(
                     fontWeight = FontWeight.SemiBold,
                 )
             }
-            TextButton(
-                onClick = {},
-                enabled = false,
-                modifier = Modifier.align(Alignment.CenterEnd),
-            ) {
-                Text(strings.horoscope.shareCta)
-            }
+            Text(
+                text = periodLabel,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
-        Text(
-            text = periodLabel,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
+        TextButton(
+            onClick = {},
+            enabled = false,
+        ) {
+            Text(strings.horoscope.shareCta)
+        }
     }
 }
 
