@@ -204,6 +204,20 @@ class AnalyticsEventTest {
     }
 
     @Test
+    fun premiumRestoreEvents_haveExpectedNamesAndParams() {
+        val clicked = AnalyticsEvent.PremiumRestoreClicked(placement = "settings_restore")
+        val completed = AnalyticsEvent.PremiumRestoreCompleted(status = "ActiveMonthly")
+        val empty = AnalyticsEvent.PremiumRestoreEmpty(reason = "no_purchases_or_backend_inactive")
+
+        assertEquals("premium_restore_clicked", clicked.name)
+        assertEquals(mapOf("placement" to "settings_restore"), clicked.params())
+        assertEquals("premium_restore_completed", completed.name)
+        assertEquals(mapOf("status" to "ActiveMonthly"), completed.params())
+        assertEquals("premium_restore_empty", empty.name)
+        assertEquals(mapOf("reason" to "no_purchases_or_backend_inactive"), empty.params())
+    }
+
+    @Test
     fun premiumEvents_params_keepLegacyPayloadWhenOptionalOriginPlacementIsNull() {
         val shown = AnalyticsEvent.PremiumCtaShown(placement = "settings_subscribe")
         val clicked = AnalyticsEvent.PremiumCtaClicked(placement = "settings_catalog")

@@ -329,6 +329,12 @@ fun TarotScreen(
                 DailyLimitPaywallCard(
                     economyStrings = appStrings.economy,
                     onOpenStore = onOpenStore,
+                    module = state.selectedType.name,
+                    placement = "tarot_daily_limit",
+                    reason = "daily_limit",
+                    hasPremiumBenefit = state.selectedType == TarotRequestType.TAROT_3,
+                    onPaywallShown = economyViewModel::onDailyLimitPaywallShown,
+                    onPaywallActionClicked = economyViewModel::onDailyLimitPaywallActionClicked,
                 )
             }
 

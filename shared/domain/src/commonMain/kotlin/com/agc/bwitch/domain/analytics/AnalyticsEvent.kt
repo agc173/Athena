@@ -203,6 +203,26 @@ sealed interface AnalyticsEvent {
         )
     }
 
+    data class PremiumRestoreClicked(
+        val placement: String,
+    ) : AnalyticsEvent {
+        override val name: String = "premium_restore_clicked"
+        override fun params(): Map<String, String> = mapOf("placement" to placement)
+    }
+
+    data class PremiumRestoreCompleted(
+        val status: String,
+    ) : AnalyticsEvent {
+        override val name: String = "premium_restore_completed"
+        override fun params(): Map<String, String> = mapOf("status" to status)
+    }
+
+    data class PremiumRestoreEmpty(
+        val reason: String,
+    ) : AnalyticsEvent {
+        override val name: String = "premium_restore_empty"
+        override fun params(): Map<String, String> = mapOf("reason" to reason)
+    }
 
     data class EntitlementRefreshed(
         val status: String,

@@ -39,6 +39,7 @@ import com.agc.bwitch.presentation.economy.runWithEconomyGate
 import com.agc.bwitch.ui.common.economy.DailyLimitPaywallCard
 import com.agc.bwitch.ui.common.economy.EconomyGateInfoRow
 import com.agc.bwitch.ui.common.economy.isDailyLimitRejected
+import com.agc.bwitch.ui.common.economy.hasPremiumBenefit
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
 import com.agc.bwitch.ui.common.designsystem.BWitchPrimaryButton
 import com.agc.bwitch.ui.common.designsystem.BWitchSecondaryButton
@@ -149,6 +150,12 @@ fun OracleScreen(
             DailyLimitPaywallCard(
                 economyStrings = appStrings.economy,
                 onOpenStore = onOpenStore,
+                module = oraclePreview?.module ?: "ORACLE_1Q",
+                placement = "oracle_daily_limit",
+                reason = oraclePreview?.reasonIfRejected ?: "daily_limit",
+                hasPremiumBenefit = oraclePreview.hasPremiumBenefit(),
+                onPaywallShown = economyViewModel::onDailyLimitPaywallShown,
+                onPaywallActionClicked = economyViewModel::onDailyLimitPaywallActionClicked,
             )
         }
 

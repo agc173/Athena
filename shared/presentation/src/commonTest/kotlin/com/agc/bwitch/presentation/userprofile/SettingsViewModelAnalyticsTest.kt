@@ -171,10 +171,11 @@ class SettingsViewModelAnalyticsTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
         Dispatchers.setMain(dispatcher)
         try {
+            val analytics = FakeAnalyticsTracker()
             val subscriptionRepo = FakeSubscriptionRepository(
                 restoreResult = RestorePurchasesResult.Restored(SubscriptionStatus.ActiveMonthly),
             )
-            val viewModel = viewModel(subscriptionRepo = subscriptionRepo)
+            val viewModel = viewModel(analytics = analytics, subscriptionRepo = subscriptionRepo)
             val effects = mutableListOf<SettingsUiEffect>()
             val collectJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiEffects.collect { effects += it }
@@ -187,6 +188,9 @@ class SettingsViewModelAnalyticsTest {
             assertEquals(1, subscriptionRepo.restoreCallCount)
             assertEquals(SettingsFeedback.RestorePurchasesSuccess, viewModel.uiState.value.feedback)
             assertTrue(effects.any { it is SettingsUiEffect.RefreshEconomy })
+            assertTrue(analytics.events.any { it is AnalyticsEvent.PremiumRestoreClicked })
+            assertTrue(analytics.events.any { it is AnalyticsEvent.PremiumRestoreCompleted })
+            assertFalse(analytics.events.any { it is AnalyticsEvent.PremiumRestoreEmpty })
             collectJob.cancel()
             viewModel.clear()
         } finally {
@@ -199,8 +203,9 @@ class SettingsViewModelAnalyticsTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
         Dispatchers.setMain(dispatcher)
         try {
+            val analytics = FakeAnalyticsTracker()
             val subscriptionRepo = FakeSubscriptionRepository(restoreResult = RestorePurchasesResult.NoPurchasesFound)
-            val viewModel = viewModel(subscriptionRepo = subscriptionRepo)
+            val viewModel = viewModel(analytics = analytics, subscriptionRepo = subscriptionRepo)
             val effects = mutableListOf<SettingsUiEffect>()
             val collectJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.uiEffects.collect { effects += it }
@@ -213,6 +218,41 @@ class SettingsViewModelAnalyticsTest {
             assertEquals(1, subscriptionRepo.restoreCallCount)
             assertEquals(SettingsFeedback.RestorePurchasesNoPurchases, viewModel.uiState.value.feedback)
             assertFalse(effects.any { it is SettingsUiEffect.RefreshEconomy })
+            assertTrue(analytics.events.any { it is AnalyticsEvent.PremiumRestoreClicked })
+            assertTrue(analytics.events.any { it is AnalyticsEvent.PremiumRestoreEmpty })
+            assertFalse(analytics.events.any { it is AnalyticsEvent.PremiumRestoreCompleted })
+            collectJob.cancel()
+            viewModel.clear()
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun `restore inactive no emite completed aunque el resultado sea restored`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val analytics = FakeAnalyticsTracker()
+            val subscriptionRepo = FakeSubscriptionRepository(
+                restoreResult = RestorePurchasesResult.Restored(SubscriptionStatus.Inactive),
+            )
+            val viewModel = viewModel(analytics = analytics, subscriptionRepo = subscriptionRepo)
+            val effects = mutableListOf<SettingsUiEffect>()
+            val collectJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiEffects.collect { effects += it }
+            }
+
+            advanceUntilIdle()
+            viewModel.onRestorePurchasesClicked()
+            advanceUntilIdle()
+
+            assertEquals(1, subscriptionRepo.restoreCallCount)
+            assertEquals(SettingsFeedback.RestorePurchasesNoPurchases, viewModel.uiState.value.feedback)
+            assertFalse(effects.any { it is SettingsUiEffect.RefreshEconomy })
+            assertTrue(analytics.events.any { it is AnalyticsEvent.PremiumRestoreClicked })
+            assertTrue(analytics.events.any { it is AnalyticsEvent.PremiumRestoreEmpty })
+            assertFalse(analytics.events.any { it is AnalyticsEvent.PremiumRestoreCompleted })
             collectJob.cancel()
             viewModel.clear()
         } finally {

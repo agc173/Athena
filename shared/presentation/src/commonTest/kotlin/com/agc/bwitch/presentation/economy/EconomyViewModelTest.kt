@@ -155,6 +155,43 @@ class EconomyViewModelTest {
     }
 
     @Test
+    fun `daily limit paywall analytics include context`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val analytics = FakeAnalyticsTracker()
+            val viewModel = EconomyViewModel(
+                economyRepository = StableEconomyRepository(),
+                analyticsTracker = analytics,
+                autoLoadOnInit = true,
+            )
+            advanceUntilIdle()
+
+            viewModel.onDailyLimitPaywallShown(
+                module = "ORACLE_1Q",
+                placement = "oracle_daily_limit",
+                reason = "daily_limit",
+            )
+            viewModel.onDailyLimitPaywallActionClicked(
+                module = "ORACLE_1Q",
+                placement = "oracle_daily_limit",
+                action = "open_store",
+            )
+
+            val shown = analytics.events.filterIsInstance<AnalyticsEvent.PaywallShown>().last()
+            val clicked = analytics.events.filterIsInstance<AnalyticsEvent.PaywallActionClicked>().last()
+            assertEquals("ORACLE_1Q", shown.module)
+            assertEquals("oracle_daily_limit", shown.placement)
+            assertEquals("daily_limit", shown.reason)
+            assertEquals("ORACLE_1Q", clicked.module)
+            assertEquals("oracle_daily_limit", clicked.placement)
+            assertEquals("open_store", clicked.action)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
     fun `claim rewarded ad includes paywall impression id on started and completed`() = runTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
         Dispatchers.setMain(dispatcher)
