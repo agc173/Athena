@@ -171,6 +171,61 @@ class HoroscopeViewModel(
         }
     }
 
+    fun onOverlaySignChanged(sign: ZodiacSign) {
+        val state = _uiState.value
+        val overlay = state.overlay ?: return
+        if (overlay.sign == sign || state.isUnlocking) return
+
+        userHasManuallySelectedSign = true
+        var overlayUpdated = false
+        when (overlay) {
+            is HoroscopeOverlayUi.DailyOverlay -> {
+                _uiState.update { current ->
+                    val currentOverlay = current.overlay as? HoroscopeOverlayUi.DailyOverlay ?: return@update current
+                    if (currentOverlay.dateIso != overlay.dateIso || currentOverlay.sign != overlay.sign) return@update current
+                    overlayUpdated = true
+                    current.copy(
+                        selectedSign = sign,
+                        overlay = currentOverlay.copy(
+                            sign = sign,
+                            isLoading = !currentOverlay.isLocked,
+                            horoscope = null,
+                            unlockErrorMessage = null,
+                            unlockErrorType = null,
+                        ),
+                    )
+                }
+                if (overlayUpdated && !overlay.isLocked) loadOverlayHoroscope(sign = sign, dateIso = overlay.dateIso)
+            }
+
+            is HoroscopeOverlayUi.WeeklyOverlay -> {
+                _uiState.update { current ->
+                    val currentOverlay = current.overlay as? HoroscopeOverlayUi.WeeklyOverlay ?: return@update current
+                    if (currentOverlay.weekKey != overlay.weekKey || currentOverlay.sign != overlay.sign) return@update current
+                    overlayUpdated = true
+                    current.copy(
+                        selectedSign = sign,
+                        overlay = currentOverlay.copy(sign = sign, isLoading = true, horoscope = null),
+                    )
+                }
+                if (overlayUpdated) observeWeeklyOverlay(sign = sign, weekKey = overlay.weekKey)
+            }
+
+            is HoroscopeOverlayUi.MonthlyOverlay -> {
+                _uiState.update { current ->
+                    val currentOverlay = current.overlay as? HoroscopeOverlayUi.MonthlyOverlay ?: return@update current
+                    if (currentOverlay.monthKey != overlay.monthKey || currentOverlay.sign != overlay.sign) return@update current
+                    overlayUpdated = true
+                    current.copy(
+                        selectedSign = sign,
+                        overlay = currentOverlay.copy(sign = sign, isLoading = true, horoscope = null),
+                    )
+                }
+                if (overlayUpdated) observeMonthlyOverlay(sign = sign, monthKey = overlay.monthKey)
+            }
+        }
+    }
+
     fun onCloseOverlay() {
         pendingUnlockTarget = null
         _uiState.update { it.copy(overlay = null) }
