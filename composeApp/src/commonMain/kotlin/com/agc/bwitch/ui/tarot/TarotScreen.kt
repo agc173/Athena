@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -123,12 +124,13 @@ fun TarotScreen(
 
             when (state.revealPhase) {
                 TarotRevealPhase.WAITING_TO_SHUFFLE -> {
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        TarotCardView(card = null, revealed = false, onClick = viewModel::startShuffle)
+                    TarotDeckInteractionStage {
+                        TarotCardView(
+                            card = null,
+                            revealed = false,
+                            cardWidth = TAROT_DECK_STAGE_CARD_WIDTH,
+                            onClick = viewModel::startShuffle,
+                        )
                         Text(strings.tapDeckToShuffle, style = MaterialTheme.typography.bodyMedium)
                     }
                 }
@@ -147,19 +149,22 @@ fun TarotScreen(
                             loadingSubtitle = strings.loadingThreeSubtitle
                         }
                     }
-                    TarotLoadingDeck(
-                        title = loadingTitle,
-                        subtitle = loadingSubtitle,
-                    )
+                    TarotDeckInteractionStage {
+                        TarotLoadingDeck(
+                            title = loadingTitle,
+                            subtitle = loadingSubtitle,
+                        )
+                    }
                 }
 
                 TarotRevealPhase.WAITING_TO_REVEAL -> {
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        TarotCardView(card = null, revealed = false, onClick = viewModel::startReveal)
+                    TarotDeckInteractionStage {
+                        TarotCardView(
+                            card = null,
+                            revealed = false,
+                            cardWidth = TAROT_DECK_STAGE_CARD_WIDTH,
+                            onClick = viewModel::startReveal,
+                        )
                         Text(strings.tapToReveal, style = MaterialTheme.typography.bodyMedium)
                     }
                 }
@@ -514,6 +519,28 @@ fun TarotScreen(
         }
     }
 }
+
+@Composable
+private fun TarotDeckInteractionStage(
+    content: @Composable () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = TAROT_DECK_STAGE_MIN_HEIGHT),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            content()
+        }
+    }
+}
+
+private val TAROT_DECK_STAGE_MIN_HEIGHT = 420.dp
+private val TAROT_DECK_STAGE_CARD_WIDTH = 180.dp
 
 private const val OVERLAY_CARD_EXIT_DURATION_MS = 180
 private val OVERLAY_TOP_METADATA_HEIGHT = 72.dp
