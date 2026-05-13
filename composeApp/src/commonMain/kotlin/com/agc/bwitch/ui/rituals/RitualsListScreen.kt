@@ -2,6 +2,8 @@ package com.agc.bwitch.ui.rituals
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,7 +37,7 @@ fun RitualsListScreen(
 
     BWitchScreen(
         contentPadding = contentPadding,
-        modifier = modifier,
+        modifier = modifier.verticalScroll(rememberScrollState()),
     ) {
         BWitchSectionHeader(
             title = strings.listHeaderTitle.withText(category.localizedName(strings)),

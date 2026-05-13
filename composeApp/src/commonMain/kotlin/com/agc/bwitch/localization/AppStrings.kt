@@ -702,7 +702,7 @@ val fallbackAppStrings: AppStrings = AppStrings(
         addCta = "Sumar a mi práctica",
     ),
     ritualCatalog = RitualCatalogStrings(
-        homeHeaderTitle = "Rituales",
+        homeHeaderTitle = "Tu altar interior",
         homeHeaderSubtitle = "Activa tu energía con pequeñas prácticas",
         dailyRitualCardTitle = "Ritual del día",
         dailyRitualCardSubtitle = "Hoy: claridad interior",
@@ -1200,7 +1200,7 @@ private val englishAppStrings = fallbackAppStrings.copy(
         addCta = "Add to my practice",
     ),
     ritualCatalog = fallbackAppStrings.ritualCatalog.copy(
-        homeHeaderTitle = "Rituals",
+        homeHeaderTitle = "Your inner altar",
         homeHeaderSubtitle = "Activate your energy with small practices",
         dailyRitualCardTitle = "Daily ritual",
         dailyRitualCardSubtitle = "Today: inner clarity",
@@ -1702,7 +1702,7 @@ private val portugueseAppStrings = fallbackAppStrings.copy(
         addCta = "Somar à minha prática",
     ),
     ritualCatalog = fallbackAppStrings.ritualCatalog.copy(
-        homeHeaderTitle = "Rituais",
+        homeHeaderTitle = "Seu altar interior",
         homeHeaderSubtitle = "Ative sua energia com pequenas práticas",
         dailyRitualCardTitle = "Ritual do dia",
         dailyRitualCardSubtitle = "Hoje: clareza interior",
@@ -2191,7 +2191,7 @@ private val russianAppStrings = fallbackAppStrings.copy(
         addCta = "Добавить в мою практику",
     ),
     ritualCatalog = fallbackAppStrings.ritualCatalog.copy(
-        homeHeaderTitle = "Ритуалы",
+        homeHeaderTitle = "Твой внутренний алтарь",
         homeHeaderSubtitle = "Активируй свою энергию с помощью небольших практик",
         dailyRitualCardTitle = "Ритуал дня",
         dailyRitualCardSubtitle = "Сегодня: внутренняя ясность",
@@ -2695,7 +2695,7 @@ private val frenchAppStrings = fallbackAppStrings.copy(
         addCta = "Ajouter à ma pratique",
     ),
     ritualCatalog = fallbackAppStrings.ritualCatalog.copy(
-        homeHeaderTitle = "Rituels",
+        homeHeaderTitle = "Ton autel intérieur",
         homeHeaderSubtitle = "Active ton énergie avec de petites pratiques",
         dailyRitualCardTitle = "Rituel du jour",
         dailyRitualCardSubtitle = "Aujourd'hui : clarté intérieure",
@@ -3188,7 +3188,7 @@ private val italianAppStrings = fallbackAppStrings.copy(
         addCta = "Aggiungi alla mia pratica",
     ),
     ritualCatalog = fallbackAppStrings.ritualCatalog.copy(
-        homeHeaderTitle = "Rituali",
+        homeHeaderTitle = "Il tuo altare interiore",
         homeHeaderSubtitle = "Attiva la tua energia con piccole pratiche",
         dailyRitualCardTitle = "Rituale del giorno",
         dailyRitualCardSubtitle = "Oggi: chiarezza interiore",
@@ -3679,7 +3679,7 @@ private val germanAppStrings = fallbackAppStrings.copy(
         addCta = "Zu meiner Praxis hinzufügen",
     ),
     ritualCatalog = fallbackAppStrings.ritualCatalog.copy(
-        homeHeaderTitle = "Rituale",
+        homeHeaderTitle = "Dein innerer Altar",
         homeHeaderSubtitle = "Aktiviere deine Energie mit kleinen Praktiken",
         dailyRitualCardTitle = "Tagesritual",
         dailyRitualCardSubtitle = "Heute: innere Klarheit",
