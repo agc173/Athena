@@ -22,9 +22,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import bwitch.composeapp.generated.resources.Res
-import bwitch.composeapp.generated.resources.horoscope_ornament
-import bwitch.composeapp.generated.resources.oracle_ornament
-import bwitch.composeapp.generated.resources.pendulum_ornament
+import bwitch.composeapp.generated.resources.daily_ritual_ornament
+import bwitch.composeapp.generated.resources.habits_ornament
+import bwitch.composeapp.generated.resources.rituals_ornament
 import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
 import com.agc.bwitch.ui.common.designsystem.BWitchScreen
@@ -96,24 +96,21 @@ private data class RitualsCardOrnamentConfig(
 private fun RitualsCardOrnament.config(): RitualsCardOrnamentConfig =
     when (this) {
         RitualsCardOrnament.DailyRitual -> RitualsCardOrnamentConfig(
-            // TODO: Replace with Res.drawable.ritual_daily_ornament when the raster asset is available.
-            resource = Res.drawable.horoscope_ornament,
+            resource = Res.drawable.daily_ritual_ornament,
             width = 250.dp,
             offsetX = 74.dp,
             alignment = Alignment.CenterEnd,
             alpha = 0.22f,
         )
         RitualsCardOrnament.Rituals -> RitualsCardOrnamentConfig(
-            // TODO: Replace with Res.drawable.rituals_ornament when the raster asset is available.
-            resource = Res.drawable.oracle_ornament,
+            resource = Res.drawable.rituals_ornament,
             width = 220.dp,
             offsetX = 56.dp,
             alignment = Alignment.CenterEnd,
             alpha = 0.24f,
         )
         RitualsCardOrnament.Habits -> RitualsCardOrnamentConfig(
-            // TODO: Replace with Res.drawable.habits_ornament when the raster asset is available.
-            resource = Res.drawable.pendulum_ornament,
+            resource = Res.drawable.habits_ornament,
             width = 246.dp,
             offsetX = 52.dp,
             alignment = Alignment.CenterEnd,

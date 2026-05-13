@@ -129,7 +129,7 @@ internal fun TarotCardFaceContent(card: TarotCard?, revealed: Boolean) {
 private fun TarotBackFace() {
     val strings = appStrings.tarot
     Image(
-        painter = painterResource(Res.drawable.tarot_back_bw),
+        painter = painterResource(Res.drawable.tarot_back_1),
         contentDescription = strings.cardBackContentDescription,
         modifier = Modifier.fillMaxSize(),
         contentScale = ContentScale.Fit,
