@@ -14,7 +14,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -24,15 +24,19 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -430,6 +434,7 @@ private fun LockedDailyHoroscopeDialog(
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun HoroscopeContentDialog(
     overlay: HoroscopeOverlayUi,
@@ -457,41 +462,48 @@ private fun HoroscopeContentDialog(
         }
     }
 
-    AlertDialog(
+    BasicAlertDialog(
         onDismissRequest = onCloseOverlay,
         modifier = Modifier.widthIn(min = 320.dp, max = 520.dp),
-        title = {
-            HoroscopeOverlayHeader(
-                sign = visibleSign,
-                periodLabel = overlay.periodLabel,
-                strings = strings,
-            )
-        },
-        text = {
-            HorizontalPager(
-                state = pagerState,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 220.dp, max = 420.dp),
-            ) { page ->
-                val pageOverlay = overlay.forVisibleSign(signs[page])
-                Column(
+    ) {
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.extraLarge,
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 6.dp,
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                HoroscopeOverlayHeader(
+                    sign = visibleSign,
+                    periodLabel = overlay.periodLabel,
+                    strings = strings,
+                )
+                HorizontalPager(
+                    state = pagerState,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(min = 220.dp, max = 420.dp)
-                        .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(14.dp),
-                ) {
-                    HoroscopeOverlayBody(
-                        overlay = pageOverlay,
-                        strings = strings,
-                    )
+                        .height(420.dp),
+                ) { page ->
+                    val pageOverlay = overlay.forVisibleSign(signs[page])
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(420.dp)
+                            .verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(14.dp),
+                    ) {
+                        HoroscopeOverlayBody(
+                            overlay = pageOverlay,
+                            strings = strings,
+                        )
+                    }
                 }
             }
-        },
-        confirmButton = { BWitchSecondaryButton(onClick = {}, enabled = false) { Text(strings.horoscope.shareCta) } },
-        dismissButton = { BWitchPrimaryButton(onClick = onCloseOverlay) { Text(strings.horoscope.closeCta) } },
-    )
+        }
+    }
 }
 
 private fun HoroscopeOverlayUi.forVisibleSign(sign: ZodiacSign): HoroscopeOverlayUi {
@@ -509,27 +521,42 @@ private fun HoroscopeOverlayHeader(
     periodLabel: String,
     strings: AppStrings,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Image(
-                painter = painterResource(sign.artResource()),
-                contentDescription = sign.localizedLabel(strings),
-                contentScale = ContentScale.Fit,
-                modifier = Modifier.size(48.dp),
-            )
-            Text(
-                text = sign.localizedLabel(strings),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.SemiBold,
-            )
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier.align(Alignment.Center),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Image(
+                    painter = painterResource(sign.artResource()),
+                    contentDescription = sign.localizedLabel(strings),
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier.size(48.dp),
+                )
+                Text(
+                    text = sign.localizedLabel(strings),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+            TextButton(
+                onClick = {},
+                enabled = false,
+                modifier = Modifier.align(Alignment.CenterEnd),
+            ) {
+                Text(strings.horoscope.shareCta)
+            }
         }
         Text(
             text = periodLabel,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
         )
     }
 }
