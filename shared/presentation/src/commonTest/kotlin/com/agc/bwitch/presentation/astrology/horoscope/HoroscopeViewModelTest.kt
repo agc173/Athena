@@ -29,7 +29,6 @@ import com.agc.bwitch.domain.userprofile.UserProfileRepository
 import com.agc.bwitch.presentation.analytics.FakeAnalyticsTracker
 import com.agc.bwitch.presentation.economy.MoonUnlockFlowContext
 import com.agc.bwitch.presentation.economy.UNLOCK_FLOW_ORIGIN_PAYWALL_REWARDED
-import com.agc.bwitch.presentation.economy.UNLOCK_FLOW_ORIGIN_PREMIUM
 import com.agc.bwitch.presentation.economy.UNLOCK_FLOW_ORIGIN_UNKNOWN
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -199,9 +198,9 @@ class HoroscopeViewModelTest {
     }
 
     @Test
-    fun unlockDay_premiumUnlock_emitsPremiumMethod() = runTest {
+    fun premiumAccess_unlocksFutureDayWithoutMoonUnlock() = runTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
-        val unlockRepository = FakeUnlockRepository(futureDayCost = 1).apply { forceZeroCost = true }
+        val unlockRepository = FakeUnlockRepository(futureDayCost = 1)
         val analytics = FakeAnalyticsTracker()
         val viewModel = createViewModel(dispatcher, unlockRepository, analyticsTracker = analytics)
 
@@ -213,10 +212,15 @@ class HoroscopeViewModelTest {
         viewModel.onUnlockSelectedDay()
         advanceUntilIdle()
 
-        val event = analytics.events.filterIsInstance<com.agc.bwitch.domain.analytics.AnalyticsEvent.ContentUnlocked>().last()
-        assertEquals("premium", event.method)
-        assertEquals(0, event.costCharged)
-        assertEquals(UNLOCK_FLOW_ORIGIN_PREMIUM, event.unlockFlowOrigin)
+        val tomorrowItem = viewModel.uiState.value.days.first { it.dateIso == tomorrow }
+        val overlay = viewModel.uiState.value.overlay as? HoroscopeOverlayUi.DailyOverlay
+        assertEquals(false, tomorrowItem.isLocked)
+        assertEquals(true, tomorrowItem.isUnlocked)
+        assertEquals(0, tomorrowItem.cost)
+        assertEquals(false, overlay?.isLocked)
+        assertEquals(0, unlockRepository.unlockFutureDayCalls)
+        assertFalse(analytics.events.any { it is com.agc.bwitch.domain.analytics.AnalyticsEvent.ContentUnlockAttempt })
+        assertFalse(analytics.events.any { it is com.agc.bwitch.domain.analytics.AnalyticsEvent.ContentUnlocked })
     }
 
     @Test
@@ -944,6 +948,7 @@ class HoroscopeViewModelTest {
         var failMonthBatchReads: Boolean = false
         var forceZeroCost: Boolean = false
         var failUnlockFutureDayInsufficient: Boolean = false
+        var unlockFutureDayCalls: Int = 0
 
         override suspend fun getFutureDayCost(): Int = futureDayCost
         override suspend fun getWeeklyCost(): Int = 2
@@ -955,6 +960,7 @@ class HoroscopeViewModelTest {
             dateIsoList.filterTo(mutableSetOf()) { unlocked.contains(it) }
 
         override suspend fun unlockFutureDay(dateIso: String, requestId: String, sign: ZodiacSign): HoroscopeUnlockResult {
+            unlockFutureDayCalls += 1
             if (failUnlockFutureDayInsufficient) throw IllegalStateException("insufficient_moons")
             val alreadyUnlocked = unlocked.contains(dateIso)
             unlocked.add(dateIso)

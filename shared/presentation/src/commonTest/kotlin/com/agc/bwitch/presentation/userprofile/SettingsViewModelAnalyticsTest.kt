@@ -165,6 +165,61 @@ class SettingsViewModelAnalyticsTest {
         }
     }
 
+
+    @Test
+    fun `restore activo emite refresh economy`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val subscriptionRepo = FakeSubscriptionRepository(
+                restoreResult = RestorePurchasesResult.Restored(SubscriptionStatus.ActiveMonthly),
+            )
+            val viewModel = viewModel(subscriptionRepo = subscriptionRepo)
+            val effects = mutableListOf<SettingsUiEffect>()
+            val collectJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiEffects.collect { effects += it }
+            }
+
+            advanceUntilIdle()
+            viewModel.onRestorePurchasesClicked()
+            advanceUntilIdle()
+
+            assertEquals(1, subscriptionRepo.restoreCallCount)
+            assertEquals(SettingsFeedback.RestorePurchasesSuccess, viewModel.uiState.value.feedback)
+            assertTrue(effects.any { it is SettingsUiEffect.RefreshEconomy })
+            collectJob.cancel()
+            viewModel.clear()
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun `restore sin entitlement activo no emite refresh economy`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val subscriptionRepo = FakeSubscriptionRepository(restoreResult = RestorePurchasesResult.NoPurchasesFound)
+            val viewModel = viewModel(subscriptionRepo = subscriptionRepo)
+            val effects = mutableListOf<SettingsUiEffect>()
+            val collectJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiEffects.collect { effects += it }
+            }
+
+            advanceUntilIdle()
+            viewModel.onRestorePurchasesClicked()
+            advanceUntilIdle()
+
+            assertEquals(1, subscriptionRepo.restoreCallCount)
+            assertEquals(SettingsFeedback.RestorePurchasesNoPurchases, viewModel.uiState.value.feedback)
+            assertFalse(effects.any { it is SettingsUiEffect.RefreshEconomy })
+            collectJob.cancel()
+            viewModel.clear()
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
     @Test
     fun `init con backend entitlement active marca ActiveMonthly y Manage`() = runTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
@@ -339,6 +394,7 @@ class SettingsViewModelAnalyticsTest {
         private val catalog: List<SubscriptionPlan> = listOf(
             SubscriptionPlan("bwitch_premium_monthly", "Monthly", "$4.99", SubscriptionPlanType.Monthly, "monthly"),
         ),
+        private val restoreResult: RestorePurchasesResult = RestorePurchasesResult.NoPurchasesFound,
     ) : SubscriptionRepository {
         private val status = MutableStateFlow<SubscriptionStatus>(SubscriptionStatus.Inactive)
 
@@ -349,7 +405,7 @@ class SettingsViewModelAnalyticsTest {
         override fun observeStatus(): Flow<SubscriptionStatus> = status
         override suspend fun restorePurchases(): RestorePurchasesResult {
             restoreCallCount += 1
-            return RestorePurchasesResult.NoPurchasesFound
+            return restoreResult
         }
     }
 

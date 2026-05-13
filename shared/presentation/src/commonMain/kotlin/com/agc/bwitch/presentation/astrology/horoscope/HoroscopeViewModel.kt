@@ -221,6 +221,11 @@ class HoroscopeViewModel(
             )
             else -> pendingUnlockTarget
         } ?: return
+        if (state.hasPremiumAccess) {
+            pendingUnlockTarget = null
+            unlockDailyContentCoveredByPremium(target.dateIso, target.sign, loadOverlay = overlay != null)
+            return
+        }
         println("BWITCH_HOROSCOPE unlock_attempt date=${target.dateIso} sign=${target.sign.name} from=${unlockFlowContext?.unlockFlowOrigin}")
         pendingUnlockTarget = target
 
@@ -485,7 +490,46 @@ class HoroscopeViewModel(
 
     fun onPremiumAccessChanged(hasPremiumAccess: Boolean) {
         _uiState.update { it.copy(hasPremiumAccess = hasPremiumAccess) }
+        if (hasPremiumAccess) unlockVisibleDailyContentCoveredByPremium()
+        rebuildDays()
         refreshWeeklyMonthlyLocks()
+    }
+
+    private fun unlockVisibleDailyContentCoveredByPremium() {
+        val state = _uiState.value
+        val overlay = state.overlay as? HoroscopeOverlayUi.DailyOverlay
+        if (overlay != null && overlay.isLocked) {
+            unlockDailyContentCoveredByPremium(
+                dateIso = overlay.dateIso,
+                sign = overlay.sign,
+                loadOverlay = true,
+            )
+        }
+    }
+
+    private fun unlockDailyContentCoveredByPremium(
+        dateIso: String,
+        sign: ZodiacSign,
+        loadOverlay: Boolean,
+    ) {
+        _uiState.update { current ->
+            val updatedDays = current.days.map { day ->
+                if (day.dateIso == dateIso) day.copy(isLocked = false, isUnlocked = true, cost = 0) else day
+            }
+            val updatedOverlay = (current.overlay as? HoroscopeOverlayUi.DailyOverlay)?.takeIf {
+                it.dateIso == dateIso && it.sign == sign
+            }?.copy(
+                isLocked = false,
+                isLoading = loadOverlay,
+                unlockErrorMessage = null,
+                unlockErrorType = null,
+            )
+            current.copy(
+                days = updatedDays,
+                overlay = updatedOverlay ?: current.overlay,
+            )
+        }
+        if (loadOverlay) loadOverlayHoroscope(sign = sign, dateIso = dateIso)
     }
 
     private fun onSelectSign(sign: ZodiacSign, fromUserInteraction: Boolean) {
@@ -669,7 +713,7 @@ class HoroscopeViewModel(
         onSelectSign(sign)
         val state = _uiState.value
         val selectedDateIso = state.selectedDateIso.ifBlank { todayIso() }
-        val isLocked = state.days.firstOrNull { it.dateIso == selectedDateIso }?.isLocked == true
+        val isLocked = !state.hasPremiumAccess && state.days.firstOrNull { it.dateIso == selectedDateIso }?.isLocked == true
 
         _uiState.update {
             it.copy(
@@ -765,7 +809,7 @@ class HoroscopeViewModel(
             val items = (0..6).map { offset ->
                 val date = today.plus(DatePeriod(days = offset))
                 val dateIso = date.toString()
-                val unlocked = offset == 0 || unlockedDatesSession.contains(dateIso) || remoteUnlockedDates.contains(dateIso)
+                val unlocked = offset == 0 || state.hasPremiumAccess || unlockedDatesSession.contains(dateIso) || remoteUnlockedDates.contains(dateIso)
                 HoroscopeDayItemUi(
                     dateIso = dateIso,
                     shortLabel = shortDateLabel(date),
@@ -773,7 +817,7 @@ class HoroscopeViewModel(
                     isSelected = dateIso == selectedIso,
                     isLocked = offset > 0 && !unlocked,
                     isUnlocked = unlocked,
-                    cost = if (offset > 0) cost else 0,
+                    cost = if (offset > 0 && !state.hasPremiumAccess) cost else 0,
                 )
             }
 
@@ -811,7 +855,7 @@ class HoroscopeViewModel(
 
     private fun isDateUnlocked(dateIso: String): Boolean {
         val state = _uiState.value
-        return unlockedDatesSession.contains(dateIso) || state.days.firstOrNull { it.dateIso == dateIso }?.isUnlocked == true
+        return state.hasPremiumAccess || unlockedDatesSession.contains(dateIso) || state.days.firstOrNull { it.dateIso == dateIso }?.isUnlocked == true
     }
 
     private fun resolveUnlockMethod(

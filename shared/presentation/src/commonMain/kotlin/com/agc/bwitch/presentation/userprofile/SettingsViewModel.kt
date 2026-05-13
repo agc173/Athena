@@ -467,6 +467,9 @@ class SettingsViewModel(
                         is RestorePurchasesResult.Restored -> SettingsFeedback.RestorePurchasesSuccess
                     }
                     _uiState.update { it.copy(feedback = feedback) }
+                    if (result is RestorePurchasesResult.Restored && result.status.isActive) {
+                        _uiEffects.emit(SettingsUiEffect.RefreshEconomy)
+                    }
                 }
                 .onFailure { error -> _uiState.update { it.copy(error = error.message) } }
         }
