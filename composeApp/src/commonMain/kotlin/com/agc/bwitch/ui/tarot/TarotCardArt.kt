@@ -5,7 +5,7 @@ import org.jetbrains.compose.resources.DrawableResource
 
 object TarotCardArt {
 
-    const val cardBackAssetKey: String = "tarot_back_bw"
+    const val cardBackAssetKey: String = "tarot_back_1"
     const val placeholderFaceAssetKey: String = "tarot_placeholder_face"
 
     private val faceDrawableByCardId: Map<String, DrawableResource> = mapOf(
