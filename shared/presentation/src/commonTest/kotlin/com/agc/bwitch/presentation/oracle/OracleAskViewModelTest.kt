@@ -15,6 +15,7 @@ import com.agc.bwitch.domain.economy.SynastryAuthorizationResult
 import com.agc.bwitch.domain.oracle.OracleAskRequest
 import com.agc.bwitch.domain.oracle.OracleAskResult
 import com.agc.bwitch.domain.oracle.OracleRepository
+import com.agc.bwitch.domain.security.InputPolicy
 import com.agc.bwitch.domain.shared.ApiError
 import com.agc.bwitch.domain.shared.ApiResult
 import com.agc.bwitch.presentation.analytics.FakeAnalyticsTracker
