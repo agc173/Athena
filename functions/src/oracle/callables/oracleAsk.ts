@@ -14,6 +14,7 @@ import {generateOracleAnswer} from '../oracle/oracleService';
 import {RequestType, type OracleAskData} from '../types';
 import {buildEconomyPayload, stripUndefinedDeep} from './payloadBuilders';
 import {normalizeMultilineInput, ORACLE_QUESTION_MAX_LENGTH} from '../../utils/inputNormalization';
+import {detectSuspiciousPromptPayload} from '../oracle/promptInputRisk';
 
 
 type SystemMode = 'NORMAL' | 'DEGRADED' | 'EMERGENCY';
@@ -149,6 +150,15 @@ export const oracleAsk = onCall(
         if (question.length === 0) {
           throw new HttpsError('invalid-argument', 'question is required');
         }
+        const questionRisk = detectSuspiciousPromptPayload(question);
+        console.info('ORACLE_ASK_INPUT_META', {
+          requestId,
+          uidTag: buildUidTag(uid),
+          questionLength: question.length,
+          questionRisk,
+          lang,
+          hasTopic: Boolean(data.topic),
+        });
         const dateIso = dateIsoMadrid();
 
         economyV2Enabled = await isOracleEconomyV2Enabled();
