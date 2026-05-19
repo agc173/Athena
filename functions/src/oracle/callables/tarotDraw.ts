@@ -236,6 +236,13 @@ export const tarotDraw = onCall(
         const requestId = data.requestId.trim();
         const lang = normalizeLang(data.lang);
         const question = normalizeQuestion(data.question);
+        console.info('TAROT_DRAW_INPUT_META', {
+          requestId,
+          uidTag: buildUidTag(uid),
+          requestType: data.requestType,
+          lang,
+          requestTypeScope: 'tarot_draw',
+        });
         const dateIso = dateIsoMadrid();
 
         economyV2Enabled = await isTarotEconomyV2Enabled();

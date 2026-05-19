@@ -32,7 +32,6 @@ export async function generateTarotReading(params: {
     requestType: params.requestType,
     lang: params.lang,
     draw,
-    question: params.question,
   });
 
   const llmResponse = await params.llm.generate({
