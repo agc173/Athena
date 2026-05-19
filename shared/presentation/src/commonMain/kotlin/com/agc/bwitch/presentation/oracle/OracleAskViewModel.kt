@@ -8,6 +8,7 @@ import com.agc.bwitch.domain.oracle.OracleRepository
 import com.agc.bwitch.domain.oracle.OracleTopic
 import com.agc.bwitch.domain.economy.EconomyRepository
 import com.agc.bwitch.domain.analytics.AnalyticsEvent
+import com.agc.bwitch.domain.security.InputPolicy
 import com.agc.bwitch.domain.analytics.AnalyticsTracker
 import com.agc.bwitch.domain.analytics.NoOpAnalyticsTracker
 import com.agc.bwitch.domain.localization.AppLanguage
@@ -28,8 +29,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-
-const val ORACLE_QUESTION_MAX_LENGTH = 150
 
 data class OracleAskUiState(
     val question: String = "",
@@ -99,7 +98,7 @@ class OracleAskViewModel(
     }
 
     fun onQuestionChange(value: String) {
-        val limitedQuestion = value.take(ORACLE_QUESTION_MAX_LENGTH)
+        val limitedQuestion = InputPolicy.normalizeMultilineInput(value, InputPolicy.ORACLE_QUESTION_MAX_LENGTH)
 
         _uiState.update {
             it.copy(
@@ -115,7 +114,7 @@ class OracleAskViewModel(
 
     fun ask(topic: OracleTopic? = null, lang: String? = null) {
         val trimmedQuestion = _uiState.value.question.trim()
-        if (trimmedQuestion.length > ORACLE_QUESTION_MAX_LENGTH) {
+        if (trimmedQuestion.length > InputPolicy.ORACLE_QUESTION_MAX_LENGTH) {
             _uiState.update {
                 it.copy(
                     error = OracleAskMessage(

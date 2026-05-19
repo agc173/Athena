@@ -15,6 +15,7 @@ import com.agc.bwitch.domain.economy.SynastryAuthorizationResult
 import com.agc.bwitch.domain.oracle.OracleAskRequest
 import com.agc.bwitch.domain.oracle.OracleAskResult
 import com.agc.bwitch.domain.oracle.OracleRepository
+import com.agc.bwitch.domain.security.InputPolicy
 import com.agc.bwitch.domain.shared.ApiError
 import com.agc.bwitch.domain.shared.ApiResult
 import com.agc.bwitch.presentation.analytics.FakeAnalyticsTracker
@@ -240,7 +241,7 @@ class OracleAskViewModelTest {
                 observeCurrentLanguageUseCase = ObserveCurrentLanguageUseCase(languageRepo),
                 economyRepository = FakeEconomyRepository(),
             )
-            val acceptedQuestion = "ñ".repeat(ORACLE_QUESTION_MAX_LENGTH)
+            val acceptedQuestion = "ñ".repeat(InputPolicy.ORACLE_QUESTION_MAX_LENGTH)
 
             viewModel.onQuestionChange(acceptedQuestion)
             viewModel.onQuestionChange(acceptedQuestion + "x")
@@ -264,8 +265,8 @@ class OracleAskViewModelTest {
                 observeCurrentLanguageUseCase = ObserveCurrentLanguageUseCase(languageRepo),
                 economyRepository = FakeEconomyRepository(),
             )
-            val longQuestion = "ж".repeat(ORACLE_QUESTION_MAX_LENGTH + 25)
-            val expectedQuestion = longQuestion.take(ORACLE_QUESTION_MAX_LENGTH)
+            val longQuestion = "ж".repeat(InputPolicy.ORACLE_QUESTION_MAX_LENGTH + 25)
+            val expectedQuestion = longQuestion.take(InputPolicy.ORACLE_QUESTION_MAX_LENGTH)
 
             viewModel.onQuestionChange(longQuestion)
             viewModel.ask()

@@ -13,6 +13,8 @@ import {ConsumeIntent, RequestType, type TarotDrawData} from '../types';
 import {createLlmClientFromRouter} from '../shared/routerLlmClient';
 import {dateIsoMadrid, oracleRef, oracleSubRef} from '../firestore/paths';
 import {buildEconomyPayload, stripUndefinedDeep} from './payloadBuilders';
+import {normalizeMultilineInput, ORACLE_QUESTION_MAX_LENGTH} from '../../utils/inputNormalization';
+import {buildUidTag, safeErrorMessage, safeErrorMetadata} from '../../utils/safeLogging';
 
 const ALLOWED_TAROT_TYPES = new Set<RequestType>([
   RequestType.TAROT_1,
@@ -56,11 +58,6 @@ type UserDailyDoc = {
   updatedAt?: Timestamp;
 };
 
-function buildUidTag(uid?: string): string {
-  if (!uid) return 'anon';
-  if (uid.length <= 8) return `${uid.slice(0, 2)}***`;
-  return `${uid.slice(0, 4)}***${uid.slice(-2)}`;
-}
 
 function logControlledHttpsError(params: {
   error: HttpsError;
@@ -93,11 +90,13 @@ function normalizeLang(lang?: string): string {
   return 'es';
 }
 
+
+
 function normalizeQuestion(question?: string): string | undefined {
   if (!question) return undefined;
-  const trimmed = question.trim();
-  if (!trimmed) return undefined;
-  return trimmed.slice(0, 400);
+  const normalized = normalizeMultilineInput(question);
+  if (!normalized) return undefined;
+  return normalized.slice(0, ORACLE_QUESTION_MAX_LENGTH);
 }
 
 function parseSystemMode(value: unknown): SystemMode {
@@ -228,6 +227,13 @@ export const tarotDraw = onCall(
         const requestId = data.requestId.trim();
         const lang = normalizeLang(data.lang);
         const question = normalizeQuestion(data.question);
+        console.info('TAROT_DRAW_INPUT_META', {
+          requestId,
+          uidTag: buildUidTag(uid),
+          requestType: data.requestType,
+          lang,
+          requestTypeScope: 'tarot_draw',
+        });
         const dateIso = dateIsoMadrid();
 
         economyV2Enabled = await isTarotEconomyV2Enabled();
@@ -399,8 +405,13 @@ export const tarotDraw = onCall(
           const {dateIso: reservedDateIso} = await reserveLlmCallOrThrow('tarot', llmDailyCaps());
           usageDateIso = reservedDateIso;
         } catch (error) {
-          console.error('tarotDraw error:', error);
-          const errorMessage = error instanceof Error ? error.message : String(error);
+          console.warn('tarotDraw error', {
+            requestId,
+            uidTag: buildUidTag(uid),
+            errorCode: error instanceof HttpsError ? error.code : undefined,
+            error: safeErrorMetadata(error),
+          });
+          const errorMessage = safeErrorMessage(error);
 
           if (errorMessage.includes('DAILY_LLM_CAP_EXCEEDED')) {
             if (economyV2Enabled) {
@@ -521,8 +532,13 @@ export const tarotDraw = onCall(
 
           return responsePayload;
         } catch (error) {
-          console.error('tarotDraw error:', error);
-          const errorMessage = error instanceof Error ? error.message : String(error);
+          console.warn('tarotDraw error', {
+            requestId,
+            uidTag: buildUidTag(uid),
+            errorCode: error instanceof HttpsError ? error.code : undefined,
+            error: safeErrorMetadata(error),
+          });
+          const errorMessage = safeErrorMessage(error);
 
           if (economyV2Enabled) {
             await refundTarotEconomyRequest({

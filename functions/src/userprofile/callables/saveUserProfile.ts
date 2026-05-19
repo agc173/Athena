@@ -3,6 +3,7 @@ import {HttpsError, onCall} from 'firebase-functions/v2/https';
 import * as logger from 'firebase-functions/logger';
 import {ENV} from '../../config/env';
 import {normalizeUsername, validateNormalizedUsername} from '../username';
+import {BIRTH_ESSENCE_SUMMARY_MAX_LENGTH, normalizeSingleLineInput} from '../../utils/inputNormalization';
 
 type SaveUserProfileData = {
   displayName?: unknown;
@@ -54,8 +55,8 @@ type SanitizedProfileLog = {
 
 function asOptionalTrimmedString(value: unknown): string | null {
   if (typeof value !== 'string') return null;
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
+  const normalized = normalizeSingleLineInput(value);
+  return normalized.length > 0 ? normalized : null;
 }
 
 function asOptionalBirthDate(value: unknown): string | null {
@@ -73,7 +74,7 @@ function asOptionalBirthDate(value: unknown): string | null {
 function asOptionalBirthEssenceSummary(value: unknown): string | null {
   const text = asOptionalTrimmedString(value);
   if (!text) return null;
-  return text.slice(0, 120);
+  return text.slice(0, BIRTH_ESSENCE_SUMMARY_MAX_LENGTH);
 }
 
 function asOptionalLong(value: unknown): number | null {

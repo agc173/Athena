@@ -13,16 +13,14 @@ import {createLlmClientFromRouter} from '../shared/routerLlmClient';
 import {generateOracleAnswer} from '../oracle/oracleService';
 import {RequestType, type OracleAskData} from '../types';
 import {buildEconomyPayload, stripUndefinedDeep} from './payloadBuilders';
+import {normalizeMultilineInput, ORACLE_QUESTION_MAX_LENGTH} from '../../utils/inputNormalization';
+import {detectSuspiciousPromptPayload} from '../oracle/promptInputRisk';
+import {buildUidTag, safeErrorMessage} from '../../utils/safeLogging';
 
 
 type SystemMode = 'NORMAL' | 'DEGRADED' | 'EMERGENCY';
 
 
-function buildUidTag(uid?: string): string {
-  if (!uid) return 'anon';
-  if (uid.length <= 8) return `${uid.slice(0, 2)}***`;
-  return `${uid.slice(0, 4)}***${uid.slice(-2)}`;
-}
 
 function logControlledHttpsError(params: {
   error: HttpsError;
@@ -60,7 +58,7 @@ function normalizeLang(lang?: string): string {
 }
 
 function normalizeQuestion(question: string): string {
-  return question.trim().slice(0, 400);
+  return normalizeMultilineInput(question).slice(0, ORACLE_QUESTION_MAX_LENGTH);
 }
 
 function parseSystemMode(value: unknown): SystemMode {
@@ -135,7 +133,7 @@ export const oracleAsk = onCall(
         if (data?.requestType !== RequestType.ORACLE_1Q) {
           throw new HttpsError('invalid-argument', 'requestType must be ORACLE_1Q');
         }
-        if (!data.question || data.question.trim().length === 0) {
+        if (typeof data?.question !== 'string') {
           throw new HttpsError('invalid-argument', 'question is required');
         }
         if (!data.requestId || typeof data.requestId !== 'string' || data.requestId.trim().length === 0) {
@@ -145,6 +143,18 @@ export const oracleAsk = onCall(
         const requestId = data.requestId.trim();
         const lang = normalizeLang(data.lang);
         const question = normalizeQuestion(data.question);
+        if (question.length === 0) {
+          throw new HttpsError('invalid-argument', 'question is required');
+        }
+        const questionRisk = detectSuspiciousPromptPayload(question);
+        console.info('ORACLE_ASK_INPUT_META', {
+          requestId,
+          uidTag: buildUidTag(uid),
+          questionLength: question.length,
+          questionRisk,
+          lang,
+          hasTopic: Boolean(data.topic),
+        });
         const dateIso = dateIsoMadrid();
 
         economyV2Enabled = await isOracleEconomyV2Enabled();
@@ -195,7 +205,7 @@ export const oracleAsk = onCall(
           const {dateIso: reservedDateIso} = await reserveLlmCallOrThrow('oracle', llmDailyCaps());
           usageDateIso = reservedDateIso;
         } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : String(error);
+          const errorMessage = safeErrorMessage(error);
 
           if (errorMessage.includes('DAILY_LLM_CAP_EXCEEDED')) {
             await refundOracleEconomyRequest({
@@ -281,7 +291,7 @@ export const oracleAsk = onCall(
 
           return responsePayload;
         } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : String(error);
+          const errorMessage = safeErrorMessage(error);
 
           await refundOracleEconomyRequest({
             uid,
