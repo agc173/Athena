@@ -15,16 +15,12 @@ import {RequestType, type OracleAskData} from '../types';
 import {buildEconomyPayload, stripUndefinedDeep} from './payloadBuilders';
 import {normalizeMultilineInput, ORACLE_QUESTION_MAX_LENGTH} from '../../utils/inputNormalization';
 import {detectSuspiciousPromptPayload} from '../oracle/promptInputRisk';
+import {buildUidTag, safeErrorMessage} from '../../utils/safeLogging';
 
 
 type SystemMode = 'NORMAL' | 'DEGRADED' | 'EMERGENCY';
 
 
-function buildUidTag(uid?: string): string {
-  if (!uid) return 'anon';
-  if (uid.length <= 8) return `${uid.slice(0, 2)}***`;
-  return `${uid.slice(0, 4)}***${uid.slice(-2)}`;
-}
 
 function logControlledHttpsError(params: {
   error: HttpsError;
@@ -209,7 +205,7 @@ export const oracleAsk = onCall(
           const {dateIso: reservedDateIso} = await reserveLlmCallOrThrow('oracle', llmDailyCaps());
           usageDateIso = reservedDateIso;
         } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : String(error);
+          const errorMessage = safeErrorMessage(error);
 
           if (errorMessage.includes('DAILY_LLM_CAP_EXCEEDED')) {
             await refundOracleEconomyRequest({
@@ -295,7 +291,7 @@ export const oracleAsk = onCall(
 
           return responsePayload;
         } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : String(error);
+          const errorMessage = safeErrorMessage(error);
 
           await refundOracleEconomyRequest({
             uid,

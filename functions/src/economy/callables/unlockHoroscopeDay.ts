@@ -15,6 +15,7 @@ import {
 import {getPremiumStatus} from '../premiumStatus';
 import {resolveHoroscopeUnlockDecision} from '../horoscopeEconomy';
 import {getEconomyModuleRule} from '../rulesCatalog';
+import {buildUidTag} from '../../utils/safeLogging';
 import type {
   EconomyBalanceDoc,
   EconomyDailyUsageDoc,
@@ -162,7 +163,7 @@ export const unlockHoroscopeDay = onCall(
           } as EconomyLedgerEntryDoc, {merge: true});
         }
 
-        logger.info('unlockHoroscopeDay charged', {uid, unlockKey, dateIso, costCharged});
+        logger.info('unlockHoroscopeDay charged', {uidTag: buildUidTag(uid), unlockKey, dateIso, costCharged});
 
         const response: UnlockHoroscopeDayResponse = {
           result: 'COMPLETED_SUCCESS',

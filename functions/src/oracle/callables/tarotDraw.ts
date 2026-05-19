@@ -14,6 +14,7 @@ import {createLlmClientFromRouter} from '../shared/routerLlmClient';
 import {dateIsoMadrid, oracleRef, oracleSubRef} from '../firestore/paths';
 import {buildEconomyPayload, stripUndefinedDeep} from './payloadBuilders';
 import {normalizeMultilineInput, ORACLE_QUESTION_MAX_LENGTH} from '../../utils/inputNormalization';
+import {buildUidTag, safeErrorMessage, safeErrorMetadata} from '../../utils/safeLogging';
 
 const ALLOWED_TAROT_TYPES = new Set<RequestType>([
   RequestType.TAROT_1,
@@ -57,11 +58,6 @@ type UserDailyDoc = {
   updatedAt?: Timestamp;
 };
 
-function buildUidTag(uid?: string): string {
-  if (!uid) return 'anon';
-  if (uid.length <= 8) return `${uid.slice(0, 2)}***`;
-  return `${uid.slice(0, 4)}***${uid.slice(-2)}`;
-}
 
 function logControlledHttpsError(params: {
   error: HttpsError;
@@ -95,11 +91,6 @@ function normalizeLang(lang?: string): string {
 }
 
 
-function safeErrorMessage(error: unknown): string {
-  const raw = error instanceof Error ? error.message : String(error);
-  if (raw.includes('DAILY_LLM_CAP_EXCEEDED')) return 'DAILY_LLM_CAP_EXCEEDED';
-  return raw.slice(0, 120);
-}
 
 function normalizeQuestion(question?: string): string | undefined {
   if (!question) return undefined;
@@ -418,7 +409,7 @@ export const tarotDraw = onCall(
             requestId,
             uidTag: buildUidTag(uid),
             errorCode: error instanceof HttpsError ? error.code : undefined,
-            errorMessage: safeErrorMessage(error),
+            error: safeErrorMetadata(error),
           });
           const errorMessage = safeErrorMessage(error);
 
@@ -545,7 +536,7 @@ export const tarotDraw = onCall(
             requestId,
             uidTag: buildUidTag(uid),
             errorCode: error instanceof HttpsError ? error.code : undefined,
-            errorMessage: safeErrorMessage(error),
+            error: safeErrorMetadata(error),
           });
           const errorMessage = safeErrorMessage(error);
 
