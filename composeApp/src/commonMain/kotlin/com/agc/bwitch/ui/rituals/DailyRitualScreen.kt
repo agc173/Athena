@@ -25,6 +25,7 @@ import com.agc.bwitch.domain.localization.AppLanguage
 import com.agc.bwitch.domain.rituals.DailyRitualStep
 import com.agc.bwitch.domain.rituals.DailyRitualStepKind
 import com.agc.bwitch.domain.rituals.DailyRitualTemplate
+import com.agc.bwitch.domain.security.InputPolicy
 import com.agc.bwitch.localization.DailyRitualStrings
 import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.presentation.localization.AppLanguageViewModel
@@ -233,6 +234,11 @@ private fun DailyRitualStepContent(
                     placeholder = { Text(strings.inputPlaceholder) },
                     singleLine = false,
                     maxLines = 3,
+                )
+                Text(
+                    text = "${textAnswer.length}/${InputPolicy.DAILY_RITUAL_TEXT_MAX_LENGTH}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
 

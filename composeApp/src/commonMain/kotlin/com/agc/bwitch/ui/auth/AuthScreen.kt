@@ -36,6 +36,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.agc.bwitch.localization.appStrings
+import com.agc.bwitch.domain.security.InputPolicy
 import com.agc.bwitch.platform.rememberPlatformContext
 import com.agc.bwitch.presentation.auth.GoogleIdTokenProvider
 import com.agc.bwitch.presentation.auth.SessionViewModel
@@ -80,7 +81,8 @@ fun AuthScreen(
     }
 
     fun validateEmail(): Boolean {
-        val isValid = email.trim().isValidEmail()
+        val normalizedEmail = InputPolicy.normalizeSingleLineInput(email, InputPolicy.EMAIL_MAX_LENGTH)
+        val isValid = normalizedEmail.isValidEmail() && InputPolicy.isEmailLengthValid(normalizedEmail)
         localError = if (isValid) null else strings.invalidEmailError
         return isValid
     }
@@ -145,7 +147,7 @@ fun AuthScreen(
         BWitchTextField(
             value = email,
             onValueChange = {
-                email = it
+                email = InputPolicy.normalizeSingleLineInput(it, InputPolicy.EMAIL_MAX_LENGTH)
                 clearLocalFeedback()
             },
             label = { Text(strings.emailLabel) },
