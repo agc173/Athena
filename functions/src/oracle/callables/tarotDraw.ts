@@ -13,6 +13,7 @@ import {ConsumeIntent, RequestType, type TarotDrawData} from '../types';
 import {createLlmClientFromRouter} from '../shared/routerLlmClient';
 import {dateIsoMadrid, oracleRef, oracleSubRef} from '../firestore/paths';
 import {buildEconomyPayload, stripUndefinedDeep} from './payloadBuilders';
+import {normalizeMultilineInput, ORACLE_QUESTION_MAX_LENGTH} from '../../utils/inputNormalization';
 
 const ALLOWED_TAROT_TYPES = new Set<RequestType>([
   RequestType.TAROT_1,
@@ -93,11 +94,18 @@ function normalizeLang(lang?: string): string {
   return 'es';
 }
 
+
+function safeErrorMessage(error: unknown): string {
+  const raw = error instanceof Error ? error.message : String(error);
+  if (raw.includes('DAILY_LLM_CAP_EXCEEDED')) return 'DAILY_LLM_CAP_EXCEEDED';
+  return raw.slice(0, 120);
+}
+
 function normalizeQuestion(question?: string): string | undefined {
   if (!question) return undefined;
-  const trimmed = question.trim();
-  if (!trimmed) return undefined;
-  return trimmed.slice(0, 400);
+  const normalized = normalizeMultilineInput(question);
+  if (!normalized) return undefined;
+  return normalized.slice(0, ORACLE_QUESTION_MAX_LENGTH);
 }
 
 function parseSystemMode(value: unknown): SystemMode {
@@ -399,8 +407,13 @@ export const tarotDraw = onCall(
           const {dateIso: reservedDateIso} = await reserveLlmCallOrThrow('tarot', llmDailyCaps());
           usageDateIso = reservedDateIso;
         } catch (error) {
-          console.error('tarotDraw error:', error);
-          const errorMessage = error instanceof Error ? error.message : String(error);
+          console.warn('tarotDraw error', {
+            requestId,
+            uidTag: buildUidTag(uid),
+            errorCode: error instanceof HttpsError ? error.code : undefined,
+            errorMessage: safeErrorMessage(error),
+          });
+          const errorMessage = safeErrorMessage(error);
 
           if (errorMessage.includes('DAILY_LLM_CAP_EXCEEDED')) {
             if (economyV2Enabled) {
@@ -521,8 +534,13 @@ export const tarotDraw = onCall(
 
           return responsePayload;
         } catch (error) {
-          console.error('tarotDraw error:', error);
-          const errorMessage = error instanceof Error ? error.message : String(error);
+          console.warn('tarotDraw error', {
+            requestId,
+            uidTag: buildUidTag(uid),
+            errorCode: error instanceof HttpsError ? error.code : undefined,
+            errorMessage: safeErrorMessage(error),
+          });
+          const errorMessage = safeErrorMessage(error);
 
           if (economyV2Enabled) {
             await refundTarotEconomyRequest({

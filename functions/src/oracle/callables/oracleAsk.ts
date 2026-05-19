@@ -13,6 +13,7 @@ import {createLlmClientFromRouter} from '../shared/routerLlmClient';
 import {generateOracleAnswer} from '../oracle/oracleService';
 import {RequestType, type OracleAskData} from '../types';
 import {buildEconomyPayload, stripUndefinedDeep} from './payloadBuilders';
+import {normalizeMultilineInput, ORACLE_QUESTION_MAX_LENGTH} from '../../utils/inputNormalization';
 
 
 type SystemMode = 'NORMAL' | 'DEGRADED' | 'EMERGENCY';
@@ -60,7 +61,7 @@ function normalizeLang(lang?: string): string {
 }
 
 function normalizeQuestion(question: string): string {
-  return question.trim().slice(0, 400);
+  return normalizeMultilineInput(question).slice(0, ORACLE_QUESTION_MAX_LENGTH);
 }
 
 function parseSystemMode(value: unknown): SystemMode {
@@ -135,7 +136,7 @@ export const oracleAsk = onCall(
         if (data?.requestType !== RequestType.ORACLE_1Q) {
           throw new HttpsError('invalid-argument', 'requestType must be ORACLE_1Q');
         }
-        if (!data.question || data.question.trim().length === 0) {
+        if (typeof data?.question !== 'string') {
           throw new HttpsError('invalid-argument', 'question is required');
         }
         if (!data.requestId || typeof data.requestId !== 'string' || data.requestId.trim().length === 0) {
@@ -145,6 +146,9 @@ export const oracleAsk = onCall(
         const requestId = data.requestId.trim();
         const lang = normalizeLang(data.lang);
         const question = normalizeQuestion(data.question);
+        if (question.length === 0) {
+          throw new HttpsError('invalid-argument', 'question is required');
+        }
         const dateIso = dateIsoMadrid();
 
         economyV2Enabled = await isOracleEconomyV2Enabled();
