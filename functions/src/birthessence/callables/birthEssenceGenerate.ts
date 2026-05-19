@@ -10,6 +10,7 @@ import {
   reserveBirthEssenceEconomyAccess,
 } from '../../economy';
 import type {Lang} from '../../config/env';
+import {buildUidTag, safeErrorMessage} from '../../utils/safeLogging';
 
 type BirthEssenceGenerateData = {
   sunSign?: unknown;
@@ -58,12 +59,6 @@ function caps(): DailyCaps {
       unknown: ENV.DAILY_LLM_MAX_CALLS_UNKNOWN,
     },
   };
-}
-
-function buildUidTag(uid?: string): string {
-  if (!uid) return 'anon';
-  if (uid.length <= 8) return `${uid.slice(0, 2)}***`;
-  return `${uid.slice(0, 4)}***${uid.slice(-2)}`;
 }
 
 function signLabel(sign: string): string {
@@ -303,7 +298,7 @@ export const birthEssenceGenerate = onCall(
         const {dateIso: reservedDateIso} = await reserveLlmCallOrThrow('unknown', caps());
         usageDateIso = reservedDateIso;
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorMessage = safeErrorMessage(error);
 
         if (economyV2Enabled && requestId && errorMessage.includes('DAILY_LLM_CAP_EXCEEDED')) {
           await refundBirthEssenceEconomyRequest({
@@ -386,7 +381,7 @@ export const birthEssenceGenerate = onCall(
             uid,
             requestId,
             dateIso,
-            errorMessage: error instanceof Error ? error.message : String(error),
+            errorMessage: safeErrorMessage(error),
           });
         }
         throw error;
