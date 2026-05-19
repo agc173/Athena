@@ -32,7 +32,7 @@ import com.agc.bwitch.localization.OracleStrings
 import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.presentation.oracle.OracleAskMessage
 import com.agc.bwitch.presentation.oracle.OracleAskMessageId
-import com.agc.bwitch.presentation.oracle.ORACLE_QUESTION_MAX_LENGTH
+import com.agc.bwitch.domain.security.InputPolicy
 import com.agc.bwitch.presentation.oracle.OracleAskViewModel
 import com.agc.bwitch.presentation.economy.EconomyViewModel
 import com.agc.bwitch.presentation.economy.runWithEconomyGate
@@ -110,8 +110,8 @@ fun OracleScreen(
             BWitchTextField(
                 value = questionFieldValue,
                 onValueChange = { value ->
-                    questionLimitExceeded = value.text.length > ORACLE_QUESTION_MAX_LENGTH
-                    val limitedValue = value.limitTextLength(ORACLE_QUESTION_MAX_LENGTH)
+                    questionLimitExceeded = value.text.length > InputPolicy.ORACLE_QUESTION_MAX_LENGTH
+                    val limitedValue = value.limitTextLength(InputPolicy.ORACLE_QUESTION_MAX_LENGTH)
                     questionFieldValue = limitedValue
                     viewModel.onQuestionChange(limitedValue.text)
                 },
@@ -133,7 +133,7 @@ fun OracleScreen(
                     color = if (questionLimitExceeded) colors.error else colors.onSurfaceVariant,
                 )
                 Text(
-                    text = "${state.question.length}/$ORACLE_QUESTION_MAX_LENGTH",
+                    text = "${state.question.length}/$InputPolicy.ORACLE_QUESTION_MAX_LENGTH",
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.onSurfaceVariant,
                 )
@@ -171,7 +171,7 @@ fun OracleScreen(
                 }
             },
             modifier = Modifier.fillMaxWidth(),
-            enabled = !state.isLoading && !state.inProgress && state.question.length <= ORACLE_QUESTION_MAX_LENGTH,
+            enabled = !state.isLoading && !state.inProgress && state.question.length <= InputPolicy.ORACLE_QUESTION_MAX_LENGTH,
         ) {
             Text(strings.askCta)
         }

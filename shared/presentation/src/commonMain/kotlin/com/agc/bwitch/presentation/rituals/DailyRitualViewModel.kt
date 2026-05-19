@@ -1,6 +1,7 @@
 package com.agc.bwitch.presentation.rituals
 
 import com.agc.bwitch.domain.rituals.DailyRitualRepository
+import com.agc.bwitch.domain.security.InputPolicy
 import com.agc.bwitch.domain.rituals.DailyRitualStepKind
 import com.agc.bwitch.domain.rituals.dailyRitualBranchKey
 import kotlinx.coroutines.CoroutineDispatcher
@@ -52,7 +53,8 @@ class DailyRitualViewModel(
     }
 
     fun onTextAnswerChange(value: String) {
-        _uiState.update { it.copy(textAnswer = value, error = null) }
+        val normalized = InputPolicy.normalizeMultilineInput(value, InputPolicy.DAILY_RITUAL_TEXT_MAX_LENGTH)
+        _uiState.update { it.copy(textAnswer = normalized, error = null) }
     }
 
     fun onOptionSelected(value: String) {
@@ -178,7 +180,7 @@ class DailyRitualViewModel(
         textAnswer: String,
         selectedOption: String?,
     ): DailyRitualError? = when (kind) {
-        DailyRitualStepKind.TextInput -> if (textAnswer.isBlank()) DailyRitualError.TextRequired else null
+        DailyRitualStepKind.TextInput -> if (!InputPolicy.isNonBlankWithinLimit(textAnswer, InputPolicy.DAILY_RITUAL_TEXT_MAX_LENGTH)) DailyRitualError.TextRequired else null
         DailyRitualStepKind.SingleChoice,
         DailyRitualStepKind.BinaryChoice,
         -> if (selectedOption == null) DailyRitualError.OptionRequired else null
