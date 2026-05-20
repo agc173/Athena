@@ -144,7 +144,7 @@ fun OracleScreen(
                     color = if (questionLimitExceeded) colors.error else colors.onSurfaceVariant,
                 )
                 Text(
-                    text = "${state.question.length}/$InputPolicy.ORACLE_QUESTION_MAX_LENGTH",
+                    text = "${state.question.length}/${InputPolicy.ORACLE_QUESTION_MAX_LENGTH}",
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.onSurfaceVariant,
                 )
