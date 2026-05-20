@@ -66,6 +66,8 @@ fun OracleScreen(
     val dimens = BWitchThemeTokens.dimens
     val colors = MaterialTheme.colorScheme
     val strings = appStrings.oracle
+    val shareTitle = appStrings.horoscope.shareCta
+    val shareErrorFallback = appStrings.birthChart.shareFailedFallback
     val state by viewModel.uiState.collectAsState()
     val economyState by economyViewModel.uiState.collectAsState()
     val oraclePreview = economyState.modulePreviews
@@ -283,18 +285,18 @@ fun OracleScreen(
                         val shareResult = shareLauncher.shareText(
                             ShareTextPayload(
                                 text = buildOracleShareText(answer, strings),
-                                title = appStrings.horoscope.shareCta,
+                                title = shareTitle,
                             ),
                         )
                         if (shareResult is ShareResult.Error) {
-                            shareError = shareResult.message ?: appStrings.birthChart.shareFailedFallback
+                            shareError = shareResult.message ?: shareErrorFallback
                         }
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !state.isLoading && !state.inProgress,
             ) {
-                Text(appStrings.horoscope.shareCta)
+                Text(shareTitle)
             }
 
             BWitchSecondaryButton(
