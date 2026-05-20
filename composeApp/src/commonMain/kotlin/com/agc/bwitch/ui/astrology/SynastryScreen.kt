@@ -440,32 +440,20 @@ private fun SynastryResultCard(
 }
 
 private fun buildSynastryShareText(reading: SynastryReading, strings: AppStrings, languageCode: String): String {
-    val structured = reading.structured
     val synastry = strings.synastry
-    fun List<String>.limitTo3() = take(3)
-    val strengths = structured.strengths.map { it.copyVariants(languageCode, reading.dailyOverlay?.axes?.firstOrNull()).firstOrNull().orEmpty() }
-        .filter { it.isNotBlank() }
-        .limitTo3()
-    val tensions = structured.tensions.map { it.copyVariants(languageCode, reading.dailyOverlay?.axes?.firstOrNull()).firstOrNull().orEmpty() }
-        .filter { it.isNotBlank() }
-        .limitTo3()
-    val guidance = structured.guidance.map { it.copyVariants(languageCode, reading.dailyOverlay?.axes?.firstOrNull()).firstOrNull().orEmpty() }
-        .filter { it.isNotBlank() }
-        .limitTo3()
-    val sections = mutableListOf<String>()
-    sections += synastry.resultTitle
-    sections += reading.narrative.takeIf { it.isNotBlank() } ?: ""
-    sections += "${synastry.bondMetricsTitle}: ${structured.overallScore.value}"
-    sections += "${synastry.strengthTitle}:\n${listOf(reading.primaryStrengthCopy(languageCode)) + strengths}".trimList()
-    sections += "${synastry.tensionTitle}:\n${listOf(reading.primaryTensionCopy(languageCode)) + tensions}".trimList()
-    sections += "${synastry.guidanceTitle}:\n${listOf(reading.primaryGuidanceCopy(languageCode)) + guidance}".trimList()
-    return sections.filter { it.isNotBlank() }.joinToString("\n\n")
-}
+    val sections = listOf(
+        synastry.resultTitle,
+        reading.narrative,
+        "${synastry.strengthTitle}\n${reading.primaryStrengthCopy(languageCode)}",
+        "${synastry.tensionTitle}\n${reading.primaryTensionCopy(languageCode)}",
+        "${synastry.guidanceTitle}\n${reading.primaryGuidanceCopy(languageCode)}",
+    )
 
-private fun List<String>.trimList(): String =
-    filter { it.isNotBlank() }
-        .take(3)
-        .joinToString("\n") { "• $it" }
+    return sections
+        .map { it.trim() }
+        .filter { it.isNotBlank() }
+        .joinToString("\n\n")
+}
 
 @Composable
 private fun MetricStarsRow(dimension: SynastryDimension, stars: Double, strings: AppStrings) {
