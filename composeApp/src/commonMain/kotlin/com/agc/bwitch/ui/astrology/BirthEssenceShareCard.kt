@@ -31,8 +31,7 @@ fun BirthEssenceShareCard(
     val extras = BWitchThemeTokens.extras
     val archetype = essence.archetype
     val archetypeName = archetype?.displayName(essence.languageCode).orEmpty()
-    val firstSentence = essence.firstSentence()
-    val birthChartStrings = appStrings.birthChart
+    val interpretationPreview = essence.interpretationPreview()
     val zodiacStrings = appStrings.zodiac
 
     Surface(
@@ -71,34 +70,37 @@ fun BirthEssenceShareCard(
             )
 
             Text(
-                text = firstSentence,
+                text = interpretationPreview,
                 style = MaterialTheme.typography.bodyMedium,
                 fontStyle = FontStyle.Italic,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-
-            Text(
-                text = birthChartStrings.shareCardSignature,
-                style = MaterialTheme.typography.labelSmall,
-                color = extras.textSecondary,
             )
         }
     }
 }
 
-private fun BirthEssenceProfile.firstSentence(): String {
-    val hasMultipleSentences = interpretation.contains('.')
-    val firstChunk = interpretation
-        .split('.')
-        .firstOrNull { it.isNotBlank() }
-        ?.trim()
-        .orEmpty()
+private fun BirthEssenceProfile.interpretationPreview(maxChars: Int = 280): String {
+    val normalized = interpretation.trim().replace("\n", " ")
+    if (normalized.isEmpty()) return normalized
 
-    if (firstChunk.isEmpty()) {
-        return interpretation.trim()
+    val sentenceRegex = Regex("[^.!?]+[.!?]")
+    val sentences = sentenceRegex
+        .findAll(normalized)
+        .map { it.value.trim() }
+        .filter { it.isNotEmpty() }
+        .take(2)
+        .toList()
+
+    if (sentences.isNotEmpty()) {
+        return sentences.joinToString(separator = " ")
     }
 
-    return if (hasMultipleSentences) "$firstChunk." else firstChunk
+    if (normalized.length <= maxChars) return normalized
+
+    return normalized
+        .take(maxChars)
+        .substringBeforeLast(" ", normalized.take(maxChars))
+        .trimEnd() + "…"
 }
 
 private fun ZodiacSign.toDisplayName(strings: ZodiacStrings): String = when (this) {
