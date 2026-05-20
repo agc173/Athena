@@ -43,6 +43,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -71,8 +72,14 @@ import bwitch.composeapp.generated.resources.zodiac_scorpio_art
 import bwitch.composeapp.generated.resources.zodiac_taurus_art
 import bwitch.composeapp.generated.resources.zodiac_virgo_art
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
+import com.agc.bwitch.domain.astrology.horoscope.DailyHoroscope
+import com.agc.bwitch.domain.astrology.horoscope.MonthlyHoroscope
+import com.agc.bwitch.domain.astrology.horoscope.WeeklyHoroscope
 import com.agc.bwitch.localization.AppStrings
 import com.agc.bwitch.localization.appStrings
+import com.agc.bwitch.platform.share.ShareResult
+import com.agc.bwitch.platform.share.ShareTextPayload
+import com.agc.bwitch.platform.share.rememberShareLauncher
 import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeFeedbackMessage
 import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeMonthPeriod
 import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeOverlayUi
@@ -87,6 +94,7 @@ import com.agc.bwitch.presentation.economy.UNLOCK_FLOW_ORIGIN_PREMIUM
 import com.agc.bwitch.ui.common.designsystem.BWitchPrimaryButton
 import com.agc.bwitch.ui.common.designsystem.BWitchSecondaryButton
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
@@ -102,6 +110,9 @@ fun HoroscopeScreen(
     val strings = appStrings
     val state by viewModel.uiState.collectAsState()
     val economyState by economyViewModel.uiState.collectAsState()
+    val shareLauncher = rememberShareLauncher()
+    val shareScope = rememberCoroutineScope()
+    var shareErrorMessage by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(preselectedSign) { preselectedSign?.let(viewModel::onSelectSign) }
     LaunchedEffect(economyState.isPremium) { viewModel.onPremiumAccessChanged(economyState.isPremium) }
@@ -188,6 +199,23 @@ fun HoroscopeScreen(
             },
             onCloseOverlay = viewModel::onCloseOverlay,
             onOverlaySignChanged = viewModel::onOverlaySignChanged,
+            onShareOverlay = { overlay ->
+                shareErrorMessage = null
+                val shareText = overlay.toShareText(strings)
+                if (shareText.isBlank()) return@HoroscopeScreenContent
+                shareScope.launch {
+                    val result = shareLauncher.shareText(
+                        ShareTextPayload(
+                            text = shareText,
+                            title = strings.horoscope.shareCta,
+                        ),
+                    )
+                    if (result is ShareResult.Error) {
+                        shareErrorMessage = result.message ?: strings.birthChart.shareFailedFallback
+                    }
+                }
+            },
+            shareErrorMessage = shareErrorMessage,
         )
     }
 }
@@ -211,6 +239,8 @@ private fun HoroscopeScreenContent(
     onUnlockMonth: () -> Unit,
     onCloseOverlay: () -> Unit,
     onOverlaySignChanged: (ZodiacSign) -> Unit,
+    onShareOverlay: (HoroscopeOverlayUi) -> Unit,
+    shareErrorMessage: String?,
 ) {
     Column(
         modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
@@ -368,6 +398,15 @@ private fun HoroscopeScreenContent(
             onCloseOverlay = onCloseOverlay,
             onUnlock = onUnlock,
             onOverlaySignChanged = onOverlaySignChanged,
+            onShareOverlay = onShareOverlay,
+        )
+    }
+
+    shareErrorMessage?.let {
+        Text(
+            text = it,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.error,
         )
     }
 }
@@ -380,6 +419,7 @@ private fun HoroscopeOverlayDialog(
     onCloseOverlay: () -> Unit,
     onUnlock: () -> Unit,
     onOverlaySignChanged: (ZodiacSign) -> Unit,
+    onShareOverlay: (HoroscopeOverlayUi) -> Unit,
 ) {
     if (overlay is HoroscopeOverlayUi.DailyOverlay && overlay.isLocked) {
         LockedDailyHoroscopeDialog(
@@ -396,6 +436,7 @@ private fun HoroscopeOverlayDialog(
             strings = strings,
             onCloseOverlay = onCloseOverlay,
             onOverlaySignChanged = onOverlaySignChanged,
+            onShareOverlay = onShareOverlay,
         )
     }
 }
@@ -441,11 +482,13 @@ private fun HoroscopeContentDialog(
     strings: AppStrings,
     onCloseOverlay: () -> Unit,
     onOverlaySignChanged: (ZodiacSign) -> Unit,
+    onShareOverlay: (HoroscopeOverlayUi) -> Unit,
 ) {
     val signs = remember { ZodiacSign.values().toList() }
     val initialPage = signs.indexOf(overlay.sign).coerceAtLeast(0)
     val pagerState = rememberPagerState(initialPage = initialPage) { signs.size }
     val visibleSign = signs.getOrNull(pagerState.currentPage) ?: overlay.sign
+    val visibleOverlay = overlay.forVisibleSign(visibleSign)
 
     LaunchedEffect(pagerState, signs) {
         snapshotFlow { pagerState.currentPage }
@@ -482,6 +525,8 @@ private fun HoroscopeContentDialog(
                     sign = visibleSign,
                     periodLabel = overlay.periodLabel,
                     strings = strings,
+                    canShare = !visibleOverlay.isLoading && visibleOverlay.toShareText(strings).isNotBlank(),
+                    onShare = { onShareOverlay(visibleOverlay) },
                 )
                 HorizontalPager(
                     state = pagerState,
@@ -522,6 +567,8 @@ private fun HoroscopeOverlayHeader(
     sign: ZodiacSign,
     periodLabel: String,
     strings: AppStrings,
+    canShare: Boolean,
+    onShare: () -> Unit,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -556,12 +603,60 @@ private fun HoroscopeOverlayHeader(
             )
         }
         TextButton(
-            onClick = {},
-            enabled = false,
+            onClick = onShare,
+            enabled = canShare,
         ) {
             Text(strings.horoscope.shareCta)
         }
     }
+}
+
+private fun HoroscopeOverlayUi.toShareText(strings: AppStrings): String = when (this) {
+    is HoroscopeOverlayUi.DailyOverlay -> horoscope?.toShareText(strings, periodLabel)
+    is HoroscopeOverlayUi.WeeklyOverlay -> horoscope?.toShareText(strings, periodLabel)
+    is HoroscopeOverlayUi.MonthlyOverlay -> horoscope?.toShareText(strings, periodLabel)
+}.orEmpty()
+
+private fun DailyHoroscope.toShareText(strings: AppStrings, periodLabel: String): String {
+    if (text.isBlank() && shareText.isNullOrBlank()) return ""
+    val sections = mutableListOf<String>()
+    sections.add(sign.localizedLabel(strings))
+    sections.add(periodLabel)
+    shareText?.takeIf { it.isNotBlank() }?.let(sections::add)
+    val meta = buildList {
+        mood.takeIf { it.isNotBlank() }?.let { add("${strings.horoscope.moodLabel}: $it") }
+        luckyNumber.takeIf { it > 0 }?.let { add("${strings.horoscope.luckyNumberLabel}: $it") }
+        luckyColor.takeIf { it.isNotBlank() }?.let { add("${strings.horoscope.luckyColorLabel}: $it") }
+    }
+    if (meta.isNotEmpty()) sections.add(meta.joinToString("\n"))
+    text.takeIf { it.isNotBlank() }?.let(sections::add)
+    return sections.joinToString("\n\n")
+}
+
+private fun WeeklyHoroscope.toShareText(strings: AppStrings, periodLabel: String): String {
+    val sections = mutableListOf(sign.localizedLabel(strings), periodLabel)
+    shareText?.takeIf { it.isNotBlank() }?.let(sections::add)
+    title.takeIf { it.isNotBlank() }?.let(sections::add)
+    sections.add("${strings.horoscope.weekOverviewTitle}\n$overview")
+    sections.add("${strings.horoscope.loveAndRelationshipsTitle}\n$loveAndRelationships")
+    sections.add("${strings.horoscope.workAndMoneyTitle}\n$workAndMoney")
+    sections.add("${strings.horoscope.spiritualEnergyTitle}\n$spiritualEnergy")
+    sections.add("${strings.horoscope.weeklyAdviceTitle}\n$weeklyAdvice")
+    sections.add("${strings.horoscope.mantraTitle}\n$mantra")
+    return sections.joinToString("\n\n")
+}
+
+private fun MonthlyHoroscope.toShareText(strings: AppStrings, periodLabel: String): String {
+    val sections = mutableListOf(sign.localizedLabel(strings), periodLabel)
+    shareText?.takeIf { it.isNotBlank() }?.let(sections::add)
+    title.takeIf { it.isNotBlank() }?.let(sections::add)
+    sections.add("${strings.horoscope.monthThemeTitle}\n$monthTheme")
+    sections.add("${strings.horoscope.loveAndRelationshipsTitle}\n$loveAndRelationships")
+    sections.add("${strings.horoscope.workAndMoneyTitle}\n$workAndMoney")
+    sections.add("${strings.horoscope.personalGrowthTitle}\n$personalGrowth")
+    sections.add("${strings.horoscope.ritualSuggestionTitle}\n$ritualSuggestion")
+    sections.add("${strings.horoscope.mantraTitle}\n$mantra")
+    return sections.joinToString("\n\n")
 }
 
 @OptIn(ExperimentalLayoutApi::class)
