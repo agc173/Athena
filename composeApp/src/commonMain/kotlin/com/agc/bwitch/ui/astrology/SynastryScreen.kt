@@ -31,6 +31,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.geometry.Offset
@@ -59,6 +60,9 @@ import com.agc.bwitch.domain.astrology.synastry.primaryTensionCopy
 import com.agc.bwitch.domain.astrology.synastry.toFiveStarRating
 import com.agc.bwitch.localization.AppStrings
 import com.agc.bwitch.localization.appStrings
+import com.agc.bwitch.platform.share.ShareResult
+import com.agc.bwitch.platform.share.ShareTextPayload
+import com.agc.bwitch.platform.share.rememberShareLauncher
 import com.agc.bwitch.presentation.astrology.synastry.SynastryPersonForm
 import com.agc.bwitch.presentation.astrology.synastry.SynastryViewModel
 import com.agc.bwitch.presentation.economy.EconomyViewModel
@@ -70,6 +74,7 @@ import com.agc.bwitch.ui.common.economy.hasPremiumBenefit
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
 import com.agc.bwitch.ui.common.designsystem.BWitchPrimaryButton
 import com.agc.bwitch.ui.theme.BWitchThemeTokens
+import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
 @Composable
@@ -87,6 +92,9 @@ fun SynastryScreen(
     val strings = appStrings
     val synastryStrings = strings.synastry
     var wasGenerating by remember { mutableStateOf(false) }
+    val shareLauncher = rememberShareLauncher()
+    val shareScope = rememberCoroutineScope()
+    var shareErrorMessage by remember { mutableStateOf<String?>(null) }
     val showDailyLimitPaywall = synastryPreview.isDailyLimitRejected() || state.error == "daily_limit"
 
     LaunchedEffect(state.isGenerating, state.reading, state.error) {
@@ -188,8 +196,24 @@ fun SynastryScreen(
         }
 
         state.reading?.let { reading ->
-            SynastryResultCard(reading = reading, strings = strings, languageCode = state.currentLanguageCode)
+            SynastryResultCard(
+                reading = reading,
+                strings = strings,
+                languageCode = state.currentLanguageCode,
+                onShare = {
+                    shareErrorMessage = null
+                    shareScope.launch {
+                        val shareResult = shareLauncher.shareText(
+                            ShareTextPayload(text = it, title = strings.horoscope.shareCta),
+                        )
+                        if (shareResult is ShareResult.Error) {
+                            shareErrorMessage = shareResult.message ?: strings.birthChart.shareFailedFallback
+                        }
+                    }
+                },
+            )
         }
+        shareErrorMessage?.let { Text(text = it, color = MaterialTheme.colorScheme.error) }
     }
 }
 
@@ -330,7 +354,12 @@ private fun ComparativeSignRow(
 }
 
 @Composable
-private fun SynastryResultCard(reading: SynastryReading, strings: AppStrings, languageCode: String) {
+private fun SynastryResultCard(
+    reading: SynastryReading,
+    strings: AppStrings,
+    languageCode: String,
+    onShare: (String) -> Unit,
+) {
     val structured = reading.structured
     val synastryStrings = strings.synastry
 
@@ -398,8 +427,45 @@ private fun SynastryResultCard(reading: SynastryReading, strings: AppStrings, la
             text = reading.narrative,
             style = MaterialTheme.typography.bodyLarge,
         )
+
+        val shareText = buildSynastryShareText(reading = reading, strings = strings, languageCode = languageCode)
+        if (shareText.isNotBlank()) {
+            SectionSeparator()
+            OutlinedButton(
+                onClick = { onShare(shareText) },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text(strings.horoscope.shareCta) }
+        }
     }
 }
+
+private fun buildSynastryShareText(reading: SynastryReading, strings: AppStrings, languageCode: String): String {
+    val structured = reading.structured
+    val synastry = strings.synastry
+    fun List<String>.limitTo3() = take(3)
+    val strengths = structured.strengths.map { it.copyVariants(languageCode, reading.dailyOverlay?.axes?.firstOrNull()).firstOrNull().orEmpty() }
+        .filter { it.isNotBlank() }
+        .limitTo3()
+    val tensions = structured.tensions.map { it.copyVariants(languageCode, reading.dailyOverlay?.axes?.firstOrNull()).firstOrNull().orEmpty() }
+        .filter { it.isNotBlank() }
+        .limitTo3()
+    val guidance = structured.guidance.map { it.copyVariants(languageCode, reading.dailyOverlay?.axes?.firstOrNull()).firstOrNull().orEmpty() }
+        .filter { it.isNotBlank() }
+        .limitTo3()
+    val sections = mutableListOf<String>()
+    sections += synastry.resultTitle
+    sections += reading.narrative.takeIf { it.isNotBlank() } ?: ""
+    sections += "${synastry.bondMetricsTitle}: ${structured.overallScore.value}"
+    sections += "${synastry.strengthTitle}:\n${listOf(reading.primaryStrengthCopy(languageCode)) + strengths}".trimList()
+    sections += "${synastry.tensionTitle}:\n${listOf(reading.primaryTensionCopy(languageCode)) + tensions}".trimList()
+    sections += "${synastry.guidanceTitle}:\n${listOf(reading.primaryGuidanceCopy(languageCode)) + guidance}".trimList()
+    return sections.filter { it.isNotBlank() }.joinToString("\n\n")
+}
+
+private fun List<String>.trimList(): String =
+    filter { it.isNotBlank() }
+        .take(3)
+        .joinToString("\n") { "• $it" }
 
 @Composable
 private fun MetricStarsRow(dimension: SynastryDimension, stars: Double, strings: AppStrings) {

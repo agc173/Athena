@@ -37,6 +37,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.shadow
@@ -57,6 +58,9 @@ import com.agc.bwitch.domain.tarot.TarotCardPosition
 import com.agc.bwitch.domain.tarot.TarotReadingDetails
 import com.agc.bwitch.domain.tarot.TarotRequestType
 import com.agc.bwitch.localization.appStrings
+import com.agc.bwitch.platform.share.ShareResult
+import com.agc.bwitch.platform.share.ShareTextPayload
+import com.agc.bwitch.platform.share.rememberShareLauncher
 import com.agc.bwitch.presentation.tarot.TarotRevealPhase
 import com.agc.bwitch.presentation.tarot.TAROT_LIMIT_REACHED_ERROR_KEY
 import com.agc.bwitch.presentation.tarot.TarotViewModel
@@ -67,6 +71,7 @@ import com.agc.bwitch.ui.tarot.components.TarotLoadingDeck
 import com.agc.bwitch.ui.tarot.components.TarotMiniCard
 import com.agc.bwitch.ui.theme.bwitchDisplayFontFamily
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
 @Composable
@@ -82,7 +87,12 @@ fun TarotScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
     val strings = appStrings.tarot
+    val shareTitle = appStrings.horoscope.shareCta
+    val shareErrorFallback = appStrings.birthChart.shareFailedFallback
     val showDailyLimitPaywall = state.error == TAROT_LIMIT_REACHED_ERROR_KEY
+    val shareLauncher = rememberShareLauncher()
+    val shareScope = rememberCoroutineScope()
+    var shareErrorMessage by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(initialRequestType) {
         if (initialRequestType != null) {
@@ -220,6 +230,20 @@ fun TarotScreen(
                 if (state.revealPhase == TarotRevealPhase.READING_VISIBLE) {
                     when (val details = response.details) {
                         is TarotReadingDetails.Tarot1ReadingDetails -> {
+                            val shareText = buildTarotShareText(
+                                card = response.cards.firstOrNull(),
+                                details = details,
+                                fallbackTitle = strings.readingTitle,
+                                cardLabel = strings.cardLabel,
+                                orientationTitle = strings.orientationTitle,
+                                themeTitle = strings.themeTitle,
+                                meaningTitle = strings.meaningTitle,
+                                adviceTitle = strings.adviceTitle,
+                                watchOutTitle = strings.watchOutTitle,
+                                uprightLabel = strings.uprightLabel,
+                                reversedLabel = strings.reversedLabel,
+                                orientationUnknownLabel = strings.orientationUnknownLabel,
+                            )
                             val sectionVisibility = remember(details) {
                                 mutableStateListOf(false, false, false, false)
                             }
@@ -256,10 +280,42 @@ fun TarotScreen(
                                 ) {
                                     TarotReadingSection(title = strings.watchOutTitle, body = details.watchOut)
                                 }
+                                if (shareText.isNotBlank()) {
+                                    Button(
+                                        onClick = {
+                                            shareErrorMessage = null
+                                            shareScope.launch {
+                                                val shareResult = shareLauncher.shareText(
+                                                    ShareTextPayload(text = shareText, title = shareTitle),
+                                                )
+                                                if (shareResult is ShareResult.Error) {
+                                                    shareErrorMessage = shareResult.message ?: shareErrorFallback
+                                                }
+                                            }
+                                        },
+                                        modifier = Modifier.fillMaxWidth(),
+                                    ) { Text(shareTitle) }
+                                }
                             }
                         }
 
                         is TarotReadingDetails.Tarot3ReadingDetails -> {
+                            val shareText = buildTarotShareText(
+                                cards = response.cards,
+                                details = details,
+                                fallbackTitle = strings.readingTitle,
+                                pastLabel = strings.pastLabel,
+                                presentLabel = strings.presentLabel,
+                                futureLabel = strings.futureLabel,
+                                cardLabel = strings.cardLabel,
+                                orientationTitle = strings.orientationTitle,
+                                meaningTitle = strings.meaningTitle,
+                                summaryTitle = strings.summaryTitle,
+                                adviceTitle = strings.adviceTitle,
+                                uprightLabel = strings.uprightLabel,
+                                reversedLabel = strings.reversedLabel,
+                                orientationUnknownLabel = strings.orientationUnknownLabel,
+                            )
                             val sectionVisibility = remember(details) {
                                 mutableStateListOf(false, false, false, false, false)
                             }
@@ -312,6 +368,22 @@ fun TarotScreen(
                                 ) {
                                     TarotReadingSection(title = strings.adviceTitle, body = details.advice)
                                 }
+                                if (shareText.isNotBlank()) {
+                                    Button(
+                                        onClick = {
+                                            shareErrorMessage = null
+                                            shareScope.launch {
+                                                val shareResult = shareLauncher.shareText(
+                                                    ShareTextPayload(text = shareText, title = shareTitle),
+                                                )
+                                                if (shareResult is ShareResult.Error) {
+                                                    shareErrorMessage = shareResult.message ?: shareErrorFallback
+                                                }
+                                            }
+                                        },
+                                        modifier = Modifier.fillMaxWidth(),
+                                    ) { Text(shareTitle) }
+                                }
                             }
                         }
 
@@ -357,6 +429,13 @@ fun TarotScreen(
                         Text(strings.retryCta)
                     }
                 }
+            }
+            shareErrorMessage?.let {
+                Text(
+                    text = it,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
             }
         }
 
@@ -519,6 +598,85 @@ fun TarotScreen(
         }
     }
 }
+
+private fun buildTarotShareText(
+    card: com.agc.bwitch.domain.tarot.TarotCard?,
+    details: TarotReadingDetails.Tarot1ReadingDetails,
+    fallbackTitle: String,
+    cardLabel: String,
+    orientationTitle: String,
+    themeTitle: String,
+    meaningTitle: String,
+    adviceTitle: String,
+    watchOutTitle: String,
+    uprightLabel: String,
+    reversedLabel: String,
+    orientationUnknownLabel: String,
+): String {
+    if (card == null) return ""
+    val lines = listOfNotNull(
+        fallbackTitle.ifBlank { "Lectura de Tarot" },
+        "$cardLabel: ${card.name}".takeIf { card.name.isNotBlank() },
+        "$orientationTitle: ${card.orientationText(uprightLabel, reversedLabel, orientationUnknownLabel)}",
+        "$themeTitle: ${details.theme}".takeIf { details.theme.isNotBlank() },
+        "$meaningTitle: ${details.meaning}".takeIf { details.meaning.isNotBlank() },
+        "$adviceTitle: ${details.advice}".takeIf { details.advice.isNotBlank() },
+        "$watchOutTitle: ${details.watchOut}".takeIf { details.watchOut.isNotBlank() },
+    )
+    return lines.joinToString("\n\n")
+}
+
+private fun buildTarotShareText(
+    cards: List<com.agc.bwitch.domain.tarot.TarotCard>,
+    details: TarotReadingDetails.Tarot3ReadingDetails,
+    fallbackTitle: String,
+    pastLabel: String,
+    presentLabel: String,
+    futureLabel: String,
+    cardLabel: String,
+    orientationTitle: String,
+    meaningTitle: String,
+    summaryTitle: String,
+    adviceTitle: String,
+    uprightLabel: String,
+    reversedLabel: String,
+    orientationUnknownLabel: String,
+): String {
+    if (cards.isEmpty()) return ""
+    val cardsByPosition = cards.associateBy { it.position }
+    val detailsByPosition = details.cards.associateBy { it.position }
+    fun section(label: String, position: TarotCardPosition): String? {
+        val card = cardsByPosition[position] ?: return null
+        val meaning = detailsByPosition[position]?.meaning.orEmpty()
+        return listOfNotNull(
+            label,
+            "$cardLabel: ${card.name}".takeIf { card.name.isNotBlank() },
+            "$orientationTitle: ${card.orientationText(uprightLabel, reversedLabel, orientationUnknownLabel)}",
+            "$meaningTitle: $meaning".takeIf { meaning.isNotBlank() },
+        ).joinToString("\n")
+    }
+
+    val blocks = listOfNotNull(
+        fallbackTitle.ifBlank { "Lectura de Tarot" },
+        section(pastLabel, TarotCardPosition.PAST),
+        section(presentLabel, TarotCardPosition.PRESENT),
+        section(futureLabel, TarotCardPosition.FUTURE),
+        "$summaryTitle: ${details.summary}".takeIf { details.summary.isNotBlank() },
+        "$adviceTitle: ${details.advice}".takeIf { details.advice.isNotBlank() },
+    )
+    return blocks.joinToString("\n\n")
+}
+
+private fun com.agc.bwitch.domain.tarot.TarotCard.orientationText(
+    uprightLabel: String,
+    reversedLabel: String,
+    orientationUnknownLabel: String,
+): String =
+    when (upright) {
+        true -> uprightLabel
+        false -> reversedLabel
+        null -> orientationUnknownLabel
+    }
 
 @Composable
 private fun TarotDeckInteractionStage(
