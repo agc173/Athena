@@ -20,6 +20,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.Alignment
@@ -30,6 +31,10 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import com.agc.bwitch.localization.OracleStrings
 import com.agc.bwitch.localization.appStrings
+import com.agc.bwitch.domain.oracle.OracleAnswer
+import com.agc.bwitch.platform.share.ShareResult
+import com.agc.bwitch.platform.share.ShareTextPayload
+import com.agc.bwitch.platform.share.rememberShareLauncher
 import com.agc.bwitch.presentation.oracle.OracleAskMessage
 import com.agc.bwitch.presentation.oracle.OracleAskMessageId
 import com.agc.bwitch.domain.security.InputPolicy
@@ -47,6 +52,7 @@ import com.agc.bwitch.ui.common.designsystem.BWitchTextField
 import com.agc.bwitch.ui.common.designsystem.BWitchScreen
 import com.agc.bwitch.ui.common.designsystem.BWitchSectionHeader
 import com.agc.bwitch.ui.theme.BWitchThemeTokens
+import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
 @Composable
@@ -65,6 +71,9 @@ fun OracleScreen(
     val oraclePreview = economyState.modulePreviews
         .firstOrNull { it.module == "ORACLE_1Q" }
     val showDailyLimitPaywall = oraclePreview.isDailyLimitRejected()
+    val shareLauncher = rememberShareLauncher()
+    val coroutineScope = rememberCoroutineScope()
+    var shareError by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(state.answer?.coreGuidance) {
         if (state.answer != null) {
@@ -268,11 +277,40 @@ fun OracleScreen(
             }
 
             BWitchSecondaryButton(
+                onClick = {
+                    shareError = null
+                    coroutineScope.launch {
+                        val shareResult = shareLauncher.shareText(
+                            ShareTextPayload(
+                                text = buildOracleShareText(answer, strings),
+                                title = appStrings.horoscope.shareCta,
+                            ),
+                        )
+                        if (shareResult is ShareResult.Error) {
+                            shareError = shareResult.message ?: appStrings.birthChart.shareFailedFallback
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !state.isLoading && !state.inProgress,
+            ) {
+                Text(appStrings.horoscope.shareCta)
+            }
+
+            BWitchSecondaryButton(
                 onClick = viewModel::startNewConsultation,
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !state.isLoading,
             ) {
                 Text(strings.newConsultationCta)
+            }
+
+            shareError?.let { error ->
+                Text(
+                    text = error,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                )
             }
         }
 
@@ -309,6 +347,30 @@ fun OracleScreen(
             }
         }
     }
+}
+
+private fun buildOracleShareText(answer: OracleAnswer, strings: OracleStrings): String {
+    val sections = mutableListOf<String>()
+    answer.title?.takeIf { it.isNotBlank() }?.let(sections::add)
+    sections.add(answer.coreGuidance)
+    if (answer.doList.isNotEmpty()) {
+        sections.add(buildString {
+            append(strings.doTitle)
+            append('\n')
+            append(answer.doList.joinToString("\n") { strings.listItemBulletFormat.replaceFirst("%s", it) })
+        })
+    }
+    if (answer.avoidList.isNotEmpty()) {
+        sections.add(buildString {
+            append(strings.avoidTitle)
+            append('\n')
+            append(answer.avoidList.joinToString("\n") { strings.listItemBulletFormat.replaceFirst("%s", it) })
+        })
+    }
+    answer.reflection?.takeIf { it.isNotBlank() }?.let { reflection ->
+        sections.add("${strings.reflectionTitle}\n$reflection")
+    }
+    return sections.joinToString(separator = "\n\n").trim()
 }
 
 private fun OracleAskMessage.toUiText(strings: OracleStrings) = when (id) {
