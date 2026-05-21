@@ -552,7 +552,7 @@ Campos:
 - contextSign: string opcional (auditoría; unlock sigue siendo por período)
 
 ### /tarotDeckTracks/{trackId}
-Configuración backend-owned de tracks de progresión de mazos (sin asignación de cartas en esta fase).
+Configuración backend-owned de tracks de progresión de mazos.
 
 - enabled: boolean
 - moonsPerUnlock: number
@@ -561,12 +561,29 @@ Configuración backend-owned de tracks de progresión de mazos (sin asignación 
 - createdAt: timestamp
 - updatedAt: timestamp
 
+
+### /tarotDeckRewardPools/{rewardPoolId}
+Pool backend-owned de cartas desbloqueables por track.
+
+- deckId: string
+- cardIds: string[]
+- totalCards: number
+- enabled: boolean
+- createdAt: timestamp
+- updatedAt: timestamp
+
+Notas:
+- `cardIds` es la fuente de verdad para el total real de cartas desbloqueables.
+- Si `totalCards` difiere de `cardIds.length`, backend usa `cardIds.length` y registra warning de configuración.
+
 ### /users/{uid}/tarotDeckProgress/{trackId}
 Acumulado server-side del progreso por track.
 
 - totalMoonSpend: number
 - carryOverMoons: number
 - unlocksGranted: number
+- unlockedCardCount: number
+- completedAt: timestamp opcional
 - updatedAt: timestamp
 
 ### /users/{uid}/tarotDeckProgressRequests/{requestId}
@@ -576,3 +593,15 @@ Idempotencia de aplicación de progreso por gasto real moon.
 - moonCostCharged: number
 - source: string
 - createdAt: timestamp
+
+
+### /users/{uid}/tarotDeckProgress/{trackId}/unlockedCards/{cardId}
+Cartas concretas desbloqueadas por usuario/track (idempotente por `cardId`).
+
+- cardId: string
+- deckId: string
+- rewardPoolId: string
+- trackId: string
+- grantRequestId: string
+- unlockedAt: timestamp
+- source: string (`moon_spend_progress`)
