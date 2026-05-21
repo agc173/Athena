@@ -228,6 +228,7 @@ fun AppRoot() {
             destination = dest,
             strings = navigationStrings,
             moonStoreLabel = appStrings.profile.storeLabel,
+            arcanaCollectionTitle = appStrings.profile.arcanaCollectionTitle,
         ),
         topBarBadge = if (dest.showsTopBarMoonBalance() && economyState.hasUsableSnapshot) {
             {
@@ -502,6 +503,7 @@ private fun destinationTitle(
     destination: Destination,
     strings: NavigationStrings,
     moonStoreLabel: String,
+    arcanaCollectionTitle: String,
 ): String {
     return when (destination) {
         Destination.AuthGate -> ""
@@ -522,8 +524,8 @@ private fun destinationTitle(
         Destination.DailyRitual -> strings.dailyRitual
         Destination.Habits -> strings.habits
         Destination.TarotHome -> strings.tarot
-        Destination.TarotCollection -> appStrings.profile.arcanaCollectionTitle
-        is Destination.TarotDeckDetail -> appStrings.profile.arcanaCollectionTitle
+        Destination.TarotCollection -> arcanaCollectionTitle
+        is Destination.TarotDeckDetail -> arcanaCollectionTitle
         is Destination.Tarot -> strings.tarot
         Destination.Pendulum -> strings.pendulum
         is Destination.HoroscopeDaily -> strings.horoscopeDaily
