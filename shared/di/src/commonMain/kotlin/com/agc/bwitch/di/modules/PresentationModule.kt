@@ -15,6 +15,7 @@ import com.agc.bwitch.presentation.navigation.Navigator
 import com.agc.bwitch.presentation.rituals.DailyRitualViewModel
 import com.agc.bwitch.presentation.rituals.HabitsViewModel
 import com.agc.bwitch.presentation.tarot.TarotViewModel
+import com.agc.bwitch.presentation.tarotcollection.TarotCollectionViewModel
 import org.koin.core.module.Module
 import org.koin.dsl.module
 import com.agc.bwitch.presentation.userprofile.OnboardingProfileViewModel
@@ -57,6 +58,7 @@ val presentationModule: Module = module {
     factory { OracleStatusViewModel(get()) }
     factory { OracleAskViewModel(get(), get(), get(), get(), get()) }
     factory { TarotViewModel(get(), get(), get(), get(), get(), get(), get(), get()) }
+    factory { TarotCollectionViewModel(get(), get()) }
     factory { MoonStoreViewModel(get(), get(), get(), get()) }
     single { EconomyViewModel(get(), get()) }
     factory { PendulumViewModel(get()) }

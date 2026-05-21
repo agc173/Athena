@@ -192,4 +192,7 @@ object TarotCardArt {
 
     fun hasSpecificFace(deckId: TarotDeckId, cardId: String?): Boolean =
         faceDrawableForCardId(deckId = deckId, cardId = cardId) != null
+
+    fun allCardIds(deckId: TarotDeckId): List<String> =
+        faceDrawableByDeckAndCardId[deckId]?.keys?.sorted().orEmpty()
 }

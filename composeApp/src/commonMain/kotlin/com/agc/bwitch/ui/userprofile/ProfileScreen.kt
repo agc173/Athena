@@ -64,6 +64,7 @@ fun ProfileScreen(
     onDiscoverEssence: () -> Unit,
     onOpenHabits: () -> Unit,
     onOpenStore: (() -> Unit)? = null,
+    onOpenArcanaCollection: (() -> Unit)? = null,
 ) {
     val strings = appStrings
     val profileStrings = strings.profile
@@ -221,6 +222,20 @@ fun ProfileScreen(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+            }
+        }
+
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+            color = extras.surfaceElevated,
+            tonalElevation = 0.dp,
+            onClick = { onOpenArcanaCollection?.invoke() },
+            enabled = onOpenArcanaCollection != null,
+        ) {
+            Column(modifier = Modifier.fillMaxWidth().padding(horizontal = dimens.spacingMd, vertical = dimens.spacingMd)) {
+                Text(text = profileStrings.arcanaCollectionTitle, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Text(text = profileStrings.arcanaCollectionSubtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
 

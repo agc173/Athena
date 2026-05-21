@@ -15,6 +15,7 @@ data class TarotDeckDefinition(
     val id: TarotDeckId,
     val displayNameKey: String,
     val previewCardId: String,
+    val progressTrackId: String = id.value,
     val isDefault: Boolean,
 )
 
