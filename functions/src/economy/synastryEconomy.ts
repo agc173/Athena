@@ -9,6 +9,7 @@ import {
 import {getPremiumStatus} from './premiumStatus';
 import {getEconomyModuleRule} from './rulesCatalog';
 import type {EconomyBalanceDoc, EconomyDailyUsageDoc, EconomyDecisionSource, EconomyRequestDoc} from './types';
+import {applyDeckProgressPlan, planDeckProgressFromMoonSpend} from './deckProgress';
 
 type SynastryCounter = 'synastryFreeUsed' | 'synastryPremiumUsed' | 'synastryMoonPacksPurchased' | 'synastryMoonUsesUsed';
 type SynastryDecision = {
@@ -82,6 +83,13 @@ export async function reserveSynastryEconomyAccess(params: {uid: string; request
     const dailyData = (dailySnap.data() as EconomyDailyUsageDoc | undefined) ?? {};
     const decision = resolveSynastryDecision({isPremium: premium.isPremium, balance: intValue(balanceData.balance), dailyUsage: dailyData});
     if (decision.source === 'REJECT') throw new HttpsError('resource-exhausted', decision.reason ?? 'SYNASTRY_UNAVAILABLE');
+    const deckProgressPlan = await planDeckProgressFromMoonSpend({
+      tx,
+      uid: params.uid,
+      requestId: params.requestId,
+      moonCostCharged: decision.source === 'MOON' ? decision.moonCost : 0,
+      source: decision.source,
+    });
     const now = Timestamp.now();
     if (decision.usageCounters && decision.usageCounters.length > 0) {
       const patch: Record<string, unknown> = {updatedAt: now};
@@ -94,6 +102,7 @@ export async function reserveSynastryEconomyAccess(params: {uid: string; request
         type: 'SYNASTRY_MOON_SPEND', amount: -decision.moonCost, requestId: params.requestId, dateIso: params.dateIso, createdAt: now,
       }, {merge: true});
     }
+    applyDeckProgressPlan({tx, uid: params.uid, now, plan: deckProgressPlan});
     tx.create(reqRef, {
       requestId: params.requestId,
       type: 'SYNASTRY',

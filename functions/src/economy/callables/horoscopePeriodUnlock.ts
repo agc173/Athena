@@ -21,6 +21,7 @@ import type {
   UnlockHoroscopeMonthlyResponse,
   UnlockHoroscopeWeeklyResponse,
 } from '../types';
+import {applyDeckProgressPlan, planDeckProgressFromMoonSpend} from '../deckProgress';
 
 type UnlockHoroscopePeriodResponse =
   | UnlockHoroscopeWeeklyResponse
@@ -139,6 +140,13 @@ export async function unlockHoroscopePeriod<TResponse extends UnlockHoroscopePer
     if (decision.source === 'REJECT') {
       throw new HttpsError('failed-precondition', 'insufficient_moons');
     }
+    const deckProgressPlan = await planDeckProgressFromMoonSpend({
+      tx,
+      uid,
+      requestId,
+      moonCostCharged: decision.source === 'MOON' ? ruleCost : 0,
+      source: decision.source,
+    });
 
     const usageData = (usageSnap.data() as EconomyDailyUsageDoc | undefined) ?? {};
     const now = Timestamp.now();
@@ -172,6 +180,8 @@ export async function unlockHoroscopePeriod<TResponse extends UnlockHoroscopePer
         createdAt: now,
       } as EconomyLedgerEntryDoc, {merge: true});
     }
+
+    applyDeckProgressPlan({tx, uid, now, plan: deckProgressPlan});
 
     logger.info(`${config.source} charged`, {
       uid,
