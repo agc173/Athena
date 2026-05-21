@@ -38,4 +38,6 @@
     <string name="nav_title_onboarding_profile">Complete your profile</string>
     <string name="nav_title_user_profile">Profile</string>
     <string name="nav_title_settings">Settings</string>
+    <string name="tarot_deck_rider_waite">Rider-Waite</string>
+    <string name="tarot_deck_arcana_noctis">Arcana Noctis</string>
 </resources>
