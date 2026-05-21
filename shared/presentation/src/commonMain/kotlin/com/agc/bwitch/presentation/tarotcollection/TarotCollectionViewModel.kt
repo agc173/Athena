@@ -4,7 +4,9 @@ import com.agc.bwitch.domain.analytics.AnalyticsEvent
 import com.agc.bwitch.domain.analytics.AnalyticsTracker
 import com.agc.bwitch.domain.analytics.NoOpAnalyticsTracker
 import com.agc.bwitch.domain.tarot.GetTarotDeckCollectionProgressUseCase
-import com.agc.bwitch.presentation.base.BaseViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -14,7 +16,8 @@ import kotlinx.coroutines.launch
 class TarotCollectionViewModel(
     private val getProgress: GetTarotDeckCollectionProgressUseCase,
     private val analyticsTracker: AnalyticsTracker = NoOpAnalyticsTracker,
-) : BaseViewModel() {
+) {
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private val _uiState = MutableStateFlow(TarotCollectionUiState())
     val uiState: StateFlow<TarotCollectionUiState> = _uiState.asStateFlow()
 
