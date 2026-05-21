@@ -9,11 +9,6 @@ object TarotCardArt {
     const val cardBackAssetKey: String = "tarot_back_1"
     const val placeholderFaceAssetKey: String = "tarot_placeholder_face"
 
-    private val faceDrawableByDeckAndCardId: Map<TarotDeckId, Map<String, DrawableResource>> = mapOf(
-        TarotDeckId.RIDER_WAITE to riderWaiteFaceDrawableByCardId,
-        TarotDeckId.ARCANA_NOCTIS to arcanaNoctisFaceDrawableByCardId,
-    )
-
     private val riderWaiteFaceDrawableByCardId: Map<String, DrawableResource> = mapOf(
         "major-00-fool" to Res.drawable.deck_rider_waite_major_00_fool,
         "major-01-magician" to Res.drawable.deck_rider_waite_major_01_magician,
@@ -174,6 +169,11 @@ object TarotCardArt {
         "minor-king-pentacles" to Res.drawable.deck_arcana_noctis_minor_king_pentacles,
         "minor-king-swords" to Res.drawable.deck_arcana_noctis_minor_king_swords,
         "minor-king-wands" to Res.drawable.deck_arcana_noctis_minor_king_wands,
+    )
+
+    private val faceDrawableByDeckAndCardId: Map<TarotDeckId, Map<String, DrawableResource>> = mapOf(
+        TarotDeckId.RIDER_WAITE to riderWaiteFaceDrawableByCardId,
+        TarotDeckId.ARCANA_NOCTIS to arcanaNoctisFaceDrawableByCardId,
     )
 
     fun faceDrawableForCardId(cardId: String?): DrawableResource? =
