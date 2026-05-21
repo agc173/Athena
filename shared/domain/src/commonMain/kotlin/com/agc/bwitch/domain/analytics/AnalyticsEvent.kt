@@ -352,4 +352,16 @@ sealed interface AnalyticsEvent {
             "action" to action,
         )
     }
+
+    data object DeckGalleryOpened : AnalyticsEvent {
+        override val name: String = "deck_gallery_opened"
+        override fun params(): Map<String, String> = emptyMap()
+    }
+
+    data class DeckDetailOpened(
+        val trackId: String,
+    ) : AnalyticsEvent {
+        override val name: String = "deck_detail_opened"
+        override fun params(): Map<String, String> = mapOf("track_id" to trackId)
+    }
 }

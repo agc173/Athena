@@ -80,6 +80,8 @@ import com.agc.bwitch.ui.store.MoonStoreScreen
 import com.agc.bwitch.ui.store.MoonPaywallDialog
 import com.agc.bwitch.ui.tarot.TarotHomeScreen
 import com.agc.bwitch.ui.tarot.TarotScreen
+import com.agc.bwitch.ui.tarot.TarotCollectionScreen
+import com.agc.bwitch.ui.tarot.TarotDeckDetailScreen
 import com.agc.bwitch.ui.userprofile.ProfileScreen
 import com.agc.bwitch.ui.userprofile.SettingsScreen
 import com.agc.bwitch.ui.theme.BWitchThemeTokens
@@ -302,6 +304,7 @@ fun AppRoot() {
                 onDiscoverEssence = { navigator.navigate(Destination.Astrology) },
                 onOpenHabits = { navigator.navigate(Destination.Habits) },
                 onOpenStore = { navigator.navigate(Destination.MoonStore) },
+                onOpenArcanaCollection = { navigator.navigate(Destination.TarotCollection) },
             )
 
             Destination.MoonStore -> MoonStoreScreen(contentPadding = padding)
@@ -319,6 +322,14 @@ fun AppRoot() {
                     navigator.navigate(Destination.Tarot(requestType = requestType))
                 },
                 onSelectLastReading = { navigator.navigate(Destination.Tarot(requestType = null)) },
+            )
+            Destination.TarotCollection -> TarotCollectionScreen(
+                contentPadding = padding,
+                onOpenDeck = { deckId -> navigator.navigate(Destination.TarotDeckDetail(deckId)) },
+            )
+            is Destination.TarotDeckDetail -> TarotDeckDetailScreen(
+                contentPadding = padding,
+                deckRawId = (dest as Destination.TarotDeckDetail).deckId,
             )
 
             Destination.Oracle -> OracleScreen(
@@ -511,6 +522,8 @@ private fun destinationTitle(
         Destination.DailyRitual -> strings.dailyRitual
         Destination.Habits -> strings.habits
         Destination.TarotHome -> strings.tarot
+        Destination.TarotCollection -> appStrings.profile.arcanaCollectionTitle
+        is Destination.TarotDeckDetail -> appStrings.profile.arcanaCollectionTitle
         is Destination.Tarot -> strings.tarot
         Destination.Pendulum -> strings.pendulum
         is Destination.HoroscopeDaily -> strings.horoscopeDaily

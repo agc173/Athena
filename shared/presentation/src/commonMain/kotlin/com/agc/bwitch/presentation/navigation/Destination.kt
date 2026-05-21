@@ -44,6 +44,8 @@ sealed class Destination(val title: String) {
     data object Habits : Destination("Hábitos")
 
     data object TarotHome : Destination("Tarot")
+    data object TarotCollection : Destination("Colección Arcana")
+    data class TarotDeckDetail(val deckId: String) : Destination("Mazo")
 
     data class Tarot(
         val requestType: TarotRequestType? = null,

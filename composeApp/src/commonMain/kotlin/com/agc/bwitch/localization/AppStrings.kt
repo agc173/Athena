@@ -255,6 +255,13 @@ data class ProfileStrings(
     val saveErrorMessage: String,
     val avatarUpdatedMessage: String,
     val avatarUploadError: String,
+    val arcanaCollectionTitle: String = "Colección Arcana",
+    val arcanaCollectionSubtitle: String = "Explora tus mazos y cartas desbloqueadas.",
+    val arcanaDeckStatusAvailable: String = "Disponible",
+    val arcanaDeckStatusInProgress: String = "En progreso",
+    val arcanaDeckStatusCompleted: String = "Mazo completo",
+    val arcanaDeckRevealCopy: String = "Gasta Lunas para revelar nuevas cartas.",
+    val arcanaUnlockedCardsLabel: String = "Cartas desbloqueadas",
 )
 
 data class AstrologyHomeStrings(
@@ -779,6 +786,13 @@ val fallbackAppStrings: AppStrings = AppStrings(
         saveErrorMessage = "Error guardando el perfil",
         avatarUpdatedMessage = "Avatar actualizado",
         avatarUploadError = "Error subiendo avatar",
+        arcanaCollectionTitle = "Colección Arcana",
+        arcanaCollectionSubtitle = "Explora tus mazos y cartas desbloqueadas.",
+        arcanaDeckStatusAvailable = "Disponible",
+        arcanaDeckStatusInProgress = "En progreso",
+        arcanaDeckStatusCompleted = "Mazo completo",
+        arcanaDeckRevealCopy = "Gasta Lunas para revelar nuevas cartas.",
+        arcanaUnlockedCardsLabel = "Cartas desbloqueadas",
     ),
     astrologyHome = AstrologyHomeStrings(
         headerTitle = "Tu cielo interior",
@@ -1286,6 +1300,13 @@ private val englishAppStrings = fallbackAppStrings.copy(
         saveErrorMessage = "Error saving profile",
         avatarUpdatedMessage = "Avatar updated",
         avatarUploadError = "Error uploading avatar",
+        arcanaCollectionTitle = "Arcana Collection",
+        arcanaCollectionSubtitle = "Explore your decks and unlocked cards.",
+        arcanaDeckStatusAvailable = "Available",
+        arcanaDeckStatusInProgress = "In progress",
+        arcanaDeckStatusCompleted = "Deck complete",
+        arcanaDeckRevealCopy = "Spend Moons to reveal new cards.",
+        arcanaUnlockedCardsLabel = "Unlocked cards",
     ),
     astrologyHome = fallbackAppStrings.astrologyHome.copy(
         headerTitle = "Your inner sky",

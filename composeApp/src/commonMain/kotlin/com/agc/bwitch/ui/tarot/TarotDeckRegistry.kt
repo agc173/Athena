@@ -9,12 +9,14 @@ object TarotDeckRegistry {
             id = TarotDeckId.RIDER_WAITE,
             displayNameKey = "tarot_deck_rider_waite",
             previewCardId = "major-00-fool",
+            progressTrackId = "rider_waite",
             isDefault = true,
         ),
         TarotDeckDefinition(
             id = TarotDeckId.ARCANA_NOCTIS,
             displayNameKey = "tarot_deck_arcana_noctis",
             previewCardId = "major-00-fool",
+            progressTrackId = "arcana_noctis",
             isDefault = false,
         ),
     )

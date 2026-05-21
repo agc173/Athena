@@ -26,6 +26,7 @@ import com.agc.bwitch.data.settings.entitlement.FunctionsPremiumEntitlementRepos
 import com.agc.bwitch.data.settings.billing.SubscriptionBillingDataSource
 import com.agc.bwitch.data.settings.billing.UnsupportedSubscriptionBillingDataSource
 import com.agc.bwitch.data.tarot.TarotRepositoryImpl
+import com.agc.bwitch.data.tarot.FirestoreTarotDeckCollectionRepository
 import com.agc.bwitch.data.tarot.SettingsLastTarotReadingRepository
 import com.agc.bwitch.data.userprofile.FirebaseAvatarRepository
 import com.agc.bwitch.data.userprofile.SettingsUserProfileRepository
@@ -47,6 +48,7 @@ import com.agc.bwitch.domain.settings.NotificationSettingsRepository
 import com.agc.bwitch.domain.settings.PremiumEntitlementRepository
 import com.agc.bwitch.domain.settings.SubscriptionRepository
 import com.agc.bwitch.domain.tarot.TarotRepository
+import com.agc.bwitch.domain.tarot.TarotDeckCollectionRepository
 import com.agc.bwitch.domain.tarot.LastTarotReadingRepository
 import com.agc.bwitch.domain.userprofile.AvatarRepository
 import com.agc.bwitch.domain.userprofile.UserProfileRepository
@@ -142,6 +144,7 @@ val dataKoinModule: Module = module {
     single<EconomyRepository> { EconomyRepositoryImpl(get()) }
     single<OracleRepository> { OracleRepositoryImpl(get()) }
     single<TarotRepository> { TarotRepositoryImpl(get()) }
+    single<TarotDeckCollectionRepository> { FirestoreTarotDeckCollectionRepository() }
     single<LastTarotReadingRepository> { SettingsLastTarotReadingRepository(get()) }
 
     /**
