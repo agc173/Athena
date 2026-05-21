@@ -10,7 +10,6 @@ import com.agc.bwitch.domain.moons.MoonBalance
 import com.agc.bwitch.domain.moons.MoonRepository
 import com.agc.bwitch.domain.moons.ObserveMoonBalanceUseCase
 import com.agc.bwitch.domain.moons.SpendMoonsResult
-import com.agc.bwitch.domain.moons.SpendMoonsUseCase
 import com.agc.bwitch.domain.shared.ApiError
 import com.agc.bwitch.domain.shared.ApiResult
 import com.agc.bwitch.domain.tarot.TarotDrawResponse
@@ -18,7 +17,6 @@ import com.agc.bwitch.domain.tarot.LastTarotReadingRepository
 import com.agc.bwitch.domain.tarot.TarotRepository
 import com.agc.bwitch.domain.tarot.TarotRequestType
 import com.agc.bwitch.presentation.analytics.FakeAnalyticsTracker
-import com.agc.bwitch.presentation.economy.UNLOCK_FLOW_ORIGIN_DIRECT_BALANCE
 import kotlin.collections.ArrayDeque
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -52,7 +50,6 @@ class TarotViewModelTest {
                 observeMoonBalanceUseCase = ObserveMoonBalanceUseCase(moonRepository),
                 getMoonBalanceUseCase = GetMoonBalanceUseCase(moonRepository),
                 addMoonsUseCase = AddMoonsUseCase(moonRepository),
-                spendMoonsUseCase = SpendMoonsUseCase(moonRepository),
                 lastTarotReadingRepository = FakeLastTarotReadingRepository(),
             )
 
@@ -81,7 +78,6 @@ class TarotViewModelTest {
                 observeMoonBalanceUseCase = ObserveMoonBalanceUseCase(moonRepository),
                 getMoonBalanceUseCase = GetMoonBalanceUseCase(moonRepository),
                 addMoonsUseCase = AddMoonsUseCase(moonRepository),
-                spendMoonsUseCase = SpendMoonsUseCase(moonRepository),
                 lastTarotReadingRepository = FakeLastTarotReadingRepository(),
                 analyticsTracker = analytics,
             )
@@ -98,21 +94,13 @@ class TarotViewModelTest {
     }
 
     @Test
-    fun `tarot_3 legacy rewarded proof error falls back to local spend and retries`() = runTest {
+    fun `tarot_3 legacy rewarded proof error does not spend locally and does not auto retry`() = runTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
         Dispatchers.setMain(dispatcher)
         try {
             val repo = FakeTarotRepository(
                 scriptedResults = listOf(
                     ApiResult.Err(ApiError.FailedPrecondition("AD_UNLOCK rewardedProof required")),
-                    ApiResult.Ok(
-                        TarotDrawResponse(
-                            requestId = "req-1",
-                            status = "DONE",
-                            cards = emptyList(),
-                            interpretation = "ok",
-                        ),
-                    ),
                 ),
             )
             val languageRepo = FakeLanguageRepository(MutableStateFlow(AppLanguage.Spanish))
@@ -125,7 +113,6 @@ class TarotViewModelTest {
                 observeMoonBalanceUseCase = ObserveMoonBalanceUseCase(moonRepository),
                 getMoonBalanceUseCase = GetMoonBalanceUseCase(moonRepository),
                 addMoonsUseCase = AddMoonsUseCase(moonRepository),
-                spendMoonsUseCase = SpendMoonsUseCase(moonRepository),
                 lastTarotReadingRepository = FakeLastTarotReadingRepository(),
                 analyticsTracker = analytics,
             )
@@ -133,15 +120,13 @@ class TarotViewModelTest {
             viewModel.newRequest(TarotRequestType.TAROT_3)
             advanceUntilIdle()
 
-            assertEquals(2, repo.callCount)
-            assertEquals(1, moonRepository.spendCalls)
-            assertNull(viewModel.uiState.value.error)
+            assertEquals(1, repo.callCount)
+            assertEquals(0, moonRepository.spendCalls)
+            assertEquals(TAROT_DRAW_ERROR_KEY, viewModel.uiState.value.error)
             assertNull(viewModel.uiState.value.insufficientMoonsMessage)
-            assertEquals("DONE", viewModel.uiState.value.response?.status)
-            assertEquals(7, viewModel.uiState.value.moonBalance)
-            assertTrue(analytics.events.any { it is com.agc.bwitch.domain.analytics.AnalyticsEvent.ContentUnlocked })
-            val unlocked = analytics.events.filterIsInstance<com.agc.bwitch.domain.analytics.AnalyticsEvent.ContentUnlocked>().last()
-            assertEquals(UNLOCK_FLOW_ORIGIN_DIRECT_BALANCE, unlocked.unlockFlowOrigin)
+            assertNull(viewModel.uiState.value.response)
+            assertEquals(10, viewModel.uiState.value.moonBalance)
+            assertTrue(analytics.events.none { it is com.agc.bwitch.domain.analytics.AnalyticsEvent.ContentUnlocked })
         } finally {
             Dispatchers.resetMain()
         }
@@ -166,7 +151,6 @@ class TarotViewModelTest {
                 observeMoonBalanceUseCase = ObserveMoonBalanceUseCase(moonRepository),
                 getMoonBalanceUseCase = GetMoonBalanceUseCase(moonRepository),
                 addMoonsUseCase = AddMoonsUseCase(moonRepository),
-                spendMoonsUseCase = SpendMoonsUseCase(moonRepository),
                 lastTarotReadingRepository = FakeLastTarotReadingRepository(),
             )
 
@@ -206,7 +190,6 @@ class TarotViewModelTest {
                 observeMoonBalanceUseCase = ObserveMoonBalanceUseCase(moonRepository),
                 getMoonBalanceUseCase = GetMoonBalanceUseCase(moonRepository),
                 addMoonsUseCase = AddMoonsUseCase(moonRepository),
-                spendMoonsUseCase = SpendMoonsUseCase(moonRepository),
                 lastTarotReadingRepository = FakeLastTarotReadingRepository(),
             )
 
@@ -247,7 +230,6 @@ class TarotViewModelTest {
                 observeMoonBalanceUseCase = ObserveMoonBalanceUseCase(moonRepository),
                 getMoonBalanceUseCase = GetMoonBalanceUseCase(moonRepository),
                 addMoonsUseCase = AddMoonsUseCase(moonRepository),
-                spendMoonsUseCase = SpendMoonsUseCase(moonRepository),
                 lastTarotReadingRepository = FakeLastTarotReadingRepository(),
             )
 

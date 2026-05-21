@@ -12,13 +12,10 @@ import com.agc.bwitch.domain.moons.GetMoonBalanceUseCase
 import com.agc.bwitch.domain.moons.MoonUnlockCostCatalog
 import com.agc.bwitch.domain.moons.MoonUnlockFeature
 import com.agc.bwitch.domain.moons.ObserveMoonBalanceUseCase
-import com.agc.bwitch.domain.moons.SpendMoonsResult
-import com.agc.bwitch.domain.moons.SpendMoonsUseCase
 import com.agc.bwitch.domain.tarot.TarotDrawResponse
 import com.agc.bwitch.domain.tarot.LastTarotReadingRepository
 import com.agc.bwitch.domain.tarot.TarotRepository
 import com.agc.bwitch.domain.tarot.TarotRequestType
-import com.agc.bwitch.presentation.economy.UNLOCK_FLOW_ORIGIN_DIRECT_BALANCE
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 import kotlinx.coroutines.CoroutineScope
@@ -70,7 +67,6 @@ class TarotViewModel(
     private val observeMoonBalanceUseCase: ObserveMoonBalanceUseCase,
     private val getMoonBalanceUseCase: GetMoonBalanceUseCase,
     private val addMoonsUseCase: AddMoonsUseCase,
-    private val spendMoonsUseCase: SpendMoonsUseCase,
     private val lastTarotReadingRepository: LastTarotReadingRepository,
     private val analyticsTracker: AnalyticsTracker = NoOpAnalyticsTracker,
 ) {
@@ -323,120 +319,6 @@ class TarotViewModel(
                 }
 
                 is ApiResult.Err -> {
-                    if (type == TarotRequestType.TAROT_3 && result.error.requiresLegacyAdUnlockFallback()) {
-                        when (val spendResult = spendMoonsUseCase(_uiState.value.extraReadingCost)) {
-                            is SpendMoonsResult.Success -> {
-                                analyticsTracker.track(
-                                    AnalyticsEvent.MoonSpent(
-                                        module = "tarot",
-                                        cost = _uiState.value.extraReadingCost,
-                                        balanceAfter = spendResult.updatedBalance.amount,
-                                    ),
-                                )
-                                analyticsTracker.track(
-                                    AnalyticsEvent.ContentUnlocked(
-                                        module = "tarot_extra_reading",
-                                        method = "moons",
-                                        costCharged = _uiState.value.extraReadingCost,
-                                        balanceAfter = spendResult.updatedBalance.amount,
-                                        unlockFlowOrigin = UNLOCK_FLOW_ORIGIN_DIRECT_BALANCE,
-                                    ),
-                                )
-                                val retryResult = tarotRepository.tarotDraw(
-                                    requestId = requestId,
-                                    type = type,
-                                    lang = currentLanguageCode.value,
-                                )
-                                if (retryResult is ApiResult.Ok) {
-                                    _uiState.update {
-                                        it.copy(
-                                            isLoading = false,
-                                            response = retryResult.value,
-                                            error = null,
-                                            revealPhase = if (
-                                                it.revealPhase == TarotRevealPhase.SHUFFLING &&
-                                                shuffleMinDurationElapsed &&
-                                                it.requestId == shuffleRequestId
-                                            ) {
-                                                TarotRevealPhase.WAITING_TO_REVEAL
-                                            } else {
-                                                it.revealPhase
-                                            },
-                                            revealedCardCount = 0,
-                                            activeCardIndex = 0,
-                                            activeCardRevealed = false,
-                                            overlayVisible = false,
-                                            overlayCardIndex = null,
-                                            overlayCardRevealed = false,
-                                            openedMiniCardIndex = null,
-                                            insufficientMoonsMessage = null,
-                                        )
-                                    }
-                                    runCatching { lastTarotReadingRepository.save(retryResult.value) }
-                                    refreshMoonBalanceFromBackend()
-                                    return@launch
-                                }
-                                if (retryResult is ApiResult.Err) {
-                                    val retryEconomyError = retryResult.error.isEconomyRestriction()
-                                    val retryTarotLimitError = retryResult.error.isTarotLimitReached()
-                                    _uiState.update {
-                                        it.copy(
-                                            isLoading = false,
-                                            response = null,
-                                            revealPhase = TarotRevealPhase.IDLE,
-                                            revealedCardCount = 0,
-                                            activeCardIndex = 0,
-                                            activeCardRevealed = false,
-                                            overlayVisible = false,
-                                            overlayCardIndex = null,
-                                            overlayCardRevealed = false,
-                                            openedMiniCardIndex = null,
-                                            insufficientMoonsMessage = if (retryEconomyError) {
-                                                TAROT_EXTRA_READING_NOT_ENOUGH_MOONS_KEY
-                                            } else {
-                                                null
-                                            },
-                                            error = when {
-                                                retryEconomyError -> null
-                                                retryTarotLimitError -> TAROT_LIMIT_REACHED_ERROR_KEY
-                                                else -> TAROT_DRAW_ERROR_KEY
-                                            },
-                                        )
-                                    }
-                                    refreshMoonBalanceFromBackend()
-                                    return@launch
-                                }
-                            }
-
-                            is SpendMoonsResult.InsufficientBalance -> {
-                                analyticsTracker.track(
-                                    AnalyticsEvent.ModuleLimitReached(
-                                        module = "tarot_extra_reading",
-                                        isPremium = false,
-                                    ),
-                                )
-                                _uiState.update {
-                                    it.copy(
-                                        isLoading = false,
-                                        response = null,
-                                        revealPhase = TarotRevealPhase.IDLE,
-                                        revealedCardCount = 0,
-                                        activeCardIndex = 0,
-                                        activeCardRevealed = false,
-                                        overlayVisible = false,
-                                        overlayCardIndex = null,
-                                        overlayCardRevealed = false,
-                                        openedMiniCardIndex = null,
-                                        insufficientMoonsMessage = TAROT_EXTRA_READING_NOT_ENOUGH_MOONS_KEY,
-                                        error = null,
-                                    )
-                                }
-                                refreshMoonBalanceFromBackend()
-                                return@launch
-                            }
-                        }
-                    }
-
                     val economyError = result.error.isEconomyRestriction()
                     val tarotLimitError = result.error.isTarotLimitReached()
                     _uiState.update {
@@ -525,15 +407,4 @@ private fun com.agc.bwitch.domain.shared.ApiError.isTarotLimitReached(): Boolean
         normalizedMessage.contains("TAROT_3_MOON_DAILY_LIMIT_REACHED") ||
         normalizedMessage.contains("TAROT_3_PREMIUM_DAILY_LIMIT_REACHED") ||
         normalizedMessage.contains("TAROT_3_WEEKLY_LIMIT_REACHED")
-}
-
-private fun com.agc.bwitch.domain.shared.ApiError.requiresLegacyAdUnlockFallback(): Boolean {
-    val normalizedMessage = message.orEmpty().lowercase()
-    return this is com.agc.bwitch.domain.shared.ApiError.FailedPrecondition &&
-        (
-            "rewardedproof" in normalizedMessage ||
-                "rewarded proof" in normalizedMessage ||
-                "ad_unlock" in normalizedMessage ||
-                "ad unlock" in normalizedMessage
-            )
 }

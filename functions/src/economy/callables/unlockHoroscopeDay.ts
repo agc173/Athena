@@ -24,6 +24,7 @@ import type {
   UnlockHoroscopeDayData,
   UnlockHoroscopeDayResponse,
 } from '../types';
+import {applyDeckProgressPlan, planDeckProgressFromMoonSpend} from '../deckProgress';
 
 const VALID_SIGNS: ZodiacSign[] = ['aries', 'taurus', 'gemini', 'cancer', 'leo', 'virgo', 'libra', 'scorpio', 'sagittarius', 'capricorn', 'aquarius', 'pisces'];
 
@@ -130,6 +131,13 @@ export const unlockHoroscopeDay = onCall(
         if (decision.source === 'REJECT') {
           throw new HttpsError('failed-precondition', 'insufficient_moons');
         }
+        const deckProgressPlan = await planDeckProgressFromMoonSpend({
+          tx,
+          uid,
+          requestId,
+          moonCostCharged: decision.source === 'MOON' ? ruleCost : 0,
+          source: decision.source,
+        });
 
         const usageData = (usageSnap.data() as EconomyDailyUsageDoc | undefined) ?? {};
         const now = Timestamp.now();
@@ -162,6 +170,8 @@ export const unlockHoroscopeDay = onCall(
             createdAt: now,
           } as EconomyLedgerEntryDoc, {merge: true});
         }
+
+        applyDeckProgressPlan({tx, uid, now, plan: deckProgressPlan});
 
         logger.info('unlockHoroscopeDay charged', {uidTag: buildUidTag(uid), unlockKey, dateIso, costCharged});
 

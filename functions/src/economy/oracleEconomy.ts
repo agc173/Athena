@@ -15,6 +15,7 @@ import type {
   EconomyDecisionSource,
   EconomyRequestDoc,
 } from './types';
+import {applyDeckProgressPlan, planDeckProgressFromMoonSpend} from './deckProgress';
 
 type OracleUsageCounter =
   | 'oracleFreeUsed'
@@ -161,6 +162,13 @@ export async function reserveOracleEconomyAccess(params: {
     if (decision.source === 'REJECT') {
       throw new HttpsError('resource-exhausted', decision.reason ?? 'ORACLE_UNAVAILABLE');
     }
+    const deckProgressPlan = await planDeckProgressFromMoonSpend({
+      tx,
+      uid: params.uid,
+      requestId: params.requestId,
+      moonCostCharged: decision.source === 'MOON' ? decision.moonCost : 0,
+      source: decision.source,
+    });
 
     const now = Timestamp.now();
 
@@ -188,6 +196,8 @@ export async function reserveOracleEconomyAccess(params: {
         createdAt: now,
       }, {merge: true});
     }
+
+    applyDeckProgressPlan({tx, uid: params.uid, now, plan: deckProgressPlan});
 
     const requestDoc: EconomyRequestDoc = {
       requestId: params.requestId,

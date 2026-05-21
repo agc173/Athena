@@ -18,6 +18,7 @@ import type {
   EconomyRequestDoc,
   EconomyWeeklyUsageDoc,
 } from './types';
+import {applyDeckProgressPlan, planDeckProgressFromMoonSpend} from './deckProgress';
 
 type TarotRequestType = RequestType.TAROT_1 | RequestType.TAROT_3;
 
@@ -214,6 +215,13 @@ export async function reserveTarotEconomyAccess(params: {
     if (decision.source === 'REJECT') {
       throw new HttpsError('resource-exhausted', decision.reason ?? 'TAROT_UNAVAILABLE');
     }
+    const deckProgressPlan = await planDeckProgressFromMoonSpend({
+      tx,
+      uid: params.uid,
+      requestId: params.requestId,
+      moonCostCharged: decision.source === 'MOON' ? decision.moonCost : 0,
+      source: decision.source,
+    });
 
     const now = Timestamp.now();
 
@@ -250,6 +258,8 @@ export async function reserveTarotEconomyAccess(params: {
         createdAt: now,
       }, {merge: true});
     }
+
+    applyDeckProgressPlan({tx, uid: params.uid, now, plan: deckProgressPlan});
 
     const requestDoc = stripUndefinedDeep<EconomyRequestDoc>({
       requestId: params.requestId,

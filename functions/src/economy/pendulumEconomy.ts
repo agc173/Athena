@@ -14,6 +14,7 @@ import type {
   EconomyDecisionSource,
   EconomyRequestDoc,
 } from './types';
+import {applyDeckProgressPlan, planDeckProgressFromMoonSpend} from './deckProgress';
 
 type PendulumCounter =
   | 'pendulumFreeUsed'
@@ -136,6 +137,13 @@ export async function reservePendulumEconomyAccess(params: {
           decision.reason ?? 'PENDULUM_UNAVAILABLE',
       );
     }
+    const deckProgressPlan = await planDeckProgressFromMoonSpend({
+      tx,
+      uid: params.uid,
+      requestId: params.requestId,
+      moonCostCharged: decision.source === 'MOON' ? decision.moonCost : 0,
+      source: decision.source,
+    });
     const now = Timestamp.now();
     if (decision.usageCounters?.length) {
       const patch: Record<string, unknown> = {updatedAt: now};
@@ -167,6 +175,7 @@ export async function reservePendulumEconomyAccess(params: {
           {merge: true},
       );
     }
+    applyDeckProgressPlan({tx, uid: params.uid, now, plan: deckProgressPlan});
     tx.create(economyRequestRef(params.uid, params.requestId), {
       requestId: params.requestId,
       type: 'PENDULUM',

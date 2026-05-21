@@ -550,3 +550,29 @@ Campos:
 - costCharged: number
 - premiumIncluded: boolean
 - contextSign: string opcional (auditoría; unlock sigue siendo por período)
+
+### /tarotDeckTracks/{trackId}
+Configuración backend-owned de tracks de progresión de mazos (sin asignación de cartas en esta fase).
+
+- enabled: boolean
+- moonsPerUnlock: number
+- rewardType: string (p.ej. TAROT_CARD)
+- rewardPoolId: string (p.ej. classic_arcana_v1)
+- createdAt: timestamp
+- updatedAt: timestamp
+
+### /users/{uid}/tarotDeckProgress/{trackId}
+Acumulado server-side del progreso por track.
+
+- totalMoonSpend: number
+- carryOverMoons: number
+- unlocksGranted: number
+- updatedAt: timestamp
+
+### /users/{uid}/tarotDeckProgressRequests/{requestId}
+Idempotencia de aplicación de progreso por gasto real moon.
+
+- applied: boolean
+- moonCostCharged: number
+- source: string
+- createdAt: timestamp
