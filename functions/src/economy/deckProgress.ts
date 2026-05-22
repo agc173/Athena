@@ -1,6 +1,7 @@
 import {createHash} from 'node:crypto';
 import {type Timestamp, type Transaction, getFirestore} from 'firebase-admin/firestore';
 import {buildUidTag} from '../utils/safeLogging';
+import {TAROT_DECK} from '../oracle/tarot/deck';
 
 type TrackDoc = {
   enabled?: boolean;
@@ -25,6 +26,21 @@ type ProgressDoc = {
 };
 
 type Source = 'MOON' | 'FREE' | 'PREMIUM_INCLUDED' | 'REJECT';
+const DEFAULT_TRACK_ID = 'arcana_noctis';
+const DEFAULT_REWARD_POOL_ID = 'arcana_noctis';
+const DEFAULT_REWARD_POOL_CARD_IDS = TAROT_DECK.map((card) => card.id);
+const DEFAULT_TRACK: Required<Pick<TrackDoc, 'enabled' | 'moonsPerUnlock' | 'rewardType' | 'rewardPoolId'>> = {
+  enabled: true,
+  moonsPerUnlock: 5,
+  rewardType: 'TAROT_CARD',
+  rewardPoolId: DEFAULT_REWARD_POOL_ID,
+};
+const DEFAULT_REWARD_POOL: Required<Pick<RewardPoolDoc, 'deckId' | 'cardIds' | 'totalCards' | 'enabled'>> = {
+  deckId: DEFAULT_TRACK_ID,
+  enabled: true,
+  totalCards: 78,
+  cardIds: DEFAULT_REWARD_POOL_CARD_IDS,
+};
 
 export type DeckProgressPlan = {
   shouldApply: boolean;
@@ -34,6 +50,10 @@ export type DeckProgressPlan = {
   moonCostCharged: number;
   source: Source;
   tracksEvaluated: number;
+  defaultsToMaterialize: {
+    track?: {ref: FirebaseFirestore.DocumentReference; data: Record<string, unknown>};
+    rewardPool?: {ref: FirebaseFirestore.DocumentReference; data: Record<string, unknown>};
+  };
   updates: Array<{
     trackId: string;
     progressRef: FirebaseFirestore.DocumentReference;
@@ -128,20 +148,33 @@ export async function planDeckProgressFromMoonSpend(params: {
 }): Promise<DeckProgressPlan> {
   const requestRef = userTarotDeckProgressRequestRef(params.uid, params.requestId);
   if (params.source !== 'MOON' || params.moonCostCharged <= 0) {
-    return {shouldApply: false, alreadyApplied: false, requestRef, requestId: params.requestId, moonCostCharged: params.moonCostCharged, source: params.source, tracksEvaluated: 0, updates: []};
+    return {shouldApply: false, alreadyApplied: false, requestRef, requestId: params.requestId, moonCostCharged: params.moonCostCharged, source: params.source, tracksEvaluated: 0, defaultsToMaterialize: {}, updates: []};
   }
 
   const requestSnap = await params.tx.get(requestRef);
   if (requestSnap.exists) {
-    return {shouldApply: false, alreadyApplied: true, requestRef, requestId: params.requestId, moonCostCharged: params.moonCostCharged, source: params.source, tracksEvaluated: 0, updates: []};
+    return {shouldApply: false, alreadyApplied: true, requestRef, requestId: params.requestId, moonCostCharged: params.moonCostCharged, source: params.source, tracksEvaluated: 0, defaultsToMaterialize: {}, updates: []};
   }
 
   const tracksQuery = await params.tx.get(getFirestore().collection('tarotDeckTracks').where('enabled', '==', true));
   const updates: DeckProgressPlan['updates'] = [];
+  const defaultsToMaterialize: DeckProgressPlan['defaultsToMaterialize'] = {};
+  const trackEntries = tracksQuery.docs.length > 0 ?
+    tracksQuery.docs.map((trackSnap) => ({trackId: trackSnap.id, track: ((trackSnap.data() as TrackDoc | undefined) ?? {})})) :
+    [{trackId: DEFAULT_TRACK_ID, track: DEFAULT_TRACK as TrackDoc}];
+  if (tracksQuery.docs.length === 0) {
+    defaultsToMaterialize.track = {
+      ref: getFirestore().doc(`tarotDeckTracks/${DEFAULT_TRACK_ID}`),
+      data: {
+        ...DEFAULT_TRACK,
+        trackId: DEFAULT_TRACK_ID,
+      },
+    };
+  }
 
-  for (const trackSnap of tracksQuery.docs) {
-    const trackId = trackSnap.id;
-    const track = (trackSnap.data() as TrackDoc | undefined) ?? {};
+  for (const trackEntry of trackEntries) {
+    const trackId = trackEntry.trackId;
+    const track = trackEntry.track;
     const rawMoonsPerUnlock = track.moonsPerUnlock;
     const moonsPerUnlock = typeof rawMoonsPerUnlock === 'number' ? Math.floor(rawMoonsPerUnlock) : NaN;
     if (!Number.isFinite(moonsPerUnlock) || moonsPerUnlock < 1) {
@@ -171,18 +204,29 @@ export async function planDeckProgressFromMoonSpend(params: {
       if (!track.rewardPoolId) {
         console.warn('DECK_REWARD_POOL_INVALID', {trackId, reason: 'missing_rewardPoolId', uidTag: buildUidTag(params.uid), requestId: params.requestId});
       } else {
-        const rewardPoolSnap = await params.tx.get(getFirestore().doc(`tarotDeckRewardPools/${track.rewardPoolId}`));
-        const rewardPool = rewardPoolSnap.data() as RewardPoolDoc | undefined;
+        const rewardPoolRef = getFirestore().doc(`tarotDeckRewardPools/${track.rewardPoolId}`);
+        const rewardPoolSnap = await params.tx.get(rewardPoolRef);
+        const shouldUseDefaultRewardPool = track.rewardPoolId === DEFAULT_REWARD_POOL_ID && !rewardPoolSnap.exists;
+        if (shouldUseDefaultRewardPool) {
+          defaultsToMaterialize.rewardPool = {
+            ref: rewardPoolRef,
+            data: {
+              ...DEFAULT_REWARD_POOL,
+              rewardPoolId: DEFAULT_REWARD_POOL_ID,
+            },
+          };
+        }
+        const rewardPool = shouldUseDefaultRewardPool ? DEFAULT_REWARD_POOL : (rewardPoolSnap.data() as RewardPoolDoc | undefined);
         const rewardPoolEnabled = rewardPool?.enabled === true;
         const cardIds = normalizeCardIds(rewardPool?.cardIds);
         const totalCardsRaw = typeof rewardPool?.totalCards === 'number' ? Math.floor(rewardPool.totalCards) : NaN;
         const totalCards = Number.isFinite(totalCardsRaw) && totalCardsRaw > 0 ? totalCardsRaw : cardIds.length;
 
-        if (!rewardPoolSnap.exists || !rewardPoolEnabled || cardIds.length === 0 || !rewardPool?.deckId) {
+        if ((!rewardPoolSnap.exists && !shouldUseDefaultRewardPool) || !rewardPoolEnabled || cardIds.length === 0 || !rewardPool?.deckId) {
           console.warn('DECK_REWARD_POOL_INVALID', {
             trackId,
             rewardPoolId: track.rewardPoolId,
-            reason: !rewardPoolSnap.exists ? 'missing_pool' : !rewardPoolEnabled ? 'pool_disabled' : cardIds.length === 0 ? 'empty_card_ids' : 'missing_deck_id',
+            reason: (!rewardPoolSnap.exists && !shouldUseDefaultRewardPool) ? 'missing_pool' : !rewardPoolEnabled ? 'pool_disabled' : cardIds.length === 0 ? 'empty_card_ids' : 'missing_deck_id',
             uidTag: buildUidTag(params.uid),
             requestId: params.requestId,
           });
@@ -241,7 +285,8 @@ export async function planDeckProgressFromMoonSpend(params: {
     requestId: params.requestId,
     moonCostCharged: params.moonCostCharged,
     source: params.source,
-    tracksEvaluated: tracksQuery.size,
+    tracksEvaluated: trackEntries.length,
+    defaultsToMaterialize,
     updates,
   };
 }
@@ -254,6 +299,20 @@ export function applyDeckProgressPlan(params: {
 }): void {
   const {tx, now, plan} = params;
   if (!plan.shouldApply || plan.alreadyApplied) return;
+  if (plan.defaultsToMaterialize.track) {
+    tx.set(plan.defaultsToMaterialize.track.ref, {
+      ...plan.defaultsToMaterialize.track.data,
+      createdAt: now,
+      updatedAt: now,
+    }, {merge: true});
+  }
+  if (plan.defaultsToMaterialize.rewardPool) {
+    tx.set(plan.defaultsToMaterialize.rewardPool.ref, {
+      ...plan.defaultsToMaterialize.rewardPool.data,
+      createdAt: now,
+      updatedAt: now,
+    }, {merge: true});
+  }
 
   let totalUnlocksGranted = 0;
   for (const update of plan.updates) {

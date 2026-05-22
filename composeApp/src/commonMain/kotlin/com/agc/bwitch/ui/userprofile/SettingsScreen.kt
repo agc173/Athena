@@ -37,13 +37,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.agc.bwitch.config.SettingsLinks
-import com.agc.bwitch.data.functions.FunctionsClient
 import com.agc.bwitch.domain.localization.AppLanguage
 import com.agc.bwitch.domain.session.ClearLocalUserDataUseCase
 import com.agc.bwitch.domain.settings.SubscriptionStatus
 import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.localization.SettingsStrings
-import com.agc.bwitch.platform.isDebugBuild
 import com.agc.bwitch.platform.getAppVersionLabel
 import com.agc.bwitch.presentation.auth.SessionViewModel
 import com.agc.bwitch.presentation.economy.EconomyViewModel
@@ -58,7 +56,6 @@ import com.agc.bwitch.ui.common.designsystem.BWitchScreen
 import com.agc.bwitch.ui.common.premium.PremiumCard
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
-import kotlinx.serialization.builtins.serializer
 import org.koin.compose.koinInject
 
 @Composable
@@ -68,7 +65,6 @@ fun SettingsScreen(contentPadding: PaddingValues) {
     val appLanguageVm: AppLanguageViewModel = koinInject()
     val economyVm: EconomyViewModel = koinInject()
     val clearLocalUserData: ClearLocalUserDataUseCase = koinInject()
-    val functionsClient: FunctionsClient = koinInject()
 
     val settingsState by settingsVm.uiState.collectAsState()
 
@@ -84,8 +80,6 @@ fun SettingsScreen(contentPadding: PaddingValues) {
 
     var showLanguageDialog by rememberSaveable { mutableStateOf(false) }
     var showSubscriptionPlanDialog by rememberSaveable { mutableStateOf(false) }
-    var tarotSeedResult by rememberSaveable { mutableStateOf<String?>(null) }
-    var tarotSeedLoading by rememberSaveable { mutableStateOf(false) }
 
     val username = settingsState.username?.takeUnless { it.isBlank() } ?: strings.notAvailable
     val email = settingsState.email?.takeUnless { it.isBlank() } ?: strings.notAvailable
@@ -300,33 +294,7 @@ fun SettingsScreen(contentPadding: PaddingValues) {
                 )
             }
 
-            if (isDebugBuild) {
-                SettingsSectionCard(title = "DEV ONLY · Tarot deck progression") {
-                    SettingsRow(
-                        label = if (tarotSeedLoading) "Running seedTarotDeckProgressionConfig..." else "Run seedTarotDeckProgressionConfig",
-                        value = tarotSeedResult ?: "Creates tarotDeckTracks/arcana_noctis + tarotDeckRewardPools/arcana_noctis",
-                        showDivider = false,
-                        onClick = {
-                            if (tarotSeedLoading) return@SettingsRow
-                            scope.launch {
-                                tarotSeedLoading = true
-                                tarotSeedResult = null
-                                val result = functionsClient.call<Unit, Unit>(
-                                    name = "seedTarotDeckProgressionConfig",
-                                    data = Unit,
-                        requestSerializer = Unit.serializer(),
-                        responseSerializer = Unit.serializer(),
-                                )
-                                tarotSeedLoading = false
-                                tarotSeedResult = when (result) {
-                                    is com.agc.bwitch.domain.shared.ApiResult.Ok -> "✅ Success"
-                                    is com.agc.bwitch.domain.shared.ApiResult.Err -> "❌ Error: ${result.error.message ?: result.error::class.simpleName.orEmpty()}"
-                                }
-                            }
-                        },
-                    )
-                }
-            }
+
 
             SettingsSectionCard(
                 title = strings.sectionDangerZone,
