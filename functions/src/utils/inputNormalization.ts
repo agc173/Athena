@@ -2,6 +2,7 @@ export const ORACLE_QUESTION_MAX_LENGTH = 150;
 export const DAILY_RITUAL_TEXT_MAX_LENGTH = 500;
 export const BIRTH_ESSENCE_SUMMARY_MAX_LENGTH = 120;
 
+// eslint-disable-next-line no-control-regex
 const CONTROL_CHARS_UNSAFE_REGEX = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g;
 const NON_BREAKING_SPACES_REGEX = /[\u00A0\u202F\u2007]/g;
 
