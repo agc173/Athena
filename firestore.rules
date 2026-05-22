@@ -59,6 +59,19 @@ service cloud.firestore {
       allow read, write: if isOwner(uid);
     }
 
+    // Tarot deck progression es user-owned y de solo lectura desde cliente.
+    // Writes quedan backend-owned (Admin SDK), por eso se niegan aquí.
+    match /users/{uid}/tarotDeckProgress/{trackId} {
+      allow get, list: if isOwner(uid);
+      allow write: if false;
+
+      // Permite leer/listar cartas desbloqueadas del owner únicamente.
+      match /unlockedCards/{cardId} {
+        allow get, list: if isOwner(uid);
+        allow write: if false;
+      }
+    }
+
     // Username index is backend-owned for writes (Functions/Admin SDK), readable for checks.
     match /usernames/{username} {
       allow read: if isAuthenticated();
