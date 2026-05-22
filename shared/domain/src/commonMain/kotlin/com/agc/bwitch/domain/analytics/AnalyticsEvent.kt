@@ -364,4 +364,17 @@ sealed interface AnalyticsEvent {
         override val name: String = "deck_detail_opened"
         override fun params(): Map<String, String> = mapOf("track_id" to trackId)
     }
+
+    data class DeckSelected(
+        val deckId: String,
+        val sourceScreen: String,
+        val isFullyUnlocked: Boolean,
+    ) : AnalyticsEvent {
+        override val name: String = "deck_selected"
+        override fun params(): Map<String, String> = mapOf(
+            "deck_id" to deckId,
+            "source_screen" to sourceScreen,
+            "is_fully_unlocked" to isFullyUnlocked.toString(),
+        )
+    }
 }

@@ -12,6 +12,9 @@ import com.agc.bwitch.domain.moons.GetMoonBalanceUseCase
 import com.agc.bwitch.domain.moons.MoonUnlockCostCatalog
 import com.agc.bwitch.domain.moons.MoonUnlockFeature
 import com.agc.bwitch.domain.moons.ObserveMoonBalanceUseCase
+import com.agc.bwitch.domain.tarot.GetSelectedTarotDeckUseCase
+import com.agc.bwitch.domain.tarot.GetTarotDeckCollectionProgressUseCase
+import com.agc.bwitch.domain.tarot.TarotDeckId
 import com.agc.bwitch.domain.tarot.TarotDrawResponse
 import com.agc.bwitch.domain.tarot.LastTarotReadingRepository
 import com.agc.bwitch.domain.tarot.TarotRepository
@@ -58,6 +61,7 @@ data class TarotUiState(
     val moonBalance: Int = 0,
     val extraReadingCost: Int = MoonUnlockCostCatalog.costFor(MoonUnlockFeature.TarotExtraReading),
     val insufficientMoonsMessage: String? = null,
+    val selectedDeckId: TarotDeckId = TarotDeckId.RIDER_WAITE,
 )
 
 class TarotViewModel(
@@ -68,6 +72,8 @@ class TarotViewModel(
     private val getMoonBalanceUseCase: GetMoonBalanceUseCase,
     private val addMoonsUseCase: AddMoonsUseCase,
     private val lastTarotReadingRepository: LastTarotReadingRepository,
+    private val getSelectedTarotDeckUseCase: GetSelectedTarotDeckUseCase,
+    private val getTarotDeckCollectionProgressUseCase: GetTarotDeckCollectionProgressUseCase,
     private val analyticsTracker: AnalyticsTracker = NoOpAnalyticsTracker,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -101,6 +107,10 @@ class TarotViewModel(
                 _uiState.update { it.copy(moonBalance = balance.amount) }
             }
         }
+
+        scope.launch {
+            _uiState.update { it.copy(selectedDeckId = resolveSafeSelectedDeckId()) }
+        }
     }
 
     fun newRequest(type: TarotRequestType) {
@@ -115,6 +125,9 @@ class TarotViewModel(
         shuffleRequestId = null
 
         val requestId = generateRequestId()
+        scope.launch {
+            _uiState.update { it.copy(selectedDeckId = resolveSafeSelectedDeckId()) }
+        }
         _uiState.update {
             it.copy(
                 requestId = requestId,
@@ -351,6 +364,23 @@ class TarotViewModel(
         }
     }
 
+
+
+    private suspend fun resolveSafeSelectedDeckId(): TarotDeckId {
+        val selectedDeck = runCatching { getSelectedTarotDeckUseCase() }
+            .getOrDefault(TarotDeckId.RIDER_WAITE)
+
+        return when (selectedDeck) {
+            TarotDeckId.RIDER_WAITE -> TarotDeckId.RIDER_WAITE
+            TarotDeckId.ARCANA_NOCTIS -> {
+                val unlockedCards = runCatching {
+                    getTarotDeckCollectionProgressUseCase()[TarotDeckId.ARCANA_NOCTIS.value]?.unlockedCards?.size ?: 0
+                }.getOrDefault(0)
+                if (unlockedCards >= ARCANA_NOCTIS_TOTAL_CARDS) TarotDeckId.ARCANA_NOCTIS else TarotDeckId.RIDER_WAITE
+            }
+        }
+    }
+
     private suspend fun refreshMoonBalanceFromBackend() {
         val syncedBalance = runCatching { getMoonBalanceUseCase().amount }
             .getOrNull()
@@ -385,6 +415,7 @@ class TarotViewModel(
 
     private companion object {
         const val MIN_SHUFFLE_DURATION_MS = 1200L
+        const val ARCANA_NOCTIS_TOTAL_CARDS = 78
     }
 }
 
