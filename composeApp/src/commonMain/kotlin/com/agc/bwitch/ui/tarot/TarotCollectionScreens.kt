@@ -19,6 +19,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -39,6 +40,12 @@ fun TarotCollectionScreen(contentPadding: PaddingValues, onOpenDeck: (String) ->
     val state by vm.uiState.collectAsState()
     val strings = appStrings.profile
     LaunchedEffect(Unit) { vm.load(); vm.onGalleryOpened() }
+    SideEffect {
+        TarotDeckRegistry.allDecks.forEach { deck ->
+            val unlocked = state.progressByTrackId[deck.progressTrackId]?.unlockedCards?.size ?: 0
+            println("[TarotCollectionScreen] deckId=${deck.id.value} progressTrackId=${deck.progressTrackId} unlockedCount=$unlocked")
+        }
+    }
     LazyColumn(
         modifier = Modifier.padding(contentPadding).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -94,6 +101,9 @@ fun TarotDeckDetailScreen(contentPadding: PaddingValues, deckRawId: String) {
     val canUseDeck = deckDefinition?.isDefault == true || isFullyUnlocked
     val isSelectedDeck = state.selectedDeckId == deck
     LaunchedEffect(deckRawId) { vm.load(); vm.onDeckDetailOpened(deckRawId) }
+    SideEffect {
+        println("[TarotDeckDetailScreen] rawId=$deckRawId deckId=${deck.value} progressTrackId=$trackId unlockedCount=${unlocked.size}")
+    }
     Column(Modifier.padding(contentPadding).padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(deckDefinition?.displayNameLocalized() ?: deck.value, style = MaterialTheme.typography.titleLarge)
         Text("${unlocked.size} / ${cards.size}")
