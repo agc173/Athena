@@ -28,9 +28,11 @@ class TarotCollectionViewModel(
 
     fun load() {
         scope.launch {
+            println("[TarotCollectionViewModel] load() start")
             _uiState.update { it.copy(isLoading = true) }
             val progress = runCatching { getProgress() }.getOrDefault(emptyMap())
             val selectedDeckId = runCatching { getSelectedDeck() }.getOrDefault(TarotDeckId.RIDER_WAITE)
+            println("[TarotCollectionViewModel] load() progressTrackIds=${progress.keys} arcanaNoctisUnlocked=${progress[TarotDeckId.ARCANA_NOCTIS.value]?.unlockedCards?.size ?: 0} selectedDeckId=${selectedDeckId.value}")
             _uiState.update { it.copy(isLoading = false, progressByTrackId = progress, selectedDeckId = selectedDeckId) }
         }
     }
