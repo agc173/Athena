@@ -5,11 +5,13 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -19,7 +21,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.shape.RoundedCornerShape
 import com.agc.bwitch.domain.tarot.TarotDeckId
 import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.presentation.tarotcollection.TarotCollectionViewModel
@@ -32,10 +37,17 @@ fun TarotCollectionScreen(contentPadding: PaddingValues, onOpenDeck: (String) ->
     val state by vm.uiState.collectAsState()
     val strings = appStrings.profile
     LaunchedEffect(Unit) { vm.load(); vm.onGalleryOpened() }
-    Column(Modifier.padding(contentPadding).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        TarotDeckRegistry.allDecks.forEach { deck ->
+    LazyColumn(
+        modifier = Modifier.padding(contentPadding).padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        items(TarotDeckRegistry.allDecks, key = { it.id.value }) { deck ->
             val progress = state.progressByTrackId[deck.progressTrackId]
-            val unlocked = progress?.unlockedCards?.size ?: 0
+            val unlocked = if (deck.isDefault) {
+                TarotCardArt.allCardIds(deck.id).size
+            } else {
+                progress?.unlockedCards?.size ?: 0
+            }
             val total = TarotCardArt.allCardIds(deck.id).size
             val status = when {
                 deck.isDefault -> strings.arcanaDeckStatusAvailable
@@ -45,8 +57,16 @@ fun TarotCollectionScreen(contentPadding: PaddingValues, onOpenDeck: (String) ->
             Surface(Modifier.fillMaxWidth().clickable { onOpenDeck(deck.id.value) }) {
                 Column(Modifier.padding(12.dp)) {
                     val preview = TarotCardArt.faceDrawableForCardId(deck.id, deck.previewCardId) ?: TarotCardArt.backDrawable
-                    Image(painterResource(preview), null)
-                    Text(deck.displayNameKey, style = MaterialTheme.typography.titleMedium)
+                    Image(
+                        painter = painterResource(preview),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(3f / 5f)
+                            .clip(RoundedCornerShape(12.dp)),
+                        contentScale = ContentScale.Crop,
+                    )
+                    Text(deck.displayNameLocalized(), style = MaterialTheme.typography.titleMedium)
                     Text("$unlocked / $total · $status", style = MaterialTheme.typography.bodySmall)
                 }
             }
@@ -62,10 +82,15 @@ fun TarotDeckDetailScreen(contentPadding: PaddingValues, deckRawId: String) {
     val deck = TarotDeckId.fromValue(deckRawId) ?: TarotDeckRegistry.defaultDeck.id
     val cards = TarotCardArt.allCardIds(deck)
     val trackId = TarotDeckRegistry.getById(deck)?.progressTrackId ?: deck.value
-    val unlocked = state.progressByTrackId[trackId]?.unlockedCards ?: emptySet()
+    val deckDefinition = TarotDeckRegistry.getById(deck)
+    val unlocked = if (deckDefinition?.isDefault == true) {
+        cards.toSet()
+    } else {
+        state.progressByTrackId[trackId]?.unlockedCards ?: emptySet()
+    }
     LaunchedEffect(deckRawId) { vm.load(); vm.onDeckDetailOpened(deckRawId) }
     Column(Modifier.padding(contentPadding).padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(TarotDeckRegistry.getById(deck)?.displayNameKey ?: deck.value, style = MaterialTheme.typography.titleLarge)
+        Text(deckDefinition?.displayNameLocalized() ?: deck.value, style = MaterialTheme.typography.titleLarge)
         Text("${unlocked.size} / ${cards.size}")
         Text(strings.arcanaUnlockedCardsLabel + ": ${unlocked.size}")
         Text(strings.arcanaDeckRevealCopy)
@@ -79,3 +104,9 @@ fun TarotDeckDetailScreen(contentPadding: PaddingValues, deckRawId: String) {
         }
     }
 }
+
+private fun com.agc.bwitch.domain.tarot.TarotDeckDefinition.displayNameLocalized(): String =
+    when (id) {
+        TarotDeckId.RIDER_WAITE -> "Rider-Waite"
+        TarotDeckId.ARCANA_NOCTIS -> "Arcana Noctis"
+    }
