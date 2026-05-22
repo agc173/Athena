@@ -49,6 +49,9 @@ export const ENV = {
   // ACTIVE_LANGS se rellena abajo para poder filtrar contra SUPPORTED_LANGS
   ACTIVE_LANGS: [] as Lang[],
   BACKFILL_ADMIN_UIDS: parseCsv('BACKFILL_ADMIN_UIDS', ''),
+  SEED_ADMIN_UIDS: parseCsv('SEED_ADMIN_UIDS', ''),
+  SEED_ADMIN_EMAILS: parseCsv('SEED_ADMIN_EMAILS', '').map((value) => value.toLowerCase()),
+  ENABLE_TAROT_DECK_SEED_CALLABLE: optBool('ENABLE_TAROT_DECK_SEED_CALLABLE', false),
   WEEKLY_WINDOW_SIZE: Math.max(2, Math.floor(optNum('WEEKLY_WINDOW_SIZE', 2))),
   MONTHLY_WINDOW_SIZE: Math.max(2, Math.floor(optNum('MONTHLY_WINDOW_SIZE', 2))),
 
