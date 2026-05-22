@@ -30,6 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.agc.bwitch.domain.tarot.TarotCard
+import com.agc.bwitch.domain.tarot.TarotDeckId
 import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.ui.tarot.TarotCardArt
 import bwitch.composeapp.generated.resources.*
@@ -43,6 +44,7 @@ fun TarotCardView(
     revealed: Boolean,
     cardWidth: Dp = 160.dp,
     onClick: (() -> Unit)? = null,
+    deckId: TarotDeckId = TarotDeckId.RIDER_WAITE,
 ) {
     val flipRotation = remember { Animatable(0f) }
 
@@ -88,7 +90,7 @@ fun TarotCardView(
                             cameraDistance = 12f * density
                         },
                 ) {
-                    TarotCardFaceContent(card = card, revealed = false)
+                    TarotCardFaceContent(card = card, revealed = false, deckId = deckId)
                 }
 
                 Box(
@@ -100,7 +102,7 @@ fun TarotCardView(
                             cameraDistance = 12f * density
                         },
                 ) {
-                    TarotCardFaceContent(card = card, revealed = true)
+                    TarotCardFaceContent(card = card, revealed = true, deckId = deckId)
                 }
             }
         }
@@ -111,13 +113,13 @@ private const val TAROT_CARD_ASPECT_RATIO = 0.6f
 private const val REVEAL_FLIP_DURATION_MS = 520
 
 @Composable
-internal fun TarotCardFaceContent(card: TarotCard?, revealed: Boolean) {
+internal fun TarotCardFaceContent(card: TarotCard?, revealed: Boolean, deckId: TarotDeckId = TarotDeckId.RIDER_WAITE) {
     if (!revealed) {
         TarotBackFace()
         return
     }
 
-    val faceDrawable = TarotCardArt.faceDrawableForCardId(card?.id)
+    val faceDrawable = TarotCardArt.faceDrawableForCardId(deckId, card?.id)
     if (faceDrawable != null) {
         TarotKnownFace(card = card, drawable = faceDrawable)
     } else {

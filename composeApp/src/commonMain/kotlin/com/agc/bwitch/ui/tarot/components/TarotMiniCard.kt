@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.agc.bwitch.domain.tarot.TarotCard
+import com.agc.bwitch.domain.tarot.TarotDeckId
 
 @Composable
 fun TarotMiniCard(
@@ -29,6 +30,7 @@ fun TarotMiniCard(
     label: String,
     selected: Boolean = false,
     onClick: (() -> Unit)? = null,
+    deckId: TarotDeckId = TarotDeckId.RIDER_WAITE,
 ) {
     val cardWidth = 92.dp
     val cardShape = RoundedCornerShape(0.dp)
@@ -66,7 +68,7 @@ fun TarotMiniCard(
             elevation = CardDefaults.cardElevation(defaultElevation = if (selected) 2.dp else 0.dp),
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
-                TarotCardFaceContent(card = card, revealed = true)
+                TarotCardFaceContent(card = card, revealed = true, deckId = deckId)
             }
         }
     }

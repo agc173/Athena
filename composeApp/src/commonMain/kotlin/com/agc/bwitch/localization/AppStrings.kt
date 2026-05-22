@@ -542,6 +542,10 @@ data class TarotStrings(
     val fallbackArtSoon: String,
     val cardBackContentDescription: String,
     val cardFaceContentDescription: String,
+    val useThisDeck: String = "Usar este mazo",
+    val deckInUse: String = "Mazo en uso",
+    val completeDeckToUseReadings: String = "Completa el mazo para usarlo en tus tiradas.",
+    val selectedDeckLabel: String = "Mazo seleccionado",
 )
 
 data class ZodiacStrings(
@@ -1574,6 +1578,10 @@ private val englishAppStrings = fallbackAppStrings.copy(
         fallbackArtSoon = "Illustration coming soon",
         cardBackContentDescription = "Tarot card back",
         cardFaceContentDescription = "Tarot card face",
+        useThisDeck = "Use this deck",
+        deckInUse = "Deck in use",
+        completeDeckToUseReadings = "Complete the deck to use it in your readings.",
+        selectedDeckLabel = "Selected deck",
     ),
     zodiac = fallbackAppStrings.zodiac.copy(
         taurus = "Taurus",

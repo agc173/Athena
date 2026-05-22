@@ -12,6 +12,12 @@ import com.agc.bwitch.domain.moons.ObserveMoonBalanceUseCase
 import com.agc.bwitch.domain.moons.SpendMoonsResult
 import com.agc.bwitch.domain.shared.ApiError
 import com.agc.bwitch.domain.shared.ApiResult
+import com.agc.bwitch.domain.tarot.GetSelectedTarotDeckUseCase
+import com.agc.bwitch.domain.tarot.GetTarotDeckCollectionProgressUseCase
+import com.agc.bwitch.domain.tarot.SelectedTarotDeckRepository
+import com.agc.bwitch.domain.tarot.TarotDeckCollectionProgress
+import com.agc.bwitch.domain.tarot.TarotDeckCollectionRepository
+import com.agc.bwitch.domain.tarot.TarotDeckId
 import com.agc.bwitch.domain.tarot.TarotDrawResponse
 import com.agc.bwitch.domain.tarot.LastTarotReadingRepository
 import com.agc.bwitch.domain.tarot.TarotRepository
@@ -51,6 +57,8 @@ class TarotViewModelTest {
                 getMoonBalanceUseCase = GetMoonBalanceUseCase(moonRepository),
                 addMoonsUseCase = AddMoonsUseCase(moonRepository),
                 lastTarotReadingRepository = FakeLastTarotReadingRepository(),
+                getSelectedTarotDeckUseCase = GetSelectedTarotDeckUseCase(FakeSelectedTarotDeckRepository()),
+                getTarotDeckCollectionProgressUseCase = GetTarotDeckCollectionProgressUseCase(FakeTarotDeckCollectionRepository()),
             )
 
             viewModel.newRequest(TarotRequestType.TAROT_1)
@@ -79,6 +87,8 @@ class TarotViewModelTest {
                 getMoonBalanceUseCase = GetMoonBalanceUseCase(moonRepository),
                 addMoonsUseCase = AddMoonsUseCase(moonRepository),
                 lastTarotReadingRepository = FakeLastTarotReadingRepository(),
+                getSelectedTarotDeckUseCase = GetSelectedTarotDeckUseCase(FakeSelectedTarotDeckRepository()),
+                getTarotDeckCollectionProgressUseCase = GetTarotDeckCollectionProgressUseCase(FakeTarotDeckCollectionRepository()),
                 analyticsTracker = analytics,
             )
 
@@ -114,6 +124,8 @@ class TarotViewModelTest {
                 getMoonBalanceUseCase = GetMoonBalanceUseCase(moonRepository),
                 addMoonsUseCase = AddMoonsUseCase(moonRepository),
                 lastTarotReadingRepository = FakeLastTarotReadingRepository(),
+                getSelectedTarotDeckUseCase = GetSelectedTarotDeckUseCase(FakeSelectedTarotDeckRepository()),
+                getTarotDeckCollectionProgressUseCase = GetTarotDeckCollectionProgressUseCase(FakeTarotDeckCollectionRepository()),
                 analyticsTracker = analytics,
             )
 
@@ -152,6 +164,8 @@ class TarotViewModelTest {
                 getMoonBalanceUseCase = GetMoonBalanceUseCase(moonRepository),
                 addMoonsUseCase = AddMoonsUseCase(moonRepository),
                 lastTarotReadingRepository = FakeLastTarotReadingRepository(),
+                getSelectedTarotDeckUseCase = GetSelectedTarotDeckUseCase(FakeSelectedTarotDeckRepository()),
+                getTarotDeckCollectionProgressUseCase = GetTarotDeckCollectionProgressUseCase(FakeTarotDeckCollectionRepository()),
             )
 
             viewModel.newRequest(TarotRequestType.TAROT_3)
@@ -191,6 +205,8 @@ class TarotViewModelTest {
                 getMoonBalanceUseCase = GetMoonBalanceUseCase(moonRepository),
                 addMoonsUseCase = AddMoonsUseCase(moonRepository),
                 lastTarotReadingRepository = FakeLastTarotReadingRepository(),
+                getSelectedTarotDeckUseCase = GetSelectedTarotDeckUseCase(FakeSelectedTarotDeckRepository()),
+                getTarotDeckCollectionProgressUseCase = GetTarotDeckCollectionProgressUseCase(FakeTarotDeckCollectionRepository()),
             )
 
             viewModel.newRequest(TarotRequestType.TAROT_3)
@@ -231,6 +247,8 @@ class TarotViewModelTest {
                 getMoonBalanceUseCase = GetMoonBalanceUseCase(moonRepository),
                 addMoonsUseCase = AddMoonsUseCase(moonRepository),
                 lastTarotReadingRepository = FakeLastTarotReadingRepository(),
+                getSelectedTarotDeckUseCase = GetSelectedTarotDeckUseCase(FakeSelectedTarotDeckRepository()),
+                getTarotDeckCollectionProgressUseCase = GetTarotDeckCollectionProgressUseCase(FakeTarotDeckCollectionRepository()),
             )
 
             viewModel.newRequest(TarotRequestType.TAROT_1)
@@ -316,4 +334,18 @@ class TarotViewModelTest {
             cached = response
         }
     }
+
+    private class FakeSelectedTarotDeckRepository(
+        private val selectedDeckId: TarotDeckId = TarotDeckId.RIDER_WAITE,
+    ) : SelectedTarotDeckRepository {
+        override fun getSelectedDeckId(): TarotDeckId = selectedDeckId
+        override fun setSelectedDeckId(deckId: TarotDeckId) = Unit
+    }
+
+    private class FakeTarotDeckCollectionRepository(
+        private val progress: Map<String, TarotDeckCollectionProgress> = emptyMap(),
+    ) : TarotDeckCollectionRepository {
+        override suspend fun getProgressByTrackId(): Map<String, TarotDeckCollectionProgress> = progress
+    }
+
 }

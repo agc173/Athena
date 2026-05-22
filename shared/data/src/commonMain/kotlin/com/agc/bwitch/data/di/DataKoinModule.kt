@@ -28,6 +28,7 @@ import com.agc.bwitch.data.settings.billing.UnsupportedSubscriptionBillingDataSo
 import com.agc.bwitch.data.tarot.TarotRepositoryImpl
 import com.agc.bwitch.data.tarot.FirestoreTarotDeckCollectionRepository
 import com.agc.bwitch.data.tarot.SettingsLastTarotReadingRepository
+import com.agc.bwitch.data.tarot.SettingsSelectedTarotDeckRepository
 import com.agc.bwitch.data.userprofile.FirebaseAvatarRepository
 import com.agc.bwitch.data.userprofile.SettingsUserProfileRepository
 import com.agc.bwitch.data.userprofile.SyncUserProfileRepository
@@ -50,6 +51,7 @@ import com.agc.bwitch.domain.settings.SubscriptionRepository
 import com.agc.bwitch.domain.tarot.TarotRepository
 import com.agc.bwitch.domain.tarot.TarotDeckCollectionRepository
 import com.agc.bwitch.domain.tarot.LastTarotReadingRepository
+import com.agc.bwitch.domain.tarot.SelectedTarotDeckRepository
 import com.agc.bwitch.domain.userprofile.AvatarRepository
 import com.agc.bwitch.domain.userprofile.UserProfileRepository
 import org.koin.core.module.Module
@@ -146,6 +148,7 @@ val dataKoinModule: Module = module {
     single<TarotRepository> { TarotRepositoryImpl(get()) }
     single<TarotDeckCollectionRepository> { FirestoreTarotDeckCollectionRepository() }
     single<LastTarotReadingRepository> { SettingsLastTarotReadingRepository(get()) }
+    single<SelectedTarotDeckRepository> { SettingsSelectedTarotDeckRepository(get()) }
 
     /**
      * Daily Ritual

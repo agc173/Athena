@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.items as lazyItems
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items as gridItems
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -89,12 +90,24 @@ fun TarotDeckDetailScreen(contentPadding: PaddingValues, deckRawId: String) {
     } else {
         state.progressByTrackId[trackId]?.unlockedCards ?: emptySet()
     }
+    val isFullyUnlocked = cards.isNotEmpty() && unlocked.size >= cards.size
+    val canUseDeck = deckDefinition?.isDefault == true || isFullyUnlocked
+    val isSelectedDeck = state.selectedDeckId == deck
     LaunchedEffect(deckRawId) { vm.load(); vm.onDeckDetailOpened(deckRawId) }
     Column(Modifier.padding(contentPadding).padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(deckDefinition?.displayNameLocalized() ?: deck.value, style = MaterialTheme.typography.titleLarge)
         Text("${unlocked.size} / ${cards.size}")
         Text(strings.arcanaUnlockedCardsLabel + ": ${unlocked.size}")
         Text(strings.arcanaDeckRevealCopy)
+        Button(onClick = { vm.selectDeck(deck, isFullyUnlocked) }, enabled = canUseDeck) {
+            Text(if (isSelectedDeck) appStrings.tarot.deckInUse else appStrings.tarot.useThisDeck)
+        }
+        if (!canUseDeck) {
+            Text(appStrings.tarot.completeDeckToUseReadings, style = MaterialTheme.typography.bodySmall)
+        }
+        if (isSelectedDeck) {
+            Text(appStrings.tarot.selectedDeckLabel, style = MaterialTheme.typography.bodySmall)
+        }
         LazyVerticalGrid(columns = GridCells.Fixed(3), verticalArrangement = Arrangement.spacedBy(8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             gridItems(cards) { cardId ->
                 val image = TarotCardArt.faceDrawableForCardId(deck, cardId)

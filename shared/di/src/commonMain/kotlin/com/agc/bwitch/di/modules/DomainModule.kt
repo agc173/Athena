@@ -37,7 +37,9 @@ import com.agc.bwitch.domain.settings.RestoreGooglePlayPurchasesUseCase
 import com.agc.bwitch.domain.settings.RestorePurchasesUseCase
 import com.agc.bwitch.domain.settings.UpdateNotificationSettingsUseCase
 import com.agc.bwitch.domain.settings.ValidateGooglePlayPurchaseUseCase
+import com.agc.bwitch.domain.tarot.GetSelectedTarotDeckUseCase
 import com.agc.bwitch.domain.tarot.GetTarotDeckCollectionProgressUseCase
+import com.agc.bwitch.domain.tarot.SetSelectedTarotDeckUseCase
 import com.agc.bwitch.domain.userprofile.GetUserProfileUseCase
 import com.agc.bwitch.domain.userprofile.ObserveUserProfileUseCase
 import com.agc.bwitch.domain.userprofile.PullUserProfileUseCase
@@ -99,6 +101,8 @@ val domainModule: Module = module {
     factory { HasEnoughMoonsUseCase(get()) }
     factory { GetMoonPacksUseCase(get()) }
     factory { GetTarotDeckCollectionProgressUseCase(get()) }
+    factory { GetSelectedTarotDeckUseCase(get()) }
+    factory { SetSelectedTarotDeckUseCase(get()) }
 
     // Localization
     factory { ObserveCurrentLanguageUseCase(get()) }
