@@ -58,7 +58,7 @@ import com.agc.bwitch.ui.common.designsystem.BWitchScreen
 import com.agc.bwitch.ui.common.premium.PremiumCard
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
-import kotlinx.serialization.builtins.UnitSerializer
+import kotlinx.serialization.builtins.serializer
 import org.koin.compose.koinInject
 
 @Composable
@@ -314,8 +314,8 @@ fun SettingsScreen(contentPadding: PaddingValues) {
                                 val result = functionsClient.call<Unit, Unit>(
                                     name = "seedTarotDeckProgressionConfig",
                                     data = Unit,
-                                    requestSerializer = UnitSerializer(),
-                                    responseSerializer = UnitSerializer(),
+                        requestSerializer = Unit.serializer(),
+                        responseSerializer = Unit.serializer(),
                                 )
                                 tarotSeedLoading = false
                                 tarotSeedResult = when (result) {
