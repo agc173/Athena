@@ -3,6 +3,7 @@ package com.agc.bwitch.ui.tarot
 import bwitch.composeapp.generated.resources.Res
 import com.agc.bwitch.domain.tarot.TarotDeckId
 import org.jetbrains.compose.resources.DrawableResource
+import bwitch.composeapp.generated.resources.*
 
 object TarotCardArt {
 
