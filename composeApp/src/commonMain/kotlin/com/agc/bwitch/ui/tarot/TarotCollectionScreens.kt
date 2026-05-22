@@ -9,9 +9,10 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.items as lazyItems
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items as gridItems
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -41,7 +42,7 @@ fun TarotCollectionScreen(contentPadding: PaddingValues, onOpenDeck: (String) ->
         modifier = Modifier.padding(contentPadding).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        items(TarotDeckRegistry.allDecks, key = { it.id.value }) { deck ->
+        lazyItems(TarotDeckRegistry.allDecks, key = { it.id.value }) { deck ->
             val progress = state.progressByTrackId[deck.progressTrackId]
             val unlocked = if (deck.isDefault) {
                 TarotCardArt.allCardIds(deck.id).size
@@ -95,7 +96,7 @@ fun TarotDeckDetailScreen(contentPadding: PaddingValues, deckRawId: String) {
         Text(strings.arcanaUnlockedCardsLabel + ": ${unlocked.size}")
         Text(strings.arcanaDeckRevealCopy)
         LazyVerticalGrid(columns = GridCells.Fixed(3), verticalArrangement = Arrangement.spacedBy(8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(cards) { cardId ->
+            gridItems(cards) { cardId ->
                 val image = TarotCardArt.faceDrawableForCardId(deck, cardId)
                 if (image != null) {
                     Image(painterResource(image), null, colorFilter = if (unlocked.contains(cardId)) null else ColorFilter.tint(MaterialTheme.colorScheme.scrim.copy(alpha = 0.6f)))
