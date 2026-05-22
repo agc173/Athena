@@ -11,6 +11,7 @@ import {
 } from './firestorePaths';
 import {getPremiumStatus} from './premiumStatus';
 import {getEconomyModuleRule} from './rulesCatalog';
+import {applyDeckProgressPlan, planDeckProgressFromMoonSpend} from './deckProgress';
 import type {
   EconomyBalanceDoc,
   EconomyDailyUsageDoc,
@@ -187,6 +188,14 @@ export async function reserveBirthEssenceEconomyAccess(params: {
       throw new HttpsError('resource-exhausted', decision.reason ?? 'BIRTH_ESSENCE_UNAVAILABLE');
     }
 
+    const deckProgressPlan = await planDeckProgressFromMoonSpend({
+      tx,
+      uid: params.uid,
+      requestId: params.requestId,
+      moonCostCharged: decision.source === 'MOON' ? decision.moonCost : 0,
+      source: decision.source,
+    });
+
     const now = Timestamp.now();
 
     if (decision.usageApplied.dailyCounters && decision.usageApplied.dailyCounters.length > 0) {
@@ -230,6 +239,8 @@ export async function reserveBirthEssenceEconomyAccess(params: {
         createdAt: now,
       }, {merge: true});
     }
+
+    applyDeckProgressPlan({tx, uid: params.uid, now, plan: deckProgressPlan});
 
     const requestDoc: EconomyRequestDoc = {
       requestId: params.requestId,
