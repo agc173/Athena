@@ -1,7 +1,7 @@
 import {createHash} from 'node:crypto';
 import {type Timestamp, type Transaction, getFirestore} from 'firebase-admin/firestore';
 import {buildUidTag} from '../utils/safeLogging';
-import {TAROT_DECK} from '../oracle/tarot/deck';
+import {TAROT_DECK_CARD_IDS} from './tarotDeckCardIds';
 
 type TrackDoc = {
   enabled?: boolean;
@@ -28,7 +28,7 @@ type ProgressDoc = {
 type Source = 'MOON' | 'FREE' | 'PREMIUM_INCLUDED' | 'REJECT';
 const DEFAULT_TRACK_ID = 'arcana_noctis';
 const DEFAULT_REWARD_POOL_ID = 'arcana_noctis';
-const DEFAULT_REWARD_POOL_CARD_IDS = TAROT_DECK.map((card) => card.id);
+const DEFAULT_REWARD_POOL_CARD_IDS = TAROT_DECK_CARD_IDS;
 const DEFAULT_TRACK: Required<Pick<TrackDoc, 'enabled' | 'moonsPerUnlock' | 'rewardType' | 'rewardPoolId'>> = {
   enabled: true,
   moonsPerUnlock: 5,
