@@ -313,11 +313,12 @@ fun SettingsScreen(contentPadding: PaddingValues) {
                             scope.launch {
                                 tarotSeedLoading = true
                                 tarotSeedResult = null
-                                val result = functionsClient.call(
+                                val payload = buildJsonObject {
+                                    put("dryRun", false)
+                                }
+                                val result = functionsClient.call<JsonObject, JsonObject>(
                                     name = "seedTarotDeckProgressionConfig",
-                                    data = buildJsonObject {
-                                        put("dryRun", false)
-                                    },
+                                    data = payload,
                                     requestSerializer = JsonObject.serializer(),
                                     responseSerializer = JsonObject.serializer(),
                                 )
