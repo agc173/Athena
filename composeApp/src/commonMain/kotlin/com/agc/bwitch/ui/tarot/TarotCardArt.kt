@@ -9,6 +9,7 @@ object TarotCardArt {
 
     const val cardBackAssetKey: String = "tarot_back_1"
     const val placeholderFaceAssetKey: String = "tarot_placeholder_face"
+    val backDrawable: DrawableResource = Res.drawable.tarot_back_1
 
     private val riderWaiteFaceDrawableByCardId: Map<String, DrawableResource> = mapOf(
         "major-00-fool" to Res.drawable.deck_rider_waite_major_00_fool,
