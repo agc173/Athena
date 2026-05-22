@@ -9,6 +9,7 @@ export {saveUserProfile} from './userprofile';
 export {birthEssenceGenerate} from './birthessence';
 export {validateGooglePlayPurchase, restoreGooglePlayPurchases, refreshEntitlement} from './premium';
 export {backfillPeriodHoroscopes} from './admin/callables/backfillPeriodHoroscopes';
+export {seedTarotDeckProgressionConfig} from './admin/callables/seedTarotDeckProgressionConfig';
 export {
   getEconomyBalance,
   getEconomyStatus,
