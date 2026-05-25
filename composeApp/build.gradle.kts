@@ -62,7 +62,7 @@ kotlin {
             // GitLive remains the source for Auth/Firestore/Functions integrations.
             implementation("com.google.firebase:firebase-appcheck-debug:18.0.0")
             implementation("com.google.android.gms:play-services-ads:24.3.0")
-            implementation("com.google.firebase:firebase-appcheck-playintegrity:18.0.0")
+            // TODO(prod): implementation("com.google.firebase:firebase-appcheck-playintegrity:18.0.0")
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
@@ -100,10 +100,6 @@ android {
         // Fallback seguro para evitar crash por App ID ausente.
         .orElse(admobTestAppId)
 
-    val releaseRewardedAdUnitProvider = providers.gradleProperty("ADMOB_REWARDED_AD_UNIT_ID")
-        .orElse(providers.environmentVariable("ADMOB_REWARDED_AD_UNIT_ID"))
-        .orElse("")
-
     namespace = "com.agc.bwitch"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
@@ -124,15 +120,13 @@ android {
     }
     buildTypes {
         getByName("debug") {
-            // Debug uses the rewarded test ad unit from app code (not BuildConfig).
             manifestPlaceholders["ADMOB_APP_ID"] = admobTestAppId
             buildConfigField("String", "ADMOB_REWARDED_AD_UNIT_ID", "\"\"")
         }
         getByName("release") {
-            // Release/Internal Testing uses Gradle property/env ADMOB_REWARDED_AD_UNIT_ID.
             isMinifyEnabled = false
             manifestPlaceholders["ADMOB_APP_ID"] = releaseAdmobAppIdProvider.get()
-            buildConfigField("String", "ADMOB_REWARDED_AD_UNIT_ID", "\"${releaseRewardedAdUnitProvider.get()}\"")
+            buildConfigField("String", "ADMOB_REWARDED_AD_UNIT_ID", "\"\"")
         }
     }
     compileOptions {

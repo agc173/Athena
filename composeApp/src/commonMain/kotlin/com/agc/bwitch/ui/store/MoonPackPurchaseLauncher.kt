@@ -13,7 +13,6 @@ sealed interface MoonPackPurchaseOutcome {
 interface MoonPackPurchaseLauncher {
     suspend fun launch(productId: String): MoonPackPurchaseOutcome
     suspend fun consume(purchaseToken: String): Boolean
-    suspend fun recoverPendingPurchases(): List<GooglePlayPurchase>
 }
 
 @androidx.compose.runtime.Composable

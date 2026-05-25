@@ -67,7 +67,6 @@ fun MoonStoreScreen(
     val managementLauncher = rememberSubscriptionManagementLauncher()
     val scope = rememberCoroutineScope()
     var isRewardedAdFlowRunning by rememberSaveable { mutableStateOf(false) }
-    var rewardedFeedback by rememberSaveable { mutableStateOf<String?>(null) }
     // TODO(store): esta pantalla ya funciona como hub general de Store; renombrar archivo/composable en una pasada posterior.
 
     LaunchedEffect(economyState.isLoading, economyState.error, economyState.balance) {
@@ -114,11 +113,6 @@ fun MoonStoreScreen(
     }
 
     LaunchedEffect(Unit) {
-        val recovered = moonPackPurchaseLauncher.recoverPendingPurchases()
-        if (recovered.isNotEmpty()) {
-            println("[MoonStoreScreen] recovered pending purchases=${recovered.size}")
-            recovered.forEach { viewModel.onPurchaseCompleted(it) }
-        }
         viewModel.uiEffects.collect { effect ->
             when (effect) {
                 is MoonStoreUiEffect.LaunchMoonPackPurchase -> {
@@ -226,13 +220,11 @@ fun MoonStoreScreen(
                             isRewardedAdFlowRunning = true
                             try {
                                 when (rewardedAdsService.showRewardedAd(placement = "moon_store")) {
-                                    RewardedAdResult.Completed -> {
-                                        println("[MoonStoreScreen] rewarded completed, starting backend claim")
-                                        economyViewModel.claimRewardedAd(placement = "moon_store")
-                                    }
-                                    RewardedAdResult.Cancelled -> rewardedFeedback = strings.storePurchaseCancelledFeedback
-                                    is RewardedAdResult.Failed -> rewardedFeedback = strings.storePurchaseFailedFeedback
-                                    RewardedAdResult.Unavailable -> rewardedFeedback = strings.storeMoonPackUnavailable
+                                    RewardedAdResult.Completed -> economyViewModel.claimRewardedAd(placement = "moon_store")
+                                    RewardedAdResult.Cancelled,
+                                    is RewardedAdResult.Failed,
+                                    RewardedAdResult.Unavailable,
+                                    -> Unit
                                 }
                             } catch (error: Throwable) {
                                 println("[MoonStoreScreen] rewarded ad flow failed: ${error.message}")
@@ -317,15 +309,6 @@ fun MoonStoreScreen(
                     text = strings.storeSoon,
                     color = MaterialTheme.colorScheme.primary,
                 )
-            }
-        }
-
-        rewardedFeedback?.let { message ->
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(text = message, color = MaterialTheme.colorScheme.error)
-                    Button(onClick = { rewardedFeedback = null }, modifier = Modifier.fillMaxWidth()) { Text(appStrings.settings.close) }
-                }
             }
         }
 
