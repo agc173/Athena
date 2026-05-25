@@ -10,5 +10,6 @@ data class UserProfile(
     val username: String?,
     val birthDate: LocalDate?,
     val zodiacSign: ZodiacSign?,
+    val description: String? = null,
     val birthEssenceSummary: String? = null,
 )

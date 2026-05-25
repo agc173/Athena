@@ -23,15 +23,18 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.Canvas
 import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -49,6 +52,9 @@ import com.agc.bwitch.localization.AppStrings
 import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.presentation.economy.EconomyViewModel
 import com.agc.bwitch.presentation.userprofile.UserProfileViewModel
+import com.agc.bwitch.presentation.userprofile.PROFILE_BIRTH_DATE_IN_FUTURE_ERROR_KEY
+import com.agc.bwitch.presentation.userprofile.PROFILE_BIRTH_DATE_INVALID_ERROR_KEY
+import com.agc.bwitch.presentation.userprofile.PROFILE_DESCRIPTION_TOO_LONG_ERROR_KEY
 import com.agc.bwitch.ui.common.toVisualResource
 import com.agc.bwitch.ui.rituals.components.habitBadgeResourceFor
 import com.agc.bwitch.ui.theme.BWitchThemeTokens
@@ -56,6 +62,7 @@ import io.kamel.image.KamelImage
 import io.kamel.image.asyncPainterResource
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
+import kotlinx.coroutines.launch
 
 @Composable
 fun ProfileScreen(
@@ -74,6 +81,7 @@ fun ProfileScreen(
     val economyState by economyVm.uiState.collectAsState()
     val savedEssence = state.savedBirthEssence
     var showBirthEssenceDialog by remember { mutableStateOf(false) }
+    var showEditDialog by remember { mutableStateOf(false) }
 
     val profile = state.profile
     val username = profile?.username?.takeIf { it.isNotBlank() }
@@ -81,13 +89,14 @@ fun ProfileScreen(
     val zodiacSign = profile?.zodiacSign
     val zodiacLabel = zodiacSign?.let { "${it.symbol()} ${it.localizedLabel(strings)}" } ?: "✧ ${profileStrings.pendingSign}"
     val avatarUrl = profile?.photoUrl?.takeIf { it.startsWith("http://") || it.startsWith("https://") }
-    val profileDescription: String? = null
+    val profileDescription: String? = profile?.description
     val moonCredits = state.moonBalance
     val habitsProgress = state.habitsProgress
     val completedBadges = completedHabitBadgesForCycles(habitsProgress.completedCycles)
 
     val dimens = BWitchThemeTokens.dimens
     val extras = BWitchThemeTokens.extras
+    val scope = rememberCoroutineScope()
 
     Column(
         modifier = Modifier
@@ -137,13 +146,11 @@ fun ProfileScreen(
                 )
 
                 ZodiacBadge(label = zodiacLabel)
-                profileDescription?.takeIf { it.isNotBlank() }?.let { description ->
-                    Text(
-                        text = description,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = extras.textSecondary,
-                    )
-                }
+                Text(
+                    text = profileDescription?.takeIf { it.isNotBlank() } ?: profileStrings.descriptionPlaceholder,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = extras.textSecondary,
+                )
             }
         }
 
@@ -153,7 +160,7 @@ fun ProfileScreen(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             IconMiniAction(
-                onClick = onEditProfile,
+                onClick = { showEditDialog = true },
                 enabled = true,
             )
 
@@ -301,6 +308,44 @@ fun ProfileScreen(
             }
         }
     }
+    if (showEditDialog) {
+        var descriptionDraft by remember(profile?.description) { mutableStateOf(profile?.description.orEmpty()) }
+        var birthDateDraft by remember(profile?.birthDate) { mutableStateOf(profile?.birthDate?.toString().orEmpty()) }
+        Dialog(onDismissRequest = { showEditDialog = false }) {
+            Surface(shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.surface) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(profileStrings.editProfileTitle, style = MaterialTheme.typography.titleMedium)
+                    Text(usernameLine, style = MaterialTheme.typography.bodySmall, color = extras.textSecondary)
+                    AvatarPickerButton(enabled = !state.isBusy, buttonText = profileStrings.selectAvatarButton) { uriString, mimeType ->
+                        vm.uploadAvatarAndSave(uriString, mimeType)
+                    }
+                    OutlinedTextField(
+                        value = descriptionDraft,
+                        onValueChange = { if (it.length <= 160) descriptionDraft = it },
+                        label = { Text(profileStrings.editProfileDescriptionLabel) },
+                        supportingText = { Text("${descriptionDraft.length}/160") }
+                    )
+                    OutlinedTextField(value = birthDateDraft, onValueChange = { birthDateDraft = it }, label = { Text(profileStrings.editProfileBirthDateLabel) })
+                    state.error?.let {
+                        Text(
+                            text = it.toProfileUiText(strings),
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        TextButton(onClick = { showEditDialog = false }) { Text(profileStrings.editProfileCancel) }
+                        Button(onClick = {
+                            scope.launch {
+                                val ok = vm.saveEditableProfile(descriptionDraft, birthDateDraft)
+                                if (ok) showEditDialog = false
+                            }
+                        }, enabled = !state.isBusy) { Text(profileStrings.editProfileSave) }
+                    }
+                }
+            }
+        }
+    }
 
     savedEssence?.let { essence ->
         if (showBirthEssenceDialog) {
@@ -311,6 +356,13 @@ fun ProfileScreen(
             )
         }
     }
+}
+
+private fun String.toProfileUiText(strings: AppStrings): String = when (this) {
+    PROFILE_BIRTH_DATE_INVALID_ERROR_KEY -> strings.profile.birthDateFormatError
+    PROFILE_BIRTH_DATE_IN_FUTURE_ERROR_KEY -> strings.profile.birthDateFutureError
+    PROFILE_DESCRIPTION_TOO_LONG_ERROR_KEY -> strings.profile.descriptionTooLongError
+    else -> this
 }
 
 @Composable

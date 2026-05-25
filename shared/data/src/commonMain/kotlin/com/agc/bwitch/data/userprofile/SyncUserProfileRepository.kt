@@ -112,6 +112,8 @@ class SyncUserProfileRepository(
             username = normalizedUsername,
             birthDate = value.birthDate,
             zodiacSign = value.zodiacSign,
+            description = value.description,
+            descriptionProvided = true,
             birthEssenceSummary = value.birthEssenceSummary,
             updatedAtEpochMillis = updatedAtEpochMillis,
         )
@@ -161,6 +163,7 @@ data class UserProfileRemoteDto(
     val username: String? = null,
     val birthDate: LocalDate? = null,
     val zodiacSign: ZodiacSign? = null,
+    val description: String? = null,
     val birthEssenceSummary: String? = null,
     val updatedAtEpochMillis: Long
 ) {
@@ -172,6 +175,7 @@ data class UserProfileRemoteDto(
             username = username,
             birthDate = birthDate,
             zodiacSign = zodiacSign,
+            description = description,
             birthEssenceSummary = birthEssenceSummary
         )
 
@@ -184,6 +188,7 @@ data class UserProfileRemoteDto(
                 username = profile.username,
                 birthDate = profile.birthDate,
                 zodiacSign = profile.zodiacSign,
+                description = profile.description,
                 birthEssenceSummary = profile.birthEssenceSummary,
                 updatedAtEpochMillis = updatedAtEpochMillis
             )
