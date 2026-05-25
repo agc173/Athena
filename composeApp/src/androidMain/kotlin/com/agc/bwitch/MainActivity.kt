@@ -6,12 +6,14 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.compose.BackHandler
 import com.agc.bwitch.ads.AndroidRewardedAdsService
+import com.agc.bwitch.data.moons.billing.googleplay.GooglePlayMoonPackBillingDataSource
 import org.koin.compose.koinInject
 import org.koin.java.KoinJavaComponent.inject
 import com.agc.bwitch.presentation.navigation.Navigator
 
 class MainActivity : ComponentActivity() {
     private val rewardedAdsService: AndroidRewardedAdsService by inject(AndroidRewardedAdsService::class.java)
+    private val moonPackBillingDataSource: GooglePlayMoonPackBillingDataSource by inject(GooglePlayMoonPackBillingDataSource::class.java)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
@@ -35,10 +37,12 @@ class MainActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
         rewardedAdsService.bindActivity(this)
+        moonPackBillingDataSource.bindActivity(this)
     }
 
     override fun onStop() {
         rewardedAdsService.bindActivity(null)
+        moonPackBillingDataSource.bindActivity(null)
         super.onStop()
     }
 }

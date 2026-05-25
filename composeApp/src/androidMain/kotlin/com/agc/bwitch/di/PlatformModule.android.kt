@@ -8,6 +8,8 @@ import com.agc.bwitch.audio.AndroidTarotHaptics
 import com.agc.bwitch.audio.AndroidTarotSoundPlayer
 import com.agc.bwitch.audio.TarotHaptics
 import com.agc.bwitch.audio.TarotSoundPlayer
+import com.agc.bwitch.data.moons.MoonPackBillingDataSource
+import com.agc.bwitch.data.moons.billing.googleplay.GooglePlayMoonPackBillingDataSource
 import com.agc.bwitch.data.settings.billing.SubscriptionBillingDataSource
 import com.agc.bwitch.data.settings.billing.googleplay.GooglePlaySubscriptionBillingDataSource
 import com.agc.bwitch.data.storage.SettingsFactory
@@ -29,6 +31,8 @@ fun platformModule(app: Application): Module = module {
     single<Settings> { get<SettingsFactory>().create("bwitch") }
     single { GooglePlaySubscriptionBillingDataSource(app) }
     single<SubscriptionBillingDataSource> { get<GooglePlaySubscriptionBillingDataSource>() }
+    single { GooglePlayMoonPackBillingDataSource(app) }
+    single<MoonPackBillingDataSource> { get<GooglePlayMoonPackBillingDataSource>() }
     single<AnalyticsTracker> { AndroidFirebaseAnalyticsTracker(app) }
     single { AndroidRewardedAdsService() }
     single<RewardedAdsService> { get<AndroidRewardedAdsService>() }

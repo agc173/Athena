@@ -11,7 +11,11 @@ import com.agc.bwitch.data.remote.economy.EconomyRemoteDataSource
 import com.agc.bwitch.data.localization.SettingsAppLanguageRepository
 import com.agc.bwitch.data.localization.SystemLanguageCodeProvider
 import com.agc.bwitch.data.moons.BackendFirstMoonRepository
+import com.agc.bwitch.data.moons.BillingBackedMoonPackRepository
+import com.agc.bwitch.data.moons.FunctionsMoonPackPurchaseRepository
 import com.agc.bwitch.data.moons.MockMoonPackRepository
+import com.agc.bwitch.data.moons.MoonPackBillingDataSource
+import com.agc.bwitch.data.moons.UnsupportedMoonPackBillingDataSource
 import com.agc.bwitch.data.moons.SettingsMoonRepository
 import com.agc.bwitch.data.rituals.LocalRitualCatalogRepository
 import com.agc.bwitch.data.rituals.SettingsDailyRitualRepository
@@ -40,6 +44,7 @@ import com.agc.bwitch.domain.economy.EconomyRepository
 import com.agc.bwitch.domain.oracle.OracleRepository
 import com.agc.bwitch.domain.localization.AppLanguageRepository
 import com.agc.bwitch.domain.moons.MoonPackRepository
+import com.agc.bwitch.domain.moons.MoonPackPurchaseRepository
 import com.agc.bwitch.domain.moons.MoonRepository
 import com.agc.bwitch.domain.rituals.DailyRitualRepository
 import com.agc.bwitch.domain.rituals.HabitsRepository
@@ -81,7 +86,9 @@ val dataKoinModule: Module = module {
     single<SubscriptionRepository> { BillingBackedSubscriptionRepository(get(), get(), get()) }
     single { SettingsMoonRepository(get()) }
     single<MoonRepository> { BackendFirstMoonRepository(localRepository = get<SettingsMoonRepository>(), economyRepository = get()) }
-    single<MoonPackRepository> { MockMoonPackRepository() }
+    single<MoonPackBillingDataSource> { UnsupportedMoonPackBillingDataSource }
+    single<MoonPackRepository> { BillingBackedMoonPackRepository(get()) }
+    single<MoonPackPurchaseRepository> { FunctionsMoonPackPurchaseRepository(get()) }
 
     /**
      * Auth
