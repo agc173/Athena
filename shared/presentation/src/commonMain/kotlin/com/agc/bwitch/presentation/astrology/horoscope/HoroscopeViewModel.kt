@@ -433,6 +433,7 @@ class HoroscopeViewModel(
                 )
             }.onSuccess { unlockResult ->
                 unlockedWeekKeysSession += weekKey
+                println("HOROSCOPE_WEEK_UNLOCK_REWARDS size=${unlockResult.deckCardUnlockRewards.size}")
                 analyticsTracker.track(
                     AnalyticsEvent.ContentUnlocked(
                         module = "horoscope_weekly",
@@ -500,6 +501,7 @@ class HoroscopeViewModel(
                 )
             }.onSuccess { unlockResult ->
                 unlockedMonthKeysSession += monthKey
+                println("HOROSCOPE_MONTH_UNLOCK_REWARDS size=${unlockResult.deckCardUnlockRewards.size}")
                 analyticsTracker.track(
                     AnalyticsEvent.ContentUnlocked(
                         module = "horoscope_monthly",
