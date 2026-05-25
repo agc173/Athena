@@ -28,6 +28,9 @@ actual fun rememberMoonPackPurchaseLauncher(): MoonPackPurchaseLauncher {
             }
 
             override suspend fun consume(purchaseToken: String): Boolean = dataSource.consumePurchase(purchaseToken).isSuccess
+
+            override suspend fun recoverPendingPurchases(): List<com.agc.bwitch.domain.settings.GooglePlayPurchase> =
+                dataSource.queryUnconsumedMoonPackPurchases().getOrElse { emptyList() }
         }
     }
 }

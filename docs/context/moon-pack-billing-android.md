@@ -35,3 +35,12 @@
 - Añadir tests automáticos de callable con provider fake Android Publisher (unit/integration).
 - Alinear cliente Android para consumir automáticamente solo en success backend.
 - Añadir analytics de eventos de moon pack en launcher/UI.
+
+## Internal Testing hardening (2026-05-25)
+
+- Release/Internal rewarded ads now require `ADMOB_REWARDED_AD_UNIT_ID` (Gradle property or env var). If missing, app logs `unavailable ... blank_ad_unit_id` and UI shows visible feedback.
+- Configure in CI/local:
+  - `ADMOB_APP_ID=<admob app id>`
+  - `ADMOB_REWARDED_AD_UNIT_ID=<rewarded ad unit id>`
+- App Check on Android release uses `PlayIntegrityAppCheckProviderFactory` and requires Firebase Console App Check setup for package `com.agc.bwitch` with correct Play/Internal Testing signing SHA.
+- Moon pack INAPP recovery now queries owned purchases (`queryPurchasesAsync(INAPP)`) when opening Moon Store and replays backend claim + consume-on-success to recover previously completed but unclaimed purchases.

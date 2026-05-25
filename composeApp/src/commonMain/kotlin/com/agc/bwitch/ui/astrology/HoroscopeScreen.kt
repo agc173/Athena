@@ -120,6 +120,7 @@ fun HoroscopeScreen(
     val shareLauncher = rememberShareLauncher()
     val shareScope = rememberCoroutineScope()
     var shareErrorMessage by remember { mutableStateOf<String?>(null) }
+    var rewardedFeedbackMessage by remember { mutableStateOf<String?>(null) }
     var rewardDialogRewards by remember { mutableStateOf<List<DeckCardUnlockReward>>(emptyList()) }
     var isRewardedAdFlowRunning by rememberSaveable { mutableStateOf(false) }
 
@@ -150,10 +151,9 @@ fun HoroscopeScreen(
                     try {
                         when (rewardedAdsService.showRewardedAd(placement = "horoscope_period_lock_overlay")) {
                             RewardedAdResult.Completed -> economyViewModel.claimRewardedAd("horoscope_period_lock_overlay")
-                            RewardedAdResult.Cancelled,
-                            is RewardedAdResult.Failed,
-                            RewardedAdResult.Unavailable,
-                            -> Unit
+                            RewardedAdResult.Cancelled -> rewardedFeedbackMessage = strings.profile.storePurchaseCancelledFeedback
+                            is RewardedAdResult.Failed -> rewardedFeedbackMessage = strings.profile.storePurchaseFailedFeedback
+                            RewardedAdResult.Unavailable -> rewardedFeedbackMessage = strings.profile.storeMoonPackUnavailable
                         }
                     } catch (error: Throwable) {
                         println("[HoroscopeScreen] rewarded ad flow failed: ${error.message}")
@@ -445,6 +445,10 @@ private fun HoroscopeScreenContent(
             onOverlaySignChanged = onOverlaySignChanged,
             onShareOverlay = onShareOverlay,
         )
+    }
+
+    rewardedFeedbackMessage?.let {
+        Text(text = it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
     }
 
     shareErrorMessage?.let {
