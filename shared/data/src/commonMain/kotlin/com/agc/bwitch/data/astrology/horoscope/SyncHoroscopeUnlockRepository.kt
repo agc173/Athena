@@ -4,6 +4,7 @@ import com.agc.bwitch.data.remote.economy.EconomyRemoteDataSource
 import com.agc.bwitch.domain.astrology.horoscope.HoroscopeUnlockRepository
 import com.agc.bwitch.domain.astrology.horoscope.HoroscopeUnlockResult
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
+import com.agc.bwitch.domain.model.DeckCardUnlockReward
 
 class SyncHoroscopeUnlockRepository(
     private val remoteDataSource: EconomyRemoteDataSource,
@@ -46,6 +47,7 @@ class SyncHoroscopeUnlockRepository(
             alreadyUnlocked = response.alreadyUnlocked,
             balanceAfter = response.balance,
             costCharged = response.costCharged,
+            deckCardUnlockRewards = response.deckCardUnlockRewards.map { it.toDomain() },
         )
     }
 
@@ -68,6 +70,7 @@ class SyncHoroscopeUnlockRepository(
             alreadyUnlocked = response.alreadyUnlocked,
             balanceAfter = response.balance,
             costCharged = response.costCharged,
+            deckCardUnlockRewards = response.deckCardUnlockRewards.map { it.toDomain() },
         )
     }
 
@@ -90,7 +93,12 @@ class SyncHoroscopeUnlockRepository(
             alreadyUnlocked = response.alreadyUnlocked,
             balanceAfter = response.balance,
             costCharged = response.costCharged,
+            deckCardUnlockRewards = response.deckCardUnlockRewards.map { it.toDomain() },
         )
     }
 
 }
+
+
+private fun com.agc.bwitch.data.remote.economy.DeckCardUnlockRewardDto.toDomain(): DeckCardUnlockReward =
+    DeckCardUnlockReward(deckId = deckId, trackId = trackId, rewardPoolId = rewardPoolId, cardId = cardId)

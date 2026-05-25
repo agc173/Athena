@@ -21,7 +21,7 @@ import type {
   UnlockHoroscopeMonthlyResponse,
   UnlockHoroscopeWeeklyResponse,
 } from '../types';
-import {applyDeckProgressPlan, planDeckProgressFromMoonSpend} from '../deckProgress';
+import {applyDeckProgressPlan, deckCardUnlockRewardsFromPlan, planDeckProgressFromMoonSpend} from '../deckProgress';
 
 type UnlockHoroscopePeriodResponse =
   | UnlockHoroscopeWeeklyResponse
@@ -183,6 +183,8 @@ export async function unlockHoroscopePeriod<TResponse extends UnlockHoroscopePer
 
     applyDeckProgressPlan({tx, uid, now, plan: deckProgressPlan});
 
+    const deckCardUnlockRewards = deckCardUnlockRewardsFromPlan(deckProgressPlan);
+
     logger.info(`${config.source} charged`, {
       uid,
       unlockKey,
@@ -196,6 +198,7 @@ export async function unlockHoroscopePeriod<TResponse extends UnlockHoroscopePer
       alreadyUnlocked: false,
       balance: nextBalance,
       costCharged,
+      deckCardUnlockRewards,
     };
 
     tx.set(reqRef, {

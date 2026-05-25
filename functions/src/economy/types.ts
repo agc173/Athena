@@ -241,12 +241,20 @@ export type UnlockHoroscopeDayData = {
   sign?: unknown;
 };
 
+export type DeckCardUnlockReward = {
+  deckId: string;
+  trackId: string;
+  rewardPoolId: string;
+  cardId: string;
+};
+
 export type UnlockHoroscopeDayResponse = {
   result: EconomyRequestResult;
   unlocked: boolean;
   alreadyUnlocked: boolean;
   balance: number;
   costCharged: number;
+  deckCardUnlockRewards?: DeckCardUnlockReward[];
 };
 
 export type GetHoroscopeDailyUnlocksData = {
@@ -269,6 +277,7 @@ export type UnlockHoroscopeWeeklyResponse = {
   alreadyUnlocked: boolean;
   balance: number;
   costCharged: number;
+  deckCardUnlockRewards?: DeckCardUnlockReward[];
 };
 
 export type UnlockHoroscopeMonthlyData = {
@@ -283,6 +292,7 @@ export type UnlockHoroscopeMonthlyResponse = {
   alreadyUnlocked: boolean;
   balance: number;
   costCharged: number;
+  deckCardUnlockRewards?: DeckCardUnlockReward[];
 };
 
 export type GetHoroscopeWeeklyUnlocksData = {
