@@ -58,6 +58,7 @@ import com.agc.bwitch.domain.astrology.synastry.primaryGuidanceCopy
 import com.agc.bwitch.domain.astrology.synastry.primaryStrengthCopy
 import com.agc.bwitch.domain.astrology.synastry.primaryTensionCopy
 import com.agc.bwitch.domain.astrology.synastry.toFiveStarRating
+import com.agc.bwitch.domain.model.DeckCardUnlockReward
 import com.agc.bwitch.localization.AppStrings
 import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.platform.share.ShareResult
@@ -65,6 +66,7 @@ import com.agc.bwitch.platform.share.ShareTextPayload
 import com.agc.bwitch.platform.share.rememberShareLauncher
 import com.agc.bwitch.presentation.astrology.synastry.SynastryPersonForm
 import com.agc.bwitch.presentation.astrology.synastry.SynastryViewModel
+import com.agc.bwitch.presentation.astrology.synastry.SynastryUiEffect
 import com.agc.bwitch.presentation.economy.EconomyViewModel
 import com.agc.bwitch.presentation.economy.runWithEconomyGate
 import com.agc.bwitch.ui.common.economy.DailyLimitPaywallCard
@@ -74,6 +76,7 @@ import com.agc.bwitch.ui.common.economy.hasPremiumBenefit
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
 import com.agc.bwitch.ui.common.designsystem.BWitchPrimaryButton
 import com.agc.bwitch.ui.theme.BWitchThemeTokens
+import com.agc.bwitch.ui.tarot.DeckCardUnlockRewardDialog
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
@@ -84,6 +87,7 @@ fun SynastryScreen(
     viewModel: SynastryViewModel = koinInject(),
     economyViewModel: EconomyViewModel = koinInject(),
     onOpenStore: () -> Unit = {},
+    onOpenCollection: () -> Unit = {},
 ) {
     val state by viewModel.uiState.collectAsState()
     val economyState by economyViewModel.uiState.collectAsState()
@@ -95,6 +99,7 @@ fun SynastryScreen(
     val shareLauncher = rememberShareLauncher()
     val shareScope = rememberCoroutineScope()
     var shareErrorMessage by remember { mutableStateOf<String?>(null) }
+    var rewardDialogRewards by remember { mutableStateOf<List<DeckCardUnlockReward>>(emptyList()) }
     val showDailyLimitPaywall = synastryPreview.isDailyLimitRejected() || state.error == "daily_limit"
 
     LaunchedEffect(state.isGenerating, state.reading, state.error) {
@@ -106,6 +111,13 @@ fun SynastryScreen(
             }
         }
         wasGenerating = state.isGenerating
+    }
+    LaunchedEffect(viewModel) {
+        viewModel.uiEffects.collect { effect ->
+            when (effect) {
+                is SynastryUiEffect.ShowDeckCardUnlockRewards -> rewardDialogRewards = effect.rewards
+            }
+        }
     }
 
     Column(
@@ -214,6 +226,17 @@ fun SynastryScreen(
             )
         }
         shareErrorMessage?.let { Text(text = it, color = MaterialTheme.colorScheme.error) }
+    }
+    if (rewardDialogRewards.isNotEmpty()) {
+        DeckCardUnlockRewardDialog(
+            strings = appStrings,
+            rewards = rewardDialogRewards,
+            onDismiss = { rewardDialogRewards = emptyList() },
+            onOpenCollection = {
+                rewardDialogRewards = emptyList()
+                onOpenCollection()
+            },
+        )
     }
 }
 

@@ -12,6 +12,7 @@ import com.agc.bwitch.domain.moons.GetMoonBalanceUseCase
 import com.agc.bwitch.domain.moons.MoonUnlockCostCatalog
 import com.agc.bwitch.domain.moons.MoonUnlockFeature
 import com.agc.bwitch.domain.moons.ObserveMoonBalanceUseCase
+import com.agc.bwitch.domain.model.DeckCardUnlockReward
 import com.agc.bwitch.domain.tarot.GetSelectedTarotDeckUseCase
 import com.agc.bwitch.domain.tarot.GetTarotDeckCollectionProgressUseCase
 import com.agc.bwitch.domain.tarot.TarotDeckId
@@ -27,6 +28,9 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -84,6 +88,8 @@ class TarotViewModel(
 
     private val _uiState = MutableStateFlow(TarotUiState())
     val uiState: StateFlow<TarotUiState> = _uiState.asStateFlow()
+    private val _uiEffects = MutableSharedFlow<TarotUiEffect>(extraBufferCapacity = 16)
+    val uiEffects: SharedFlow<TarotUiEffect> = _uiEffects.asSharedFlow()
 
     init {
         scope.launch {
@@ -304,6 +310,7 @@ class TarotViewModel(
 
             when (result) {
                 is ApiResult.Ok -> {
+                    emitDeckUnlockRewardsIfNeeded(result.value.deckCardUnlockRewards)
                     _uiState.update {
                         it.copy(
                             isLoading = false,
@@ -388,6 +395,11 @@ class TarotViewModel(
         _uiState.update { it.copy(moonBalance = syncedBalance) }
     }
 
+    private fun emitDeckUnlockRewardsIfNeeded(rewards: List<DeckCardUnlockReward>) {
+        if (rewards.isEmpty()) return
+        _uiEffects.tryEmit(TarotUiEffect.ShowDeckCardUnlockRewards(rewards))
+    }
+
     @OptIn(ExperimentalUuidApi::class)
     private fun generateRequestId(): String = Uuid.random().toString()
 
@@ -417,6 +429,12 @@ class TarotViewModel(
         const val MIN_SHUFFLE_DURATION_MS = 1200L
         const val ARCANA_NOCTIS_TOTAL_CARDS = 78
     }
+}
+
+sealed interface TarotUiEffect {
+    data class ShowDeckCardUnlockRewards(
+        val rewards: List<DeckCardUnlockReward>,
+    ) : TarotUiEffect
 }
 
 const val TAROT_EXTRA_READING_NOT_ENOUGH_MOONS_KEY = "tarot.error.not_enough_moons"

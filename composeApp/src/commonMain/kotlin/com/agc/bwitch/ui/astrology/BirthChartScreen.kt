@@ -30,10 +30,12 @@ import androidx.compose.ui.window.DialogProperties
 import com.agc.bwitch.domain.astrology.birthchart.BirthEssenceArchetype
 import com.agc.bwitch.domain.astrology.birthchart.BirthEssenceProfile
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
+import com.agc.bwitch.domain.model.DeckCardUnlockReward
 import com.agc.bwitch.localization.AppStrings
 import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.presentation.astrology.birthchart.BirthChartUiState
 import com.agc.bwitch.presentation.astrology.birthchart.BirthChartViewModel
+import com.agc.bwitch.presentation.astrology.birthchart.BirthChartUiEffect
 import com.agc.bwitch.presentation.astrology.birthchart.BIRTH_CHART_GENERATE_ERROR_FALLBACK_KEY
 import com.agc.bwitch.presentation.astrology.birthchart.BIRTH_CHART_GENERATE_FIRST_ERROR_KEY
 import com.agc.bwitch.presentation.astrology.birthchart.BIRTH_CHART_GENERATE_UNAVAILABLE_KEY
@@ -54,6 +56,7 @@ import com.agc.bwitch.ui.common.economy.hasPremiumBenefit
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
 import com.agc.bwitch.ui.common.designsystem.BWitchPrimaryButton
 import com.agc.bwitch.ui.theme.BWitchThemeTokens
+import com.agc.bwitch.ui.tarot.DeckCardUnlockRewardDialog
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 
@@ -64,6 +67,7 @@ fun BirthChartScreen(
     viewModel: BirthChartViewModel = koinInject(),
     economyViewModel: EconomyViewModel = koinInject(),
     onOpenStore: () -> Unit = {},
+    onOpenCollection: () -> Unit = {},
 ) {
     val dimens = BWitchThemeTokens.dimens
     val extras = BWitchThemeTokens.extras
@@ -78,6 +82,7 @@ fun BirthChartScreen(
     var shareError by remember { mutableStateOf<String?>(null) }
     var sharePreviewEssence by remember { mutableStateOf<BirthEssenceProfile?>(null) }
     var wasGenerating by remember { mutableStateOf(false) }
+    var rewardDialogRewards by remember { mutableStateOf<List<DeckCardUnlockReward>>(emptyList()) }
     val showDailyLimitPaywall = birthEssencePreview.isDailyLimitRejected() || state.error.isDailyLimitError()
 
     LaunchedEffect(state.isGenerating, state.hasGeneratedResult, state.error) {
@@ -89,6 +94,13 @@ fun BirthChartScreen(
             }
         }
         wasGenerating = state.isGenerating
+    }
+    LaunchedEffect(viewModel) {
+        viewModel.uiEffects.collect { effect ->
+            when (effect) {
+                is BirthChartUiEffect.ShowDeckCardUnlockRewards -> rewardDialogRewards = effect.rewards
+            }
+        }
     }
 
     Column(
@@ -245,6 +257,17 @@ fun BirthChartScreen(
                     .onSuccess { sharePreviewEssence = null }
                     .onFailure { shareError = it.message ?: birthChartStrings.shareFailedFallback }
             }
+        )
+    }
+    if (rewardDialogRewards.isNotEmpty()) {
+        DeckCardUnlockRewardDialog(
+            strings = appStrings,
+            rewards = rewardDialogRewards,
+            onDismiss = { rewardDialogRewards = emptyList() },
+            onOpenCollection = {
+                rewardDialogRewards = emptyList()
+                onOpenCollection()
+            },
         )
     }
 }

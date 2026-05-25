@@ -16,6 +16,7 @@ import com.agc.bwitch.domain.localization.ObserveCurrentLanguageUseCase
 import com.agc.bwitch.domain.localization.ResolveCurrentLanguageUseCase
 import com.agc.bwitch.domain.shared.ApiError
 import com.agc.bwitch.domain.shared.ApiResult
+import com.agc.bwitch.domain.model.DeckCardUnlockReward
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 import kotlinx.coroutines.CoroutineScope
@@ -25,6 +26,9 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -76,6 +80,8 @@ class OracleAskViewModel(
 
     private val _uiState = MutableStateFlow(OracleAskUiState())
     val uiState: StateFlow<OracleAskUiState> = _uiState.asStateFlow()
+    private val _uiEffects = MutableSharedFlow<OracleAskUiEffect>(extraBufferCapacity = 16)
+    val uiEffects: SharedFlow<OracleAskUiEffect> = _uiEffects.asSharedFlow()
     private val currentLanguageCode = MutableStateFlow(AppLanguage.fallback.code)
     private var lastSubmittedQuestion: String? = null
 
@@ -166,6 +172,9 @@ class OracleAskViewModel(
             ) {
                 is ApiResult.Ok -> {
                     val oracleResult = result.value
+                    if (oracleResult is OracleAskResult.CompletedSuccess) {
+                        emitDeckUnlockRewardsIfNeeded(oracleResult.deckCardUnlockRewards)
+                    }
                     _uiState.update {
                         it.copy(
                             isLoading = false,
@@ -205,6 +214,11 @@ class OracleAskViewModel(
                 }
             }
         }
+    }
+
+    private fun emitDeckUnlockRewardsIfNeeded(rewards: List<DeckCardUnlockReward>) {
+        if (rewards.isEmpty()) return
+        _uiEffects.tryEmit(OracleAskUiEffect.ShowDeckCardUnlockRewards(rewards))
     }
 
     fun retry(topic: OracleTopic? = null, lang: String? = null) {
@@ -332,6 +346,12 @@ class OracleAskViewModel(
             normalized.contains("maintenance") ||
             normalized.contains("try again later")
     }
+}
+
+sealed interface OracleAskUiEffect {
+    data class ShowDeckCardUnlockRewards(
+        val rewards: List<DeckCardUnlockReward>,
+    ) : OracleAskUiEffect
 }
 
 private data class OracleAskMappedError(
