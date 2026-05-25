@@ -5,6 +5,7 @@ import com.agc.bwitch.domain.tarot.LastTarotReadingRepository
 import com.agc.bwitch.domain.tarot.Tarot3CardMeaning
 import com.agc.bwitch.domain.tarot.TarotCard
 import com.agc.bwitch.domain.tarot.TarotCardPosition
+import com.agc.bwitch.domain.tarot.TarotDeckId
 import com.agc.bwitch.domain.tarot.TarotDrawResponse
 import com.agc.bwitch.domain.tarot.TarotReadingDetails
 import com.russhwolf.settings.Settings
@@ -39,6 +40,7 @@ class SettingsLastTarotReadingRepository(
                 put("requestId", JsonPrimitive(response.requestId))
                 put("status", JsonPrimitive(response.status))
                 put("interpretation", JsonPrimitive(response.interpretation))
+                put("deckId", JsonPrimitive(response.deckId.value))
                 put("cards", buildJsonArray {
                     response.cards.forEach { card ->
                         add(buildJsonObject {
@@ -96,6 +98,7 @@ class SettingsLastTarotReadingRepository(
             cards = cards,
             details = root["details"]?.jsonObject?.let(::decodeDetails),
             interpretation = root["interpretation"]?.jsonPrimitive?.contentOrNull.orEmpty(),
+            deckId = TarotDeckId.fromValue(root["deckId"]?.jsonPrimitive?.contentOrNull) ?: TarotDeckId.RIDER_WAITE,
         )
     }.getOrNull()
 

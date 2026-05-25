@@ -15,6 +15,7 @@ import com.agc.bwitch.domain.moons.ObserveMoonBalanceUseCase
 import com.agc.bwitch.domain.model.DeckCardUnlockReward
 import com.agc.bwitch.domain.tarot.GetSelectedTarotDeckUseCase
 import com.agc.bwitch.domain.tarot.GetTarotDeckCollectionProgressUseCase
+import com.agc.bwitch.domain.tarot.TarotDeckCatalog
 import com.agc.bwitch.domain.tarot.TarotDeckId
 import com.agc.bwitch.domain.tarot.TarotDrawResponse
 import com.agc.bwitch.domain.tarot.LastTarotReadingRepository
@@ -115,7 +116,7 @@ class TarotViewModel(
         }
 
         scope.launch {
-            _uiState.update { it.copy(selectedDeckId = resolveSafeSelectedDeckId()) }
+            _uiState.update { it.copy(selectedDeckId = resolvePlayableSelectedDeckId()) }
         }
     }
 
@@ -132,27 +133,26 @@ class TarotViewModel(
 
         val requestId = generateRequestId()
         scope.launch {
-            _uiState.update { it.copy(selectedDeckId = resolveSafeSelectedDeckId()) }
-        }
-        _uiState.update {
-            it.copy(
-                requestId = requestId,
-                selectedType = type,
-                response = null,
-                error = null,
-                revealPhase = TarotRevealPhase.WAITING_TO_SHUFFLE,
-                revealedCardCount = 0,
-                activeCardIndex = 0,
-                activeCardRevealed = false,
-                overlayVisible = false,
-                overlayCardIndex = null,
-                overlayCardRevealed = false,
-                openedMiniCardIndex = null,
-                insufficientMoonsMessage = null,
-            )
-        }
-        scope.launch {
-            draw(requestId, type)
+            val playableDeckId = resolvePlayableSelectedDeckId()
+            _uiState.update {
+                it.copy(
+                    requestId = requestId,
+                    selectedType = type,
+                    response = null,
+                    error = null,
+                    revealPhase = TarotRevealPhase.WAITING_TO_SHUFFLE,
+                    revealedCardCount = 0,
+                    activeCardIndex = 0,
+                    activeCardRevealed = false,
+                    overlayVisible = false,
+                    overlayCardIndex = null,
+                    overlayCardRevealed = false,
+                    openedMiniCardIndex = null,
+                    insufficientMoonsMessage = null,
+                    selectedDeckId = playableDeckId,
+                )
+            }
+            draw(requestId, type, playableDeckId)
         }
     }
 
@@ -230,6 +230,7 @@ class TarotViewModel(
                     selectedType = if (saved.cards.size > 1) TarotRequestType.TAROT_3 else TarotRequestType.TAROT_1,
                     isLoading = false,
                     response = saved,
+                    selectedDeckId = saved.deckId,
                     error = null,
                     revealPhase = TarotRevealPhase.READING_VISIBLE,
                     revealedCardCount = saved.cards.size,
@@ -298,7 +299,7 @@ class TarotViewModel(
         }
     }
 
-    private fun draw(requestId: String, type: TarotRequestType) {
+    private fun draw(requestId: String, type: TarotRequestType, playableDeckId: TarotDeckId) {
         scope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
 
@@ -311,20 +312,17 @@ class TarotViewModel(
             when (result) {
                 is ApiResult.Ok -> {
                     emitDeckUnlockRewardsIfNeeded(result.value.deckCardUnlockRewards)
+                    val responseWithDeck = result.value.copy(deckId = playableDeckId)
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            response = result.value,
+                            response = responseWithDeck,
                             error = null,
                             revealPhase = if (
                                 it.revealPhase == TarotRevealPhase.SHUFFLING &&
                                 shuffleMinDurationElapsed &&
                                 it.requestId == shuffleRequestId
-                            ) {
-                                TarotRevealPhase.WAITING_TO_REVEAL
-                            } else {
-                                it.revealPhase
-                            },
+                            ) TarotRevealPhase.WAITING_TO_REVEAL else it.revealPhase,
                             revealedCardCount = 0,
                             activeCardIndex = 0,
                             activeCardRevealed = false,
@@ -335,7 +333,7 @@ class TarotViewModel(
                         )
                     }
                     refreshMoonBalanceFromBackend()
-                    runCatching { lastTarotReadingRepository.save(result.value) }
+                    runCatching { lastTarotReadingRepository.save(responseWithDeck) }
                 }
 
                 is ApiResult.Err -> {
@@ -353,11 +351,7 @@ class TarotViewModel(
                             overlayCardIndex = null,
                             overlayCardRevealed = false,
                             openedMiniCardIndex = null,
-                            insufficientMoonsMessage = if (economyError) {
-                                TAROT_EXTRA_READING_NOT_ENOUGH_MOONS_KEY
-                            } else {
-                                null
-                            },
+                            insufficientMoonsMessage = if (economyError) TAROT_EXTRA_READING_NOT_ENOUGH_MOONS_KEY else null,
                             error = when {
                                 economyError -> null
                                 tarotLimitError -> TAROT_LIMIT_REACHED_ERROR_KEY
@@ -371,21 +365,16 @@ class TarotViewModel(
         }
     }
 
-
-
-    private suspend fun resolveSafeSelectedDeckId(): TarotDeckId {
+    private suspend fun resolvePlayableSelectedDeckId(): TarotDeckId {
         val selectedDeck = runCatching { getSelectedTarotDeckUseCase() }
-            .getOrDefault(TarotDeckId.RIDER_WAITE)
+            .getOrDefault(TarotDeckCatalog.defaultDeck.id)
+        val progressByTrackId = runCatching { getTarotDeckCollectionProgressUseCase() }
+            .getOrDefault(emptyMap())
 
-        return when (selectedDeck) {
-            TarotDeckId.RIDER_WAITE -> TarotDeckId.RIDER_WAITE
-            TarotDeckId.ARCANA_NOCTIS -> {
-                val unlockedCards = runCatching {
-                    getTarotDeckCollectionProgressUseCase()[TarotDeckId.ARCANA_NOCTIS.value]?.unlockedCards?.size ?: 0
-                }.getOrDefault(0)
-                if (unlockedCards >= ARCANA_NOCTIS_TOTAL_CARDS) TarotDeckId.ARCANA_NOCTIS else TarotDeckId.RIDER_WAITE
-            }
-        }
+        return TarotDeckCatalog.resolvePlayableDeckId(
+            selectedDeckId = selectedDeck,
+            progressByTrackId = progressByTrackId,
+        )
     }
 
     private suspend fun refreshMoonBalanceFromBackend() {
@@ -427,7 +416,6 @@ class TarotViewModel(
 
     private companion object {
         const val MIN_SHUFFLE_DURATION_MS = 1200L
-        const val ARCANA_NOCTIS_TOTAL_CARDS = 78
     }
 }
 

@@ -13,6 +13,7 @@ import com.agc.bwitch.domain.model.DeckCardUnlockReward
 import com.agc.bwitch.domain.tarot.Tarot3CardMeaning
 import com.agc.bwitch.domain.tarot.TarotCard
 import com.agc.bwitch.domain.tarot.TarotCardPosition
+import com.agc.bwitch.domain.tarot.TarotDeckId
 import com.agc.bwitch.domain.tarot.TarotDrawResponse
 import com.agc.bwitch.domain.tarot.TarotReadingDetails
 import com.agc.bwitch.domain.tarot.TarotRepository
@@ -67,6 +68,7 @@ class TarotRepositoryImpl(
                     cards = emptyList(),
                     details = null,
                     interpretation = "",
+                    deckId = response.deckId.toDeckIdOrDefault(),
                     deckCardUnlockRewards = response.deckCardUnlockRewards.map { it.toDomain() },
                 )
             )
@@ -97,6 +99,7 @@ class TarotRepositoryImpl(
                 cards = cards,
                 details = details,
                 interpretation = details.toInterpretationText(),
+                deckId = response.deckId.toDeckIdOrDefault(),
                 deckCardUnlockRewards = response.deckCardUnlockRewards.map { it.toDomain() },
             )
         )
@@ -217,3 +220,5 @@ class TarotRepositoryImpl(
 
 private fun com.agc.bwitch.data.remote.economy.DeckCardUnlockRewardDto.toDomain(): DeckCardUnlockReward =
     DeckCardUnlockReward(deckId = deckId, trackId = trackId, rewardPoolId = rewardPoolId, cardId = cardId)
+
+private fun String?.toDeckIdOrDefault(): TarotDeckId = TarotDeckId.fromValue(this) ?: TarotDeckId.RIDER_WAITE
