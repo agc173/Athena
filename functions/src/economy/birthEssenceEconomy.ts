@@ -11,7 +11,7 @@ import {
 } from './firestorePaths';
 import {getPremiumStatus} from './premiumStatus';
 import {getEconomyModuleRule} from './rulesCatalog';
-import {applyDeckProgressPlan, planDeckProgressFromMoonSpend} from './deckProgress';
+import {applyDeckProgressPlan, deckCardUnlockRewardsFromPlan, planDeckProgressFromMoonSpend} from './deckProgress';
 import type {
   EconomyBalanceDoc,
   EconomyDailyUsageDoc,
@@ -46,6 +46,7 @@ export type BirthEssenceEconomyReservationResult =
     type: 'reserved';
     source: EconomyDecisionSource;
     moonCost: number;
+    deckCardUnlockRewards: {deckId: string; trackId: string; rewardPoolId: string; cardId: string}[];
   };
 
 function intValue(value: unknown): number {
@@ -263,6 +264,7 @@ export async function reserveBirthEssenceEconomyAccess(params: {
       type: 'reserved' as const,
       source: decision.source,
       moonCost: decision.source === 'MOON' ? decision.moonCost : 0,
+      deckCardUnlockRewards: deckCardUnlockRewardsFromPlan(deckProgressPlan),
     };
   });
 }

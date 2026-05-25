@@ -1,5 +1,7 @@
 package com.agc.bwitch.domain.tarot
 
+import com.agc.bwitch.domain.model.DeckCardUnlockReward
+
 data class TarotCard(
     val id: String,
     val name: String,
@@ -39,4 +41,5 @@ data class TarotDrawResponse(
     val cards: List<TarotCard>,
     val details: TarotReadingDetails? = null,
     val interpretation: String,
+    val deckCardUnlockRewards: List<DeckCardUnlockReward> = emptyList(),
 )

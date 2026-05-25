@@ -12,6 +12,7 @@ import com.agc.bwitch.domain.oracle.OracleAskResult
 import com.agc.bwitch.domain.oracle.OracleQuotaSnapshot
 import com.agc.bwitch.domain.oracle.OracleRepository
 import com.agc.bwitch.domain.oracle.SystemMode
+import com.agc.bwitch.domain.model.DeckCardUnlockReward
 import com.agc.bwitch.domain.shared.ApiError
 import com.agc.bwitch.domain.shared.ApiResult
 import kotlinx.serialization.Serializable
@@ -98,6 +99,7 @@ class OracleRepositoryImpl(
                             avoidList = guidance.avoidList.orEmpty().filter { it.isNotBlank() },
                             reflection = guidance.reflection?.takeIf { it.isNotBlank() },
                         ),
+                        deckCardUnlockRewards = response.deckCardUnlockRewards.map { it.toDomain() },
                         systemMode = parsedSystemMode,
                         quotaSnapshot = response.quotaSnapshot?.let {
                             OracleQuotaSnapshot(
@@ -127,3 +129,6 @@ class OracleRepositoryImpl(
         return AppLanguage.fromCodeOrNull(raw)?.code ?: ORACLE_FALLBACK_LANGUAGE_CODE
     }
 }
+
+private fun com.agc.bwitch.data.remote.economy.DeckCardUnlockRewardDto.toDomain(): DeckCardUnlockReward =
+    DeckCardUnlockReward(deckId = deckId, trackId = trackId, rewardPoolId = rewardPoolId, cardId = cardId)

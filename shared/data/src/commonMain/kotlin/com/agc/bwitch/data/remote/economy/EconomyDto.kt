@@ -197,6 +197,7 @@ data class SynastryAuthorizeResponseDto(
     val requestId: String? = null,
     val source: String? = null,
     val moonCost: Int = 0,
+    val deckCardUnlockRewards: List<DeckCardUnlockRewardDto> = emptyList(),
 )
 
 @Serializable
@@ -213,4 +214,5 @@ data class PendulumAuthorizeResponseDto(
     val requestId: String? = null,
     val source: String? = null,
     val moonCost: Int = 0,
+    val deckCardUnlockRewards: List<DeckCardUnlockRewardDto> = emptyList(),
 )

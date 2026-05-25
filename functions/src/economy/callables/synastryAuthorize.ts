@@ -57,6 +57,7 @@ export const synastryAuthorize = onCall({
     requestId,
     source: reservation.source,
     moonCost: reservation.moonCost,
+    deckCardUnlockRewards: reservation.deckCardUnlockRewards,
   };
 
   await completeSynastryEconomyRequest({uid, requestId, responsePayload: payload});

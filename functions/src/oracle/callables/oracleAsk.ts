@@ -241,6 +241,7 @@ export const oracleAsk = onCall(
             requestId,
             status: 'COMPLETED_SUCCESS',
             answer: generated.answer,
+            deckCardUnlockRewards: reservation.type === 'reserved' ? reservation.deckCardUnlockRewards : undefined,
             systemMode,
             economy: buildEconomyPayload(
                 true,

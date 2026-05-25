@@ -60,6 +60,7 @@ export const pendulumAuthorize = onCall(
         requestId,
         source: reservation.source,
         moonCost: reservation.moonCost,
+        deckCardUnlockRewards: reservation.deckCardUnlockRewards,
       };
       await completePendulumEconomyRequest({
         uid,

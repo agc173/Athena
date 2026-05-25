@@ -1,5 +1,6 @@
 package com.agc.bwitch.domain.oracle
 
+import com.agc.bwitch.domain.model.DeckCardUnlockReward
 enum class OracleTopic {
     GENERAL,
     LOVE,
@@ -27,6 +28,7 @@ sealed class OracleAskResult {
     data class CompletedSuccess(
         override val requestId: String,
         val answer: OracleAnswer,
+        val deckCardUnlockRewards: List<DeckCardUnlockReward> = emptyList(),
         val systemMode: SystemMode? = null,
         val quotaSnapshot: OracleQuotaSnapshot? = null,
         override val status: String = "COMPLETED_SUCCESS",

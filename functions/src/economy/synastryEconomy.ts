@@ -9,7 +9,7 @@ import {
 import {getPremiumStatus} from './premiumStatus';
 import {getEconomyModuleRule} from './rulesCatalog';
 import type {EconomyBalanceDoc, EconomyDailyUsageDoc, EconomyDecisionSource, EconomyRequestDoc} from './types';
-import {applyDeckProgressPlan, planDeckProgressFromMoonSpend} from './deckProgress';
+import {applyDeckProgressPlan, deckCardUnlockRewardsFromPlan, planDeckProgressFromMoonSpend} from './deckProgress';
 
 type SynastryCounter = 'synastryFreeUsed' | 'synastryPremiumUsed' | 'synastryMoonPacksPurchased' | 'synastryMoonUsesUsed';
 type SynastryDecision = {
@@ -22,7 +22,7 @@ type SynastryDecision = {
 export type SynastryEconomyReservationResult =
   | {type: 'completed'; payload: unknown}
   | {type: 'in-progress'}
-  | {type: 'reserved'; source: EconomyDecisionSource; moonCost: number};
+  | {type: 'reserved'; source: EconomyDecisionSource; moonCost: number; deckCardUnlockRewards: {deckId: string; trackId: string; rewardPoolId: string; cardId: string}[]};
 
 function intValue(value: unknown): number {
   if (typeof value !== 'number' || !Number.isFinite(value)) return 0;
@@ -116,7 +116,12 @@ export async function reserveSynastryEconomyAccess(params: {uid: string; request
       createdAt: now,
       updatedAt: now,
     } as EconomyRequestDoc);
-    return {type: 'reserved', source: decision.source, moonCost: decision.source === 'MOON' ? decision.moonCost : 0};
+    return {
+      type: 'reserved',
+      source: decision.source,
+      moonCost: decision.source === 'MOON' ? decision.moonCost : 0,
+      deckCardUnlockRewards: deckCardUnlockRewardsFromPlan(deckProgressPlan),
+    };
   });
 }
 

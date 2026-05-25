@@ -459,6 +459,11 @@ export const tarotDraw = onCall(
             status: 'COMPLETED_SUCCESS',
             reading: generated.reading,
             draw: generated.draw,
+            deckCardUnlockRewards: economyV2Enabled &&
+              reservation?.type === 'reserved' &&
+              'deckCardUnlockRewards' in reservation ?
+              reservation.deckCardUnlockRewards :
+              undefined,
             quotaSnapshot: economyV2Enabled ? undefined : legacyQuotaSnapshot,
             systemMode,
             economy: buildEconomyPayload(

@@ -14,6 +14,7 @@ import com.agc.bwitch.domain.economy.EconomyNextSource
 import com.agc.bwitch.domain.economy.EconomyModulePreview
 import com.agc.bwitch.domain.economy.SynastryAuthorizationResult
 import com.agc.bwitch.domain.economy.PendulumAuthorizationResult
+import com.agc.bwitch.domain.model.DeckCardUnlockReward
 
 class EconomyRepositoryImpl(
     private val remoteDataSource: EconomyRemoteDataSource,
@@ -144,10 +145,21 @@ private fun com.agc.bwitch.data.remote.economy.SynastryAuthorizeResponseDto.toDo
         status = status,
         source = source,
         moonCost = moonCost,
+        deckCardUnlockRewards = deckCardUnlockRewards.map { it.toDomain() },
     )
 }
 
 
 private fun com.agc.bwitch.data.remote.economy.PendulumAuthorizeResponseDto.toDomain(): PendulumAuthorizationResult {
-    return PendulumAuthorizationResult(authorized = authorized, economyDisabled = economyDisabled, status = status, source = source, moonCost = moonCost)
+    return PendulumAuthorizationResult(
+        authorized = authorized,
+        economyDisabled = economyDisabled,
+        status = status,
+        source = source,
+        moonCost = moonCost,
+        deckCardUnlockRewards = deckCardUnlockRewards.map { it.toDomain() },
+    )
 }
+
+private fun com.agc.bwitch.data.remote.economy.DeckCardUnlockRewardDto.toDomain(): DeckCardUnlockReward =
+    DeckCardUnlockReward(deckId = deckId, trackId = trackId, rewardPoolId = rewardPoolId, cardId = cardId)
