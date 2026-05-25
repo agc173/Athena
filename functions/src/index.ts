@@ -23,6 +23,7 @@ export {
   getHoroscopeMonthlyUnlocks,
   synastryAuthorize,
   pendulumAuthorize,
+  claimMoonPackPurchase,
 } from './economy';
 
 initializeApp();

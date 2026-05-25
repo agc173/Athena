@@ -28,6 +28,7 @@ import com.agc.bwitch.localization.SettingsStrings
 import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.presentation.economy.EconomyViewModel
 import com.agc.bwitch.presentation.moons.MoonStoreViewModel
+import com.agc.bwitch.domain.moons.MoonPackProductStatus
 import com.agc.bwitch.presentation.moons.STORE_COMING_SOON_KEY
 import com.agc.bwitch.presentation.userprofile.SettingsUiEffect
 import com.agc.bwitch.presentation.userprofile.SettingsViewModel
@@ -233,13 +234,15 @@ fun MoonStoreScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     Text(text = pack.localizedLabel(strings), style = MaterialTheme.typography.titleMedium)
-                    Text(text = strings.storeMoonPackMoonsFormat.replaceFirst("%d", "${pack.moons}"))
-                    Text(text = pack.displayPrice, color = MaterialTheme.colorScheme.primary)
+                    Text(text = strings.storeMoonPackMoonsFormat.replaceFirst("%d", "${pack.moonAmount}"))
+                    Text(text = pack.localizedPrice ?: "—", color = MaterialTheme.colorScheme.primary)
+                    val canShowBuy = pack.status == MoonPackProductStatus.Available
                     Button(
-                        onClick = { viewModel.onBuyPackClicked(pack.id) },
+                        onClick = { viewModel.onBuyPackClicked(pack.productId) },
+                        enabled = false,
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Text(strings.storeSoon)
+                        Text(if (canShowBuy) strings.storeMoonPackBuyDisabled else strings.storeMoonPackUnavailable)
                     }
                 }
             }
@@ -305,10 +308,10 @@ fun MoonStoreScreen(
 }
 
 
-private fun com.agc.bwitch.domain.moons.MoonPack.localizedLabel(strings: ProfileStrings): String = when (id) {
-    "starter" -> strings.storeMoonPackStarterLabel
-    "mystic" -> strings.storeMoonPackMysticLabel
-    "coven" -> strings.storeMoonPackCovenLabel
+private fun com.agc.bwitch.domain.moons.MoonPack.localizedLabel(strings: ProfileStrings): String = when (productId) {
+    "bwitch_moons_pack_10" -> strings.storeMoonPackStarterLabel
+    "bwitch_moons_pack_30" -> strings.storeMoonPackMysticLabel
+    "bwitch_moons_pack_80" -> strings.storeMoonPackCovenLabel
     else -> label
 }
 

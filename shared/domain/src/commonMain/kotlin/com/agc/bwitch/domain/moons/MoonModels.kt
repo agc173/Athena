@@ -5,12 +5,19 @@ data class MoonBalance(
 )
 
 data class MoonPack(
-    val id: String,
-    val moons: Int,
+    val productId: String,
+    val moonAmount: Int,
     val label: String,
-    val displayPrice: String,
+    val localizedPrice: String?,
     val displayOrder: Int,
+    val status: MoonPackProductStatus = MoonPackProductStatus.Loading,
 )
+
+enum class MoonPackProductStatus {
+    Loading,
+    Available,
+    Unavailable,
+}
 
 enum class MoonUnlockFeature {
     TarotExtraReading,
