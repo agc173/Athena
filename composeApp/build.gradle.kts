@@ -94,6 +94,12 @@ kotlin {
 
 
 android {
+    val admobTestAppId = "ca-app-pub-3940256099942544~3347511713"
+    val releaseAdmobAppIdProvider = providers.gradleProperty("ADMOB_APP_ID")
+        .orElse(providers.environmentVariable("ADMOB_APP_ID"))
+        // Fallback seguro para evitar crash por App ID ausente.
+        .orElse(admobTestAppId)
+
     namespace = "com.agc.bwitch"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
@@ -114,10 +120,12 @@ android {
     }
     buildTypes {
         getByName("debug") {
+            manifestPlaceholders["ADMOB_APP_ID"] = admobTestAppId
             buildConfigField("String", "ADMOB_REWARDED_AD_UNIT_ID", "\"\"")
         }
         getByName("release") {
             isMinifyEnabled = false
+            manifestPlaceholders["ADMOB_APP_ID"] = releaseAdmobAppIdProvider.get()
             buildConfigField("String", "ADMOB_REWARDED_AD_UNIT_ID", "\"\"")
         }
     }
