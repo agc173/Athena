@@ -37,18 +37,14 @@ class TarotCollectionViewModel(
                             isLoading = false,
                             progressByTrackId = progress,
                             selectedDeckId = selectedDeckId,
-                            loadError = null,
-                            arcanaNoctisDebugUnlockedCount = progress[TarotDeckId.ARCANA_NOCTIS.value]?.unlockedCards?.size ?: 0,
                         )
                     }
                 }
-                .onFailure { error ->
+                .onFailure {
                     _uiState.update {
                         it.copy(
                             isLoading = false,
                             selectedDeckId = selectedDeckId,
-                            loadError = error.message ?: "Failed to load tarot deck collection progress.",
-                            arcanaNoctisDebugUnlockedCount = 0,
                         )
                     }
                 }
@@ -78,6 +74,4 @@ data class TarotCollectionUiState(
     val isLoading: Boolean = false,
     val progressByTrackId: Map<String, com.agc.bwitch.domain.tarot.TarotDeckCollectionProgress> = emptyMap(),
     val selectedDeckId: TarotDeckId = TarotDeckId.RIDER_WAITE,
-    val loadError: String? = null,
-    val arcanaNoctisDebugUnlockedCount: Int = 0,
 )

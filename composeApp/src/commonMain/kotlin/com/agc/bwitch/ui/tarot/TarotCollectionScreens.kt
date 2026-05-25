@@ -43,18 +43,6 @@ fun TarotCollectionScreen(contentPadding: PaddingValues, onOpenDeck: (String) ->
         modifier = Modifier.padding(contentPadding).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item {
-            Text(
-                text = "Arcana debug: loaded ${state.arcanaNoctisDebugUnlockedCount} unlocked cards",
-                style = MaterialTheme.typography.bodySmall,
-            )
-            state.loadError?.let { error ->
-                Text(
-                    text = "Arcana debug error: $error",
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            }
-        }
         lazyItems(TarotDeckRegistry.allDecks, key = { it.id.value }) { deck ->
             val progress = state.progressByTrackId[deck.progressTrackId]
             val unlocked = if (deck.isDefault) {
