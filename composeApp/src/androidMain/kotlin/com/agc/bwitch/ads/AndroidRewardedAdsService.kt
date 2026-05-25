@@ -1,6 +1,7 @@
 package com.agc.bwitch.ads
 
 import android.app.Activity
+import android.util.Log
 import com.agc.bwitch.presentation.ads.RewardedAdResult
 import com.agc.bwitch.presentation.ads.RewardedAdsService
 import com.google.android.gms.ads.AdRequest
@@ -12,6 +13,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 
 class AndroidRewardedAdsService : RewardedAdsService {
+    private val tag = "RewardedAds"
     @Volatile
     private var currentActivity: Activity? = null
 
@@ -20,7 +22,8 @@ class AndroidRewardedAdsService : RewardedAdsService {
     }
 
     override suspend fun showRewardedAd(placement: String): RewardedAdResult {
-        val activity = currentActivity ?: return RewardedAdResult.Unavailable
+        Log.i(tag, "show requested placement=$placement")
+        val activity = currentActivity ?: run { Log.w(tag, "unavailable placement=$placement reason=no_activity"); return RewardedAdResult.Unavailable }
         val adUnitId = AdMobRewardedAdUnitIds.rewarded(placement)
             ?.takeIf { it.isNotBlank() }
             ?: return RewardedAdResult.Unavailable
@@ -40,6 +43,7 @@ class AndroidRewardedAdsService : RewardedAdsService {
                 AdRequest.Builder().build(),
                 object : RewardedAdLoadCallback() {
                     override fun onAdFailedToLoad(loadAdError: LoadAdError) {
+                        Log.w(tag, "load failed placement=$placement code=${loadAdError.code} message=${loadAdError.message}")
                         resumeOnce(RewardedAdResult.Failed("load_failed:${loadAdError.code}"))
                     }
 
@@ -49,6 +53,7 @@ class AndroidRewardedAdsService : RewardedAdsService {
                             override fun onAdShowedFullScreenContent() = Unit
 
                             override fun onAdFailedToShowFullScreenContent(adError: com.google.android.gms.ads.AdError) {
+                                Log.w(tag, "show failed placement=$placement code=${adError.code} message=${adError.message}")
                                 resumeOnce(RewardedAdResult.Failed("show_failed:${adError.code}"))
                             }
 

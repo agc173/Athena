@@ -13,7 +13,9 @@ import com.android.billingclient.api.BillingResult
 import com.android.billingclient.api.ConsumeParams
 import com.android.billingclient.api.PendingPurchasesParams
 import com.android.billingclient.api.Purchase
+import android.util.Log
 import com.android.billingclient.api.QueryProductDetailsParams
+import com.android.billingclient.api.QueryPurchasesParams
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -22,6 +24,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlin.coroutines.resume
 
 class GooglePlayMoonPackBillingDataSource(private val appContext: Context) : MoonPackBillingDataSource {
+    private val tag = "MoonPackBilling"
     override val isSupported: Boolean = true
     private val mutex = Mutex()
     private var pendingPurchase: CompletableDeferred<Result<GooglePlayPurchase>>? = null
@@ -37,10 +40,20 @@ class GooglePlayMoonPackBillingDataSource(private val appContext: Context) : Moo
             val relevant = purchases.orEmpty().firstOrNull { p ->
                 p.products.any { it in GooglePlayMoonPackProducts.knownProducts }
             }
+            Log.i(tag, "purchase callback received code=${result.responseCode} purchases=${purchases?.size ?: 0}")
             when {
-                result.responseCode == BillingClient.BillingResponseCode.OK && relevant != null -> deferred.complete(Result.success(relevant.toDomain(appContext.packageName)!!))
-                result.responseCode == BillingClient.BillingResponseCode.USER_CANCELED -> deferred.complete(Result.failure(CancellationException("cancelled")))
-                else -> deferred.complete(Result.failure(IllegalStateException("purchase failed ${result.responseCode}")))
+                result.responseCode == BillingClient.BillingResponseCode.OK && relevant != null -> {
+                    Log.i(tag, "purchase callback purchased product=${relevant.products}")
+                    deferred.complete(Result.success(relevant.toDomain(appContext.packageName)!!))
+                }
+                result.responseCode == BillingClient.BillingResponseCode.USER_CANCELED -> {
+                    Log.i(tag, "purchase callback cancelled")
+                    deferred.complete(Result.failure(CancellationException("cancelled")))
+                }
+                else -> {
+                    Log.w(tag, "purchase callback failed code=${result.responseCode} message=${result.debugMessage}")
+                    deferred.complete(Result.failure(IllegalStateException("purchase failed ${result.responseCode}")))
+                }
             }
         }.build()
 
@@ -73,13 +86,43 @@ class GooglePlayMoonPackBillingDataSource(private val appContext: Context) : Moo
         deferred.await()
     }.getOrElse { Result.failure(it) }
 
+
+
+    override suspend fun queryUnconsumedMoonPackPurchases(): Result<List<GooglePlayPurchase>> = runCatching {
+        mutex.withLock {
+            ensureReady()
+            suspendCancellableCoroutine { cont ->
+                val params = QueryPurchasesParams.newBuilder()
+                    .setProductType(BillingClient.ProductType.INAPP)
+                    .build()
+                billingClient.queryPurchasesAsync(params) { result, purchases ->
+                    if (result.responseCode != BillingClient.BillingResponseCode.OK) {
+                        Log.w(tag, "query purchases failed code=${result.responseCode} message=${result.debugMessage}")
+                        cont.resumeWith(Result.failure(IllegalStateException("query purchases failed ${result.responseCode}")))
+                    } else {
+                        val pending = purchases.orEmpty().mapNotNull { it.toDomain(appContext.packageName) }
+                            .filter { it.purchaseState == GooglePlayPurchaseState.Purchased }
+                        Log.i(tag, "query purchases success pending=${pending.size}")
+                        cont.resume(pending)
+                    }
+                }
+            }
+        }
+    }
+
     override suspend fun consumePurchase(purchaseToken: String): Result<Unit> = runCatching {
         mutex.withLock {
             ensureReady()
             suspendCancellableCoroutine { cont ->
+                Log.i(tag, "consume started tokenHash=${purchaseToken.hashCode()}")
                 billingClient.consumeAsync(ConsumeParams.newBuilder().setPurchaseToken(purchaseToken).build()) { r, _ ->
-                    if (r.responseCode == BillingClient.BillingResponseCode.OK) cont.resume(Unit)
-                    else cont.resumeWith(Result.failure(IllegalStateException("consume failed ${r.responseCode}")))
+                    if (r.responseCode == BillingClient.BillingResponseCode.OK) {
+                        Log.i(tag, "consume success")
+                        cont.resume(Unit)
+                    } else {
+                        Log.w(tag, "consume failed code=${r.responseCode} message=${r.debugMessage}")
+                        cont.resumeWith(Result.failure(IllegalStateException("consume failed ${r.responseCode}")))
+                    }
                 }
             }
         }
