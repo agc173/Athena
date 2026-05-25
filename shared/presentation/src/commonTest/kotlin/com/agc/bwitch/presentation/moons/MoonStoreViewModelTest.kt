@@ -42,10 +42,10 @@ class MoonStoreViewModelTest {
             )
 
             advanceUntilIdle()
-            viewModel.onBuyPackClicked("starter")
+            viewModel.onBuyPackClicked("bwitch_moons_pack_10")
             advanceUntilIdle()
 
-            assertEquals("$STORE_COMING_SOON_KEY:starter", viewModel.uiState.value.feedbackMessage)
+            assertEquals("$STORE_COMING_SOON_KEY:bwitch_moons_pack_10", viewModel.uiState.value.feedbackMessage)
             assertTrue(analytics.events.any { it is AnalyticsEvent.MoonPackSelected })
             assertTrue(analytics.events.any { it is AnalyticsEvent.MoonPackPurchaseFailed && it.reason == "not_available" })
             assertTrue(analytics.events.none { it is AnalyticsEvent.MoonPackPurchaseStarted })
@@ -68,10 +68,10 @@ class MoonStoreViewModelTest {
     private class FakeMoonPackRepository : MoonPackRepository {
         override suspend fun getMoonPacks(): List<MoonPack> = listOf(
             MoonPack(
-                id = "starter",
-                moons = 5,
+                productId = "bwitch_moons_pack_10",
+                moonAmount = 10,
                 label = "Starter",
-                displayPrice = "\$1.99",
+                localizedPrice = "\$1.99",
                 displayOrder = 1,
             ),
         )

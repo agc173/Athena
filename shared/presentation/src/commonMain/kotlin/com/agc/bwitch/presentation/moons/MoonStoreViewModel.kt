@@ -60,9 +60,9 @@ class MoonStoreViewModel(
                 packs.forEach { pack ->
                     analyticsTracker.track(
                         AnalyticsEvent.MoonPackViewed(
-                            packId = pack.id,
-                            moons = pack.moons,
-                            price = pack.displayPrice,
+                            packId = pack.productId,
+                            moons = pack.moonAmount,
+                            price = pack.localizedPrice ?: "N/A",
                         ),
                     )
                 }
@@ -78,17 +78,17 @@ class MoonStoreViewModel(
     }
 
     fun onBuyPackClicked(packId: String) {
-        _uiState.value.packs.firstOrNull { it.id == packId }?.let { pack ->
+        _uiState.value.packs.firstOrNull { it.productId == packId }?.let { pack ->
             analyticsTracker.track(
                 AnalyticsEvent.MoonPackSelected(
-                    packId = pack.id,
-                    moons = pack.moons,
-                    price = pack.displayPrice,
+                    packId = pack.productId,
+                    moons = pack.moonAmount,
+                    price = pack.localizedPrice ?: "N/A",
                 ),
             )
             analyticsTracker.track(
                 AnalyticsEvent.MoonPackPurchaseFailed(
-                    packId = pack.id,
+                    packId = pack.productId,
                     reason = "not_available",
                 ),
             )
