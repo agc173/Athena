@@ -5,10 +5,14 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.compose.BackHandler
+import com.agc.bwitch.ads.AndroidRewardedAdsService
 import org.koin.compose.koinInject
+import org.koin.java.KoinJavaComponent.inject
 import com.agc.bwitch.presentation.navigation.Navigator
 
 class MainActivity : ComponentActivity() {
+    private val rewardedAdsService: AndroidRewardedAdsService by inject(AndroidRewardedAdsService::class.java)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
@@ -27,5 +31,14 @@ class MainActivity : ComponentActivity() {
             App()
         }
     }
-}
 
+    override fun onStart() {
+        super.onStart()
+        rewardedAdsService.bindActivity(this)
+    }
+
+    override fun onStop() {
+        rewardedAdsService.bindActivity(null)
+        super.onStop()
+    }
+}

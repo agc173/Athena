@@ -88,6 +88,8 @@ import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeOverlayUi
 import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeTab
 import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeUiState
 import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeViewModel
+import com.agc.bwitch.presentation.ads.RewardedAdResult
+import com.agc.bwitch.presentation.ads.RewardedAdsService
 import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeWeekPeriod
 import com.agc.bwitch.presentation.economy.EconomyViewModel
 import com.agc.bwitch.presentation.economy.MoonUnlockFlowContext
@@ -110,6 +112,7 @@ fun HoroscopeScreen(
     modifier: Modifier = Modifier,
     viewModel: HoroscopeViewModel = koinInject(),
     economyViewModel: EconomyViewModel = koinInject(),
+    rewardedAdsService: RewardedAdsService = koinInject(),
 ) {
     val strings = appStrings
     val state by viewModel.uiState.collectAsState()
@@ -118,6 +121,7 @@ fun HoroscopeScreen(
     val shareScope = rememberCoroutineScope()
     var shareErrorMessage by remember { mutableStateOf<String?>(null) }
     var rewardDialogRewards by remember { mutableStateOf<List<DeckCardUnlockReward>>(emptyList()) }
+    var isRewardedAdFlowRunning by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(preselectedSign) { preselectedSign?.let(viewModel::onSelectSign) }
     LaunchedEffect(economyState.isPremium) { viewModel.onPremiumAccessChanged(economyState.isPremium) }
@@ -138,8 +142,26 @@ fun HoroscopeScreen(
             onSelectWeek = viewModel::onSelectWeek,
             onSelectMonth = viewModel::onSelectMonth,
             onOpenSign = viewModel::onOpenSign,
-            canEarnMoonsWithRewardedAd = economyState.rewardedAdsRemaining > 0,
-            onEarnMoonsWithRewardedAd = { economyViewModel.claimRewardedAd("horoscope_period_lock_overlay") },
+            canEarnMoonsWithRewardedAd = economyState.rewardedAdsRemaining > 0 && !isRewardedAdFlowRunning,
+            onEarnMoonsWithRewardedAd = {
+                if (isRewardedAdFlowRunning) return@HoroscopeScreenContent
+                shareScope.launch {
+                    isRewardedAdFlowRunning = true
+                    try {
+                        when (rewardedAdsService.showRewardedAd(placement = "horoscope_period_lock_overlay")) {
+                            RewardedAdResult.Completed -> economyViewModel.claimRewardedAd("horoscope_period_lock_overlay")
+                            RewardedAdResult.Cancelled,
+                            is RewardedAdResult.Failed,
+                            RewardedAdResult.Unavailable,
+                            -> Unit
+                        }
+                    } catch (error: Throwable) {
+                        println("[HoroscopeScreen] rewarded ad flow failed: ${error.message}")
+                    } finally {
+                        isRewardedAdFlowRunning = false
+                    }
+                }
+            },
             onRewardedAdCtaShown = {
                 economyViewModel.onRewardedAdCtaShown(
                     placement = "horoscope_period_lock_overlay",

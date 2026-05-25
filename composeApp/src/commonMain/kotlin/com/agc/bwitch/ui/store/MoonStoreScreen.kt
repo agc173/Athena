@@ -21,6 +21,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import com.agc.bwitch.domain.settings.SubscriptionStatus
 import com.agc.bwitch.localization.ProfileStrings
 import com.agc.bwitch.localization.SettingsStrings
@@ -31,10 +32,13 @@ import com.agc.bwitch.presentation.moons.STORE_COMING_SOON_KEY
 import com.agc.bwitch.presentation.userprofile.SettingsUiEffect
 import com.agc.bwitch.presentation.userprofile.SettingsViewModel
 import com.agc.bwitch.presentation.userprofile.SubscriptionPrimaryAction
+import com.agc.bwitch.presentation.ads.RewardedAdResult
+import com.agc.bwitch.presentation.ads.RewardedAdsService
 import com.agc.bwitch.ui.common.premium.PremiumCard
 import com.agc.bwitch.ui.userprofile.rememberSubscriptionManagementLauncher
 import com.agc.bwitch.ui.userprofile.rememberSubscriptionPurchaseLauncher
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
 @Composable
@@ -43,6 +47,7 @@ fun MoonStoreScreen(
     viewModel: MoonStoreViewModel = koinInject(),
     economyViewModel: EconomyViewModel = koinInject(),
     settingsViewModel: SettingsViewModel = koinInject(),
+    rewardedAdsService: RewardedAdsService = koinInject(),
 ) {
     val strings = appStrings.profile
     val settingsStrings = appStrings.settings
@@ -51,6 +56,8 @@ fun MoonStoreScreen(
     val settingsState by settingsViewModel.uiState.collectAsState()
     val purchaseLauncher = rememberSubscriptionPurchaseLauncher()
     val managementLauncher = rememberSubscriptionManagementLauncher()
+    val scope = rememberCoroutineScope()
+    var isRewardedAdFlowRunning by rememberSaveable { mutableStateOf(false) }
     // TODO(store): esta pantalla ya funciona como hub general de Store; renombrar archivo/composable en una pasada posterior.
 
     LaunchedEffect(economyState.isLoading, economyState.error, economyState.balance) {
@@ -99,6 +106,7 @@ fun MoonStoreScreen(
     var rewardedCtaTracked by rememberSaveable { mutableStateOf(false) }
     val rewardedCtaVisible = economyState.rewardedAdsRemaining > 0 &&
         !economyState.isClaimingRewardedAd &&
+        !isRewardedAdFlowRunning &&
         !economyState.isLoading
     LaunchedEffect(rewardedCtaVisible, economyState.rewardedAdsRemaining) {
         when {
@@ -178,8 +186,24 @@ fun MoonStoreScreen(
 
                 Button(
                     onClick = {
+                        if (isRewardedAdFlowRunning) return@Button
                         println("[MoonStoreScreen] CTA rewarded ad tapped")
-                        economyViewModel.claimRewardedAd()
+                        scope.launch {
+                            isRewardedAdFlowRunning = true
+                            try {
+                                when (rewardedAdsService.showRewardedAd(placement = "moon_store")) {
+                                    RewardedAdResult.Completed -> economyViewModel.claimRewardedAd(placement = "moon_store")
+                                    RewardedAdResult.Cancelled,
+                                    is RewardedAdResult.Failed,
+                                    RewardedAdResult.Unavailable,
+                                    -> Unit
+                                }
+                            } catch (error: Throwable) {
+                                println("[MoonStoreScreen] rewarded ad flow failed: ${error.message}")
+                            } finally {
+                                isRewardedAdFlowRunning = false
+                            }
+                        }
                     },
                     enabled = rewardedCtaVisible,
                     modifier = Modifier.fillMaxWidth(),

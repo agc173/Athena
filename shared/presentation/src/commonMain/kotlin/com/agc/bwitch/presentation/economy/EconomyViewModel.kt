@@ -394,6 +394,7 @@ class EconomyViewModel(
 
     fun claimRewardedAd(
         placement: String? = REWARDED_AD_DEFAULT_PLACEMENT,
+        adProof: String = REWARDED_AD_CALLBACK_PROOF,
         paywallImpressionId: String? = null,
     ) {
         val currentState = _uiState.value
@@ -420,7 +421,7 @@ class EconomyViewModel(
             runCatching {
                 economyRepository.claimRewardedAd(
                     requestId = requestId,
-                    adProof = REWARDED_AD_PLACEHOLDER_PROOF,
+                    adProof = adProof,
                     placement = placement,
                 )
             }.onSuccess { result ->
@@ -570,8 +571,8 @@ const val UNLOCK_FLOW_ORIGIN_PAYWALL_REWARDED = "paywall_rewarded"
 const val UNLOCK_FLOW_ORIGIN_PREMIUM = "premium"
 const val UNLOCK_FLOW_ORIGIN_UNKNOWN = "unknown"
 
-// TODO(economy-rewarded-ad): Replace placeholder proof with SDK validated reward token.
-const val REWARDED_AD_PLACEHOLDER_PROOF = "client-placeholder-proof"
+// TODO(monetization-ssv): replace with server-verified proof/SSV token.
+const val REWARDED_AD_CALLBACK_PROOF = "android-admob-reward-callback-v1"
 
 private fun normalizeMoonPaywallModule(source: String?): String = source.orEmpty().ifBlank { "unknown" }
 

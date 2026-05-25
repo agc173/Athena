@@ -29,6 +29,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,6 +56,8 @@ import com.agc.bwitch.localization.NavigationStrings
 import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.platform.isDebugBuild
 import com.agc.bwitch.presentation.auth.SessionViewModel
+import com.agc.bwitch.presentation.ads.RewardedAdResult
+import com.agc.bwitch.presentation.ads.RewardedAdsService
 import com.agc.bwitch.presentation.economy.DEBUG_MONETIZABLE_MODULES
 import com.agc.bwitch.presentation.economy.EconomyViewModel
 import com.agc.bwitch.presentation.navigation.Destination
@@ -85,6 +89,7 @@ import com.agc.bwitch.ui.tarot.TarotDeckDetailScreen
 import com.agc.bwitch.ui.userprofile.ProfileScreen
 import com.agc.bwitch.ui.userprofile.SettingsScreen
 import com.agc.bwitch.ui.theme.BWitchThemeTokens
+import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
 @Composable
@@ -95,6 +100,7 @@ fun AppRoot() {
     val sessionVm: SessionViewModel = koinInject()
     val session by sessionVm.uiState.collectAsState()
     val economyVm: EconomyViewModel = koinInject()
+    val rewardedAdsService: RewardedAdsService = koinInject()
     val economyState by economyVm.uiState.collectAsState()
     val moonPaywallRequest by economyVm.moonPaywallRequest.collectAsState()
     LaunchedEffect(economyState.modulePreviews) {
@@ -119,6 +125,8 @@ fun AppRoot() {
     var profileForGate by remember { mutableStateOf<UserProfile?>(null) }
     var hasProfileGateSnapshot by remember { mutableStateOf(false) }
     var isProfileGateLoading by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    var isRewardedAdFlowRunning by rememberSaveable { mutableStateOf(false) }
 
     if (session.isLoading) {
         AuthBootstrapLoading()
@@ -411,14 +419,31 @@ fun AppRoot() {
                     economyVm.claimDailyLogin()
                 },
                 onClaimRewardedAd = {
+                    if (isRewardedAdFlowRunning) return@MoonPaywallDialog
                     economyVm.onMoonPaywallActionClicked(
                         request = paywall,
                         action = "watch_ad",
                     )
-                    economyVm.claimRewardedAd(
-                        placement = paywall.source ?: REWARDED_AD_PAYWALL_PLACEMENT,
-                        paywallImpressionId = paywall.impressionId,
-                    )
+                    scope.launch {
+                        isRewardedAdFlowRunning = true
+                        val placement = paywall.source ?: REWARDED_AD_PAYWALL_PLACEMENT
+                        try {
+                            when (rewardedAdsService.showRewardedAd(placement = placement)) {
+                                RewardedAdResult.Completed -> economyVm.claimRewardedAd(
+                                    placement = placement,
+                                    paywallImpressionId = paywall.impressionId,
+                                )
+                                RewardedAdResult.Cancelled,
+                                is RewardedAdResult.Failed,
+                                RewardedAdResult.Unavailable,
+                                -> Unit
+                            }
+                        } catch (error: Throwable) {
+                            println("[AppRoot] rewarded ad flow failed: ${error.message}")
+                        } finally {
+                            isRewardedAdFlowRunning = false
+                        }
+                    }
                 },
                 onOpenStore = {
                     economyVm.onMoonPaywallActionClicked(
