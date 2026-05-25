@@ -36,6 +36,7 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toLocalDateTime
 
 data class UserProfileUiState(
@@ -245,7 +246,8 @@ class UserProfileViewModel(
                     ?: sessionVm.uiState.value.email?.trim().takeUnless { it.isNullOrBlank() },
                 username = current?.username,
                 birthDate = current?.birthDate,
-                zodiacSign = current?.zodiacSign ?: current?.birthDate?.let(deriveZodiacSign::invoke)
+                zodiacSign = current?.zodiacSign ?: current?.birthDate?.let(deriveZodiacSign::invoke),
+                description = current?.description
             )
 
             save(updated)
@@ -256,6 +258,50 @@ class UserProfileViewModel(
         }
 
         _uiState.update { it.copy(isUploadingAvatar = false) }
+    }
+
+    suspend fun saveEditableProfile(description: String?, birthDateText: String?): Boolean {
+        if (uiState.value.isBusy) return false
+        _uiState.update { it.copy(isSaving = true, error = null) }
+        val current = uiState.value.profile
+        val birthInput = birthDateText?.trim().orEmpty()
+        val parsedBirthDate = if (birthInput.isBlank()) current?.birthDate else runCatching { LocalDate.parse(birthInput) }.getOrNull()
+        if (birthInput.isNotBlank() && parsedBirthDate == null) {
+            _uiState.update { it.copy(isSaving = false, error = PROFILE_BIRTH_DATE_INVALID_ERROR_KEY) }
+            _snackbarEvents.tryEmit(PROFILE_BIRTH_DATE_INVALID_ERROR_KEY)
+            return false
+        }
+        if (parsedBirthDate != null && parsedBirthDate.atStartOfDayIn(TimeZone.UTC) > Clock.System.now()) {
+            _uiState.update { it.copy(isSaving = false, error = PROFILE_BIRTH_DATE_IN_FUTURE_ERROR_KEY) }
+            _snackbarEvents.tryEmit(PROFILE_BIRTH_DATE_IN_FUTURE_ERROR_KEY)
+            return false
+        }
+        val normalizedDescription = description
+            ?.replace(Regex("\\s+"), " ")
+            ?.trim()
+            ?.takeIf { it.isNotBlank() }
+        if ((normalizedDescription?.length ?: 0) > 160) {
+            _uiState.update { it.copy(isSaving = false, error = PROFILE_DESCRIPTION_TOO_LONG_ERROR_KEY) }
+            _snackbarEvents.tryEmit(PROFILE_DESCRIPTION_TOO_LONG_ERROR_KEY)
+            return false
+        }
+        val zodiacSign = if (birthInput.isBlank()) current?.zodiacSign else parsedBirthDate?.let(deriveZodiacSign::invoke)
+        val updated = UserProfile(
+            displayName = current?.displayName,
+            photoUrl = current?.photoUrl,
+            email = current?.email ?: sessionVm.uiState.value.email?.trim().takeUnless { it.isNullOrBlank() },
+            username = current?.username,
+            birthDate = parsedBirthDate,
+            zodiacSign = zodiacSign,
+            description = normalizedDescription,
+            birthEssenceSummary = current?.birthEssenceSummary,
+        )
+        val success = runCatching { save(updated) }
+            .onSuccess { _snackbarEvents.tryEmit(PROFILE_SAVE_SUCCESS_MESSAGE_KEY) }
+            .onFailure { e -> _uiState.update { it.copy(error = e.message) }; _snackbarEvents.tryEmit(e.message ?: PROFILE_SAVE_ERROR_KEY) }
+            .isSuccess
+        _uiState.update { it.copy(isSaving = false) }
+        return success
     }
 
     fun refresh() = scope.launch {
@@ -320,3 +366,5 @@ const val PROFILE_REFRESH_SUCCESS_MESSAGE_KEY = "profile.info.refresh_success"
 const val PROFILE_SAVE_ERROR_KEY = "profile.error.save"
 const val PROFILE_AVATAR_UPDATED_MESSAGE_KEY = "profile.info.avatar_updated"
 const val PROFILE_AVATAR_UPLOAD_ERROR_KEY = "profile.error.avatar_upload"
+const val PROFILE_DESCRIPTION_TOO_LONG_ERROR_KEY = "profile.error.description_too_long"
+const val PROFILE_BIRTH_DATE_IN_FUTURE_ERROR_KEY = "profile.error.birth_date_in_future"

@@ -12,6 +12,8 @@ type SaveUserProfileData = {
   username?: unknown;
   birthDate?: unknown;
   zodiacSign?: unknown;
+  description?: unknown;
+  descriptionProvided?: unknown;
   birthEssenceSummary?: unknown;
   updatedAtEpochMillis?: unknown;
 };
@@ -23,6 +25,7 @@ type UserProfileDoc = {
   username?: string;
   birthDate?: string;
   zodiacSign?: string;
+  description?: string;
   birthEssenceSummary?: string;
   updatedAtEpochMillis?: number;
   updatedAt?: Timestamp;
@@ -49,6 +52,7 @@ type SanitizedProfileLog = {
   hasEmail: boolean;
   hasBirthDate: boolean;
   hasZodiacSign: boolean;
+  hasDescription: boolean;
   hasBirthEssenceSummary: boolean;
   updatedAtEpochMillis: number;
 };
@@ -81,6 +85,9 @@ function asOptionalLong(value: unknown): number | null {
   if (typeof value !== 'number' || !Number.isFinite(value)) return null;
   return Math.trunc(value);
 }
+function asBoolean(value: unknown): boolean {
+  return value === true;
+}
 
 function asDisplayNameOrFallback(displayNameRaw: unknown, normalizedUsername: string): string {
   return asOptionalTrimmedString(displayNameRaw) ?? normalizedUsername;
@@ -103,6 +110,7 @@ function sanitizedProfileLog(input: {
   email: string | null;
   birthDate: string | null;
   zodiacSign: string | null;
+  description: string | null;
   birthEssenceSummary: string | null;
   updatedAtEpochMillis: number;
 }): SanitizedProfileLog {
@@ -115,6 +123,7 @@ function sanitizedProfileLog(input: {
     hasEmail: input.email != null,
     hasBirthDate: input.birthDate != null,
     hasZodiacSign: input.zodiacSign != null,
+    hasDescription: input.description != null,
     hasBirthEssenceSummary: input.birthEssenceSummary != null,
     updatedAtEpochMillis: input.updatedAtEpochMillis,
   };
@@ -170,6 +179,8 @@ export const saveUserProfile = onCall(
       const email = asOptionalTrimmedString(data.email);
       const birthDate = asOptionalBirthDate(data.birthDate);
       const zodiacSign = asOptionalTrimmedString(data.zodiacSign);
+      const description = asOptionalTrimmedString(data.description);
+      const descriptionProvided = asBoolean(data.descriptionProvided);
       const birthEssenceSummary = asOptionalBirthEssenceSummary(data.birthEssenceSummary);
       const updatedAtEpochMillis = asOptionalLong(data.updatedAtEpochMillis) ?? Date.now();
 
@@ -181,6 +192,7 @@ export const saveUserProfile = onCall(
         email,
         birthDate,
         zodiacSign,
+        description,
         birthEssenceSummary,
         updatedAtEpochMillis,
       }));
@@ -199,6 +211,10 @@ export const saveUserProfile = onCall(
       if (email != null) profilePatch.email = email;
       if (birthDate != null) profilePatch.birthDate = birthDate;
       if (zodiacSign != null) profilePatch.zodiacSign = zodiacSign;
+      if (descriptionProvided) {
+        if (description != null) profilePatch.description = description.slice(0, 160);
+        else profilePatch.description = FieldValue.delete() as unknown as string;
+      }
       if (birthEssenceSummary != null) profilePatch.birthEssenceSummary = birthEssenceSummary;
 
       try {
