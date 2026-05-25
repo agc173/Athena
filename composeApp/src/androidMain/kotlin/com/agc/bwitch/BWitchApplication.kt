@@ -10,7 +10,6 @@ import com.google.android.gms.ads.MobileAds
 import com.google.firebase.FirebaseApp
 import com.google.firebase.appcheck.FirebaseAppCheck
 import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory
-import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
 
 class BWitchApplication : Application() {
     override fun onCreate() {
@@ -26,9 +25,7 @@ class BWitchApplication : Application() {
                 DebugAppCheckProviderFactory.getInstance()
             )
         } else {
-            FirebaseAppCheck.getInstance().installAppCheckProviderFactory(
-                PlayIntegrityAppCheckProviderFactory.getInstance()
-            )
+            // TODO: Integrar proveedor de App Check con Play Integrity para release.
         }
 
         MobileAds.initialize(this)
