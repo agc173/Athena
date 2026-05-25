@@ -9,6 +9,7 @@ import com.agc.bwitch.data.tarot.dto.TarotDrawRequestDto
 import com.agc.bwitch.data.tarot.dto.TarotDrawResponseDto
 import com.agc.bwitch.domain.shared.ApiError
 import com.agc.bwitch.domain.shared.ApiResult
+import com.agc.bwitch.domain.model.DeckCardUnlockReward
 import com.agc.bwitch.domain.tarot.Tarot3CardMeaning
 import com.agc.bwitch.domain.tarot.TarotCard
 import com.agc.bwitch.domain.tarot.TarotCardPosition
@@ -66,6 +67,7 @@ class TarotRepositoryImpl(
                     cards = emptyList(),
                     details = null,
                     interpretation = "",
+                    deckCardUnlockRewards = response.deckCardUnlockRewards.map { it.toDomain() },
                 )
             )
         }
@@ -95,6 +97,7 @@ class TarotRepositoryImpl(
                 cards = cards,
                 details = details,
                 interpretation = details.toInterpretationText(),
+                deckCardUnlockRewards = response.deckCardUnlockRewards.map { it.toDomain() },
             )
         )
     }
@@ -211,3 +214,6 @@ class TarotRepositoryImpl(
         TarotCardPosition.FUTURE -> "future"
     }
 }
+
+private fun com.agc.bwitch.data.remote.economy.DeckCardUnlockRewardDto.toDomain(): DeckCardUnlockReward =
+    DeckCardUnlockReward(deckId = deckId, trackId = trackId, rewardPoolId = rewardPoolId, cardId = cardId)

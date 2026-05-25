@@ -1,5 +1,6 @@
 package com.agc.bwitch.data.oracle.dto
 
+import com.agc.bwitch.data.remote.economy.DeckCardUnlockRewardDto
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -26,6 +27,7 @@ data class OracleAskResponseDto(
     val quotaSnapshot: OracleQuotaSnapshotDto? = null,
     val systemMode: String? = null,
     val error: OracleErrorDto? = null,
+    val deckCardUnlockRewards: List<DeckCardUnlockRewardDto> = emptyList(),
 )
 
 @Serializable

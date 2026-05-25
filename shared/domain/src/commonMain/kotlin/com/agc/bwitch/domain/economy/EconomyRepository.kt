@@ -1,5 +1,7 @@
 package com.agc.bwitch.domain.economy
 
+import com.agc.bwitch.domain.model.DeckCardUnlockReward
+
 interface EconomyRepository {
     suspend fun getBalance(): EconomyBalance
     suspend fun getStatus(): EconomyStatus
@@ -20,6 +22,7 @@ data class PendulumAuthorizationResult(
     val status: String? = null,
     val source: String? = null,
     val moonCost: Int = 0,
+    val deckCardUnlockRewards: List<DeckCardUnlockReward> = emptyList(),
 )
 
 
@@ -29,4 +32,5 @@ data class SynastryAuthorizationResult(
     val status: String? = null,
     val source: String? = null,
     val moonCost: Int = 0,
+    val deckCardUnlockRewards: List<DeckCardUnlockReward> = emptyList(),
 )

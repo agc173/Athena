@@ -354,6 +354,11 @@ export const birthEssenceGenerate = onCall(
         const responsePayload = {
           ...parsed,
           languageCode,
+          deckCardUnlockRewards: economyV2Enabled &&
+            reservation?.type === 'reserved' &&
+            'deckCardUnlockRewards' in reservation ?
+            reservation.deckCardUnlockRewards :
+            undefined,
           requestId: economyV2Enabled ? requestId : undefined,
           economy: economyV2Enabled ? {
             source: economyDecisionSource,

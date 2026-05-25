@@ -15,7 +15,7 @@ import type {
   EconomyDecisionSource,
   EconomyRequestDoc,
 } from './types';
-import {applyDeckProgressPlan, planDeckProgressFromMoonSpend} from './deckProgress';
+import {applyDeckProgressPlan, deckCardUnlockRewardsFromPlan, planDeckProgressFromMoonSpend} from './deckProgress';
 
 type OracleUsageCounter =
   | 'oracleFreeUsed'
@@ -40,6 +40,7 @@ export type OracleEconomyReservationResult =
     type: 'reserved';
     source: EconomyDecisionSource;
     moonCost: number;
+    deckCardUnlockRewards: {deckId: string; trackId: string; rewardPoolId: string; cardId: string}[];
   };
 
 function intValue(value: unknown): number {
@@ -220,6 +221,7 @@ export async function reserveOracleEconomyAccess(params: {
       type: 'reserved' as const,
       source: decision.source,
       moonCost: decision.source === 'MOON' ? decision.moonCost : 0,
+      deckCardUnlockRewards: deckCardUnlockRewardsFromPlan(deckProgressPlan),
     };
   });
 }

@@ -1,5 +1,6 @@
 package com.agc.bwitch.data.tarot.dto
 
+import com.agc.bwitch.data.remote.economy.DeckCardUnlockRewardDto
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -27,6 +28,7 @@ data class TarotDrawResponseDto(
     val requestType: String? = null,
     val quotaSnapshot: QuotaSnapshotDto? = null,
     val systemMode: String? = null,
+    val deckCardUnlockRewards: List<DeckCardUnlockRewardDto> = emptyList(),
 )
 
 @Serializable

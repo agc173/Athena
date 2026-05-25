@@ -1,6 +1,7 @@
 package com.agc.bwitch.domain.astrology.birthchart
 
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
+import com.agc.bwitch.domain.model.DeckCardUnlockReward
 
 data class BirthEssenceInput(
     val sunSign: ZodiacSign,
@@ -14,6 +15,7 @@ data class BirthEssenceReading(
     val interpretation: String,
     val languageCode: String = "es",
     val archetype: BirthEssenceArchetype? = null,
+    val deckCardUnlockRewards: List<DeckCardUnlockReward> = emptyList(),
 )
 
 data class BirthEssenceDraft(

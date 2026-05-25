@@ -15,6 +15,7 @@ import com.agc.bwitch.domain.astrology.birthchart.BirthEssenceReading
 import com.agc.bwitch.domain.auth.AuthRepository
 import com.agc.bwitch.domain.userprofile.UserProfileRepository
 import com.agc.bwitch.domain.shared.ApiResult
+import com.agc.bwitch.domain.model.DeckCardUnlockReward
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.firestore.firestore
 import kotlinx.coroutines.CoroutineScope
@@ -130,6 +131,7 @@ class SyncBirthChartRepository(
                         languageCode = normalizeLanguageCode(result.value.languageCode).orEmpty()
                             .ifBlank { input.languageCode },
                         archetype = null,
+                        deckCardUnlockRewards = result.value.deckCardUnlockRewards.map { it.toDomain() },
                     )
                 )
             }
@@ -249,7 +251,11 @@ data class BirthEssenceGenerateResponseDto(
     val interpretation: String,
     val languageCode: String? = null,
     val archetype: String? = null,
+    val deckCardUnlockRewards: List<com.agc.bwitch.data.remote.economy.DeckCardUnlockRewardDto> = emptyList(),
 )
+
+private fun com.agc.bwitch.data.remote.economy.DeckCardUnlockRewardDto.toDomain(): DeckCardUnlockReward =
+    DeckCardUnlockReward(deckId = deckId, trackId = trackId, rewardPoolId = rewardPoolId, cardId = cardId)
 
 private fun normalizeLanguageCode(raw: String?): String? =
     raw

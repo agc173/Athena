@@ -2,6 +2,7 @@ package com.agc.bwitch.presentation.astrology.birthchart
 
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
 import com.agc.bwitch.domain.astrology.birthchart.BirthEssenceArchetype
+import com.agc.bwitch.domain.model.DeckCardUnlockReward
 
 data class BirthChartUiState(
     val isLoading: Boolean = false,
@@ -15,6 +16,7 @@ data class BirthChartUiState(
     val generatedInterpretation: String? = null,
     val generatedLanguageCode: String = "es",
     val generatedArchetype: BirthEssenceArchetype? = null,
+    val generatedDeckCardUnlockRewards: List<DeckCardUnlockReward> = emptyList(),
     val generatedSunSign: ZodiacSign? = null,
     val generatedMoonSign: ZodiacSign? = null,
     val generatedRisingSign: ZodiacSign? = null,
