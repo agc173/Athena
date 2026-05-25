@@ -91,6 +91,16 @@ data class UnlockHoroscopeDayResponseDto(
 )
 
 @Serializable
+data class UnlockHoroscopeWeeklyResponseDto(
+    val result: String = "",
+    val unlocked: Boolean = false,
+    val alreadyUnlocked: Boolean = false,
+    val balance: Int = 0,
+    val costCharged: Int = 0,
+    val deckCardUnlockRewards: List<DeckCardUnlockRewardDto> = emptyList(),
+)
+
+@Serializable
 data class GetHoroscopeDailyUnlocksRequestDto(
     val dateIsoList: List<String>,
 )
@@ -122,6 +132,16 @@ data class UnlockHoroscopeMonthlyRequestDto(
     val requestId: String,
     val monthKey: String,
     val sign: String,
+)
+
+@Serializable
+data class UnlockHoroscopeMonthlyResponseDto(
+    val result: String = "",
+    val unlocked: Boolean = false,
+    val alreadyUnlocked: Boolean = false,
+    val balance: Int = 0,
+    val costCharged: Int = 0,
+    val deckCardUnlockRewards: List<DeckCardUnlockRewardDto> = emptyList(),
 )
 
 @Serializable

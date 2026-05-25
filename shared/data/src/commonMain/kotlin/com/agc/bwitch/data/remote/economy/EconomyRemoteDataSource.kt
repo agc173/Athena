@@ -114,7 +114,7 @@ class EconomyRemoteDataSource(
         requestId: String,
         weekKey: String,
         sign: String,
-    ): UnlockHoroscopeDayResponseDto {
+    ): UnlockHoroscopeWeeklyResponseDto {
         return when (
             val result = functionsClient.call(
                 name = UNLOCK_HOROSCOPE_WEEKLY_CALLABLE,
@@ -124,7 +124,7 @@ class EconomyRemoteDataSource(
                     sign = sign,
                 ),
                 requestSerializer = UnlockHoroscopeWeeklyRequestDto.serializer(),
-                responseSerializer = UnlockHoroscopeDayResponseDto.serializer(),
+                responseSerializer = UnlockHoroscopeWeeklyResponseDto.serializer(),
             )
         ) {
             is ApiResult.Ok -> result.value
@@ -151,7 +151,7 @@ class EconomyRemoteDataSource(
         requestId: String,
         monthKey: String,
         sign: String,
-    ): UnlockHoroscopeDayResponseDto {
+    ): UnlockHoroscopeMonthlyResponseDto {
         return when (
             val result = functionsClient.call(
                 name = UNLOCK_HOROSCOPE_MONTHLY_CALLABLE,
@@ -161,7 +161,7 @@ class EconomyRemoteDataSource(
                     sign = sign,
                 ),
                 requestSerializer = UnlockHoroscopeMonthlyRequestDto.serializer(),
-                responseSerializer = UnlockHoroscopeDayResponseDto.serializer(),
+                responseSerializer = UnlockHoroscopeMonthlyResponseDto.serializer(),
             )
         ) {
             is ApiResult.Ok -> result.value

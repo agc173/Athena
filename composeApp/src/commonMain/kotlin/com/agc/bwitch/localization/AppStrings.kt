@@ -365,6 +365,11 @@ data class HoroscopeStrings(
     val personalGrowthTitle: String,
     val ritualSuggestionTitle: String,
     val mantraTitle: String,
+    val newDeckCardUnlockedTitle: String,
+    val newDeckCardUnlockedMessage: String,
+    val viewCollectionCta: String,
+    val close: String,
+    val unlockedMoreCardsSuffix: String,
 )
 
 data class SynastryStrings(
@@ -897,6 +902,11 @@ val fallbackAppStrings: AppStrings = AppStrings(
         personalGrowthTitle = "Crecimiento personal",
         ritualSuggestionTitle = "Ritual sugerido",
         mantraTitle = "Mantra",
+        newDeckCardUnlockedTitle = "Nueva carta desbloqueada",
+        newDeckCardUnlockedMessage = "Has desbloqueado una carta de {deckName}",
+        viewCollectionCta = "Ver colección",
+        close = "Cerrar",
+        unlockedMoreCardsSuffix = "+%d cartas más",
     ),
     synastry = SynastryStrings(
         screenTitle = "Sinastría",
@@ -1411,6 +1421,11 @@ private val englishAppStrings = fallbackAppStrings.copy(
         personalGrowthTitle = "Personal growth",
         ritualSuggestionTitle = "Ritual suggestion",
         mantraTitle = "Mantra",
+        newDeckCardUnlockedTitle = "New card unlocked",
+        newDeckCardUnlockedMessage = "You unlocked a card from {deckName}",
+        viewCollectionCta = "View collection",
+        close = "Close",
+        unlockedMoreCardsSuffix = "+%d more cards",
     ),
     synastry = fallbackAppStrings.synastry.copy(
         screenTitle = "Synastry",
