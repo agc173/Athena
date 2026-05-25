@@ -35,6 +35,7 @@ import com.agc.bwitch.presentation.moons.STORE_PURCHASE_COMPLETED_KEY
 import com.agc.bwitch.presentation.moons.STORE_PURCHASE_CONSUME_FAILED_KEY
 import com.agc.bwitch.presentation.moons.STORE_PURCHASE_FAILED_KEY
 import com.agc.bwitch.presentation.moons.STORE_PURCHASE_PENDING_KEY
+import com.agc.bwitch.presentation.moons.STORE_LOAD_ERROR_KEY
 import com.agc.bwitch.presentation.userprofile.SettingsUiEffect
 import com.agc.bwitch.presentation.userprofile.SettingsViewModel
 import com.agc.bwitch.presentation.userprofile.SubscriptionPrimaryAction
@@ -333,6 +334,16 @@ fun MoonStoreScreen(
     }
 }
 
+
+private fun String.toLocalizedFeedback(strings: ProfileStrings): String = when (this) {
+    STORE_PURCHASE_CANCELLED_KEY -> strings.storePurchaseCancelledFeedback
+    STORE_PURCHASE_PENDING_KEY -> strings.storePurchasePendingFeedback
+    STORE_PURCHASE_FAILED_KEY -> strings.storePurchaseFailedFeedback
+    STORE_PURCHASE_COMPLETED_KEY -> strings.storePurchaseCompletedFeedback
+    STORE_PURCHASE_CONSUME_FAILED_KEY -> strings.storePurchaseConsumeFailedFeedback
+    STORE_LOAD_ERROR_KEY -> strings.storeLoadErrorFeedback
+    else -> this
+}
 
 private fun com.agc.bwitch.domain.moons.MoonPack.localizedLabel(strings: ProfileStrings): String = when (productId) {
     "bwitch_moons_pack_10" -> strings.storeMoonPackStarterLabel
