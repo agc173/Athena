@@ -6,6 +6,8 @@ import com.agc.bwitch.audio.TarotHaptics
 import com.agc.bwitch.audio.TarotSoundPlayer
 import com.agc.bwitch.domain.analytics.AnalyticsTracker
 import com.agc.bwitch.domain.analytics.NoOpAnalyticsTracker
+import com.agc.bwitch.presentation.ads.NoOpRewardedAdsService
+import com.agc.bwitch.presentation.ads.RewardedAdsService
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.darwin.Darwin
 import kotlinx.coroutines.CoroutineDispatcher
@@ -23,4 +25,5 @@ val platformModule: Module = module {
     single<TarotSoundPlayer> { IosTarotSoundPlayer() }
     single<TarotHaptics> { IosTarotHaptics() }
     single<AnalyticsTracker> { NoOpAnalyticsTracker }
+    single<RewardedAdsService> { NoOpRewardedAdsService() }
 }
