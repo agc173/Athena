@@ -15,4 +15,5 @@ interface MoonPackPurchaseLauncher {
     suspend fun consume(purchaseToken: String): Boolean
 }
 
+@androidx.compose.runtime.Composable
 expect fun rememberMoonPackPurchaseLauncher(): MoonPackPurchaseLauncher
