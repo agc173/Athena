@@ -20,7 +20,6 @@ import type {
   EconomyMonthlyUsageDoc,
   EconomyRequestDoc,
 } from './types';
-import {buildUidTag} from '../utils/safeLogging';
 
 type BirthEssenceDailyCounter =
   | 'birthEssenceTotalUsed'
@@ -196,14 +195,6 @@ export async function reserveBirthEssenceEconomyAccess(params: {
       moonCostCharged: decision.source === 'MOON' ? decision.moonCost : 0,
       source: decision.source,
     });
-    console.info('BIRTH_ESSENCE_DECK_PROGRESS_PLANNED', {
-      uidTag: buildUidTag(params.uid),
-      requestId: params.requestId,
-      source: decision.source,
-      moonCost: decision.moonCost,
-      shouldApply: deckProgressPlan.shouldApply,
-      updatesCount: deckProgressPlan.updates.length,
-    });
 
     const now = Timestamp.now();
 
@@ -250,14 +241,6 @@ export async function reserveBirthEssenceEconomyAccess(params: {
     }
 
     applyDeckProgressPlan({tx, uid: params.uid, now, plan: deckProgressPlan});
-    console.info('BIRTH_ESSENCE_DECK_PROGRESS_APPLIED', {
-      uidTag: buildUidTag(params.uid),
-      requestId: params.requestId,
-      source: decision.source,
-      moonCost: decision.moonCost,
-      shouldApply: deckProgressPlan.shouldApply,
-      updatesCount: deckProgressPlan.updates.length,
-    });
 
     const requestDoc: EconomyRequestDoc = {
       requestId: params.requestId,
