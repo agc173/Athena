@@ -7,6 +7,7 @@ import com.agc.bwitch.domain.astrology.synastry.SynastryReadingGenerator
 import com.agc.bwitch.domain.economy.EconomyRepository
 import com.agc.bwitch.domain.localization.ObserveCurrentLanguageUseCase
 import com.agc.bwitch.domain.localization.ResolveCurrentLanguageUseCase
+import com.agc.bwitch.domain.model.DeckCardUnlockReward
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -14,7 +15,10 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.uuid.ExperimentalUuidApi
@@ -31,6 +35,8 @@ class SynastryViewModel(
 
     private val _uiState = MutableStateFlow(SynastryUiState())
     val uiState: StateFlow<SynastryUiState> = _uiState
+    private val _uiEffects = MutableSharedFlow<SynastryUiEffect>(extraBufferCapacity = 16)
+    val uiEffects: SharedFlow<SynastryUiEffect> = _uiEffects.asSharedFlow()
 
     init {
         scope.launch {
@@ -94,7 +100,7 @@ class SynastryViewModel(
                     }
                     throw IllegalStateException(status ?: "synastry_not_authorized")
                 }
-                readingGenerator(
+                val reading = readingGenerator(
                     SynastryInput(
                         personA = SynastryPersonInput(
                             sunSign = personASun,
@@ -109,7 +115,9 @@ class SynastryViewModel(
                         languageCode = state.currentLanguageCode,
                     )
                 )
-            }.onSuccess { reading ->
+                reading to authorization.deckCardUnlockRewards
+            }.onSuccess { (reading, rewards) ->
+                emitDeckUnlockRewardsIfNeeded(rewards)
                 _uiState.update { it.copy(reading = reading, isGenerating = false, error = null) }
             }.onFailure { throwable ->
                 val normalized = throwable.message?.lowercase().orEmpty()
@@ -136,4 +144,15 @@ class SynastryViewModel(
 
     @OptIn(ExperimentalUuidApi::class)
     private fun generateRequestId(): String = Uuid.random().toString()
+
+    private fun emitDeckUnlockRewardsIfNeeded(rewards: List<DeckCardUnlockReward>) {
+        if (rewards.isEmpty()) return
+        _uiEffects.tryEmit(SynastryUiEffect.ShowDeckCardUnlockRewards(rewards))
+    }
+}
+
+sealed interface SynastryUiEffect {
+    data class ShowDeckCardUnlockRewards(
+        val rewards: List<DeckCardUnlockReward>,
+    ) : SynastryUiEffect
 }

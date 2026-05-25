@@ -10,12 +10,16 @@ import com.agc.bwitch.domain.astrology.birthchart.SaveBirthEssenceUseCase
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
 import com.agc.bwitch.domain.localization.ObserveCurrentLanguageUseCase
 import com.agc.bwitch.domain.localization.ResolveCurrentLanguageUseCase
+import com.agc.bwitch.domain.model.DeckCardUnlockReward
 import com.agc.bwitch.domain.shared.ApiError
 import com.agc.bwitch.domain.shared.ApiResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -35,6 +39,8 @@ class BirthChartViewModel(
 
     private val _uiState = MutableStateFlow(BirthChartUiState(isLoading = true))
     val uiState: StateFlow<BirthChartUiState> = _uiState
+    private val _uiEffects = MutableSharedFlow<BirthChartUiEffect>(extraBufferCapacity = 16)
+    val uiEffects: SharedFlow<BirthChartUiEffect> = _uiEffects.asSharedFlow()
 
     init {
         scope.launch {
@@ -165,6 +171,7 @@ class BirthChartViewModel(
                 )
             ) {
                 is ApiResult.Ok -> {
+                    emitDeckUnlockRewardsIfNeeded(result.value.deckCardUnlockRewards)
                     _uiState.update {
                         it.copy(
                             generatedInterpretation = result.value.interpretation.sanitizeInterpretation(),
@@ -187,6 +194,11 @@ class BirthChartViewModel(
 
             _uiState.update { it.copy(isGenerating = false) }
         }
+    }
+
+    private fun emitDeckUnlockRewardsIfNeeded(rewards: List<DeckCardUnlockReward>) {
+        if (rewards.isEmpty()) return
+        _uiEffects.tryEmit(BirthChartUiEffect.ShowDeckCardUnlockRewards(rewards))
     }
 
     fun saveActiveEssence() {
@@ -278,6 +290,12 @@ class BirthChartViewModel(
             length >= 2 && startsWith("'") && endsWith("'") -> substring(1, length - 1).trim()
             else -> this
         }
+}
+
+sealed interface BirthChartUiEffect {
+    data class ShowDeckCardUnlockRewards(
+        val rewards: List<DeckCardUnlockReward>,
+    ) : BirthChartUiEffect
 }
 
 const val BIRTH_CHART_SYNC_NO_ESSENCE_KEY = "birth_chart.sync.no_essence"

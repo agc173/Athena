@@ -57,11 +57,13 @@ import com.agc.bwitch.audio.TarotSoundPlayer
 import com.agc.bwitch.domain.tarot.TarotCardPosition
 import com.agc.bwitch.domain.tarot.TarotReadingDetails
 import com.agc.bwitch.domain.tarot.TarotRequestType
+import com.agc.bwitch.domain.model.DeckCardUnlockReward
 import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.platform.share.ShareResult
 import com.agc.bwitch.platform.share.ShareTextPayload
 import com.agc.bwitch.platform.share.rememberShareLauncher
 import com.agc.bwitch.presentation.tarot.TarotRevealPhase
+import com.agc.bwitch.presentation.tarot.TarotUiEffect
 import com.agc.bwitch.presentation.tarot.TAROT_LIMIT_REACHED_ERROR_KEY
 import com.agc.bwitch.presentation.tarot.TarotViewModel
 import com.agc.bwitch.presentation.economy.EconomyViewModel
@@ -82,6 +84,7 @@ fun TarotScreen(
     viewModel: TarotViewModel = koinInject(),
     economyViewModel: EconomyViewModel = koinInject(),
     onOpenStore: () -> Unit = {},
+    onOpenCollection: () -> Unit = {},
     tarotSoundPlayer: TarotSoundPlayer = koinInject(),
     tarotHaptics: TarotHaptics = koinInject(),
 ) {
@@ -93,6 +96,7 @@ fun TarotScreen(
     val shareLauncher = rememberShareLauncher()
     val shareScope = rememberCoroutineScope()
     var shareErrorMessage by remember { mutableStateOf<String?>(null) }
+    var rewardDialogRewards by remember { mutableStateOf<List<DeckCardUnlockReward>>(emptyList()) }
 
     LaunchedEffect(initialRequestType) {
         if (initialRequestType != null) {
@@ -105,6 +109,13 @@ fun TarotScreen(
     LaunchedEffect(state.isLoading, state.response, state.error, state.insufficientMoonsMessage) {
         if (!state.isLoading && (state.response != null || state.error != null || state.insufficientMoonsMessage != null)) {
             economyViewModel.loadEconomy()
+        }
+    }
+    LaunchedEffect(viewModel) {
+        viewModel.uiEffects.collect { effect ->
+            when (effect) {
+                is TarotUiEffect.ShowDeckCardUnlockRewards -> rewardDialogRewards = effect.rewards
+            }
         }
     }
 
@@ -600,6 +611,17 @@ fun TarotScreen(
                 }
             }
         }
+    }
+    if (rewardDialogRewards.isNotEmpty()) {
+        DeckCardUnlockRewardDialog(
+            strings = appStrings,
+            rewards = rewardDialogRewards,
+            onDismiss = { rewardDialogRewards = emptyList() },
+            onOpenCollection = {
+                rewardDialogRewards = emptyList()
+                onOpenCollection()
+            },
+        )
     }
 }
 

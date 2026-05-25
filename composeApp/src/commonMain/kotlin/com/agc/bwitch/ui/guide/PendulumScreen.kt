@@ -50,10 +50,12 @@ import bwitch.composeapp.generated.resources.Res
 import bwitch.composeapp.generated.resources.pendulum_board
 import bwitch.composeapp.generated.resources.pendulum_crystal
 import com.agc.bwitch.domain.pendulum.PendulumAnswer
+import com.agc.bwitch.domain.model.DeckCardUnlockReward
 import com.agc.bwitch.localization.PendulumStrings
 import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.presentation.pendulum.PendulumPhase
 import com.agc.bwitch.presentation.pendulum.PendulumViewModel
+import com.agc.bwitch.presentation.pendulum.PendulumUiEffect
 import com.agc.bwitch.presentation.economy.EconomyViewModel
 import com.agc.bwitch.presentation.economy.runWithEconomyGate
 import kotlin.math.PI
@@ -69,6 +71,7 @@ import com.agc.bwitch.ui.common.economy.DailyLimitPaywallCard
 import com.agc.bwitch.ui.common.economy.EconomyGateInfoRow
 import com.agc.bwitch.ui.common.economy.isDailyLimitRejected
 import com.agc.bwitch.ui.common.economy.hasPremiumBenefit
+import com.agc.bwitch.ui.tarot.DeckCardUnlockRewardDialog
 
 @Composable
 fun PendulumScreen(
@@ -76,6 +79,7 @@ fun PendulumScreen(
     viewModel: PendulumViewModel = koinInject(),
     economyViewModel: EconomyViewModel = koinInject(),
     onOpenStore: () -> Unit = {},
+    onOpenCollection: () -> Unit = {},
 ) {
     val state by viewModel.uiState.collectAsState()
     val orbitProgress = remember { Animatable(0f) }
@@ -83,6 +87,7 @@ fun PendulumScreen(
     val pendulumPreview = economyState.modulePreviews.firstOrNull { it.module == "PENDULUM" }
     val colors = MaterialTheme.colorScheme
     val showDailyLimitPaywall = pendulumPreview.isDailyLimitRejected() || state.error == "daily_limit"
+    var rewardDialogRewards by remember { mutableStateOf<List<DeckCardUnlockReward>>(emptyList()) }
     LaunchedEffect(state.phase, state.selectedAnswer) {
         when (state.phase) {
             PendulumPhase.ANIMATING -> {
@@ -109,6 +114,13 @@ fun PendulumScreen(
     LaunchedEffect(state.phase, state.error) {
         if (state.phase == PendulumPhase.RESULT || state.error == "insufficient_moons" || state.error == "daily_limit") {
             economyViewModel.loadEconomy()
+        }
+    }
+    LaunchedEffect(viewModel) {
+        viewModel.uiEffects.collect { effect ->
+            when (effect) {
+                is PendulumUiEffect.ShowDeckCardUnlockRewards -> rewardDialogRewards = effect.rewards
+            }
         }
     }
 
@@ -213,6 +225,17 @@ fun PendulumScreen(
                 Text(strings.resetCta)
             }
         }
+    }
+    if (rewardDialogRewards.isNotEmpty()) {
+        DeckCardUnlockRewardDialog(
+            strings = appStrings,
+            rewards = rewardDialogRewards,
+            onDismiss = { rewardDialogRewards = emptyList() },
+            onOpenCollection = {
+                rewardDialogRewards = emptyList()
+                onOpenCollection()
+            },
+        )
     }
 }
 

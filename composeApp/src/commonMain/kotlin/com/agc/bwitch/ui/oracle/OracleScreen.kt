@@ -32,6 +32,7 @@ import androidx.compose.ui.text.style.TextAlign
 import com.agc.bwitch.localization.OracleStrings
 import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.domain.oracle.OracleAnswer
+import com.agc.bwitch.domain.model.DeckCardUnlockReward
 import com.agc.bwitch.platform.share.ShareResult
 import com.agc.bwitch.platform.share.ShareTextPayload
 import com.agc.bwitch.platform.share.rememberShareLauncher
@@ -39,6 +40,7 @@ import com.agc.bwitch.presentation.oracle.OracleAskMessage
 import com.agc.bwitch.presentation.oracle.OracleAskMessageId
 import com.agc.bwitch.domain.security.InputPolicy
 import com.agc.bwitch.presentation.oracle.OracleAskViewModel
+import com.agc.bwitch.presentation.oracle.OracleAskUiEffect
 import com.agc.bwitch.presentation.economy.EconomyViewModel
 import com.agc.bwitch.presentation.economy.runWithEconomyGate
 import com.agc.bwitch.ui.common.economy.DailyLimitPaywallCard
@@ -51,6 +53,7 @@ import com.agc.bwitch.ui.common.designsystem.BWitchSecondaryButton
 import com.agc.bwitch.ui.common.designsystem.BWitchTextField
 import com.agc.bwitch.ui.common.designsystem.BWitchScreen
 import com.agc.bwitch.ui.common.designsystem.BWitchSectionHeader
+import com.agc.bwitch.ui.tarot.DeckCardUnlockRewardDialog
 import com.agc.bwitch.ui.theme.BWitchThemeTokens
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
@@ -62,6 +65,7 @@ fun OracleScreen(
     viewModel: OracleAskViewModel = koinInject(),
     economyViewModel: EconomyViewModel = koinInject(),
     onOpenStore: () -> Unit = {},
+    onOpenCollection: () -> Unit = {},
 ) {
     val dimens = BWitchThemeTokens.dimens
     val colors = MaterialTheme.colorScheme
@@ -76,6 +80,7 @@ fun OracleScreen(
     val shareLauncher = rememberShareLauncher()
     val coroutineScope = rememberCoroutineScope()
     var shareError by remember { mutableStateOf<String?>(null) }
+    var rewardDialogRewards by remember { mutableStateOf<List<DeckCardUnlockReward>>(emptyList()) }
 
     LaunchedEffect(state.answer?.coreGuidance) {
         if (state.answer != null) {
@@ -86,6 +91,13 @@ fun OracleScreen(
     LaunchedEffect(state.error?.id) {
         if (state.error?.id.isEconomyRestrictionError()) {
             economyViewModel.loadEconomy()
+        }
+    }
+    LaunchedEffect(viewModel) {
+        viewModel.uiEffects.collect { effect ->
+            when (effect) {
+                is OracleAskUiEffect.ShowDeckCardUnlockRewards -> rewardDialogRewards = effect.rewards
+            }
         }
     }
 
@@ -348,6 +360,17 @@ fun OracleScreen(
                 }
             }
         }
+    }
+    if (rewardDialogRewards.isNotEmpty()) {
+        DeckCardUnlockRewardDialog(
+            strings = appStrings,
+            rewards = rewardDialogRewards,
+            onDismiss = { rewardDialogRewards = emptyList() },
+            onOpenCollection = {
+                rewardDialogRewards = emptyList()
+                onOpenCollection()
+            },
+        )
     }
 }
 
