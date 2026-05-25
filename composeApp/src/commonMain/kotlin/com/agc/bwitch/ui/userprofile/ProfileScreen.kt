@@ -88,7 +88,7 @@ fun ProfileScreen(
     val usernameLine = username?.let { "@$it" } ?: "@${profileStrings.defaultUsername}"
     val zodiacSign = profile?.zodiacSign
     val zodiacLabel = zodiacSign?.let { "${it.symbol()} ${it.localizedLabel(strings)}" } ?: "✧ ${profileStrings.pendingSign}"
-    val avatarUrl = profile?.photoUrl?.takeIf { it.startsWith("http://") || it.startsWith("https://") }
+    val avatarUrl = profile?.photoUrl?.takeIf(::isHttpAvatarUrl)
     val profileDescription: String? = profile?.description
     val moonCredits = state.moonBalance
     val habitsProgress = state.habitsProgress
@@ -111,29 +111,11 @@ fun ProfileScreen(
             horizontalArrangement = Arrangement.spacedBy(dimens.spacingMd),
             verticalAlignment = Alignment.Top,
         ) {
-            if (avatarUrl != null) {
-                KamelImage(
-                    resource = asyncPainterResource(avatarUrl),
-                    contentDescription = profileStrings.avatarContentDescription,
-                    modifier = Modifier
-                        .size(96.dp)
-                        .clip(CircleShape),
-                    contentScale = ContentScale.Crop,
-                )
-            } else {
-                Box(
-                    modifier = Modifier
-                        .size(96.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.surfaceVariant),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = "✨",
-                        style = MaterialTheme.typography.headlineMedium,
-                    )
-                }
-            }
+            ProfileAvatarPreview(
+                avatarUrl = avatarUrl,
+                contentDescription = profileStrings.avatarContentDescription,
+                size = 96.dp,
+            )
 
             Column(
                 modifier = Modifier.weight(1f),
@@ -316,8 +298,22 @@ fun ProfileScreen(
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(profileStrings.editProfileTitle, style = MaterialTheme.typography.titleMedium)
                     Text(usernameLine, style = MaterialTheme.typography.bodySmall, color = extras.textSecondary)
-                    AvatarPickerButton(enabled = !state.isBusy, buttonText = profileStrings.selectAvatarButton) { uriString, mimeType ->
-                        vm.uploadAvatarAndSave(uriString, mimeType)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(dimens.spacingSm),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        ProfileAvatarPreview(
+                            avatarUrl = avatarUrl,
+                            contentDescription = profileStrings.avatarContentDescription,
+                            size = 56.dp,
+                        )
+                        AvatarPickerButton(
+                            enabled = !state.isBusy,
+                            buttonText = profileStrings.selectAvatarButton,
+                        ) { uriString, mimeType ->
+                            vm.uploadAvatarAndSave(uriString, mimeType)
+                        }
                     }
                     OutlinedTextField(
                         value = descriptionDraft,
@@ -363,6 +359,39 @@ private fun String.toProfileUiText(strings: AppStrings): String = when (this) {
     PROFILE_BIRTH_DATE_IN_FUTURE_ERROR_KEY -> strings.profile.birthDateFutureError
     PROFILE_DESCRIPTION_TOO_LONG_ERROR_KEY -> strings.profile.descriptionTooLongError
     else -> this
+}
+
+private fun isHttpAvatarUrl(url: String): Boolean = url.startsWith("http://") || url.startsWith("https://")
+
+@Composable
+private fun ProfileAvatarPreview(
+    avatarUrl: String?,
+    contentDescription: String,
+    size: Dp,
+) {
+    if (avatarUrl != null) {
+        KamelImage(
+            resource = asyncPainterResource(avatarUrl),
+            contentDescription = contentDescription,
+            modifier = Modifier
+                .size(size)
+                .clip(CircleShape),
+            contentScale = ContentScale.Crop,
+        )
+    } else {
+        Box(
+            modifier = Modifier
+                .size(size)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surfaceVariant),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = "✨",
+                style = MaterialTheme.typography.headlineMedium,
+            )
+        }
+    }
 }
 
 @Composable
