@@ -4,6 +4,7 @@ import com.agc.bwitch.domain.astrology.horoscope.DailyHoroscope
 import com.agc.bwitch.domain.astrology.horoscope.MonthlyHoroscope
 import com.agc.bwitch.domain.astrology.horoscope.WeeklyHoroscope
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
+import com.agc.bwitch.domain.model.DeckCardUnlockReward
 
 data class HoroscopeUiState(
     val selectedTab: HoroscopeTab = HoroscopeTab.Daily,
@@ -104,4 +105,10 @@ enum class HoroscopeFeedbackMessage {
     UnlockWeekFailed,
     UnlockMonthFailed,
     ContentInPreparation,
+}
+
+sealed interface HoroscopeUiEffect {
+    data class ShowDeckCardUnlockRewards(
+        val rewards: List<DeckCardUnlockReward>,
+    ) : HoroscopeUiEffect
 }

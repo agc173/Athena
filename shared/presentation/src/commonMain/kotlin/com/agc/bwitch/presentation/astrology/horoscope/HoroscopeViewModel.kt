@@ -32,7 +32,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
@@ -75,6 +78,8 @@ class HoroscopeViewModel(
 
     private val _uiState = MutableStateFlow(HoroscopeUiState(isLoading = true))
     val uiState: StateFlow<HoroscopeUiState> = _uiState.asStateFlow()
+    private val _uiEffects = MutableSharedFlow<HoroscopeUiEffect>(extraBufferCapacity = 16)
+    val uiEffects: SharedFlow<HoroscopeUiEffect> = _uiEffects.asSharedFlow()
     private val currentLanguageCode = MutableStateFlow(AppLanguage.fallback.code)
 
     private var observeJob: Job? = null
@@ -366,6 +371,7 @@ class HoroscopeViewModel(
                 if (overlay != null && overlay.dateIso == target.dateIso && overlay.sign == target.sign) {
                     loadOverlayHoroscope(sign = target.sign, dateIso = target.dateIso)
                 }
+                emitDeckUnlockRewardsIfNeeded(unlockResult)
                 rebuildDays()
             }.onFailure { error ->
                 val isInsufficient = error.isInsufficientMoons()
@@ -445,6 +451,7 @@ class HoroscopeViewModel(
                         lockCardMessage = null,
                     )
                 }
+                emitDeckUnlockRewardsIfNeeded(unlockResult)
             }.onFailure { error ->
                 analyticsTracker.track(
                     AnalyticsEvent.ContentUnlockFailed(
@@ -511,6 +518,7 @@ class HoroscopeViewModel(
                         lockCardMessage = null,
                     )
                 }
+                emitDeckUnlockRewardsIfNeeded(unlockResult)
             }.onFailure { error ->
                 analyticsTracker.track(
                     AnalyticsEvent.ContentUnlockFailed(
@@ -1020,6 +1028,14 @@ class HoroscopeViewModel(
 
     private fun buildMonthlyRequestId(monthKey: String): String {
         return "horoscope-monthly-unlock-${Clock.System.now().toEpochMilliseconds()}-$monthKey"
+    }
+
+    private fun emitDeckUnlockRewardsIfNeeded(
+        unlockResult: com.agc.bwitch.domain.astrology.horoscope.HoroscopeUnlockResult,
+    ) {
+        val rewards = unlockResult.deckCardUnlockRewards
+        if (rewards.isEmpty()) return
+        _uiEffects.tryEmit(HoroscopeUiEffect.ShowDeckCardUnlockRewards(rewards))
     }
 
 }

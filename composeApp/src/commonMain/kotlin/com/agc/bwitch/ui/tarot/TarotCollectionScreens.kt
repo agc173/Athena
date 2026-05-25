@@ -118,9 +118,3 @@ fun TarotDeckDetailScreen(contentPadding: PaddingValues, deckRawId: String) {
         }
     }
 }
-
-private fun com.agc.bwitch.domain.tarot.TarotDeckDefinition.displayNameLocalized(): String =
-    when (id) {
-        TarotDeckId.RIDER_WAITE -> "Rider-Waite"
-        TarotDeckId.ARCANA_NOCTIS -> "Arcana Noctis"
-    }

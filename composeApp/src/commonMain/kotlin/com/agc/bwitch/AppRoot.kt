@@ -296,7 +296,8 @@ fun AppRoot() {
 
             is Destination.HoroscopeDaily -> HoroscopeScreen(
                 contentPadding = padding,
-                preselectedSign = (dest as Destination.HoroscopeDaily).preselectedSign
+                preselectedSign = (dest as Destination.HoroscopeDaily).preselectedSign,
+                onOpenCollection = { navigator.navigate(Destination.TarotCollection) },
             )
 
             Destination.UserProfile -> ProfileScreen(

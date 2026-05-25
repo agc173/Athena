@@ -48,7 +48,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.semantics.Role
@@ -77,6 +76,8 @@ import com.agc.bwitch.domain.astrology.horoscope.MonthlyHoroscope
 import com.agc.bwitch.domain.astrology.horoscope.WeeklyHoroscope
 import com.agc.bwitch.localization.AppStrings
 import com.agc.bwitch.localization.appStrings
+import com.agc.bwitch.domain.model.DeckCardUnlockReward
+import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeUiEffect
 import com.agc.bwitch.platform.share.ShareResult
 import com.agc.bwitch.platform.share.ShareTextPayload
 import com.agc.bwitch.platform.share.rememberShareLauncher
@@ -93,6 +94,7 @@ import com.agc.bwitch.presentation.economy.UNLOCK_FLOW_ORIGIN_DIRECT_BALANCE
 import com.agc.bwitch.presentation.economy.UNLOCK_FLOW_ORIGIN_PREMIUM
 import com.agc.bwitch.ui.common.designsystem.BWitchPrimaryButton
 import com.agc.bwitch.ui.common.designsystem.BWitchSecondaryButton
+import com.agc.bwitch.ui.tarot.DeckCardUnlockRewardDialog
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.DrawableResource
@@ -103,6 +105,7 @@ import org.koin.compose.koinInject
 fun HoroscopeScreen(
     contentPadding: PaddingValues,
     preselectedSign: ZodiacSign? = null,
+    onOpenCollection: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: HoroscopeViewModel = koinInject(),
     economyViewModel: EconomyViewModel = koinInject(),
@@ -113,9 +116,17 @@ fun HoroscopeScreen(
     val shareLauncher = rememberShareLauncher()
     val shareScope = rememberCoroutineScope()
     var shareErrorMessage by remember { mutableStateOf<String?>(null) }
+    var rewardDialogRewards by remember { mutableStateOf<List<DeckCardUnlockReward>>(emptyList()) }
 
     LaunchedEffect(preselectedSign) { preselectedSign?.let(viewModel::onSelectSign) }
     LaunchedEffect(economyState.isPremium) { viewModel.onPremiumAccessChanged(economyState.isPremium) }
+    LaunchedEffect(viewModel) {
+        viewModel.uiEffects.collect { effect ->
+            when (effect) {
+                is HoroscopeUiEffect.ShowDeckCardUnlockRewards -> rewardDialogRewards = effect.rewards
+            }
+        }
+    }
     Scaffold(modifier = modifier) { innerPadding ->
         HoroscopeScreenContent(
             modifier = Modifier.padding(innerPadding).padding(contentPadding),
@@ -216,6 +227,17 @@ fun HoroscopeScreen(
                 }
             },
             shareErrorMessage = shareErrorMessage,
+        )
+    }
+    if (rewardDialogRewards.isNotEmpty()) {
+        DeckCardUnlockRewardDialog(
+            strings = strings,
+            rewards = rewardDialogRewards,
+            onDismiss = { rewardDialogRewards = emptyList() },
+            onOpenCollection = {
+                rewardDialogRewards = emptyList()
+                onOpenCollection()
+            },
         )
     }
 }

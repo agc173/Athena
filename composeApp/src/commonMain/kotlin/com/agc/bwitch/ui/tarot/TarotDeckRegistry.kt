@@ -26,3 +26,9 @@ object TarotDeckRegistry {
     fun getById(id: TarotDeckId): TarotDeckDefinition? =
         allDecks.firstOrNull { it.id == id }
 }
+
+fun TarotDeckDefinition.displayNameLocalized(): String =
+    when (id) {
+        TarotDeckId.RIDER_WAITE -> "Rider-Waite"
+        TarotDeckId.ARCANA_NOCTIS -> "Arcana Noctis"
+    }
