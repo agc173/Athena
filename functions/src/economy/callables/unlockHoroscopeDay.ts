@@ -24,7 +24,7 @@ import type {
   UnlockHoroscopeDayData,
   UnlockHoroscopeDayResponse,
 } from '../types';
-import {applyDeckProgressPlan, planDeckProgressFromMoonSpend} from '../deckProgress';
+import {applyDeckProgressPlan, deckCardUnlockRewardsFromPlan, planDeckProgressFromMoonSpend} from '../deckProgress';
 
 const VALID_SIGNS: ZodiacSign[] = ['aries', 'taurus', 'gemini', 'cancer', 'leo', 'virgo', 'libra', 'scorpio', 'sagittarius', 'capricorn', 'aquarius', 'pisces'];
 
@@ -173,6 +173,8 @@ export const unlockHoroscopeDay = onCall(
 
         applyDeckProgressPlan({tx, uid, now, plan: deckProgressPlan});
 
+        const deckCardUnlockRewards = deckCardUnlockRewardsFromPlan(deckProgressPlan);
+
         logger.info('unlockHoroscopeDay charged', {uidTag: buildUidTag(uid), unlockKey, dateIso, costCharged});
 
         const response: UnlockHoroscopeDayResponse = {
@@ -181,6 +183,7 @@ export const unlockHoroscopeDay = onCall(
           alreadyUnlocked: false,
           balance: nextBalance,
           costCharged,
+          deckCardUnlockRewards,
         };
 
         tx.set(reqRef, {

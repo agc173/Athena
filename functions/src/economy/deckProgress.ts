@@ -42,6 +42,23 @@ const DEFAULT_REWARD_POOL: Required<Pick<RewardPoolDoc, 'deckId' | 'cardIds' | '
   cardIds: DEFAULT_REWARD_POOL_CARD_IDS,
 };
 
+
+export type DeckCardUnlockReward = {
+  deckId: string;
+  trackId: string;
+  rewardPoolId: string;
+  cardId: string;
+};
+
+export function deckCardUnlockRewardsFromPlan(plan: DeckProgressPlan): DeckCardUnlockReward[] {
+  return plan.updates.flatMap((update) => update.cardsToUnlock.map((card) => ({
+    deckId: card.deckId,
+    trackId: card.trackId,
+    rewardPoolId: card.rewardPoolId,
+    cardId: card.cardId,
+  })));
+}
+
 export type DeckProgressPlan = {
   shouldApply: boolean;
   alreadyApplied: boolean;

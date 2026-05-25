@@ -73,12 +73,21 @@ data class UnlockHoroscopeDayRequestDto(
 )
 
 @Serializable
+data class DeckCardUnlockRewardDto(
+    val deckId: String,
+    val trackId: String,
+    val rewardPoolId: String,
+    val cardId: String,
+)
+
+@Serializable
 data class UnlockHoroscopeDayResponseDto(
     val result: String = "",
     val unlocked: Boolean = false,
     val alreadyUnlocked: Boolean = false,
     val balance: Int = 0,
     val costCharged: Int = 0,
+    val deckCardUnlockRewards: List<DeckCardUnlockRewardDto> = emptyList(),
 )
 
 @Serializable

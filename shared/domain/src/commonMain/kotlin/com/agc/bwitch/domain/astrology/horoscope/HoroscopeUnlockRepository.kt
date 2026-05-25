@@ -1,5 +1,7 @@
 package com.agc.bwitch.domain.astrology.horoscope
 
+import com.agc.bwitch.domain.model.DeckCardUnlockReward
+
 interface HoroscopeUnlockRepository {
     suspend fun getFutureDayCost(): Int
     suspend fun getWeeklyCost(): Int = getFutureDayCost()
@@ -25,4 +27,5 @@ data class HoroscopeUnlockResult(
     val alreadyUnlocked: Boolean,
     val balanceAfter: Int,
     val costCharged: Int,
+    val deckCardUnlockRewards: List<DeckCardUnlockReward> = emptyList(),
 )
