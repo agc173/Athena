@@ -264,6 +264,55 @@ class TarotViewModelTest {
         }
     }
 
+
+    @Test
+    fun `new request resolves playable deck deterministically before draw`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val repo = FakeTarotRepository(
+                scriptedResults = listOf(
+                    ApiResult.Ok(
+                        TarotDrawResponse(
+                            requestId = "req-1",
+                            status = "DONE",
+                            cards = emptyList(),
+                            interpretation = "ok",
+                            deckId = TarotDeckId.ARCANA_NOCTIS,
+                        ),
+                    ),
+                ),
+            )
+            val languageRepo = FakeLanguageRepository(MutableStateFlow(AppLanguage.Spanish))
+            val moonRepository = FakeMoonRepository(initialBalance = 10)
+            val lastReadingRepository = FakeLastTarotReadingRepository()
+            val viewModel = TarotViewModel(
+                tarotRepository = repo,
+                resolveCurrentLanguageUseCase = ResolveCurrentLanguageUseCase(languageRepo),
+                observeCurrentLanguageUseCase = ObserveCurrentLanguageUseCase(languageRepo),
+                observeMoonBalanceUseCase = ObserveMoonBalanceUseCase(moonRepository),
+                getMoonBalanceUseCase = GetMoonBalanceUseCase(moonRepository),
+                addMoonsUseCase = AddMoonsUseCase(moonRepository),
+                lastTarotReadingRepository = lastReadingRepository,
+                getSelectedTarotDeckUseCase = GetSelectedTarotDeckUseCase(
+                    FakeSelectedTarotDeckRepository(TarotDeckId.ARCANA_NOCTIS),
+                ),
+                getTarotDeckCollectionProgressUseCase = GetTarotDeckCollectionProgressUseCase(
+                    FakeTarotDeckCollectionRepository(),
+                ),
+            )
+
+            viewModel.newRequest(TarotRequestType.TAROT_3)
+            advanceUntilIdle()
+
+            assertEquals(TarotDeckId.RIDER_WAITE, viewModel.uiState.value.selectedDeckId)
+            assertEquals(TarotDeckId.RIDER_WAITE, viewModel.uiState.value.response?.deckId)
+            assertEquals(TarotDeckId.RIDER_WAITE, lastReadingRepository.get()?.deckId)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
     private class FakeMoonRepository(initialBalance: Int = 0) : MoonRepository {
         private val state = MutableStateFlow(MoonBalance(initialBalance))
         var spendCalls: Int = 0

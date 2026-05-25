@@ -17,6 +17,7 @@ data class TarotDeckDefinition(
     val previewCardId: String,
     val progressTrackId: String = id.value,
     val isDefault: Boolean,
+    val requiredCardsToPlay: Int = 0,
 )
 
 enum class TarotDeckAvailability {

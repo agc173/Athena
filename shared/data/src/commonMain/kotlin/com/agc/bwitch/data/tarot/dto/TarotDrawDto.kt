@@ -28,6 +28,7 @@ data class TarotDrawResponseDto(
     val requestType: String? = null,
     val quotaSnapshot: QuotaSnapshotDto? = null,
     val systemMode: String? = null,
+    val deckId: String? = null,
     val deckCardUnlockRewards: List<DeckCardUnlockRewardDto> = emptyList(),
 )
 

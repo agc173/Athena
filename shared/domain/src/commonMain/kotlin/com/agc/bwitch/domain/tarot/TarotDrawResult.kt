@@ -41,5 +41,6 @@ data class TarotDrawResponse(
     val cards: List<TarotCard>,
     val details: TarotReadingDetails? = null,
     val interpretation: String,
+    val deckId: TarotDeckId = TarotDeckId.RIDER_WAITE,
     val deckCardUnlockRewards: List<DeckCardUnlockReward> = emptyList(),
 )

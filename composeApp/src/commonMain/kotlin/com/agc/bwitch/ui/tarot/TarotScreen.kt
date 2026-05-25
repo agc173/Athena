@@ -151,7 +151,7 @@ fun TarotScreen(
                             revealed = false,
                             cardWidth = TAROT_DECK_STAGE_CARD_WIDTH,
                             onClick = viewModel::startShuffle,
-                            deckId = state.selectedDeckId,
+                            deckId = state.response?.deckId ?: state.selectedDeckId,
                         )
                         Text(strings.tapDeckToShuffle, style = MaterialTheme.typography.bodyMedium)
                     }
@@ -186,7 +186,7 @@ fun TarotScreen(
                             revealed = false,
                             cardWidth = TAROT_DECK_STAGE_CARD_WIDTH,
                             onClick = viewModel::startReveal,
-                            deckId = state.selectedDeckId,
+                            deckId = state.response?.deckId ?: state.selectedDeckId,
                         )
                         Text(strings.tapToReveal, style = MaterialTheme.typography.bodyMedium)
                     }
@@ -223,7 +223,7 @@ fun TarotScreen(
                                     } else {
                                         null
                                     },
-                                    deckId = state.selectedDeckId,
+                                    deckId = state.response?.deckId ?: state.selectedDeckId,
                                 )
                             }
                         }
@@ -588,7 +588,7 @@ fun TarotScreen(
                                                 }
                                             }
                                         },
-                                        deckId = state.selectedDeckId,
+                                        deckId = state.response?.deckId ?: state.selectedDeckId,
                                     )
                                 }
 
