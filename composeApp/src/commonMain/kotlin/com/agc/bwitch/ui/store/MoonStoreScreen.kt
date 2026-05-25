@@ -29,7 +29,12 @@ import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.presentation.economy.EconomyViewModel
 import com.agc.bwitch.presentation.moons.MoonStoreViewModel
 import com.agc.bwitch.domain.moons.MoonPackProductStatus
-import com.agc.bwitch.presentation.moons.STORE_COMING_SOON_KEY
+import com.agc.bwitch.presentation.moons.MoonStoreUiEffect
+import com.agc.bwitch.presentation.moons.STORE_PURCHASE_CANCELLED_KEY
+import com.agc.bwitch.presentation.moons.STORE_PURCHASE_COMPLETED_KEY
+import com.agc.bwitch.presentation.moons.STORE_PURCHASE_CONSUME_FAILED_KEY
+import com.agc.bwitch.presentation.moons.STORE_PURCHASE_FAILED_KEY
+import com.agc.bwitch.presentation.moons.STORE_PURCHASE_PENDING_KEY
 import com.agc.bwitch.presentation.userprofile.SettingsUiEffect
 import com.agc.bwitch.presentation.userprofile.SettingsViewModel
 import com.agc.bwitch.presentation.userprofile.SubscriptionPrimaryAction
@@ -38,6 +43,7 @@ import com.agc.bwitch.presentation.ads.RewardedAdsService
 import com.agc.bwitch.ui.common.premium.PremiumCard
 import com.agc.bwitch.ui.userprofile.rememberSubscriptionManagementLauncher
 import com.agc.bwitch.ui.userprofile.rememberSubscriptionPurchaseLauncher
+import com.agc.bwitch.ui.store.rememberMoonPackPurchaseLauncher
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
@@ -56,6 +62,7 @@ fun MoonStoreScreen(
     val economyState by economyViewModel.uiState.collectAsState()
     val settingsState by settingsViewModel.uiState.collectAsState()
     val purchaseLauncher = rememberSubscriptionPurchaseLauncher()
+    val moonPackPurchaseLauncher = rememberMoonPackPurchaseLauncher()
     val managementLauncher = rememberSubscriptionManagementLauncher()
     val scope = rememberCoroutineScope()
     var isRewardedAdFlowRunning by rememberSaveable { mutableStateOf(false) }
@@ -100,6 +107,25 @@ fun MoonStoreScreen(
                 SettingsUiEffect.RefreshEconomy -> {
                     economyViewModel.loadEconomy()
                 }
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.uiEffects.collect { effect ->
+            when (effect) {
+                is MoonStoreUiEffect.LaunchMoonPackPurchase -> {
+                    when (val outcome = moonPackPurchaseLauncher.launch(effect.productId)) {
+                        is MoonPackPurchaseOutcome.Purchased -> viewModel.onPurchaseCompleted(outcome.purchase)
+                        is MoonPackPurchaseOutcome.Pending -> viewModel.onPurchasePending(effect.productId)
+                        MoonPackPurchaseOutcome.Cancelled -> viewModel.onPurchaseCancelled(effect.productId)
+                        MoonPackPurchaseOutcome.Failed, MoonPackPurchaseOutcome.Unsupported -> viewModel.onPurchaseFailed(effect.productId)
+                    }
+                }
+                is MoonStoreUiEffect.ConsumeMoonPackPurchase -> {
+                    if (!moonPackPurchaseLauncher.consume(effect.token)) viewModel.onConsumeFailed()
+                }
+                MoonStoreUiEffect.RefreshEconomy -> economyViewModel.loadEconomy()
             }
         }
     }
@@ -239,10 +265,10 @@ fun MoonStoreScreen(
                     val canShowBuy = pack.status == MoonPackProductStatus.Available
                     Button(
                         onClick = { viewModel.onBuyPackClicked(pack.productId) },
-                        enabled = false,
+                        enabled = canShowBuy && !state.isLoading && !state.isPurchaseInProgress,
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Text(if (canShowBuy) strings.storeMoonPackBuyDisabled else strings.storeMoonPackUnavailable)
+                        Text(if (canShowBuy) strings.storeMoonPackBuy else strings.storeMoonPackUnavailable)
                     }
                 }
             }
@@ -285,14 +311,14 @@ fun MoonStoreScreen(
             }
         }
 
-        if (state.feedbackMessage?.startsWith(STORE_COMING_SOON_KEY) == true) {
+        state.feedbackMessage?.let { feedbackKey ->
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(
                     modifier = Modifier.padding(12.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     Text(
-                        text = strings.storeSoon,
+                        text = feedbackKey.toLocalizedFeedback(strings),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Button(
