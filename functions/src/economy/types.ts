@@ -41,7 +41,8 @@ export type EconomyLedgerEntryDoc = {
   | 'HOROSCOPE_WEEKLY_MOON_SPEND'
   | 'HOROSCOPE_MONTHLY_MOON_SPEND'
   | 'SYNASTRY_MOON_SPEND'
-  | 'PENDULUM_MOON_SPEND';
+  | 'PENDULUM_MOON_SPEND'
+  | 'MOON_PACK_PURCHASE';
   amount: number;
   createdAt: Timestamp;
   requestId: string;
@@ -75,7 +76,8 @@ export type EconomyRequestType =
   | 'PENDULUM'
   | 'HOROSCOPE_UNLOCK_DAY'
   | 'HOROSCOPE_UNLOCK_WEEKLY'
-  | 'HOROSCOPE_UNLOCK_MONTHLY';
+  | 'HOROSCOPE_UNLOCK_MONTHLY'
+  | 'CLAIM_MOON_PACK_PURCHASE';
 
 export type EconomyRequestDoc = {
   requestId: string;
