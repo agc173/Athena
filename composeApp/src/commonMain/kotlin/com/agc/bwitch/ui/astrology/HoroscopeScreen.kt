@@ -124,7 +124,11 @@ fun HoroscopeScreen(
     var isRewardedAdFlowRunning by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(preselectedSign) { preselectedSign?.let(viewModel::onSelectSign) }
-    LaunchedEffect(economyState.isPremium) { viewModel.onPremiumAccessChanged(economyState.isPremium) }
+    LaunchedEffect(economyState.hasUsableSnapshot, economyState.isPremium) {
+        if (economyState.hasUsableSnapshot) {
+            viewModel.onPremiumAccessChanged(economyState.isPremium)
+        }
+    }
     LaunchedEffect(viewModel) {
         viewModel.uiEffects.collect { effect ->
             when (effect) {

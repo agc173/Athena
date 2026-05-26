@@ -465,8 +465,13 @@ class SettingsViewModel(
                 .onSuccess { result ->
                     val feedback = when (result) {
                         is RestorePurchasesResult.NoPurchasesFound -> {
-                            analyticsTracker.track(AnalyticsEvent.PremiumRestoreEmpty(reason = "no_purchases_or_backend_inactive"))
-                            SettingsFeedback.RestorePurchasesNoPurchases
+                            if (_uiState.value.subscriptionStatus.isActive) {
+                                analyticsTracker.track(AnalyticsEvent.PremiumRestoreCompleted(status = _uiState.value.subscriptionStatus.name))
+                                SettingsFeedback.RestorePurchasesSuccess
+                            } else {
+                                analyticsTracker.track(AnalyticsEvent.PremiumRestoreEmpty(reason = "no_purchases_or_backend_inactive"))
+                                SettingsFeedback.RestorePurchasesNoPurchases
+                            }
                         }
 
                         is RestorePurchasesResult.Restored -> {
@@ -479,8 +484,15 @@ class SettingsViewModel(
                             }
                         }
                     }
-                    _uiState.update { it.copy(feedback = feedback) }
-                    if (result is RestorePurchasesResult.Restored && result.status.isActive) {
+                    println("BWITCH_PREMIUM_DEBUG restore_ui result=$result currentStatus=${_uiState.value.subscriptionStatus}")
+                    _uiState.update { state ->
+                        val next = when (result) {
+                            is RestorePurchasesResult.Restored -> state.copyWithSubscription(result.status)
+                            RestorePurchasesResult.NoPurchasesFound -> state
+                        }
+                        next.copy(feedback = feedback)
+                    }
+                    if ((result is RestorePurchasesResult.Restored && result.status.isActive) || _uiState.value.subscriptionStatus.isActive) {
                         _uiEffects.emit(SettingsUiEffect.RefreshEconomy)
                     }
                 }
@@ -555,14 +567,8 @@ private fun SettingsUiState.copyWithSubscription(subscriptionStatus: Subscriptio
 )
 
 
-private fun SettingsUiState.copyWithRepositorySubscription(subscriptionStatus: SubscriptionStatus): SettingsUiState {
-    val resolvedStatus = if (this.subscriptionStatus.isActive && !subscriptionStatus.isActive) {
-        this.subscriptionStatus
-    } else {
-        subscriptionStatus
-    }
-    return copyWithSubscription(resolvedStatus)
-}
+private fun SettingsUiState.copyWithRepositorySubscription(subscriptionStatus: SubscriptionStatus): SettingsUiState =
+    copyWithSubscription(subscriptionStatus)
 
 private fun SubscriptionPlan.toUiPlan(): SubscriptionPlanUi = SubscriptionPlanUi(
     productId = productId,
