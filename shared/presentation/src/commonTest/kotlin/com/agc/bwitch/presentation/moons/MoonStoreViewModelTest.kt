@@ -13,6 +13,7 @@ import com.agc.bwitch.domain.moons.MoonRepository
 import com.agc.bwitch.domain.moons.ObserveMoonBalanceUseCase
 import com.agc.bwitch.domain.moons.SpendMoonsResult
 import com.agc.bwitch.domain.settings.GooglePlayPurchase
+import com.agc.bwitch.domain.settings.GooglePlayPurchaseState
 import com.agc.bwitch.presentation.analytics.FakeAnalyticsTracker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -130,9 +131,10 @@ class MoonStoreViewModelTest {
                 GooglePlayPurchase(
                     productId = "bwitch_moons_pack_10",
                     purchaseToken = "token",
+                    purchaseState = GooglePlayPurchaseState.Purchased,
+                    isAcknowledged = false,
                     orderId = "order-1",
-                    purchaseTime = 123L,
-                    purchaseState = 0,
+                    packageName = "com.agc.bwitch",
                 ),
             )
             advanceUntilIdle()
