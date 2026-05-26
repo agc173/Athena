@@ -16,6 +16,7 @@ import com.agc.bwitch.data.moons.FunctionsMoonPackPurchaseRepository
 import com.agc.bwitch.data.moons.MockMoonPackRepository
 import com.agc.bwitch.data.moons.MoonPackBillingDataSource
 import com.agc.bwitch.data.moons.UnsupportedMoonPackBillingDataSource
+import com.agc.bwitch.data.notifications.FunctionsPushRegistrationRepository
 import com.agc.bwitch.data.moons.SettingsMoonRepository
 import com.agc.bwitch.data.rituals.LocalRitualCatalogRepository
 import com.agc.bwitch.data.rituals.SettingsDailyRitualRepository
@@ -46,6 +47,7 @@ import com.agc.bwitch.domain.localization.AppLanguageRepository
 import com.agc.bwitch.domain.moons.MoonPackRepository
 import com.agc.bwitch.domain.moons.MoonPackPurchaseRepository
 import com.agc.bwitch.domain.moons.MoonRepository
+import com.agc.bwitch.domain.notifications.PushRegistrationRepository
 import com.agc.bwitch.domain.rituals.DailyRitualRepository
 import com.agc.bwitch.domain.rituals.HabitsRepository
 import com.agc.bwitch.domain.rituals.RitualCatalogRepository
@@ -89,6 +91,7 @@ val dataKoinModule: Module = module {
     single<MoonPackBillingDataSource> { UnsupportedMoonPackBillingDataSource }
     single<MoonPackRepository> { BillingBackedMoonPackRepository(get()) }
     single<MoonPackPurchaseRepository> { FunctionsMoonPackPurchaseRepository(get()) }
+    single<PushRegistrationRepository> { FunctionsPushRegistrationRepository(get()) }
 
     /**
      * Auth

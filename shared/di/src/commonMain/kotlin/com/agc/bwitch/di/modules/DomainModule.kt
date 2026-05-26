@@ -26,6 +26,9 @@ import com.agc.bwitch.domain.moons.GetMoonPacksUseCase
 import com.agc.bwitch.domain.moons.HasEnoughMoonsUseCase
 import com.agc.bwitch.domain.moons.ObserveMoonBalanceUseCase
 import com.agc.bwitch.domain.moons.SpendMoonsUseCase
+import com.agc.bwitch.domain.notifications.RegisterPushTokenUseCase
+import com.agc.bwitch.domain.notifications.UnregisterPushTokenUseCase
+import com.agc.bwitch.domain.notifications.UpdatePushNotificationPreferencesUseCase
 import com.agc.bwitch.domain.session.ClearLocalUserDataUseCase
 import com.agc.bwitch.domain.settings.GetNotificationSettingsUseCase
 import com.agc.bwitch.domain.settings.GetSubscriptionCatalogUseCase
@@ -92,6 +95,11 @@ val domainModule: Module = module {
     factory { RestoreGooglePlayPurchasesUseCase(get()) }
     factory { RefreshPremiumEntitlementUseCase(get()) }
     factory { ValidateGooglePlayPurchaseUseCase(get()) }
+
+    // Push notifications
+    factory { RegisterPushTokenUseCase(get()) }
+    factory { UnregisterPushTokenUseCase(get()) }
+    factory { UpdatePushNotificationPreferencesUseCase(get()) }
 
     // Moons
     factory { GetMoonBalanceUseCase(get()) }
