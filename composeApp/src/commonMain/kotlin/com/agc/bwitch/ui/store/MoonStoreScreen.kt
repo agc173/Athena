@@ -1,6 +1,7 @@
 package com.agc.bwitch.ui.store
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,7 +12,10 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -19,6 +23,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberCoroutineScope
@@ -50,6 +55,10 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
+private const val STORE_REWARDED_AD_UNAVAILABLE_KEY = "store_rewarded_ad_unavailable"
+private const val STORE_REWARDED_AD_FAILED_KEY = "store_rewarded_ad_failed"
+private const val STORE_REWARDED_AD_CANCELLED_KEY = "store_rewarded_ad_cancelled"
+
 @Composable
 fun MoonStoreScreen(
     contentPadding: PaddingValues,
@@ -68,6 +77,8 @@ fun MoonStoreScreen(
     val managementLauncher = rememberSubscriptionManagementLauncher()
     val scope = rememberCoroutineScope()
     var isRewardedAdFlowRunning by rememberSaveable { mutableStateOf(false) }
+    var rewardedAdFeedbackKey by rememberSaveable { mutableStateOf<String?>(null) }
+    val snackbarHostState = remember { SnackbarHostState() }
     // TODO(store): esta pantalla ya funciona como hub general de Store; renombrar archivo/composable en una pasada posterior.
 
     LaunchedEffect(economyState.isLoading, economyState.error, economyState.balance) {
@@ -150,13 +161,27 @@ fun MoonStoreScreen(
         }
     }
 
-    Column(
-        modifier = Modifier
-            .padding(contentPadding)
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
+    LaunchedEffect(state.feedbackMessage) {
+        state.feedbackMessage?.let { feedbackKey ->
+            snackbarHostState.showSnackbar(feedbackKey.toLocalizedFeedback(strings))
+            viewModel.clearFeedback()
+        }
+    }
+    LaunchedEffect(rewardedAdFeedbackKey) {
+        rewardedAdFeedbackKey?.let { feedbackKey ->
+            snackbarHostState.showSnackbar(feedbackKey.toLocalizedFeedback(strings))
+            rewardedAdFeedbackKey = null
+        }
+    }
+
+    Box(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .padding(contentPadding)
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
         Card(modifier = Modifier.fillMaxWidth()) {
             Column(
                 modifier = Modifier.padding(12.dp),
@@ -222,13 +247,13 @@ fun MoonStoreScreen(
                             try {
                                 when (rewardedAdsService.showRewardedAd(placement = "moon_store")) {
                                     RewardedAdResult.Completed -> economyViewModel.claimRewardedAd(placement = "moon_store")
-                                    RewardedAdResult.Cancelled,
-                                    is RewardedAdResult.Failed,
-                                    RewardedAdResult.Unavailable,
-                                    -> Unit
+                                    RewardedAdResult.Cancelled -> rewardedAdFeedbackKey = STORE_REWARDED_AD_CANCELLED_KEY
+                                    is RewardedAdResult.Failed -> rewardedAdFeedbackKey = STORE_REWARDED_AD_FAILED_KEY
+                                    RewardedAdResult.Unavailable -> rewardedAdFeedbackKey = STORE_REWARDED_AD_UNAVAILABLE_KEY
                                 }
                             } catch (error: Throwable) {
                                 println("[MoonStoreScreen] rewarded ad flow failed: ${error.message}")
+                                rewardedAdFeedbackKey = STORE_REWARDED_AD_FAILED_KEY
                             } finally {
                                 isRewardedAdFlowRunning = false
                             }
@@ -313,25 +338,14 @@ fun MoonStoreScreen(
             }
         }
 
-        state.feedbackMessage?.let { feedbackKey ->
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(
-                    modifier = Modifier.padding(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    Text(
-                        text = feedbackKey.toLocalizedFeedback(strings),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Button(
-                        onClick = viewModel::clearFeedback,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Text(appStrings.settings.close)
-                    }
-                }
-            }
         }
+
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = contentPadding.calculateTopPadding() + 8.dp, start = 16.dp, end = 16.dp),
+        )
     }
 }
 
@@ -345,6 +359,9 @@ private fun String.toLocalizedFeedback(strings: ProfileStrings): String = when (
         "${strings.storePurchaseCompletedFeedback} ${strings.storePurchaseConsumeFailedFeedback}"
     STORE_PURCHASE_CONSUME_FAILED_KEY -> strings.storePurchaseConsumeFailedFeedback
     STORE_LOAD_ERROR_KEY -> strings.storeLoadErrorFeedback
+    STORE_REWARDED_AD_UNAVAILABLE_KEY -> strings.storeRewardedAdUnavailableFeedback
+    STORE_REWARDED_AD_FAILED_KEY -> strings.storeRewardedAdFailedFeedback
+    STORE_REWARDED_AD_CANCELLED_KEY -> strings.storeRewardedAdCancelledFeedback
     else -> this
 }
 
