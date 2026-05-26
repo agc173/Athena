@@ -229,6 +229,37 @@ class SettingsViewModelAnalyticsTest {
     }
 
     @Test
+    fun `restore no purchases pero backend activo devuelve success y refresh economy`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val analytics = FakeAnalyticsTracker()
+            val subscriptionRepo = FakeSubscriptionRepository(restoreResult = RestorePurchasesResult.NoPurchasesFound)
+            val entitlements = FakePremiumEntitlementRepository(
+                refreshEntitlement = PremiumEntitlement(isActive = true, status = SubscriptionStatus.ActiveMonthly),
+            )
+            val viewModel = viewModel(analytics = analytics, subscriptionRepo = subscriptionRepo, entitlements = entitlements)
+            val effects = mutableListOf<SettingsUiEffect>()
+            val collectJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiEffects.collect { effects += it }
+            }
+
+            advanceUntilIdle()
+            viewModel.onRestorePurchasesClicked()
+            advanceUntilIdle()
+
+            assertEquals(SettingsFeedback.RestorePurchasesSuccess, viewModel.uiState.value.feedback)
+            assertEquals(SubscriptionStatus.ActiveMonthly, viewModel.uiState.value.subscriptionStatus)
+            assertTrue(effects.any { it is SettingsUiEffect.RefreshEconomy })
+            assertTrue(analytics.events.any { it is AnalyticsEvent.PremiumRestoreCompleted })
+            collectJob.cancel()
+            viewModel.clear()
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
     fun `restore inactive no emite completed aunque el resultado sea restored`() = runTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
         Dispatchers.setMain(dispatcher)

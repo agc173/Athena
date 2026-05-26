@@ -239,6 +239,7 @@ class SettingsViewModel(
             observeSubscriptionStatus()
                 .catch { error -> _uiState.update { it.copy(error = error.message) } }
                 .collect { subscriptionStatus ->
+                    println("BWITCH_PREMIUM_DEBUG settings_init repoStatus=$subscriptionStatus")
                     _uiState.update { it.copyWithRepositorySubscription(subscriptionStatus) }
                 }
         }
@@ -255,6 +256,7 @@ class SettingsViewModel(
     private suspend fun refreshBackendEntitlement() {
         runCatching { refreshPremiumEntitlement() }
             .onSuccess { entitlement ->
+                println("BWITCH_PREMIUM_DEBUG settings_refresh_entitlement=$entitlement")
                 analyticsTracker.track(
                     AnalyticsEvent.EntitlementRefreshed(
                         status = entitlement.status.name,
@@ -463,42 +465,42 @@ class SettingsViewModel(
         scope.launch {
             runCatching { restorePurchases() }
                 .onSuccess { result ->
-                    val feedback = when (result) {
+                    val backendStatus = runCatching { refreshPremiumEntitlement().status }.getOrNull()
+                    val effectiveStatus = when {
+                        backendStatus?.isActive == true -> backendStatus
+                        result is RestorePurchasesResult.Restored -> result.status
+                        else -> _uiState.value.subscriptionStatus
+                    }
+                    val feedback = when {
+                        effectiveStatus.isActive -> {
+                            analyticsTracker.track(AnalyticsEvent.PremiumRestoreCompleted(status = effectiveStatus.name))
+                            SettingsFeedback.RestorePurchasesSuccess
+                        }
+                        else -> when (result) {
                         is RestorePurchasesResult.NoPurchasesFound -> {
-                            if (_uiState.value.subscriptionStatus.isActive) {
-                                analyticsTracker.track(AnalyticsEvent.PremiumRestoreCompleted(status = _uiState.value.subscriptionStatus.name))
-                                SettingsFeedback.RestorePurchasesSuccess
-                            } else {
-                                analyticsTracker.track(AnalyticsEvent.PremiumRestoreEmpty(reason = "no_purchases_or_backend_inactive"))
-                                SettingsFeedback.RestorePurchasesNoPurchases
-                            }
+                            analyticsTracker.track(AnalyticsEvent.PremiumRestoreEmpty(reason = "no_purchases_or_backend_inactive"))
+                            SettingsFeedback.RestorePurchasesNoPurchases
                         }
 
                         is RestorePurchasesResult.Restored -> {
-                            if (result.status.isActive) {
-                                analyticsTracker.track(AnalyticsEvent.PremiumRestoreCompleted(status = result.status.name))
-                                SettingsFeedback.RestorePurchasesSuccess
-                            } else {
-                                analyticsTracker.track(AnalyticsEvent.PremiumRestoreEmpty(reason = "backend_inactive"))
-                                SettingsFeedback.RestorePurchasesNoPurchases
-                            }
+                            analyticsTracker.track(AnalyticsEvent.PremiumRestoreEmpty(reason = "backend_inactive"))
+                            SettingsFeedback.RestorePurchasesNoPurchases
                         }
                     }
-                    println("BWITCH_PREMIUM_DEBUG restore_ui result=$result currentStatus=${_uiState.value.subscriptionStatus}")
+                    }
+                    println("BWITCH_PREMIUM_DEBUG restore_feedback result=$result backendStatus=$backendStatus effectiveStatus=$effectiveStatus feedback=$feedback")
                     _uiState.update { state ->
-                        val next = when (result) {
-                            is RestorePurchasesResult.Restored -> state.copyWithSubscription(result.status)
-                            RestorePurchasesResult.NoPurchasesFound -> state
-                        }
+                        val next = state.copyWithSubscription(effectiveStatus)
                         next.copy(feedback = feedback)
                     }
-                    if ((result is RestorePurchasesResult.Restored && result.status.isActive) || _uiState.value.subscriptionStatus.isActive) {
+                    if (effectiveStatus.isActive) {
                         _uiEffects.emit(SettingsUiEffect.RefreshEconomy)
                     }
                 }
                 .onFailure { error ->
                     analyticsTracker.track(AnalyticsEvent.PremiumRestoreEmpty(reason = error.message ?: "restore_failed"))
-                    _uiState.update { it.copy(error = error.message) }
+                    println("BWITCH_PREMIUM_DEBUG restore_feedback error=${error.message}")
+                    _uiState.update { it.copy(error = error.message, feedback = SettingsFeedback.SubscriptionPurchaseFailed) }
                 }
         }
     }

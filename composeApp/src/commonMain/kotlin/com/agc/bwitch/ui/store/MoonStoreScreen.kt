@@ -43,6 +43,7 @@ import com.agc.bwitch.presentation.moons.STORE_PURCHASE_FAILED_KEY
 import com.agc.bwitch.presentation.moons.STORE_PURCHASE_PENDING_KEY
 import com.agc.bwitch.presentation.moons.STORE_LOAD_ERROR_KEY
 import com.agc.bwitch.presentation.userprofile.SettingsUiEffect
+import com.agc.bwitch.presentation.userprofile.SettingsFeedback
 import com.agc.bwitch.presentation.userprofile.SettingsViewModel
 import com.agc.bwitch.presentation.userprofile.SubscriptionPrimaryAction
 import com.agc.bwitch.presentation.ads.RewardedAdResult
@@ -94,6 +95,20 @@ fun MoonStoreScreen(
         if (settingsState.subscriptionPrimaryAction == SubscriptionPrimaryAction.Subscribe) {
             settingsViewModel.onPremiumCtaShown("moon_store_subscribe")
         }
+    }
+    LaunchedEffect(settingsState.feedback) {
+        val feedback = settingsState.feedback ?: return@LaunchedEffect
+        val message = when (feedback) {
+            SettingsFeedback.SubscriptionSubscribeComingSoon -> settingsStrings.subscriptionSubscribeComingSoon
+            SettingsFeedback.SubscriptionManageComingSoon -> settingsStrings.subscriptionManageComingSoon
+            SettingsFeedback.SubscriptionPurchaseFailed -> settingsStrings.subscriptionPurchaseFailed
+            SettingsFeedback.RestorePurchasesSuccess -> settingsStrings.subscriptionRestoreSuccess
+            SettingsFeedback.RestorePurchasesNoPurchases -> settingsStrings.subscriptionRestoreNoPurchases
+            SettingsFeedback.DeleteAccountComingSoon -> settingsStrings.deleteAccountComingSoonFeedback
+        }
+        println("BWITCH_PREMIUM_DEBUG restore_feedback=$feedback")
+        snackbarHostState.showSnackbar(message)
+        settingsViewModel.onFeedbackConsumed()
     }
     LaunchedEffect(Unit) {
         settingsViewModel.uiEffects.collect { effect ->
@@ -166,6 +181,9 @@ fun MoonStoreScreen(
             snackbarHostState.showSnackbar(feedbackKey.toLocalizedFeedback(strings))
             viewModel.clearFeedback()
         }
+    }
+    LaunchedEffect(settingsState.error) {
+        settingsState.error?.let { snackbarHostState.showSnackbar(it) }
     }
     LaunchedEffect(rewardedAdFeedbackKey) {
         rewardedAdFeedbackKey?.let { feedbackKey ->
@@ -301,11 +319,17 @@ fun MoonStoreScreen(
             }
         }
 
+        val premiumCardStatus = settingsState.subscriptionStatus.resolveStoreStatus(economyState)
+        println(
+            "BWITCH_PREMIUM_DEBUG premium_card_status_displayed=$premiumCardStatus " +
+                "settings=${settingsState.subscriptionStatus} economyIsPremium=${economyState.isPremium} " +
+                "economyHasSnapshot=${economyState.hasUsableSnapshot}"
+        )
         PremiumCard(
             title = strings.storeSubscriptionTitle,
             subtitle = strings.storeSubscriptionPlaceholderDescription,
-            statusLabel = settingsState.subscriptionStatus.toLocalizedLabel(settingsStrings),
-            primaryActionLabel = when (settingsState.subscriptionPrimaryAction) {
+            statusLabel = premiumCardStatus.toLocalizedLabel(settingsStrings),
+            primaryActionLabel = when (premiumCardStatus.toPrimaryAction()) {
                 SubscriptionPrimaryAction.Subscribe -> settingsStrings.subscriptionActionSubscribe
                 SubscriptionPrimaryAction.Manage -> settingsStrings.subscriptionActionManage
             },
@@ -378,4 +402,17 @@ private fun SubscriptionStatus.toLocalizedLabel(strings: SettingsStrings): Strin
     SubscriptionStatus.Inactive -> strings.subscriptionStatusInactive
     SubscriptionStatus.ActiveMonthly -> strings.subscriptionStatusActiveMonthly
     SubscriptionStatus.ActiveAnnual -> strings.subscriptionStatusActiveAnnual
+}
+
+private fun SubscriptionStatus.resolveStoreStatus(
+    economyState: com.agc.bwitch.presentation.economy.EconomyUiState,
+): SubscriptionStatus = if (economyState.hasUsableSnapshot && economyState.isPremium) {
+    SubscriptionStatus.ActiveMonthly
+} else {
+    this
+}
+
+private fun SubscriptionStatus.toPrimaryAction(): SubscriptionPrimaryAction = when {
+    isActive -> SubscriptionPrimaryAction.Manage
+    else -> SubscriptionPrimaryAction.Subscribe
 }

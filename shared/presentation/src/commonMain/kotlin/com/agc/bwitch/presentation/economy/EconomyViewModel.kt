@@ -313,6 +313,10 @@ class EconomyViewModel(
                     },
                 )
             }
+            println(
+                "BWITCH_PREMIUM_DEBUG economy_isPremium=${_uiState.value.isPremium} " +
+                    "hasSnapshot=${_uiState.value.hasUsableSnapshot} balance=${_uiState.value.balance}"
+            )
             _uiState.value.takeIf { it.hasUsableSnapshot }?.let { snapshot ->
                 val trackedSnapshot = EconomyTrackedSnapshot(
                     balance = snapshot.balance,
