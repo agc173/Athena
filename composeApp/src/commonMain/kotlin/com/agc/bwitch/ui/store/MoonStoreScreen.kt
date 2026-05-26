@@ -412,7 +412,9 @@ private fun SubscriptionStatus.resolveStoreStatus(
     this
 }
 
-private fun SubscriptionStatus.toPrimaryAction(): SubscriptionPrimaryAction = when {
-    isActive -> SubscriptionPrimaryAction.Manage
-    else -> SubscriptionPrimaryAction.Subscribe
+private fun SubscriptionStatus.toPrimaryAction(): SubscriptionPrimaryAction = when (this) {
+    SubscriptionStatus.ActiveMonthly,
+    SubscriptionStatus.ActiveAnnual -> SubscriptionPrimaryAction.Manage
+    SubscriptionStatus.Unknown,
+    SubscriptionStatus.Inactive -> SubscriptionPrimaryAction.Subscribe
 }
