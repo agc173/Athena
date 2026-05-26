@@ -107,8 +107,8 @@ android {
         applicationId = "com.agc.bwitch"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 15
-        versionName = "1.1.4"
+        versionCode = 16
+        versionName = "1.1.5"
     }
     buildFeatures {
         buildConfig = true
