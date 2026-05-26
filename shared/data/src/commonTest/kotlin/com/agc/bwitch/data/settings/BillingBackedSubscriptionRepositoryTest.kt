@@ -34,7 +34,7 @@ class BillingBackedSubscriptionRepositoryTest {
     }
 
     @Test
-    fun `getStatus no conserva activo persistido cuando backend falla`() = runTest {
+    fun `getStatus usa activo persistido como fallback temporal cuando backend falla`() = runTest {
         val settings = MapSettings().apply {
             putString("subscription_status", SubscriptionStatus.ActiveMonthly.name)
         }
@@ -46,9 +46,48 @@ class BillingBackedSubscriptionRepositoryTest {
 
         val status = repository.getStatus()
 
-        assertEquals(SubscriptionStatus.Unknown, status)
+        assertEquals(SubscriptionStatus.ActiveMonthly, status)
     }
 
+
+
+    @Test
+    fun `getStatus backend Inactive converge a Inactive y persiste Inactive`() = runTest {
+        val settings = MapSettings().apply {
+            putString("subscription_status", SubscriptionStatus.ActiveMonthly.name)
+        }
+        val repository = repository(
+            settings = settings,
+            billing = FakeBillingDataSource(isSupported = true),
+            entitlements = FakePremiumEntitlementRepository(
+                refreshEntitlement = PremiumEntitlement(isActive = false, status = SubscriptionStatus.Inactive),
+            ),
+        )
+
+        val status = repository.getStatus()
+
+        assertEquals(SubscriptionStatus.Inactive, status)
+        assertEquals(SubscriptionStatus.Inactive.name, settings.getStringOrNull("subscription_status"))
+    }
+
+    @Test
+    fun `getStatus backend ActiveMonthly converge a ActiveMonthly y persiste ActiveMonthly`() = runTest {
+        val settings = MapSettings().apply {
+            putString("subscription_status", SubscriptionStatus.Inactive.name)
+        }
+        val repository = repository(
+            settings = settings,
+            billing = FakeBillingDataSource(isSupported = true),
+            entitlements = FakePremiumEntitlementRepository(
+                refreshEntitlement = PremiumEntitlement(isActive = true, status = SubscriptionStatus.ActiveMonthly),
+            ),
+        )
+
+        val status = repository.getStatus()
+
+        assertEquals(SubscriptionStatus.ActiveMonthly, status)
+        assertEquals(SubscriptionStatus.ActiveMonthly.name, settings.getStringOrNull("subscription_status"))
+    }
     @Test
     fun `restore envia compras Google Play al backend y restaura solo si entitlement activo`() = runTest {
         val purchase = googlePlayPurchase()
