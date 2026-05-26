@@ -273,7 +273,7 @@ class SettingsViewModelAnalyticsTest {
             val viewModel = viewModel(
                 analytics = analytics,
                 entitlements = entitlements,
-                subscriptionRepo = subscriptionRepo,
+                subscriptionRepo = subscriptionRepo.copyWithStatus(SubscriptionStatus.ActiveMonthly),
                 authUser = AuthUser(uid = "user-1", email = "user@example.com", isAnonymous = false),
             )
 
@@ -435,8 +435,9 @@ class SettingsViewModelAnalyticsTest {
             SubscriptionPlan("bwitch_premium_monthly", "Monthly", "$4.99", SubscriptionPlanType.Monthly, "monthly"),
         ),
         private val restoreResult: RestorePurchasesResult = RestorePurchasesResult.NoPurchasesFound,
+        initialStatus: SubscriptionStatus = SubscriptionStatus.Inactive,
     ) : SubscriptionRepository {
-        private val status = MutableStateFlow<SubscriptionStatus>(SubscriptionStatus.Inactive)
+        private val status = MutableStateFlow(initialStatus)
 
         override suspend fun getStatus(): SubscriptionStatus = status.value
         override suspend fun getCatalog(): List<SubscriptionPlan> = catalog
@@ -447,6 +448,12 @@ class SettingsViewModelAnalyticsTest {
             restoreCallCount += 1
             return restoreResult
         }
+
+        fun copyWithStatus(status: SubscriptionStatus): FakeSubscriptionRepository = FakeSubscriptionRepository(
+            catalog = catalog,
+            restoreResult = restoreResult,
+            initialStatus = status,
+        )
     }
 
     private class FakePremiumEntitlementRepository(
