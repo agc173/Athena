@@ -6,6 +6,7 @@ import android.util.Log
 import com.agc.bwitch.BuildConfig
 import com.agc.bwitch.di.init.initKoin
 import com.agc.bwitch.di.platformModule
+import com.agc.bwitch.notifications.AndroidNotificationChannels
 import com.google.android.gms.ads.MobileAds
 import com.google.firebase.FirebaseApp
 import com.google.firebase.appcheck.FirebaseAppCheck
@@ -29,6 +30,7 @@ class BWitchApplication : Application() {
         }
 
         MobileAds.initialize(this)
+        AndroidNotificationChannels.create(this)
 
         initKoin(additionalModules = listOf(platformModule(this)))
     }
