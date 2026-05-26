@@ -35,10 +35,11 @@ class BillingBackedSubscriptionRepository private constructor(
         @Suppress("UNUSED_PARAMETER") forTests: Unit,
     ) : this(settings, billingDataSource, premiumEntitlementRepository)
 
-    private val status = MutableStateFlow(readCurrentStatus())
+    private val status = MutableStateFlow(SubscriptionStatus.Unknown)
 
     override suspend fun getStatus(): SubscriptionStatus {
         val resolvedStatus = resolveStatusFromStoreOrFallback()
+        println("BWITCH_PREMIUM_DEBUG status_refresh backend=$resolvedStatus")
         status.value = resolvedStatus
         persistCurrentStatus(resolvedStatus)
         return resolvedStatus
@@ -54,14 +55,28 @@ class BillingBackedSubscriptionRepository private constructor(
 
     override suspend fun restorePurchases(): RestorePurchasesResult {
         val purchases = if (billingDataSource.isSupported) {
-            runCatching { billingDataSource.queryGooglePlayPurchases() }.getOrDefault(emptyList())
+            runCatching { billingDataSource.queryGooglePlayPurchases() }.getOrElse { error ->
+                println("BWITCH_PREMIUM_DEBUG restore billing_query_failed=${error.message}")
+                emptyList()
+            }
         } else {
             emptyList()
         }
 
+        println("BWITCH_PREMIUM_DEBUG restore billing_purchases_count=${purchases.size}")
+
         val resolvedStatus = runCatching {
             premiumEntitlementRepository.restoreGooglePlayPurchases(purchases).status
-        }.getOrElse { readCurrentStatus().takeUnless { status -> status.isActive } ?: SubscriptionStatus.Unknown }
+        }.getOrElse { error ->
+            println("BWITCH_PREMIUM_DEBUG restore backend_restore_failed=${error.message}")
+            runCatching { premiumEntitlementRepository.refreshEntitlement().status }
+                .getOrElse { refreshError ->
+                    println("BWITCH_PREMIUM_DEBUG restore backend_refresh_failed=${refreshError.message}")
+                    SubscriptionStatus.Unknown
+                }
+        }
+
+        println("BWITCH_PREMIUM_DEBUG restore resolved_status=$resolvedStatus")
 
         status.value = resolvedStatus
         persistCurrentStatus(resolvedStatus)
@@ -75,7 +90,10 @@ class BillingBackedSubscriptionRepository private constructor(
 
     private suspend fun resolveStatusFromStoreOrFallback(): SubscriptionStatus {
         return runCatching { premiumEntitlementRepository.refreshEntitlement().status }
-            .getOrElse { readCurrentStatus().takeUnless { status -> status.isActive } ?: SubscriptionStatus.Unknown }
+            .getOrElse { error ->
+                println("BWITCH_PREMIUM_DEBUG refresh backend_failed=${error.message}")
+                readCurrentStatus()
+            }
     }
 
     private fun readCurrentStatus(): SubscriptionStatus {
@@ -85,7 +103,7 @@ class BillingBackedSubscriptionRepository private constructor(
         val resolved = SubscriptionStatus.entries.firstOrNull { it.name == persistedStatus }
             ?: return SubscriptionStatus.Unknown
 
-        return resolved.takeUnless { it.isActive } ?: SubscriptionStatus.Unknown
+        return resolved
     }
 
     private fun persistCurrentStatus(status: SubscriptionStatus) {
