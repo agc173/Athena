@@ -76,6 +76,7 @@ fun SettingsScreen(contentPadding: PaddingValues) {
     val uriHandler = LocalUriHandler.current
     val purchaseLauncher = rememberSubscriptionPurchaseLauncher()
     val managementLauncher = rememberSubscriptionManagementLauncher()
+    val handlePushPermissionRequest = rememberHandlePushPermissionRequest(settingsVm)
 
 
     var showLanguageDialog by rememberSaveable { mutableStateOf(false) }
@@ -108,6 +109,8 @@ fun SettingsScreen(contentPadding: PaddingValues) {
             SettingsFeedback.RestorePurchasesSuccess -> strings.subscriptionRestoreSuccess
             SettingsFeedback.RestorePurchasesNoPurchases -> strings.subscriptionRestoreNoPurchases
             SettingsFeedback.DeleteAccountComingSoon -> strings.deleteAccountComingSoonFeedback
+            SettingsFeedback.NotificationsPermissionDenied -> strings.comingSoon
+            SettingsFeedback.NotificationsUnavailable -> strings.comingSoon
         }
         snackbarHostState.showSnackbar(message)
         settingsVm.onFeedbackConsumed()
@@ -137,6 +140,10 @@ fun SettingsScreen(contentPadding: PaddingValues) {
 
                 SettingsUiEffect.RefreshEconomy -> {
                     economyVm.loadEconomy()
+                }
+
+                SettingsUiEffect.RequestPushPermissionAndToken -> {
+                    handlePushPermissionRequest()
                 }
             }
         }

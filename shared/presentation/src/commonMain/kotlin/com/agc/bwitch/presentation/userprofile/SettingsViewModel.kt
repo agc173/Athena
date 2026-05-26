@@ -5,6 +5,11 @@ import com.agc.bwitch.domain.analytics.AnalyticsTracker
 import com.agc.bwitch.domain.analytics.NoOpAnalyticsTracker
 import com.agc.bwitch.domain.localization.AppLanguage
 import com.agc.bwitch.domain.localization.ObserveCurrentLanguageUseCase
+import com.agc.bwitch.domain.notifications.PushNotificationPreferences
+import com.agc.bwitch.domain.notifications.PushPlatform
+import com.agc.bwitch.domain.notifications.PushTokenRegistration
+import com.agc.bwitch.domain.notifications.RegisterPushTokenUseCase
+import com.agc.bwitch.domain.notifications.UpdatePushNotificationPreferencesUseCase
 import com.agc.bwitch.domain.settings.GetNotificationSettingsUseCase
 import com.agc.bwitch.domain.settings.GooglePlayPurchase
 import com.agc.bwitch.domain.settings.GooglePlayPurchaseState
@@ -72,6 +77,8 @@ enum class SettingsFeedback {
     RestorePurchasesSuccess,
     RestorePurchasesNoPurchases,
     DeleteAccountComingSoon,
+    NotificationsPermissionDenied,
+    NotificationsUnavailable,
 }
 
 data class SubscriptionPlanUi(
@@ -104,6 +111,8 @@ sealed interface SettingsUiEffect {
     ) : SettingsUiEffect
 
     data object RefreshEconomy : SettingsUiEffect
+
+    data object RequestPushPermissionAndToken : SettingsUiEffect
 }
 
 sealed interface SubscriptionPurchaseOutcome {
@@ -134,6 +143,8 @@ class SettingsViewModel(
     private val restorePurchases: RestorePurchasesUseCase,
     private val refreshPremiumEntitlement: RefreshPremiumEntitlementUseCase,
     private val validateGooglePlayPurchase: ValidateGooglePlayPurchaseUseCase,
+    private val registerPushToken: RegisterPushTokenUseCase,
+    private val updatePushNotificationPreferences: UpdatePushNotificationPreferencesUseCase,
     private val analyticsTracker: AnalyticsTracker = NoOpAnalyticsTracker,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -280,19 +291,61 @@ class SettingsViewModel(
     }
 
     fun onNotificationsEnabledChanged(enabled: Boolean) {
-        updateNotificationSettings { it.copy(globalEnabled = enabled) }
+        if (enabled) {
+            updateLocalNotificationSettings { it.copy(globalEnabled = true) }
+            scope.launch { _uiEffects.emit(SettingsUiEffect.RequestPushPermissionAndToken) }
+            return
+        }
+
+        updateLocalAndRemoteNotificationSettings { it.copy(globalEnabled = false) }
     }
 
     fun onDailyHoroscopeEnabledChanged(enabled: Boolean) {
-        updateNotificationSettings { it.copy(dailyHoroscopeEnabled = enabled) }
+        updateLocalAndRemoteNotificationSettings { it.copy(dailyHoroscopeEnabled = enabled) }
     }
 
     fun onRitualOfDayEnabledChanged(enabled: Boolean) {
-        updateNotificationSettings { it.copy(ritualOfDayEnabled = enabled) }
+        updateLocalAndRemoteNotificationSettings { it.copy(ritualOfDayEnabled = enabled) }
     }
 
     fun onHabitsEnabledChanged(enabled: Boolean) {
-        updateNotificationSettings { it.copy(habitsEnabled = enabled) }
+        updateLocalAndRemoteNotificationSettings { it.copy(habitsEnabled = enabled) }
+    }
+
+    fun onPushPermissionAndTokenResolved(permissionGranted: Boolean, token: String?) {
+        val nextSettings = NotificationSettings(
+            globalEnabled = permissionGranted && !token.isNullOrBlank(),
+            dailyHoroscopeEnabled = _uiState.value.dailyHoroscopeEnabled,
+            ritualOfDayEnabled = _uiState.value.ritualOfDayEnabled,
+            habitsEnabled = _uiState.value.habitsEnabled,
+        )
+        updateLocalAndRemoteNotificationSettings(nextSettings)
+
+        if (!permissionGranted) {
+            _uiState.update { it.copy(feedback = SettingsFeedback.NotificationsPermissionDenied) }
+            return
+        }
+        if (token.isNullOrBlank()) {
+            _uiState.update { it.copy(feedback = SettingsFeedback.NotificationsUnavailable) }
+            return
+        }
+
+        scope.launch {
+            runCatching {
+                registerPushToken(
+                    PushTokenRegistration(
+                        token = token,
+                        platform = PushPlatform.ANDROID,
+                        appVersion = _uiState.value.appVersion.takeIf { it.isNotBlank() },
+                        locale = _uiState.value.currentLanguage.code,
+                        timezone = null,
+                        notificationsPermissionGranted = true,
+                    ),
+                )
+            }.onFailure {
+                _uiState.update { state -> state.copy(feedback = SettingsFeedback.NotificationsUnavailable) }
+            }
+        }
     }
 
     fun onSubscriptionPrimaryActionClicked() {
@@ -535,7 +588,7 @@ class SettingsViewModel(
         scope.cancel()
     }
 
-    private fun updateNotificationSettings(update: (NotificationSettings) -> NotificationSettings) {
+    private fun updateLocalNotificationSettings(update: (NotificationSettings) -> NotificationSettings) {
         scope.launch {
             val current = NotificationSettings(
                 globalEnabled = _uiState.value.notificationsEnabled,
@@ -550,7 +603,39 @@ class SettingsViewModel(
             }
         }
     }
+
+    private fun updateLocalAndRemoteNotificationSettings(update: (NotificationSettings) -> NotificationSettings) {
+        scope.launch {
+            val current = NotificationSettings(
+                globalEnabled = _uiState.value.notificationsEnabled,
+                dailyHoroscopeEnabled = _uiState.value.dailyHoroscopeEnabled,
+                ritualOfDayEnabled = _uiState.value.ritualOfDayEnabled,
+                habitsEnabled = _uiState.value.habitsEnabled,
+            )
+            val next = update(current)
+            updateLocalAndRemoteNotificationSettings(next)
+        }
+    }
+
+    private fun updateLocalAndRemoteNotificationSettings(next: NotificationSettings) {
+        scope.launch {
+            runCatching { updateNotificationSettings(next) }
+                .onFailure { error -> _uiState.update { it.copy(error = error.message) } }
+
+            runCatching { updatePushNotificationPreferences(next.toPushNotificationPreferences()) }
+                .onFailure { _uiState.update { it.copy(feedback = SettingsFeedback.NotificationsUnavailable) } }
+        }
+    }
 }
+
+private fun NotificationSettings.toPushNotificationPreferences(): PushNotificationPreferences = PushNotificationPreferences(
+    globalEnabled = globalEnabled,
+    dailyHoroscopeEnabled = dailyHoroscopeEnabled,
+    dailyRewardEnabled = false,
+    tarotOracleReminderEnabled = false,
+    ritualsEnabled = ritualOfDayEnabled,
+    habitsEnabled = habitsEnabled,
+)
 
 private fun SettingsUiState.copyFrom(settings: NotificationSettings): SettingsUiState = copy(
     notificationsEnabled = settings.globalEnabled,
