@@ -6,6 +6,12 @@ import com.agc.bwitch.domain.auth.AuthUser
 import com.agc.bwitch.domain.localization.AppLanguage
 import com.agc.bwitch.domain.localization.AppLanguageRepository
 import com.agc.bwitch.domain.localization.ObserveCurrentLanguageUseCase
+import com.agc.bwitch.domain.notifications.PushNotificationPreferences
+import com.agc.bwitch.domain.notifications.PushPlatform
+import com.agc.bwitch.domain.notifications.PushRegistrationRepository
+import com.agc.bwitch.domain.notifications.PushTokenRegistration
+import com.agc.bwitch.domain.notifications.RegisterPushTokenUseCase
+import com.agc.bwitch.domain.notifications.UpdatePushNotificationPreferencesUseCase
 import com.agc.bwitch.domain.settings.GetNotificationSettingsUseCase
 import com.agc.bwitch.domain.settings.GetSubscriptionCatalogUseCase
 import com.agc.bwitch.domain.settings.GetSubscriptionStatusUseCase
@@ -443,6 +449,7 @@ class SettingsViewModelAnalyticsTest {
     ): SettingsViewModel {
         val notificationRepo = FakeNotificationSettingsRepository()
         val profileRepo = FakeUserProfileRepository()
+        val pushRepo = FakePushRegistrationRepository()
         return SettingsViewModel(
             observeUserProfile = ObserveUserProfileUseCase(profileRepo),
             getUserProfile = GetUserProfileUseCase(profileRepo),
@@ -457,6 +464,8 @@ class SettingsViewModelAnalyticsTest {
             restorePurchases = RestorePurchasesUseCase(subscriptionRepo),
             refreshPremiumEntitlement = RefreshPremiumEntitlementUseCase(entitlements),
             validateGooglePlayPurchase = ValidateGooglePlayPurchaseUseCase(entitlements),
+            registerPushToken = RegisterPushTokenUseCase(pushRepo),
+            updatePushNotificationPreferences = UpdatePushNotificationPreferencesUseCase(pushRepo),
             analyticsTracker = analytics,
         )
     }
@@ -521,6 +530,12 @@ class SettingsViewModelAnalyticsTest {
         }
     }
 
+
+    private class FakePushRegistrationRepository : PushRegistrationRepository {
+        override suspend fun registerToken(payload: PushTokenRegistration) = Unit
+        override suspend fun unregisterToken(token: String, platform: PushPlatform) = Unit
+        override suspend fun updatePreferences(preferences: PushNotificationPreferences) = Unit
+    }
     private class FakeUserProfileRepository : UserProfileRepository {
         override fun observeUserProfile(): Flow<UserProfile?> = MutableStateFlow(null)
         override suspend fun getUserProfile(): UserProfile? = null
