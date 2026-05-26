@@ -6,8 +6,8 @@ import android.content.Context
 import android.os.Build
 
 object AndroidNotificationChannels {
-    const val DEFAULT_CHANNEL_ID = CHANNEL_DAILY
     const val CHANNEL_DAILY = "bwitch_daily"
+    const val DEFAULT_CHANNEL_ID = CHANNEL_DAILY
     const val CHANNEL_REWARDS = "bwitch_rewards"
     const val CHANNEL_SPIRITUAL = "bwitch_spiritual"
 
