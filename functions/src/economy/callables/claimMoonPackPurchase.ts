@@ -1,10 +1,9 @@
 import {Timestamp, getFirestore} from 'firebase-admin/firestore';
 import {onCall, HttpsError} from 'firebase-functions/v2/https';
+import {createHash} from 'node:crypto';
 import {ENV} from '../../config/env';
 import {dateIsoMadrid, economyBalanceRef, economyLedgerRef} from '../firestorePaths';
 import type {EconomyBalanceDoc, EconomyLedgerEntryDoc} from '../types';
-import {getGooglePlayAndroidPublisherProvider} from '../../premium/googlePlayProvider';
-import {hashPurchaseToken} from '../../premium/service';
 
 const MOON_PACKS: Record<string, number> = {
   bwitch_moons_pack_10: 10,
@@ -39,8 +38,13 @@ function asCount(value: unknown): number {
   return Math.max(0, Math.floor(value));
 }
 
+function hashPurchaseToken(purchaseToken: string): string {
+  return createHash('sha256').update(purchaseToken, 'utf8').digest('hex');
+}
+
 // TODO(test): extraer AndroidPublisher client detrás de una interfaz inyectable para test unitario sin red.
 async function queryInAppPurchase(packageName: string, productId: string, purchaseToken: string): Promise<ProductPurchase> {
+  const {getGooglePlayAndroidPublisherProvider} = await import('../../premium/googlePlayProvider.js');
   const provider = getGooglePlayAndroidPublisherProvider() as unknown as {
     getAuthClient: () => Promise<{request<T>(options: {url: string; method: 'GET'}): Promise<{data: T}>}>;
   };
