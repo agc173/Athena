@@ -141,7 +141,14 @@ class MoonStoreViewModel(
     }
 
     fun onConsumeFailed() {
-        _uiState.update { it.copy(feedbackMessage = STORE_PURCHASE_CONSUME_FAILED_KEY) }
+        _uiState.update {
+            val feedback = if (it.feedbackMessage == STORE_PURCHASE_COMPLETED_KEY) {
+                STORE_PURCHASE_COMPLETED_WITH_CONSUME_FAILED_KEY
+            } else {
+                STORE_PURCHASE_CONSUME_FAILED_KEY
+            }
+            it.copy(feedbackMessage = feedback)
+        }
     }
 
     fun clearFeedback() {
@@ -207,3 +214,4 @@ const val STORE_PURCHASE_PENDING_KEY = "store.purchase.pending"
 const val STORE_PURCHASE_FAILED_KEY = "store.purchase.failed"
 const val STORE_PURCHASE_COMPLETED_KEY = "store.purchase.completed"
 const val STORE_PURCHASE_CONSUME_FAILED_KEY = "store.purchase.consume_failed"
+const val STORE_PURCHASE_COMPLETED_WITH_CONSUME_FAILED_KEY = "store.purchase.completed.consume_failed"

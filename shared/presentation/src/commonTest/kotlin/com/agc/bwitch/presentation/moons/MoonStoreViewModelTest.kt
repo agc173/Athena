@@ -27,6 +27,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -99,6 +100,50 @@ class MoonStoreViewModelTest {
             assertTrue(effects.none { it is MoonStoreUiEffect.LaunchMoonPackPurchase })
             assertTrue(analytics.events.none { it is AnalyticsEvent.MoonPackSelected })
             assertTrue(analytics.events.none { it is AnalyticsEvent.MoonPackPurchaseStarted })
+
+            collectJob.cancel()
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun `completed purchase emits refresh and preserves completion feedback when consume fails`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val viewModel = MoonStoreViewModel(
+                getMoonPacks = GetMoonPacksUseCase(FakeMoonPackRepository()),
+                getMoonBalance = GetMoonBalanceUseCase(FakeMoonRepository()),
+                observeMoonBalance = ObserveMoonBalanceUseCase(FakeMoonRepository()),
+                moonPackPurchaseRepository = FakeMoonPackPurchaseRepository(),
+                analyticsTracker = FakeAnalyticsTracker(),
+            )
+            val effects = mutableListOf<MoonStoreUiEffect>()
+            val collectJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.uiEffects.collect { effects += it }
+            }
+
+            advanceUntilIdle()
+            viewModel.onBuyPackClicked("bwitch_moons_pack_10")
+            viewModel.onPurchaseCompleted(
+                GooglePlayPurchase(
+                    productId = "bwitch_moons_pack_10",
+                    purchaseToken = "token",
+                    orderId = "order-1",
+                    purchaseTime = 123L,
+                    purchaseState = 0,
+                ),
+            )
+            advanceUntilIdle()
+
+            assertTrue(effects.contains(MoonStoreUiEffect.RefreshEconomy))
+            assertTrue(effects.contains(MoonStoreUiEffect.ConsumeMoonPackPurchase("token")))
+            assertEquals(STORE_PURCHASE_COMPLETED_KEY, viewModel.uiState.value.feedbackMessage)
+
+            viewModel.onConsumeFailed()
+            assertEquals(STORE_PURCHASE_COMPLETED_WITH_CONSUME_FAILED_KEY, viewModel.uiState.value.feedbackMessage)
+            assertFalse(viewModel.uiState.value.isPurchaseInProgress)
 
             collectJob.cancel()
         } finally {

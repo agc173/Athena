@@ -32,6 +32,7 @@ import com.agc.bwitch.domain.moons.MoonPackProductStatus
 import com.agc.bwitch.presentation.moons.MoonStoreUiEffect
 import com.agc.bwitch.presentation.moons.STORE_PURCHASE_CANCELLED_KEY
 import com.agc.bwitch.presentation.moons.STORE_PURCHASE_COMPLETED_KEY
+import com.agc.bwitch.presentation.moons.STORE_PURCHASE_COMPLETED_WITH_CONSUME_FAILED_KEY
 import com.agc.bwitch.presentation.moons.STORE_PURCHASE_CONSUME_FAILED_KEY
 import com.agc.bwitch.presentation.moons.STORE_PURCHASE_FAILED_KEY
 import com.agc.bwitch.presentation.moons.STORE_PURCHASE_PENDING_KEY
@@ -340,6 +341,8 @@ private fun String.toLocalizedFeedback(strings: ProfileStrings): String = when (
     STORE_PURCHASE_PENDING_KEY -> strings.storePurchasePendingFeedback
     STORE_PURCHASE_FAILED_KEY -> strings.storePurchaseFailedFeedback
     STORE_PURCHASE_COMPLETED_KEY -> strings.storePurchaseCompletedFeedback
+    STORE_PURCHASE_COMPLETED_WITH_CONSUME_FAILED_KEY ->
+        "${strings.storePurchaseCompletedFeedback} ${strings.storePurchaseConsumeFailedFeedback}"
     STORE_PURCHASE_CONSUME_FAILED_KEY -> strings.storePurchaseConsumeFailedFeedback
     STORE_LOAD_ERROR_KEY -> strings.storeLoadErrorFeedback
     else -> this
