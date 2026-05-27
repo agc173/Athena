@@ -1,6 +1,7 @@
 package com.agc.bwitch
 
 import android.os.Bundle
+import android.content.Intent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -10,10 +11,12 @@ import com.agc.bwitch.data.moons.billing.googleplay.GooglePlayMoonPackBillingDat
 import org.koin.compose.koinInject
 import org.koin.java.KoinJavaComponent.inject
 import com.agc.bwitch.presentation.navigation.Navigator
+import com.agc.bwitch.notifications.PushIntentRouter
 
 class MainActivity : ComponentActivity() {
     private val rewardedAdsService: AndroidRewardedAdsService by inject(AndroidRewardedAdsService::class.java)
     private val moonPackBillingDataSource: GooglePlayMoonPackBillingDataSource by inject(GooglePlayMoonPackBillingDataSource::class.java)
+    private val navigator: Navigator by inject(Navigator::class.java)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
@@ -32,6 +35,14 @@ class MainActivity : ComponentActivity() {
 
             App()
         }
+
+        PushIntentRouter.handle(intent, navigator)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        PushIntentRouter.handle(intent, navigator)
     }
 
     override fun onStart() {
