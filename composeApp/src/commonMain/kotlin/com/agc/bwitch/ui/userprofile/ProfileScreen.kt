@@ -56,7 +56,7 @@ import com.agc.bwitch.presentation.userprofile.UserProfileViewModel
 import com.agc.bwitch.presentation.userprofile.PROFILE_BIRTH_DATE_IN_FUTURE_ERROR_KEY
 import com.agc.bwitch.presentation.userprofile.PROFILE_BIRTH_DATE_INVALID_ERROR_KEY
 import com.agc.bwitch.presentation.userprofile.PROFILE_DESCRIPTION_TOO_LONG_ERROR_KEY
-import com.agc.bwitch.ui.common.ConstellationProgressCard
+import com.agc.bwitch.ui.common.AriesSimplifiedTemplate
 import com.agc.bwitch.ui.common.toVisualResource
 import com.agc.bwitch.ui.rituals.components.habitBadgeResourceFor
 import com.agc.bwitch.ui.theme.BWitchThemeTokens
@@ -297,21 +297,33 @@ fun ProfileScreen(
             shape = RoundedCornerShape(20.dp),
             color = extras.surfaceElevated,
             tonalElevation = 0.dp,
+            onClick = { /* Coming soon: detalle de constelaciones */ },
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = dimens.spacingMd, vertical = dimens.spacingMd),
-                verticalArrangement = Arrangement.spacedBy(dimens.spacingSm),
+                verticalArrangement = Arrangement.spacedBy(dimens.spacingXs),
             ) {
                 Text(
                     text = "Constelaciones",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                 )
-                ConstellationProgressCard(
-                    progressSteps = 5,
-                    totalSteps = 12,
+                Text(
+                    text = "Colección astral en progreso",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    text = "0/${AriesSimplifiedTemplate.totalSteps} luces despertadas",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                Text(
+                    text = "Próximamente podrás abrir el detalle de tu constelación.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = extras.textSecondary,
                 )
             }
         }
