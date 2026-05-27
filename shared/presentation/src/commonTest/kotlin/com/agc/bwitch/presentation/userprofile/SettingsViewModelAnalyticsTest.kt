@@ -10,7 +10,9 @@ import com.agc.bwitch.domain.notifications.PushNotificationPreferences
 import com.agc.bwitch.domain.notifications.PushPlatform
 import com.agc.bwitch.domain.notifications.PushRegistrationRepository
 import com.agc.bwitch.domain.notifications.PushTokenRegistration
+import com.agc.bwitch.domain.notifications.PushTestNotificationRepository
 import com.agc.bwitch.domain.notifications.RegisterPushTokenUseCase
+import com.agc.bwitch.domain.notifications.SendTestNotificationUseCase
 import com.agc.bwitch.domain.notifications.UpdatePushNotificationPreferencesUseCase
 import com.agc.bwitch.domain.settings.GetNotificationSettingsUseCase
 import com.agc.bwitch.domain.settings.GetSubscriptionCatalogUseCase
@@ -450,6 +452,7 @@ class SettingsViewModelAnalyticsTest {
         val notificationRepo = FakeNotificationSettingsRepository()
         val profileRepo = FakeUserProfileRepository()
         val pushRepo = FakePushRegistrationRepository()
+        val testPushRepo = FakePushTestNotificationRepository()
         return SettingsViewModel(
             observeUserProfile = ObserveUserProfileUseCase(profileRepo),
             getUserProfile = GetUserProfileUseCase(profileRepo),
@@ -466,6 +469,7 @@ class SettingsViewModelAnalyticsTest {
             validateGooglePlayPurchase = ValidateGooglePlayPurchaseUseCase(entitlements),
             registerPushToken = RegisterPushTokenUseCase(pushRepo),
             updatePushNotificationPreferences = UpdatePushNotificationPreferencesUseCase(pushRepo),
+            sendTestNotification = SendTestNotificationUseCase(testPushRepo),
             analyticsTracker = analytics,
         )
     }
@@ -536,6 +540,10 @@ class SettingsViewModelAnalyticsTest {
         override suspend fun unregisterToken(token: String, platform: PushPlatform) = Unit
         override suspend fun updatePreferences(preferences: PushNotificationPreferences) = Unit
     }
+    private class FakePushTestNotificationRepository : PushTestNotificationRepository {
+        override suspend fun sendTestNotification() = Unit
+    }
+
     private class FakeUserProfileRepository : UserProfileRepository {
         override fun observeUserProfile(): Flow<UserProfile?> = MutableStateFlow(null)
         override suspend fun getUserProfile(): UserProfile? = null
