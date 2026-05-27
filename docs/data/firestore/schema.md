@@ -626,6 +626,23 @@ Notas:
 - `globalEnabled=false` representa toggle global OFF sin eliminar token.
 - Fuente authoritativa backend para decisión de envío.
 
+
+### /users/{uid}/pushNotificationSends/{dateIso_daily_horoscope}
+Registro idempotente de envíos scheduler por usuario/campaña diaria.
+
+Campos:
+- type: string (`"daily_horoscope"`)
+- dateIso: string (formato `YYYY-MM-DD`, Europe/Madrid)
+- sentAt: timestamp
+- status: string (`reserved | sent | failed_*`)
+- campaignId: string (ej. `daily_horoscope_YYYY-MM-DD`)
+
+Notas:
+- `docId = {dateIso}_daily_horoscope` en V1 para hard cap 1 envío/día por usuario.
+- El scheduler crea el doc con `create()` antes de enviar para idempotencia.
+- Si el doc ya existe, el envío se omite.
+- Consulta de selección en scheduler: `collectionGroup('pushTokens').where('enabled', '==', true)`; según proyecto puede requerir índice de collection group en Firestore.
+
 ### /users/{uid}/pushTokens/{tokenHash}
 Registro de tokens push por dispositivo/token.
 

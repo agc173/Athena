@@ -5,3 +5,4 @@ export * from './callables/unregisterPushToken';
 export * from './callables/updateNotificationPreferences';
 
 export * from './callables/sendTestNotification';
+export * from './schedulers/sendDailyHoroscopeNotifications';
