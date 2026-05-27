@@ -62,8 +62,8 @@ import com.agc.bwitch.presentation.userprofile.UserProfileViewModel
 import com.agc.bwitch.presentation.userprofile.PROFILE_BIRTH_DATE_IN_FUTURE_ERROR_KEY
 import com.agc.bwitch.presentation.userprofile.PROFILE_BIRTH_DATE_INVALID_ERROR_KEY
 import com.agc.bwitch.presentation.userprofile.PROFILE_DESCRIPTION_TOO_LONG_ERROR_KEY
-import com.agc.bwitch.ui.common.AriesSimplifiedTemplate
 import com.agc.bwitch.ui.common.ConstellationBadgeCard
+import com.agc.bwitch.ui.common.ZodiacStylizedTemplates
 import com.agc.bwitch.ui.common.toVisualResource
 import com.agc.bwitch.ui.rituals.components.habitBadgeResourceFor
 import com.agc.bwitch.ui.theme.BWitchThemeTokens
@@ -417,30 +417,15 @@ fun ProfileScreen(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    val zodiacPlaceholders = listOf(
-                        "Taurus",
-                        "Gemini",
-                        "Cancer",
-                        "Leo",
-                        "Virgo",
-                        "Libra",
-                        "Scorpio",
-                        "Sagittarius",
-                        "Capricorn",
-                        "Aquarius",
-                        "Pisces",
-                    )
+                    val demoProgressBySign = mapOf("Aries" to 3, "Scorpio" to 2, "Aquarius" to 1)
                     LazyVerticalGrid(
                         columns = GridCells.Adaptive(minSize = 170.dp),
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                         modifier = Modifier.weight(1f),
                     ) {
-                        item {
-                            ConstellationBadgeCard(template = AriesSimplifiedTemplate, progressSteps = 3)
-                        }
-                        items(zodiacPlaceholders) { signName ->
-                            ZodiacPlaceholderBadgeCard(signName = signName)
+                        items(ZodiacStylizedTemplates) { template ->
+                            ConstellationBadgeCard(template = template, progressSteps = demoProgressBySign[template.name] ?: 0)
                         }
                     }
                     Button(onClick = { showConstellationsDialog = false }, modifier = Modifier.align(Alignment.End)) { Text("Cerrar") }
@@ -450,34 +435,6 @@ fun ProfileScreen(
     }
 }
 
-
-@Composable
-private fun ZodiacPlaceholderBadgeCard(signName: String, modifier: Modifier = Modifier) {
-    Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(22.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.38f)),
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            Text(text = signName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-            Text(text = "Próximamente", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(1.05f)
-                    .border(width = 1.dp, color = MaterialTheme.colorScheme.outline.copy(alpha = 0.35f), shape = RoundedCornerShape(18.dp)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(text = "🔒", style = MaterialTheme.typography.headlineMedium)
-            }
-        }
-    }
-}
 
 private fun String.toProfileUiText(strings: AppStrings): String = when (this) {
     PROFILE_BIRTH_DATE_INVALID_ERROR_KEY -> strings.profile.birthDateFormatError

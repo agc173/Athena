@@ -48,31 +48,85 @@ data class ConstellationTemplate(
     val totalSteps: Int get() = revealSteps.size
 }
 
-// TODO:
-// Las coordenadas finales de cada signo deben derivarse de referencias/SVG aprobados.
-// No generar constelaciones zodiacales inventadas manualmente.
-val AriesSimplifiedTemplate = ConstellationTemplate(
-    name = "Aries",
-    nodes = listOf(
-        ConstellationNode(0.18f, 0.56f),
-        ConstellationNode(0.36f, 0.36f),
-        ConstellationNode(0.60f, 0.50f),
-        ConstellationNode(0.80f, 0.76f),
-    ),
-    edges = listOf(
-        ConstellationEdge(0, 1),
-        ConstellationEdge(1, 2),
-        ConstellationEdge(2, 3),
-    ),
-    revealSteps = listOf(
-        RevealStep.Node(0),
-        RevealStep.Edge(0),
-        RevealStep.Node(1),
-        RevealStep.Edge(1),
-        RevealStep.Node(2),
-        RevealStep.Edge(2),
-        RevealStep.Node(3),
-    ),
+private fun template(name: String, nodes: List<ConstellationNode>, edges: List<ConstellationEdge>) =
+    ConstellationTemplate(name = name, nodes = nodes, edges = edges, revealSteps = buildRevealSteps(nodes.size, edges))
+
+private fun buildRevealSteps(nodeCount: Int, edges: List<ConstellationEdge>): List<RevealStep> = buildList {
+    if (nodeCount == 0) return@buildList
+    add(RevealStep.Node(0))
+    edges.forEachIndexed { edgeIndex, edge ->
+        add(RevealStep.Edge(edgeIndex))
+        add(RevealStep.Node(edge.to))
+    }
+    (1 until nodeCount).filter { nodeIndex -> edges.none { it.to == nodeIndex } }.forEach { add(RevealStep.Node(it)) }
+}
+
+// Nota UX importante: estas geometrías son estilizaciones zodiacales para identidad visual.
+// No representan posiciones astronómicas reales.
+val AriesSimplifiedTemplate = template(
+    "Aries",
+    listOf(ConstellationNode(0.18f, 0.72f), ConstellationNode(0.33f, 0.38f), ConstellationNode(0.52f, 0.26f), ConstellationNode(0.64f, 0.45f), ConstellationNode(0.76f, 0.28f), ConstellationNode(0.86f, 0.40f)),
+    listOf(ConstellationEdge(0, 1), ConstellationEdge(1, 2), ConstellationEdge(2, 3), ConstellationEdge(3, 4), ConstellationEdge(4, 5)),
+)
+val TaurusStylizedTemplate = template(
+    "Taurus",
+    listOf(ConstellationNode(0.24f, 0.62f), ConstellationNode(0.40f, 0.44f), ConstellationNode(0.50f, 0.30f), ConstellationNode(0.62f, 0.43f), ConstellationNode(0.76f, 0.60f), ConstellationNode(0.60f, 0.72f), ConstellationNode(0.38f, 0.72f)),
+    listOf(ConstellationEdge(0, 1), ConstellationEdge(1, 2), ConstellationEdge(2, 3), ConstellationEdge(3, 4), ConstellationEdge(4, 5), ConstellationEdge(5, 6), ConstellationEdge(6, 0)),
+)
+val GeminiStylizedTemplate = template(
+    "Gemini",
+    listOf(ConstellationNode(0.30f, 0.24f), ConstellationNode(0.30f, 0.78f), ConstellationNode(0.70f, 0.24f), ConstellationNode(0.70f, 0.78f), ConstellationNode(0.45f, 0.24f), ConstellationNode(0.55f, 0.78f)),
+    listOf(ConstellationEdge(0, 4), ConstellationEdge(4, 2), ConstellationEdge(1, 5), ConstellationEdge(5, 3), ConstellationEdge(0, 1), ConstellationEdge(2, 3)),
+)
+val CancerStylizedTemplate = template(
+    "Cancer",
+    listOf(ConstellationNode(0.26f, 0.42f), ConstellationNode(0.42f, 0.30f), ConstellationNode(0.58f, 0.44f), ConstellationNode(0.74f, 0.58f), ConstellationNode(0.58f, 0.72f), ConstellationNode(0.40f, 0.62f), ConstellationNode(0.30f, 0.52f)),
+    listOf(ConstellationEdge(0, 1), ConstellationEdge(1, 2), ConstellationEdge(2, 3), ConstellationEdge(3, 4), ConstellationEdge(4, 5), ConstellationEdge(5, 6), ConstellationEdge(6, 0)),
+)
+val LeoStylizedTemplate = template(
+    "Leo",
+    listOf(ConstellationNode(0.24f, 0.60f), ConstellationNode(0.36f, 0.44f), ConstellationNode(0.52f, 0.34f), ConstellationNode(0.66f, 0.42f), ConstellationNode(0.74f, 0.58f), ConstellationNode(0.64f, 0.72f), ConstellationNode(0.48f, 0.70f), ConstellationNode(0.36f, 0.62f)),
+    listOf(ConstellationEdge(0, 1), ConstellationEdge(1, 2), ConstellationEdge(2, 3), ConstellationEdge(3, 4), ConstellationEdge(4, 5), ConstellationEdge(5, 6), ConstellationEdge(6, 7), ConstellationEdge(7, 0), ConstellationEdge(2, 6)),
+)
+val VirgoStylizedTemplate = template(
+    "Virgo",
+    listOf(ConstellationNode(0.22f, 0.26f), ConstellationNode(0.22f, 0.74f), ConstellationNode(0.42f, 0.26f), ConstellationNode(0.42f, 0.74f), ConstellationNode(0.58f, 0.34f), ConstellationNode(0.58f, 0.68f), ConstellationNode(0.72f, 0.52f), ConstellationNode(0.82f, 0.62f)),
+    listOf(ConstellationEdge(0, 1), ConstellationEdge(2, 3), ConstellationEdge(1, 3), ConstellationEdge(2, 4), ConstellationEdge(4, 5), ConstellationEdge(5, 6), ConstellationEdge(6, 7)),
+)
+val LibraStylizedTemplate = template(
+    "Libra",
+    listOf(ConstellationNode(0.22f, 0.68f), ConstellationNode(0.78f, 0.68f), ConstellationNode(0.34f, 0.48f), ConstellationNode(0.50f, 0.36f), ConstellationNode(0.66f, 0.48f), ConstellationNode(0.50f, 0.68f)),
+    listOf(ConstellationEdge(0, 5), ConstellationEdge(5, 1), ConstellationEdge(2, 3), ConstellationEdge(3, 4), ConstellationEdge(2, 5), ConstellationEdge(4, 5)),
+)
+val ScorpioStylizedTemplate = template(
+    "Scorpio",
+    listOf(ConstellationNode(0.22f, 0.26f), ConstellationNode(0.22f, 0.74f), ConstellationNode(0.40f, 0.26f), ConstellationNode(0.40f, 0.74f), ConstellationNode(0.58f, 0.34f), ConstellationNode(0.58f, 0.62f), ConstellationNode(0.72f, 0.62f), ConstellationNode(0.84f, 0.46f)),
+    listOf(ConstellationEdge(0, 1), ConstellationEdge(2, 3), ConstellationEdge(1, 3), ConstellationEdge(2, 4), ConstellationEdge(4, 5), ConstellationEdge(5, 6), ConstellationEdge(6, 7)),
+)
+val SagittariusStylizedTemplate = template(
+    "Sagittarius",
+    listOf(ConstellationNode(0.24f, 0.72f), ConstellationNode(0.56f, 0.40f), ConstellationNode(0.80f, 0.20f), ConstellationNode(0.80f, 0.40f), ConstellationNode(0.60f, 0.20f), ConstellationNode(0.40f, 0.56f), ConstellationNode(0.24f, 0.40f)),
+    listOf(ConstellationEdge(0, 1), ConstellationEdge(1, 2), ConstellationEdge(2, 3), ConstellationEdge(2, 4), ConstellationEdge(1, 5), ConstellationEdge(5, 6)),
+)
+val CapricornStylizedTemplate = template(
+    "Capricorn",
+    listOf(ConstellationNode(0.22f, 0.70f), ConstellationNode(0.30f, 0.32f), ConstellationNode(0.46f, 0.58f), ConstellationNode(0.60f, 0.34f), ConstellationNode(0.74f, 0.50f), ConstellationNode(0.70f, 0.72f), ConstellationNode(0.54f, 0.74f)),
+    listOf(ConstellationEdge(0, 1), ConstellationEdge(1, 2), ConstellationEdge(2, 3), ConstellationEdge(3, 4), ConstellationEdge(4, 5), ConstellationEdge(5, 6), ConstellationEdge(6, 2)),
+)
+val AquariusStylizedTemplate = template(
+    "Aquarius",
+    listOf(ConstellationNode(0.20f, 0.40f), ConstellationNode(0.36f, 0.30f), ConstellationNode(0.52f, 0.42f), ConstellationNode(0.68f, 0.32f), ConstellationNode(0.84f, 0.44f), ConstellationNode(0.20f, 0.64f), ConstellationNode(0.36f, 0.54f), ConstellationNode(0.52f, 0.66f), ConstellationNode(0.68f, 0.56f), ConstellationNode(0.84f, 0.68f)),
+    listOf(ConstellationEdge(0, 1), ConstellationEdge(1, 2), ConstellationEdge(2, 3), ConstellationEdge(3, 4), ConstellationEdge(5, 6), ConstellationEdge(6, 7), ConstellationEdge(7, 8), ConstellationEdge(8, 9)),
+)
+val PiscesStylizedTemplate = template(
+    "Pisces",
+    listOf(ConstellationNode(0.28f, 0.28f), ConstellationNode(0.28f, 0.72f), ConstellationNode(0.72f, 0.28f), ConstellationNode(0.72f, 0.72f), ConstellationNode(0.50f, 0.50f)),
+    listOf(ConstellationEdge(0, 4), ConstellationEdge(4, 3), ConstellationEdge(1, 4), ConstellationEdge(4, 2), ConstellationEdge(0, 1), ConstellationEdge(2, 3)),
+)
+
+val ZodiacStylizedTemplates = listOf(
+    AriesSimplifiedTemplate, TaurusStylizedTemplate, GeminiStylizedTemplate, CancerStylizedTemplate, LeoStylizedTemplate, VirgoStylizedTemplate,
+    LibraStylizedTemplate, ScorpioStylizedTemplate, SagittariusStylizedTemplate, CapricornStylizedTemplate, AquariusStylizedTemplate, PiscesStylizedTemplate,
 )
 
 @Composable
