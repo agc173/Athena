@@ -9,6 +9,7 @@ import com.agc.bwitch.domain.notifications.PushNotificationPreferences
 import com.agc.bwitch.domain.notifications.PushPlatform
 import com.agc.bwitch.domain.notifications.PushTokenRegistration
 import com.agc.bwitch.domain.notifications.RegisterPushTokenUseCase
+import com.agc.bwitch.domain.notifications.SendTestNotificationUseCase
 import com.agc.bwitch.domain.notifications.UpdatePushNotificationPreferencesUseCase
 import com.agc.bwitch.domain.settings.GetNotificationSettingsUseCase
 import com.agc.bwitch.domain.settings.GooglePlayPurchase
@@ -79,6 +80,8 @@ enum class SettingsFeedback {
     DeleteAccountComingSoon,
     NotificationsPermissionDenied,
     NotificationsUnavailable,
+    TestPushSent,
+    TestPushFailed,
 }
 
 data class SubscriptionPlanUi(
@@ -145,6 +148,7 @@ class SettingsViewModel(
     private val validateGooglePlayPurchase: ValidateGooglePlayPurchaseUseCase,
     private val registerPushToken: RegisterPushTokenUseCase,
     private val updatePushNotificationPreferences: UpdatePushNotificationPreferencesUseCase,
+    private val sendTestNotification: SendTestNotificationUseCase,
     private val analyticsTracker: AnalyticsTracker = NoOpAnalyticsTracker,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -310,6 +314,14 @@ class SettingsViewModel(
 
     fun onHabitsEnabledChanged(enabled: Boolean) {
         updateLocalAndRemoteNotificationSettings { it.copy(habitsEnabled = enabled) }
+    }
+
+    fun onSendTestNotificationClicked() {
+        scope.launch {
+            runCatching { sendTestNotification() }
+                .onSuccess { _uiState.update { it.copy(feedback = SettingsFeedback.TestPushSent) } }
+                .onFailure { _uiState.update { it.copy(feedback = SettingsFeedback.TestPushFailed) } }
+        }
     }
 
     fun onPushPermissionAndTokenResolved(permissionGranted: Boolean, token: String?) {

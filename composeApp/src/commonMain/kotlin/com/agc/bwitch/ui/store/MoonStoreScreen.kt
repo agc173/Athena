@@ -106,7 +106,9 @@ fun MoonStoreScreen(
             SettingsFeedback.RestorePurchasesNoPurchases -> settingsStrings.subscriptionRestoreNoPurchases
             SettingsFeedback.DeleteAccountComingSoon -> settingsStrings.deleteAccountComingSoonFeedback
             SettingsFeedback.NotificationsPermissionDenied,
-            SettingsFeedback.NotificationsUnavailable -> return@LaunchedEffect
+            SettingsFeedback.NotificationsUnavailable,
+            SettingsFeedback.TestPushSent,
+            SettingsFeedback.TestPushFailed -> return@LaunchedEffect
         }
         println("BWITCH_PREMIUM_DEBUG restore_feedback=$feedback")
         snackbarHostState.showSnackbar(message)
