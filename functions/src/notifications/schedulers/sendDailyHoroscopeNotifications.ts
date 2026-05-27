@@ -6,14 +6,30 @@ import {randomUUID} from 'node:crypto';
 import {DateTime} from 'luxon';
 import {ENV} from '../../config/env';
 
+const FALLBACK_TIMEZONE = 'Europe/Madrid';
+const TARGET_HOUR = 9;
+const TARGET_MINUTE = 30;
+const WINDOW_MINUTES = 30;
+
 function isInvalidTokenErrorCode(code: string | undefined): boolean {
   return code === 'messaging/registration-token-not-registered' ||
     code === 'messaging/invalid-registration-token';
 }
 
+function resolveTimezone(value: unknown): string {
+  if (typeof value !== 'string' || value.trim().length === 0) return FALLBACK_TIMEZONE;
+  const zone = value.trim();
+  return DateTime.now().setZone(zone).isValid ? zone : FALLBACK_TIMEZONE;
+}
+
+function shouldSendForLocalTime(nowLocal: DateTime): boolean {
+  if (nowLocal.hour !== TARGET_HOUR) return false;
+  return nowLocal.minute >= TARGET_MINUTE && nowLocal.minute < TARGET_MINUTE + WINDOW_MINUTES;
+}
+
 export const sendDailyHoroscopeNotifications = onSchedule({
-  schedule: 'every day 09:30',
-  timeZone: 'Europe/Madrid',
+  schedule: 'every 30 minutes',
+  timeZone: 'UTC',
   region: 'europe-west1',
   retryCount: 0,
   timeoutSeconds: 540,
@@ -27,10 +43,6 @@ export const sendDailyHoroscopeNotifications = onSchedule({
   }
 
   const db = getFirestore();
-  const dateIso = DateTime.now().setZone('Europe/Madrid').toISODate();
-  if (!dateIso) throw new Error('Unable to resolve dateIso for Europe/Madrid');
-
-  const campaignId = `daily_horoscope_${dateIso}`;
   const sentAtIso = new Date().toISOString();
   const title = 'Tu horóscopo diario está listo';
   const body = 'Descubre la energía de hoy en BWitch ✨';
@@ -41,8 +53,7 @@ export const sendDailyHoroscopeNotifications = onSchedule({
   let skipped = 0;
   let errors = 0;
 
-  // NOTE: This collectionGroup query may require a Firestore collection-group index
-  // for pushTokens.enabled depending on project index state.
+  // NOTE: This collectionGroup query may require a Firestore collection-group index for pushTokens.enabled depending on project index state.
   const tokensSnapshot = await db.collectionGroup('pushTokens')
     .where('enabled', '==', true)
     .get();
@@ -60,6 +71,22 @@ export const sendDailyHoroscopeNotifications = onSchedule({
     }
 
     try {
+      const timezone = resolveTimezone(tokenDoc.get('timezone'));
+      const nowLocal = DateTime.now().setZone(timezone);
+
+      if (!shouldSendForLocalTime(nowLocal)) {
+        skipped++;
+        continue;
+      }
+
+      const dateIso = nowLocal.toISODate();
+      if (!dateIso) {
+        skipped++;
+        continue;
+      }
+
+      const campaignId = `daily_horoscope_${dateIso}`;
+
       const preferencesRef = db.collection('users').doc(uid).collection('notificationPreferences').doc('current');
       const preferencesDoc = await preferencesRef.get();
       const globalEnabled = preferencesDoc.exists ? preferencesDoc.get('globalEnabled') : false;
@@ -70,12 +97,9 @@ export const sendDailyHoroscopeNotifications = onSchedule({
         continue;
       }
 
-      // V1 hard cap (per-user, not per-device): one send reservation per user/day.
-      // This scheduler intentionally does not fan out to all user devices in V1.
       const sendDocId = `${dateIso}_daily_horoscope`;
       const sendRef = db.collection('users').doc(uid).collection('pushNotificationSends').doc(sendDocId);
 
-      let reservationCreated = false;
       try {
         await sendRef.create({
           type: 'daily_horoscope',
@@ -83,8 +107,8 @@ export const sendDailyHoroscopeNotifications = onSchedule({
           sentAt: FieldValue.serverTimestamp(),
           status: 'reserved',
           campaignId,
+          timezone,
         });
-        reservationCreated = true;
       } catch (error) {
         const code = (error as {code?: number})?.code;
         if (code === 6 || (error as Error).message.includes('Already exists')) {
@@ -92,11 +116,6 @@ export const sendDailyHoroscopeNotifications = onSchedule({
           continue;
         }
         throw error;
-      }
-
-      if (!reservationCreated) {
-        skipped++;
-        continue;
       }
 
       const token = tokenDoc.get('token');
@@ -194,8 +213,6 @@ export const sendDailyHoroscopeNotifications = onSchedule({
   }
 
   logger.info('sendDailyHoroscopeNotifications completed', {
-    dateIso,
-    campaignId,
     attempted,
     sent,
     failed,

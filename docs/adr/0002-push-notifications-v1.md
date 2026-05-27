@@ -16,3 +16,10 @@ Se habilita Push Notifications v1 con enfoque Android-first usando FCM, registro
 - Se reduce exposición de tokens al cliente y se centraliza control en backend.
 - El backend puede deshabilitar/limpiar tokens inválidos sin intervención del cliente.
 - Queda preparado `unregister token` para logout futuro sin acoplarlo al toggle de preferencias.
+
+
+## Actualización 2026-05-27 — Scheduler diario v1 (horóscopo)
+- El scheduler diario se ejecuta periódicamente cada 30 minutos (UTC) y evalúa cada token habilitado según `token.timezone`.
+- Ventana de envío v1 fija: `09:30-09:59` hora local del usuario (`targetHour=9`, `targetMinute=30`, `windowMinutes=30`).
+- Fallback de timezone: `Europe/Madrid` cuando `timezone` falta o es inválida.
+- Idempotencia diaria por usuario se mantiene con `pushNotificationSends/{dateIso}_daily_horoscope`, donde `dateIso` se calcula en la zona local efectiva del usuario.

@@ -12,6 +12,7 @@ import androidx.compose.runtime.setValue
 import com.agc.bwitch.notifications.AndroidPushNotificationManager
 import com.agc.bwitch.presentation.userprofile.SettingsViewModel
 import kotlinx.coroutines.launch
+import kotlinx.datetime.TimeZone
 import org.koin.compose.koinInject
 
 @Composable
@@ -24,7 +25,8 @@ actual fun rememberHandlePushPermissionRequest(viewModel: SettingsViewModel): su
         pendingAfterPermission = false
         scope.launch {
             val token = if (granted && pushManager.areNotificationsEnabled()) pushManager.getCurrentToken() else null
-            viewModel.onPushPermissionAndTokenResolved(permissionGranted = granted, token = token)
+            val timezone = TimeZone.currentSystemDefault().id
+            viewModel.onPushPermissionAndTokenResolved(permissionGranted = granted, token = token, timezone = timezone)
         }
     }
 
@@ -33,10 +35,10 @@ actual fun rememberHandlePushPermissionRequest(viewModel: SettingsViewModel): su
             pendingAfterPermission = true
             launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
         } else if (!pushManager.areNotificationsEnabled()) {
-            viewModel.onPushPermissionAndTokenResolved(permissionGranted = false, token = null)
+            viewModel.onPushPermissionAndTokenResolved(permissionGranted = false, token = null, timezone = TimeZone.currentSystemDefault().id)
         } else {
             val token = pushManager.getCurrentToken()
-            viewModel.onPushPermissionAndTokenResolved(permissionGranted = true, token = token)
+            viewModel.onPushPermissionAndTokenResolved(permissionGranted = true, token = token, timezone = TimeZone.currentSystemDefault().id)
         }
     }
 }

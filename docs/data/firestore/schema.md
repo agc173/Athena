@@ -632,7 +632,7 @@ Registro idempotente de envíos scheduler por usuario/campaña diaria.
 
 Campos:
 - type: string (`"daily_horoscope"`)
-- dateIso: string (formato `YYYY-MM-DD`, Europe/Madrid)
+- dateIso: string (formato `YYYY-MM-DD` en timezone local del token; fallback Europe/Madrid)
 - sentAt: timestamp
 - status: string (`reserved | sent | failed_*`)
 - campaignId: string (ej. `daily_horoscope_YYYY-MM-DD`)
@@ -652,7 +652,7 @@ Campos:
 - platform: string (`"android" | "ios"`)
 - appVersion: string (opcional)
 - locale: string (opcional)
-- timezone: string (opcional)
+- timezone: string (opcional, IANA TZDB p.ej. `Europe/Madrid`; usado por scheduler daily para ventana 09:30 local)
 - permissionGranted: boolean
 - enabled: boolean
 - lastSeenAt: timestamp
