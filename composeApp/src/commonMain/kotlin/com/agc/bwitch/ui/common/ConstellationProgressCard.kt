@@ -271,8 +271,28 @@ val AquariusStylizedTemplate = template(
 )
 val PiscesStylizedTemplate = template(
     "Pisces",
-    listOf(ConstellationNode(0.28f, 0.28f), ConstellationNode(0.28f, 0.72f), ConstellationNode(0.72f, 0.28f), ConstellationNode(0.72f, 0.72f), ConstellationNode(0.50f, 0.50f)),
-    listOf(ConstellationEdge(0, 4), ConstellationEdge(4, 3), ConstellationEdge(1, 4), ConstellationEdge(4, 2), ConstellationEdge(0, 1), ConstellationEdge(2, 3)),
+    listOf(
+        ConstellationNode(0.116f, 0.491f),
+        ConstellationNode(0.250f, 0.278f),
+        ConstellationNode(0.273f, 0.095f),
+        ConstellationNode(0.471f, 0.278f),
+        ConstellationNode(0.522f, 0.488f),
+        ConstellationNode(0.472f, 0.699f),
+        ConstellationNode(0.273f, 0.882f),
+        ConstellationNode(0.251f, 0.699f),
+        ConstellationNode(0.847f, 0.488f),
+    ),
+    listOf(
+        ConstellationEdge(0, 1),
+        ConstellationEdge(1, 2),
+        ConstellationEdge(2, 3),
+        ConstellationEdge(3, 4),
+        ConstellationEdge(4, 5),
+        ConstellationEdge(5, 6),
+        ConstellationEdge(6, 7),
+        ConstellationEdge(7, 0),
+        ConstellationEdge(4, 8),
+    ),
 )
 
 val ZodiacStylizedTemplates = listOf(
