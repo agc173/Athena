@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -60,8 +61,19 @@ import com.agc.bwitch.presentation.userprofile.UserProfileViewModel
 import com.agc.bwitch.presentation.userprofile.PROFILE_BIRTH_DATE_IN_FUTURE_ERROR_KEY
 import com.agc.bwitch.presentation.userprofile.PROFILE_BIRTH_DATE_INVALID_ERROR_KEY
 import com.agc.bwitch.presentation.userprofile.PROFILE_DESCRIPTION_TOO_LONG_ERROR_KEY
+import com.agc.bwitch.ui.common.AquariusSimplifiedTemplate
 import com.agc.bwitch.ui.common.AriesSimplifiedTemplate
+import com.agc.bwitch.ui.common.CancerSimplifiedTemplate
+import com.agc.bwitch.ui.common.CapricornSimplifiedTemplate
 import com.agc.bwitch.ui.common.ConstellationBadgeCard
+import com.agc.bwitch.ui.common.GeminiSimplifiedTemplate
+import com.agc.bwitch.ui.common.LeoSimplifiedTemplate
+import com.agc.bwitch.ui.common.LibraSimplifiedTemplate
+import com.agc.bwitch.ui.common.PiscesSimplifiedTemplate
+import com.agc.bwitch.ui.common.SagittariusSimplifiedTemplate
+import com.agc.bwitch.ui.common.ScorpioSimplifiedTemplate
+import com.agc.bwitch.ui.common.TaurusSimplifiedTemplate
+import com.agc.bwitch.ui.common.VirgoSimplifiedTemplate
 import com.agc.bwitch.ui.common.toVisualResource
 import com.agc.bwitch.ui.rituals.components.habitBadgeResourceFor
 import com.agc.bwitch.ui.theme.BWitchThemeTokens
@@ -415,17 +427,28 @@ fun ProfileScreen(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                    val demoTemplates = listOf(
+                        AriesSimplifiedTemplate to 3,
+                        TaurusSimplifiedTemplate to 0,
+                        GeminiSimplifiedTemplate to 0,
+                        CancerSimplifiedTemplate to 0,
+                        LeoSimplifiedTemplate to 0,
+                        VirgoSimplifiedTemplate to 0,
+                        LibraSimplifiedTemplate to 0,
+                        ScorpioSimplifiedTemplate to 0,
+                        SagittariusSimplifiedTemplate to 0,
+                        CapricornSimplifiedTemplate to 0,
+                        AquariusSimplifiedTemplate to 0,
+                        PiscesSimplifiedTemplate to 0,
+                    )
                     LazyVerticalGrid(
                         columns = GridCells.Adaptive(minSize = 170.dp),
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                         modifier = Modifier.weight(1f),
                     ) {
-                        item {
-                            ConstellationBadgeCard(
-                                template = AriesSimplifiedTemplate,
-                                progressSteps = 0,
-                            )
+                        items(demoTemplates) { (template, progress) ->
+                            ConstellationBadgeCard(template = template, progressSteps = progress)
                         }
                     }
                     Button(onClick = { showConstellationsDialog = false }, modifier = Modifier.align(Alignment.End)) { Text("Cerrar") }
