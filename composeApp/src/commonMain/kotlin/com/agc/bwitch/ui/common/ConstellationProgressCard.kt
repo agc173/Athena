@@ -106,13 +106,47 @@ val LibraStylizedTemplate = template(
 )
 val ScorpioStylizedTemplate = template(
     "Scorpio",
-    listOf(ConstellationNode(0.22f, 0.26f), ConstellationNode(0.22f, 0.74f), ConstellationNode(0.40f, 0.26f), ConstellationNode(0.40f, 0.74f), ConstellationNode(0.58f, 0.34f), ConstellationNode(0.58f, 0.62f), ConstellationNode(0.72f, 0.62f), ConstellationNode(0.84f, 0.46f)),
-    listOf(ConstellationEdge(0, 1), ConstellationEdge(2, 3), ConstellationEdge(1, 3), ConstellationEdge(2, 4), ConstellationEdge(4, 5), ConstellationEdge(5, 6), ConstellationEdge(6, 7)),
+    listOf(
+        ConstellationNode(0.12f, 0.28f),
+        ConstellationNode(0.12f, 0.52f),
+        ConstellationNode(0.28f, 0.34f),
+        ConstellationNode(0.28f, 0.64f),
+        ConstellationNode(0.46f, 0.42f),
+        ConstellationNode(0.46f, 0.72f),
+        ConstellationNode(0.62f, 0.56f),
+        ConstellationNode(0.76f, 0.72f),
+        ConstellationNode(0.90f, 0.52f),
+    ),
+    listOf(
+        ConstellationEdge(0,1),
+        ConstellationEdge(1,3),
+        ConstellationEdge(2,3),
+        ConstellationEdge(2,4),
+        ConstellationEdge(4,5),
+        ConstellationEdge(5,6),
+        ConstellationEdge(6,7),
+        ConstellationEdge(7,8),
+    ),
 )
 val SagittariusStylizedTemplate = template(
     "Sagittarius",
-    listOf(ConstellationNode(0.24f, 0.72f), ConstellationNode(0.56f, 0.40f), ConstellationNode(0.80f, 0.20f), ConstellationNode(0.80f, 0.40f), ConstellationNode(0.60f, 0.20f), ConstellationNode(0.40f, 0.56f), ConstellationNode(0.24f, 0.40f)),
-    listOf(ConstellationEdge(0, 1), ConstellationEdge(1, 2), ConstellationEdge(2, 3), ConstellationEdge(2, 4), ConstellationEdge(1, 5), ConstellationEdge(5, 6)),
+    listOf(
+        ConstellationNode(0.18f, 0.78f),
+        ConstellationNode(0.44f, 0.52f),
+        ConstellationNode(0.72f, 0.26f),
+        ConstellationNode(0.74f, 0.46f),
+        ConstellationNode(0.88f, 0.24f),
+        ConstellationNode(0.58f, 0.18f),
+        ConstellationNode(0.30f, 0.36f),
+    ),
+    listOf(
+        ConstellationEdge(0,1),
+        ConstellationEdge(1,2),
+        ConstellationEdge(2,3),
+        ConstellationEdge(2,4),
+        ConstellationEdge(2,5),
+        ConstellationEdge(1,6),
+    ),
 )
 val CapricornStylizedTemplate = template(
     "Capricorn",
@@ -121,8 +155,34 @@ val CapricornStylizedTemplate = template(
 )
 val AquariusStylizedTemplate = template(
     "Aquarius",
-    listOf(ConstellationNode(0.20f, 0.40f), ConstellationNode(0.36f, 0.30f), ConstellationNode(0.52f, 0.42f), ConstellationNode(0.68f, 0.32f), ConstellationNode(0.84f, 0.44f), ConstellationNode(0.20f, 0.64f), ConstellationNode(0.36f, 0.54f), ConstellationNode(0.52f, 0.66f), ConstellationNode(0.68f, 0.56f), ConstellationNode(0.84f, 0.68f)),
-    listOf(ConstellationEdge(0, 1), ConstellationEdge(1, 2), ConstellationEdge(2, 3), ConstellationEdge(3, 4), ConstellationEdge(5, 6), ConstellationEdge(6, 7), ConstellationEdge(7, 8), ConstellationEdge(8, 9)),
+    listOf(
+        ConstellationNode(0.10f, 0.38f),
+        ConstellationNode(0.24f, 0.30f),
+        ConstellationNode(0.36f, 0.42f),
+        ConstellationNode(0.48f, 0.32f),
+        ConstellationNode(0.60f, 0.44f),
+        ConstellationNode(0.74f, 0.34f),
+        ConstellationNode(0.88f, 0.46f),
+        ConstellationNode(0.12f, 0.62f),
+        ConstellationNode(0.26f, 0.54f),
+        ConstellationNode(0.40f, 0.66f),
+        ConstellationNode(0.54f, 0.56f),
+        ConstellationNode(0.68f, 0.68f),
+        ConstellationNode(0.82f, 0.58f),
+    ),
+    listOf(
+        ConstellationEdge(0,1),
+        ConstellationEdge(1,2),
+        ConstellationEdge(2,3),
+        ConstellationEdge(3,4),
+        ConstellationEdge(4,5),
+        ConstellationEdge(5,6),
+        ConstellationEdge(7,8),
+        ConstellationEdge(8,9),
+        ConstellationEdge(9,10),
+        ConstellationEdge(10,11),
+        ConstellationEdge(11,12),
+    ),
 )
 val PiscesStylizedTemplate = template(
     "Pisces",
