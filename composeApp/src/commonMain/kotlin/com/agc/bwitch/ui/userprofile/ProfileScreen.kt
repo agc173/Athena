@@ -23,6 +23,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.Canvas
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -57,6 +59,7 @@ import com.agc.bwitch.presentation.userprofile.PROFILE_BIRTH_DATE_IN_FUTURE_ERRO
 import com.agc.bwitch.presentation.userprofile.PROFILE_BIRTH_DATE_INVALID_ERROR_KEY
 import com.agc.bwitch.presentation.userprofile.PROFILE_DESCRIPTION_TOO_LONG_ERROR_KEY
 import com.agc.bwitch.ui.common.AriesSimplifiedTemplate
+import com.agc.bwitch.ui.common.ConstellationProgressCard
 import com.agc.bwitch.ui.common.toVisualResource
 import com.agc.bwitch.ui.rituals.components.habitBadgeResourceFor
 import com.agc.bwitch.ui.theme.BWitchThemeTokens
@@ -84,6 +87,7 @@ fun ProfileScreen(
     val savedEssence = state.savedBirthEssence
     var showBirthEssenceDialog by remember { mutableStateOf(false) }
     var showEditDialog by remember { mutableStateOf(false) }
+    var showConstellationsDialog by remember { mutableStateOf(false) }
 
     val profile = state.profile
     val username = profile?.username?.takeIf { it.isNotBlank() }
@@ -297,7 +301,7 @@ fun ProfileScreen(
             shape = RoundedCornerShape(20.dp),
             color = extras.surfaceElevated,
             tonalElevation = 0.dp,
-            onClick = { /* Coming soon: detalle de constelaciones */ },
+            onClick = { showConstellationsDialog = true },
         ) {
             Column(
                 modifier = Modifier
@@ -311,19 +315,9 @@ fun ProfileScreen(
                     fontWeight = FontWeight.SemiBold,
                 )
                 Text(
-                    text = "Colección astral en progreso",
+                    text = "Explora tu colección astral",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Text(
-                    text = "0/${AriesSimplifiedTemplate.totalSteps} luces despertadas",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-                Text(
-                    text = "Próximamente podrás abrir el detalle de tu constelación.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = extras.textSecondary,
                 )
             }
         }
@@ -388,6 +382,41 @@ fun ProfileScreen(
                 strings = strings,
                 onDismiss = { showBirthEssenceDialog = false },
             )
+        }
+    }
+
+    if (showConstellationsDialog) {
+        Dialog(
+            onDismissRequest = { showConstellationsDialog = false },
+            properties = DialogProperties(usePlatformDefaultWidth = true),
+        ) {
+            Card(
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Text(
+                        text = "Constelaciones",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    ConstellationProgressCard(
+                        template = AriesSimplifiedTemplate,
+                        progressSteps = 0,
+                    )
+                    Button(
+                        onClick = { showConstellationsDialog = false },
+                        modifier = Modifier.align(Alignment.End),
+                    ) {
+                        Text("Cerrar")
+                    }
+                }
+            }
         }
     }
 }
