@@ -76,8 +76,31 @@ val AriesSimplifiedTemplate = template(
 )
 val TaurusStylizedTemplate = template(
     "Taurus",
-    listOf(ConstellationNode(0.24f, 0.62f), ConstellationNode(0.40f, 0.44f), ConstellationNode(0.50f, 0.30f), ConstellationNode(0.62f, 0.43f), ConstellationNode(0.76f, 0.60f), ConstellationNode(0.60f, 0.72f), ConstellationNode(0.38f, 0.72f)),
-    listOf(ConstellationEdge(0, 1), ConstellationEdge(1, 2), ConstellationEdge(2, 3), ConstellationEdge(3, 4), ConstellationEdge(4, 5), ConstellationEdge(5, 6), ConstellationEdge(6, 0)),
+    listOf(
+        ConstellationNode(0.199f, 0.103f), // 0 arriba izquierda
+        ConstellationNode(0.364f, 0.229f), // 1
+        ConstellationNode(0.487f, 0.379f), // 2
+        ConstellationNode(0.487f, 0.557f), // 3 centro
+        ConstellationNode(0.283f, 0.533f), // 4 izquierda baja
+        ConstellationNode(0.103f, 0.353f), // 5 extremo izquierdo
+        ConstellationNode(0.667f, 0.601f), // 6 derecha centro
+        ConstellationNode(0.832f, 0.679f), // 7 derecha
+        ConstellationNode(0.845f, 0.847f), // 8 abajo derecha
+        ConstellationNode(0.559f, 0.763f), // 9 abajo centro
+        ConstellationNode(0.681f, 0.833f), // 10 abajo centro-derecha
+    ),
+    listOf(
+        ConstellationEdge(0, 1),
+        ConstellationEdge(1, 2),
+        ConstellationEdge(2, 3),
+        ConstellationEdge(3, 4),
+        ConstellationEdge(4, 5),
+        ConstellationEdge(3, 6),
+        ConstellationEdge(6, 7),
+        ConstellationEdge(7, 8),
+        ConstellationEdge(6, 9),
+        ConstellationEdge(9, 10),
+    ),
 )
 val GeminiStylizedTemplate = template(
     "Gemini",
