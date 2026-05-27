@@ -2,7 +2,6 @@ package com.agc.bwitch.ui.common
 
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
@@ -24,24 +23,68 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
+data class ConstellationNode(val x: Float, val y: Float)
+
+data class ConstellationEdge(val from: Int, val to: Int)
+
+sealed interface RevealStep {
+    data class Node(val index: Int) : RevealStep
+    data class Edge(val index: Int) : RevealStep
+}
+
+data class ConstellationTemplate(
+    val name: String,
+    val nodes: List<ConstellationNode>,
+    val edges: List<ConstellationEdge>,
+    val revealSteps: List<RevealStep>,
+) {
+    val totalSteps: Int get() = revealSteps.size
+}
+
+val AriesSimplifiedTemplate = ConstellationTemplate(
+    name = "Aries",
+    nodes = listOf(
+        ConstellationNode(0.16f, 0.74f),
+        ConstellationNode(0.34f, 0.58f),
+        ConstellationNode(0.56f, 0.44f),
+        ConstellationNode(0.78f, 0.29f),
+    ),
+    edges = listOf(
+        ConstellationEdge(0, 1),
+        ConstellationEdge(1, 2),
+        ConstellationEdge(2, 3),
+    ),
+    revealSteps = listOf(
+        RevealStep.Node(0),
+        RevealStep.Edge(0),
+        RevealStep.Node(1),
+        RevealStep.Edge(1),
+        RevealStep.Node(2),
+        RevealStep.Edge(2),
+        RevealStep.Node(3),
+    ),
+)
+
 @Composable
 fun ConstellationProgressCard(
     progressSteps: Int,
-    totalSteps: Int,
+    template: ConstellationTemplate,
     modifier: Modifier = Modifier,
 ) {
-    val nodePoints = remember {
-        listOf(
-            Offset(0.10f, 0.78f), Offset(0.18f, 0.62f), Offset(0.31f, 0.52f), Offset(0.44f, 0.45f),
-            Offset(0.57f, 0.35f), Offset(0.69f, 0.27f), Offset(0.80f, 0.22f), Offset(0.88f, 0.30f),
-            Offset(0.83f, 0.45f), Offset(0.71f, 0.59f), Offset(0.56f, 0.72f), Offset(0.38f, 0.82f),
-        )
+    val totalSteps = template.totalSteps
+    val activeCount = progressSteps.coerceIn(0, totalSteps)
+    val revealedSteps = remember(activeCount, template) {
+        template.revealSteps.take(activeCount)
     }
-    val activeCount = progressSteps.coerceIn(0, minOf(totalSteps, nodePoints.size))
-    val activeProgress by animateFloatAsState(
-        targetValue = activeCount.toFloat(),
-        animationSpec = tween(durationMillis = 600),
-    )
+    val revealedNodeIndexes = remember(revealedSteps) {
+        revealedSteps.filterIsInstance<RevealStep.Node>().map { it.index }.toSet()
+    }
+    val revealedEdgeIndexes = remember(revealedSteps) {
+        revealedSteps.filterIsInstance<RevealStep.Edge>().map { it.index }.toSet()
+    }
+    val lastRevealedNodeIndex = remember(revealedSteps) {
+        revealedSteps.lastOrNull { it is RevealStep.Node }?.let { (it as RevealStep.Node).index }
+    }
     val pulseTransition = rememberInfiniteTransition(label = "aries-pulse")
     val pulse by pulseTransition.animateFloat(
         initialValue = 0.75f,
@@ -53,10 +96,10 @@ fun ConstellationProgressCard(
         label = "aries-pulse-alpha",
     )
     val cardColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
-    val inactiveLine = Color(0xFF86A3B8).copy(alpha = 0.22f)
-    val inactiveNode = Color(0xFFD9E5F0).copy(alpha = 0.25f)
-    val activeLine = Color(0xFF7AA5FF).copy(alpha = 0.85f)
-    val activeNode = Color(0xFFFFD88A)
+    val inactiveLine = Color(0xFF9AAEC0).copy(alpha = 0.20f)
+    val inactiveNode = Color(0xFFD8E2EC).copy(alpha = 0.38f)
+    val activeLine = Color(0xFF98B6FF).copy(alpha = 0.74f)
+    val activeNode = Color(0xFFFFDF9C)
 
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -67,7 +110,7 @@ fun ConstellationProgressCard(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Text(
-                text = "Constelación de Aries",
+                text = "Constelación de ${template.name}",
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.onSurface,
             )
@@ -79,37 +122,36 @@ fun ConstellationProgressCard(
             Canvas(
                 modifier = Modifier.fillMaxWidth().aspectRatio(1.9f),
             ) {
-                val scaledPoints = nodePoints.map { Offset(it.x * size.width, it.y * size.height) }
-                val totalLines = (scaledPoints.size - 1).coerceAtLeast(0)
-                for (lineIndex in 0 until totalLines) {
+                val scaledPoints = template.nodes.map { Offset(it.x * size.width, it.y * size.height) }
+                template.edges.forEachIndexed { lineIndex, edge ->
                     drawLine(
                         color = inactiveLine,
-                        start = scaledPoints[lineIndex],
-                        end = scaledPoints[lineIndex + 1],
-                        strokeWidth = 2.5f,
+                        start = scaledPoints[edge.from],
+                        end = scaledPoints[edge.to],
+                        strokeWidth = 1.65f,
                     )
-                    if (lineIndex + 1 < activeCount) {
+                    if (lineIndex in revealedEdgeIndexes) {
                         drawLine(
                             color = activeLine,
-                            start = scaledPoints[lineIndex],
-                            end = scaledPoints[lineIndex + 1],
-                            strokeWidth = 3.1f,
+                            start = scaledPoints[edge.from],
+                            end = scaledPoints[edge.to],
+                            strokeWidth = 2.2f,
                         )
                     }
                 }
                 scaledPoints.forEachIndexed { index, point ->
-                    drawCircle(color = inactiveNode, radius = 7f, center = point)
-                    if (index < activeProgress.toInt()) {
-                        val isLastActive = index == activeProgress.toInt() - 1
+                    drawCircle(color = inactiveNode, radius = 5.5f, center = point)
+                    if (index in revealedNodeIndexes) {
+                        val isLastActive = lastRevealedNodeIndex == index
                         val glowAlpha = if (isLastActive) pulse else 0.85f
                         drawCircle(
-                            color = activeNode.copy(alpha = 0.30f * glowAlpha),
-                            radius = 12f,
+                            color = activeNode.copy(alpha = 0.18f * glowAlpha),
+                            radius = 9.5f,
                             center = point,
                         )
                         drawCircle(
                             color = activeNode.copy(alpha = glowAlpha),
-                            radius = 7.5f,
+                            radius = 5.8f,
                             center = point,
                         )
                     }
