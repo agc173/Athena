@@ -150,9 +150,26 @@ val VirgoStylizedTemplate = template(
 )
 val LibraStylizedTemplate = template(
     "Libra",
-    listOf(ConstellationNode(0.22f, 0.68f), ConstellationNode(0.78f, 0.68f), ConstellationNode(0.34f, 0.48f), ConstellationNode(0.50f, 0.36f), ConstellationNode(0.66f, 0.48f), ConstellationNode(0.50f, 0.68f)),
-    listOf(ConstellationEdge(0, 5), ConstellationEdge(5, 1), ConstellationEdge(2, 3), ConstellationEdge(3, 4), ConstellationEdge(2, 5), ConstellationEdge(4, 5)),
+    listOf(
+        ConstellationNode(0.065f, 0.128f), // 0 izquierda
+        ConstellationNode(0.310f, 0.275f), // 1 centro izquierda
+        ConstellationNode(0.599f, 0.065f), // 2 arriba
+        ConstellationNode(0.934f, 0.272f), // 3 derecha
+        ConstellationNode(0.780f, 0.582f), // 4 abajo derecha
+        ConstellationNode(0.436f, 0.702f), // 5 abajo centro
+        ConstellationNode(0.439f, 0.933f), // 6 inferior
+    ),
+    listOf(
+        ConstellationEdge(0, 1),
+        ConstellationEdge(1, 2),
+        ConstellationEdge(2, 3),
+        ConstellationEdge(2, 4),
+        ConstellationEdge(3, 4),
+        ConstellationEdge(4, 5),
+        ConstellationEdge(5, 6),
+    ),
 )
+
 val ScorpioStylizedTemplate = template(
     "Scorpio",
     listOf(
