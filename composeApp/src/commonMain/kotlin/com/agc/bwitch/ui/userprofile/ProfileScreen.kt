@@ -5,6 +5,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -59,7 +61,7 @@ import com.agc.bwitch.presentation.userprofile.PROFILE_BIRTH_DATE_IN_FUTURE_ERRO
 import com.agc.bwitch.presentation.userprofile.PROFILE_BIRTH_DATE_INVALID_ERROR_KEY
 import com.agc.bwitch.presentation.userprofile.PROFILE_DESCRIPTION_TOO_LONG_ERROR_KEY
 import com.agc.bwitch.ui.common.AriesSimplifiedTemplate
-import com.agc.bwitch.ui.common.ConstellationProgressCard
+import com.agc.bwitch.ui.common.ConstellationBadgeCard
 import com.agc.bwitch.ui.common.toVisualResource
 import com.agc.bwitch.ui.rituals.components.habitBadgeResourceFor
 import com.agc.bwitch.ui.theme.BWitchThemeTokens
@@ -388,33 +390,45 @@ fun ProfileScreen(
     if (showConstellationsDialog) {
         Dialog(
             onDismissRequest = { showConstellationsDialog = false },
-            properties = DialogProperties(usePlatformDefaultWidth = true),
+            properties = DialogProperties(usePlatformDefaultWidth = false),
         ) {
-            Card(
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            Surface(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 12.dp, vertical = 24.dp),
+                shape = RoundedCornerShape(24.dp),
+                color = MaterialTheme.colorScheme.surface,
             ) {
                 Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
+                        .fillMaxSize()
+                        .padding(20.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     Text(
                         text = "Constelaciones",
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.SemiBold,
                     )
-                    ConstellationProgressCard(
-                        template = AriesSimplifiedTemplate,
-                        progressSteps = 0,
+                    Text(
+                        text = "Despierta las insignias zodiacales",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    Button(
-                        onClick = { showConstellationsDialog = false },
-                        modifier = Modifier.align(Alignment.End),
+                    LazyVerticalGrid(
+                        columns = GridCells.Adaptive(minSize = 170.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.weight(1f),
                     ) {
-                        Text("Cerrar")
+                        item {
+                            ConstellationBadgeCard(
+                                template = AriesSimplifiedTemplate,
+                                progressSteps = 0,
+                            )
+                        }
                     }
+                    Button(onClick = { showConstellationsDialog = false }, modifier = Modifier.align(Alignment.End)) { Text("Cerrar") }
                 }
             }
         }
