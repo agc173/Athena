@@ -27,7 +27,6 @@ import com.agc.bwitch.domain.moons.HasEnoughMoonsUseCase
 import com.agc.bwitch.domain.moons.ObserveMoonBalanceUseCase
 import com.agc.bwitch.domain.moons.SpendMoonsUseCase
 import com.agc.bwitch.domain.notifications.RegisterPushTokenUseCase
-import com.agc.bwitch.domain.notifications.SendTestNotificationUseCase
 import com.agc.bwitch.domain.notifications.UnregisterPushTokenUseCase
 import com.agc.bwitch.domain.notifications.UpdatePushNotificationPreferencesUseCase
 import com.agc.bwitch.domain.session.ClearLocalUserDataUseCase
@@ -101,7 +100,6 @@ val domainModule: Module = module {
     factory { RegisterPushTokenUseCase(get()) }
     factory { UnregisterPushTokenUseCase(get()) }
     factory { UpdatePushNotificationPreferencesUseCase(get()) }
-    factory { SendTestNotificationUseCase(get()) }
 
     // Moons
     factory { GetMoonBalanceUseCase(get()) }

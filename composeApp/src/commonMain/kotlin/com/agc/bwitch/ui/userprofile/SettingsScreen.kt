@@ -43,7 +43,6 @@ import com.agc.bwitch.domain.settings.SubscriptionStatus
 import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.localization.SettingsStrings
 import com.agc.bwitch.platform.getAppVersionLabel
-import com.agc.bwitch.platform.isDebugBuild
 import com.agc.bwitch.presentation.auth.SessionViewModel
 import com.agc.bwitch.presentation.economy.EconomyViewModel
 import com.agc.bwitch.presentation.localization.AppLanguageViewModel
@@ -112,8 +111,6 @@ fun SettingsScreen(contentPadding: PaddingValues) {
             SettingsFeedback.DeleteAccountComingSoon -> strings.deleteAccountComingSoonFeedback
             SettingsFeedback.NotificationsPermissionDenied -> strings.comingSoon
             SettingsFeedback.NotificationsUnavailable -> strings.comingSoon
-            SettingsFeedback.TestPushSent -> "Push sent"
-            SettingsFeedback.TestPushFailed -> "Push failed"
         }
         snackbarHostState.showSnackbar(message)
         settingsVm.onFeedbackConsumed()
@@ -243,13 +240,6 @@ fun SettingsScreen(contentPadding: PaddingValues) {
                     enabled = settingsState.notificationsEnabled,
                     onCheckedChange = settingsVm::onHabitsEnabledChanged,
                 )
-                if (isDebugBuild) {
-                    SettingsRow(
-                        label = "Send test push",
-                        showDivider = false,
-                        onClick = settingsVm::onSendTestNotificationClicked,
-                    )
-                }
             }
 
             PremiumCard(
