@@ -168,8 +168,34 @@ val LeoStylizedTemplate = template(
 )
 val VirgoStylizedTemplate = template(
     "Virgo",
-    listOf(ConstellationNode(0.22f, 0.26f), ConstellationNode(0.22f, 0.74f), ConstellationNode(0.42f, 0.26f), ConstellationNode(0.42f, 0.74f), ConstellationNode(0.58f, 0.34f), ConstellationNode(0.58f, 0.68f), ConstellationNode(0.72f, 0.52f), ConstellationNode(0.82f, 0.62f)),
-    listOf(ConstellationEdge(0, 1), ConstellationEdge(2, 3), ConstellationEdge(1, 3), ConstellationEdge(2, 4), ConstellationEdge(4, 5), ConstellationEdge(5, 6), ConstellationEdge(6, 7)),
+    listOf(
+        ConstellationNode(0.783f, 0.103f), // 0 arriba derecha
+        ConstellationNode(0.513f, 0.117f), // 1 arriba centro
+        ConstellationNode(0.651f, 0.206f), // 2 centro-alto derecha
+        ConstellationNode(0.335f, 0.219f), // 3 izquierda alta
+        ConstellationNode(0.863f, 0.351f), // 4 derecha
+        ConstellationNode(0.519f, 0.416f), // 5 centro
+        ConstellationNode(0.745f, 0.465f), // 6 derecha media
+        ConstellationNode(0.235f, 0.523f), // 7 izquierda media
+        ConstellationNode(0.429f, 0.629f), // 8 centro bajo
+        ConstellationNode(0.158f, 0.693f), // 9 izquierda baja
+        ConstellationNode(0.543f, 0.763f), // 10 abajo derecha
+        ConstellationNode(0.139f, 0.873f), // 11 abajo izquierda
+    ),
+    listOf(
+        ConstellationEdge(3, 1),
+        ConstellationEdge(1, 2),
+        ConstellationEdge(2, 0),
+        ConstellationEdge(3, 5),
+        ConstellationEdge(5, 6),
+        ConstellationEdge(6, 4),
+        ConstellationEdge(5, 8),
+        ConstellationEdge(8, 10),
+        ConstellationEdge(8, 7),
+        ConstellationEdge(7, 9),
+        ConstellationEdge(9, 11),
+        ConstellationEdge(7, 3),
+    ),
 )
 val LibraStylizedTemplate = template(
     "Libra",
