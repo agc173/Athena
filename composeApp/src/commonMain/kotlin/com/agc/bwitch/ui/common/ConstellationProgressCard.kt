@@ -199,15 +199,24 @@ val ScorpioStylizedTemplate = template(
 val SagittariusStylizedTemplate = template(
     "Sagittarius",
     listOf(
-        ConstellationNode(0.096f, 0.736f),
-        ConstellationNode(0.264f, 0.585f),
-        ConstellationNode(0.429f, 0.431f),
-        ConstellationNode(0.596f, 0.275f),
-        ConstellationNode(0.764f, 0.118f),
-        ConstellationNode(0.770f, 0.316f),
-        ConstellationNode(0.915f, 0.098f),
-        ConstellationNode(0.564f, 0.096f),
-        ConstellationNode(0.262f, 0.376f),
+        ConstellationNode(0.302f, 0.082f), // 0
+        ConstellationNode(0.416f, 0.217f), // 1
+        ConstellationNode(0.441f, 0.393f), // 2
+        ConstellationNode(0.252f, 0.315f), // 3
+        ConstellationNode(0.088f, 0.414f), // 4
+        ConstellationNode(0.127f, 0.620f), // 5
+        ConstellationNode(0.225f, 0.799f), // 6
+        ConstellationNode(0.389f, 0.700f), // 7
+        ConstellationNode(0.384f, 0.876f), // 8
+        ConstellationNode(0.495f, 0.556f), // 9
+        ConstellationNode(0.590f, 0.309f), // 10
+        ConstellationNode(0.645f, 0.457f), // 11
+        ConstellationNode(0.780f, 0.328f), // 12
+        ConstellationNode(0.900f, 0.200f), // 13
+        ConstellationNode(0.790f, 0.505f), // 14
+        ConstellationNode(0.874f, 0.654f), // 15
+        ConstellationNode(0.711f, 0.723f), // 16
+        ConstellationNode(0.825f, 0.858f), // 17
     ),
     listOf(
         ConstellationEdge(0, 1),
@@ -215,9 +224,19 @@ val SagittariusStylizedTemplate = template(
         ConstellationEdge(2, 3),
         ConstellationEdge(3, 4),
         ConstellationEdge(4, 5),
-        ConstellationEdge(4, 6),
-        ConstellationEdge(4, 7),
-        ConstellationEdge(2, 8),
+        ConstellationEdge(5, 6),
+        ConstellationEdge(6, 7),
+        ConstellationEdge(6, 8),
+        ConstellationEdge(2, 10),
+        ConstellationEdge(10, 11),
+        ConstellationEdge(11, 9),
+        ConstellationEdge(9, 2),
+        ConstellationEdge(11, 12),
+        ConstellationEdge(12, 13),
+        ConstellationEdge(12, 14),
+        ConstellationEdge(14, 15),
+        ConstellationEdge(14, 16),
+        ConstellationEdge(16, 17),
     ),
 )
 val CapricornStylizedTemplate = template(
