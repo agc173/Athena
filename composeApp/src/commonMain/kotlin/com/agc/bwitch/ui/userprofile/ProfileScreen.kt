@@ -56,6 +56,7 @@ import com.agc.bwitch.presentation.userprofile.UserProfileViewModel
 import com.agc.bwitch.presentation.userprofile.PROFILE_BIRTH_DATE_IN_FUTURE_ERROR_KEY
 import com.agc.bwitch.presentation.userprofile.PROFILE_BIRTH_DATE_INVALID_ERROR_KEY
 import com.agc.bwitch.presentation.userprofile.PROFILE_DESCRIPTION_TOO_LONG_ERROR_KEY
+import com.agc.bwitch.ui.common.ConstellationProgressCard
 import com.agc.bwitch.ui.common.toVisualResource
 import com.agc.bwitch.ui.rituals.components.habitBadgeResourceFor
 import com.agc.bwitch.ui.theme.BWitchThemeTokens
@@ -288,6 +289,30 @@ fun ProfileScreen(
                 ) {
                     Text(profileStrings.openHabits)
                 }
+            }
+        }
+
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+            color = extras.surfaceElevated,
+            tonalElevation = 0.dp,
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = dimens.spacingMd, vertical = dimens.spacingMd),
+                verticalArrangement = Arrangement.spacedBy(dimens.spacingSm),
+            ) {
+                Text(
+                    text = "Constelaciones",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                ConstellationProgressCard(
+                    progressSteps = 5,
+                    totalSteps = 12,
+                )
             }
         }
     }
