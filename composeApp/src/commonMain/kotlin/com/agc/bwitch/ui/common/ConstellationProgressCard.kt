@@ -86,8 +86,19 @@ val GeminiStylizedTemplate = template(
 )
 val CancerStylizedTemplate = template(
     "Cancer",
-    listOf(ConstellationNode(0.26f, 0.42f), ConstellationNode(0.42f, 0.30f), ConstellationNode(0.58f, 0.44f), ConstellationNode(0.74f, 0.58f), ConstellationNode(0.58f, 0.72f), ConstellationNode(0.40f, 0.62f), ConstellationNode(0.30f, 0.52f)),
-    listOf(ConstellationEdge(0, 1), ConstellationEdge(1, 2), ConstellationEdge(2, 3), ConstellationEdge(3, 4), ConstellationEdge(4, 5), ConstellationEdge(5, 6), ConstellationEdge(6, 0)),
+    listOf(
+        ConstellationNode(0.106f, 0.491f),
+        ConstellationNode(0.464f, 0.546f),
+        ConstellationNode(0.286f, 0.827f),
+        ConstellationNode(0.674f, 0.370f),
+        ConstellationNode(0.864f, 0.105f),
+    ),
+    listOf(
+        ConstellationEdge(0, 1),
+        ConstellationEdge(1, 2),
+        ConstellationEdge(1, 3),
+        ConstellationEdge(3, 4),
+    ),
 )
 val LeoStylizedTemplate = template(
     "Leo",
