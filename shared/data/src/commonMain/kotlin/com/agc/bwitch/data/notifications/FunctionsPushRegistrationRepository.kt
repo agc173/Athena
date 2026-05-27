@@ -5,7 +5,6 @@ import com.agc.bwitch.domain.notifications.PushNotificationPreferences
 import com.agc.bwitch.domain.notifications.PushPlatform
 import com.agc.bwitch.domain.notifications.PushRegistrationRepository
 import com.agc.bwitch.domain.notifications.PushTokenRegistration
-import com.agc.bwitch.domain.notifications.PushTestNotificationRepository
 import com.agc.bwitch.domain.shared.ApiError
 import com.agc.bwitch.domain.shared.ApiResult
 import kotlinx.serialization.KSerializer
@@ -13,7 +12,7 @@ import kotlinx.serialization.Serializable
 
 class FunctionsPushRegistrationRepository(
     private val functionsClient: FunctionsClient,
-) : PushRegistrationRepository, PushTestNotificationRepository {
+) : PushRegistrationRepository {
 
     override suspend fun registerToken(payload: PushTokenRegistration) {
         callBackend(
@@ -60,19 +59,6 @@ class FunctionsPushRegistrationRepository(
     }
 
 
-    override suspend fun sendTestNotification() {
-        callBackend(
-            name = SEND_TEST_NOTIFICATION_CALLABLE,
-            data = SendTestNotificationRequestDto(
-                title = "QA Ping",
-                body = "Push real de BWitch ✨",
-                type = "daily_horoscope",
-            ),
-            requestSerializer = SendTestNotificationRequestDto.serializer(),
-            responseSerializer = EmptyResponseDto.serializer(),
-        )
-    }
-
     private suspend fun <Req : Any, Res : Any> callBackend(
         name: String,
         data: Req,
@@ -94,7 +80,6 @@ class FunctionsPushRegistrationRepository(
         const val REGISTER_PUSH_TOKEN_CALLABLE = "registerPushToken"
         const val UNREGISTER_PUSH_TOKEN_CALLABLE = "unregisterPushToken"
         const val UPDATE_NOTIFICATION_PREFERENCES_CALLABLE = "updateNotificationPreferences"
-        const val SEND_TEST_NOTIFICATION_CALLABLE = "sendTestNotification"
     }
 }
 
@@ -122,13 +107,6 @@ private data class UpdateNotificationPreferencesRequestDto(
     val tarotOracleReminderEnabled: Boolean,
     val ritualsEnabled: Boolean,
     val habitsEnabled: Boolean,
-)
-
-@Serializable
-private data class SendTestNotificationRequestDto(
-    val title: String,
-    val body: String,
-    val type: String,
 )
 
 @Serializable
