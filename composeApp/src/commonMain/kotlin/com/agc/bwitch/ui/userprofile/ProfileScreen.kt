@@ -61,19 +61,8 @@ import com.agc.bwitch.presentation.userprofile.UserProfileViewModel
 import com.agc.bwitch.presentation.userprofile.PROFILE_BIRTH_DATE_IN_FUTURE_ERROR_KEY
 import com.agc.bwitch.presentation.userprofile.PROFILE_BIRTH_DATE_INVALID_ERROR_KEY
 import com.agc.bwitch.presentation.userprofile.PROFILE_DESCRIPTION_TOO_LONG_ERROR_KEY
-import com.agc.bwitch.ui.common.AquariusSimplifiedTemplate
 import com.agc.bwitch.ui.common.AriesSimplifiedTemplate
-import com.agc.bwitch.ui.common.CancerSimplifiedTemplate
-import com.agc.bwitch.ui.common.CapricornSimplifiedTemplate
 import com.agc.bwitch.ui.common.ConstellationBadgeCard
-import com.agc.bwitch.ui.common.GeminiSimplifiedTemplate
-import com.agc.bwitch.ui.common.LeoSimplifiedTemplate
-import com.agc.bwitch.ui.common.LibraSimplifiedTemplate
-import com.agc.bwitch.ui.common.PiscesSimplifiedTemplate
-import com.agc.bwitch.ui.common.SagittariusSimplifiedTemplate
-import com.agc.bwitch.ui.common.ScorpioSimplifiedTemplate
-import com.agc.bwitch.ui.common.TaurusSimplifiedTemplate
-import com.agc.bwitch.ui.common.VirgoSimplifiedTemplate
 import com.agc.bwitch.ui.common.toVisualResource
 import com.agc.bwitch.ui.rituals.components.habitBadgeResourceFor
 import com.agc.bwitch.ui.theme.BWitchThemeTokens
@@ -427,19 +416,18 @@ fun ProfileScreen(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    val demoTemplates = listOf(
-                        AriesSimplifiedTemplate to 3,
-                        TaurusSimplifiedTemplate to 0,
-                        GeminiSimplifiedTemplate to 0,
-                        CancerSimplifiedTemplate to 0,
-                        LeoSimplifiedTemplate to 0,
-                        VirgoSimplifiedTemplate to 0,
-                        LibraSimplifiedTemplate to 0,
-                        ScorpioSimplifiedTemplate to 0,
-                        SagittariusSimplifiedTemplate to 0,
-                        CapricornSimplifiedTemplate to 0,
-                        AquariusSimplifiedTemplate to 0,
-                        PiscesSimplifiedTemplate to 0,
+                    val zodiacPlaceholders = listOf(
+                        "Taurus",
+                        "Gemini",
+                        "Cancer",
+                        "Leo",
+                        "Virgo",
+                        "Libra",
+                        "Scorpio",
+                        "Sagittarius",
+                        "Capricorn",
+                        "Aquarius",
+                        "Pisces",
                     )
                     LazyVerticalGrid(
                         columns = GridCells.Adaptive(minSize = 170.dp),
@@ -447,12 +435,44 @@ fun ProfileScreen(
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                         modifier = Modifier.weight(1f),
                     ) {
-                        items(demoTemplates) { (template, progress) ->
-                            ConstellationBadgeCard(template = template, progressSteps = progress)
+                        item {
+                            ConstellationBadgeCard(template = AriesSimplifiedTemplate, progressSteps = 3)
+                        }
+                        items(zodiacPlaceholders) { signName ->
+                            ZodiacPlaceholderBadgeCard(signName = signName)
                         }
                     }
                     Button(onClick = { showConstellationsDialog = false }, modifier = Modifier.align(Alignment.End)) { Text("Cerrar") }
                 }
+            }
+        }
+    }
+}
+
+
+@Composable
+private fun ZodiacPlaceholderBadgeCard(signName: String, modifier: Modifier = Modifier) {
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(22.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.38f)),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Text(text = signName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Text(text = "Próximamente", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(1.05f)
+                    .border(width = 1.dp, color = MaterialTheme.colorScheme.outline.copy(alpha = 0.35f), shape = RoundedCornerShape(18.dp)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(text = "🔒", style = MaterialTheme.typography.headlineMedium)
             }
         }
     }
