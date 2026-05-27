@@ -54,10 +54,10 @@ data class ConstellationTemplate(
 val AriesSimplifiedTemplate = ConstellationTemplate(
     name = "Aries",
     nodes = listOf(
-        ConstellationNode(0.22f, 0.34f),
-        ConstellationNode(0.16f, 0.58f),
-        ConstellationNode(0.50f, 0.46f),
-        ConstellationNode(0.76f, 0.68f),
+        ConstellationNode(0.18f, 0.56f),
+        ConstellationNode(0.36f, 0.36f),
+        ConstellationNode(0.60f, 0.50f),
+        ConstellationNode(0.80f, 0.76f),
     ),
     edges = listOf(
         ConstellationEdge(0, 1),
@@ -98,17 +98,17 @@ fun ConstellationProgressCard(progressSteps: Int, template: ConstellationTemplat
             Canvas(modifier = Modifier.fillMaxWidth().aspectRatio(1.9f)) {
                 val scaledPoints = template.nodes.map { Offset(it.x * size.width, it.y * size.height) }
                 template.edges.forEachIndexed { lineIndex, edge ->
-                    drawLine(color = inactiveLine, start = scaledPoints[edge.from], end = scaledPoints[edge.to], strokeWidth = 14f, cap = StrokeCap.Round)
-                    if (lineIndex in revealedEdgeIndexes) drawLine(color = activeLine, start = scaledPoints[edge.from], end = scaledPoints[edge.to], strokeWidth = 16f, cap = StrokeCap.Round)
+                    drawLine(color = inactiveLine, start = scaledPoints[edge.from], end = scaledPoints[edge.to], strokeWidth = 16f, cap = StrokeCap.Round)
+                    if (lineIndex in revealedEdgeIndexes) drawLine(color = activeLine, start = scaledPoints[edge.from], end = scaledPoints[edge.to], strokeWidth = 18f, cap = StrokeCap.Round)
                 }
                 scaledPoints.forEachIndexed { index, point ->
-                    drawCircle(color = inactiveNode.copy(alpha = 0.26f * pulse), radius = 34f, center = point)
-                    drawCircle(color = inactiveNode, radius = 18f, center = point)
+                    drawCircle(color = inactiveNode.copy(alpha = 0.26f * pulse), radius = 44f, center = point)
+                    drawCircle(color = inactiveNode, radius = 26f, center = point)
                     if (index in revealedNodeIndexes) {
                         val isLastActive = lastRevealedNodeIndex == index
                         val glowAlpha = if (isLastActive) pulse else 0.85f
-                        drawCircle(color = activeNode.copy(alpha = 0.18f * glowAlpha), radius = 34f, center = point)
-                        drawCircle(color = activeNode.copy(alpha = glowAlpha), radius = 20f, center = point)
+                        drawCircle(color = activeNode.copy(alpha = 0.18f * glowAlpha), radius = 44f, center = point)
+                        drawCircle(color = activeNode.copy(alpha = glowAlpha), radius = 30f, center = point)
                     }
                 }
             }
@@ -138,19 +138,19 @@ fun ConstellationBadgeCard(progressSteps: Int, template: ConstellationTemplate, 
             Text(text = template.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
             Text(text = "$activeCount/$totalSteps", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
             Box(modifier = Modifier.fillMaxWidth().aspectRatio(1.05f).border(width = 1.dp, color = frame, shape = RoundedCornerShape(18.dp)), contentAlignment = Alignment.Center) {
-                Canvas(modifier = Modifier.fillMaxWidth().aspectRatio(1.05f).padding(10.dp)) {
+                Canvas(modifier = Modifier.fillMaxWidth().aspectRatio(1.05f).padding(4.dp)) {
                     val scaledPoints = template.nodes.map { Offset(it.x * size.width, it.y * size.height) }
                     template.edges.forEachIndexed { lineIndex, edge ->
-                        drawLine(color = inactiveLine, start = scaledPoints[edge.from], end = scaledPoints[edge.to], strokeWidth = 14f, cap = StrokeCap.Round)
-                        if (lineIndex in revealedEdgeIndexes) drawLine(color = activeLine, start = scaledPoints[edge.from], end = scaledPoints[edge.to], strokeWidth = 16f, cap = StrokeCap.Round)
+                        drawLine(color = inactiveLine, start = scaledPoints[edge.from], end = scaledPoints[edge.to], strokeWidth = 16f, cap = StrokeCap.Round)
+                        if (lineIndex in revealedEdgeIndexes) drawLine(color = activeLine, start = scaledPoints[edge.from], end = scaledPoints[edge.to], strokeWidth = 18f, cap = StrokeCap.Round)
                     }
                     scaledPoints.forEachIndexed { index, point ->
-                        drawCircle(color = inactiveNode.copy(alpha = 0.18f * pulse), radius = 34f, center = point, style = Stroke(width = 6f))
-                        drawCircle(color = inactiveNode, radius = 18f, center = point)
+                        drawCircle(color = inactiveNode.copy(alpha = 0.18f * pulse), radius = 44f, center = point, style = Stroke(width = 6f))
+                        drawCircle(color = inactiveNode, radius = 26f, center = point)
                         if (index in revealedNodeIndexes) {
                             val glowAlpha = if (lastRevealedNodeIndex == index) pulse else 0.85f
-                            drawCircle(color = activeNode.copy(alpha = 0.20f * glowAlpha), radius = 34f, center = point)
-                            drawCircle(color = activeNode.copy(alpha = glowAlpha), radius = 20f, center = point)
+                            drawCircle(color = activeNode.copy(alpha = 0.20f * glowAlpha), radius = 44f, center = point)
+                            drawCircle(color = activeNode.copy(alpha = glowAlpha), radius = 30f, center = point)
                         }
                     }
                 }
