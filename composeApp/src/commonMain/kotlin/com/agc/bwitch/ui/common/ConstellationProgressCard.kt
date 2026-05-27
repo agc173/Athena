@@ -163,8 +163,28 @@ val SagittariusStylizedTemplate = template(
 )
 val CapricornStylizedTemplate = template(
     "Capricorn",
-    listOf(ConstellationNode(0.22f, 0.70f), ConstellationNode(0.30f, 0.32f), ConstellationNode(0.46f, 0.58f), ConstellationNode(0.60f, 0.34f), ConstellationNode(0.74f, 0.50f), ConstellationNode(0.70f, 0.72f), ConstellationNode(0.54f, 0.74f)),
-    listOf(ConstellationEdge(0, 1), ConstellationEdge(1, 2), ConstellationEdge(2, 3), ConstellationEdge(3, 4), ConstellationEdge(4, 5), ConstellationEdge(5, 6), ConstellationEdge(6, 2)),
+    listOf(
+        ConstellationNode(0.084f, 0.612f), // 0 izquierda
+        ConstellationNode(0.271f, 0.581f), // 1
+        ConstellationNode(0.469f, 0.561f), // 2
+        ConstellationNode(0.594f, 0.466f), // 3
+        ConstellationNode(0.811f, 0.102f), // 4 arriba
+        ConstellationNode(0.856f, 0.306f), // 5
+        ConstellationNode(0.804f, 0.644f), // 6 pequeño/intermedio
+        ConstellationNode(0.711f, 0.864f), // 7 abajo derecha
+        ConstellationNode(0.419f, 0.785f), // 8 abajo centro
+    ),
+    listOf(
+        ConstellationEdge(0, 1),
+        ConstellationEdge(1, 2),
+        ConstellationEdge(2, 3),
+        ConstellationEdge(3, 4),
+        ConstellationEdge(4, 5),
+        ConstellationEdge(5, 6),
+        ConstellationEdge(6, 7),
+        ConstellationEdge(7, 8),
+        ConstellationEdge(8, 0),
+    ),
 )
 val AquariusStylizedTemplate = template(
     "Aquarius",
