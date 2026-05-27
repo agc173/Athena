@@ -313,7 +313,7 @@ class SettingsViewModel(
     }
 
 
-    fun onPushPermissionAndTokenResolved(permissionGranted: Boolean, token: String?) {
+    fun onPushPermissionAndTokenResolved(permissionGranted: Boolean, token: String?, timezone: String? = null) {
         val nextSettings = NotificationSettings(
             globalEnabled = permissionGranted && !token.isNullOrBlank(),
             dailyHoroscopeEnabled = _uiState.value.dailyHoroscopeEnabled,
@@ -339,7 +339,7 @@ class SettingsViewModel(
                         platform = PushPlatform.ANDROID,
                         appVersion = _uiState.value.appVersion.takeIf { it.isNotBlank() },
                         locale = _uiState.value.currentLanguage.code,
-                        timezone = null,
+                        timezone = timezone,
                         notificationsPermissionGranted = true,
                     ),
                 )
