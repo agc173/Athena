@@ -35,3 +35,11 @@ Archivo fuente de reglas: `firestore.rules`.
    - `A` puede leer `usernames/{any}` ✅
    - `A` **no** puede escribir `usernames/{any}` ❌
 3. Probar callable `saveUserProfile` y revisar logs sanitizados para errores inesperados.
+
+## Política recomendada — Push Notifications v1
+- Cliente **NO** puede leer `/users/{uid}/pushTokens`.
+- Cliente **NO** escribe directamente en `/users/{uid}/pushTokens/{tokenHash}` ni `/users/{uid}/notificationPreferences/current`.
+- Altas/bajas/updates se realizan vía Cloud Functions callable con `auth` + App Check.
+- Backend con Admin SDK opera con privilegios y puede mantener estado de tokens (success/failure/invalidation).
+- `notificationPreferences/current` se trata como backend-authoritative (escritura mediada por callable).
+

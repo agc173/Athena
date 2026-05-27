@@ -605,3 +605,50 @@ Cartas concretas desbloqueadas por usuario/track (idempotente por `cardId`).
 - grantRequestId: string
 - unlockedAt: timestamp
 - source: string (`moon_spend_progress`)
+
+---
+
+### /users/{uid}/notificationPreferences/current
+Preferencias de push activas por usuario (documento único).
+
+Campos:
+- globalEnabled: boolean
+- dailyHoroscopeEnabled: boolean
+- dailyRewardEnabled: boolean
+- tarotOracleReminderEnabled: boolean
+- ritualsEnabled: boolean
+- habitsEnabled: boolean
+- updatedAt: timestamp
+- updatedBy: string (`"CLIENT_CALLABLE"` en V1)
+
+Notas:
+- Cambios de cliente se realizan por callable autenticada + App Check.
+- `globalEnabled=false` representa toggle global OFF sin eliminar token.
+- Fuente authoritativa backend para decisión de envío.
+
+### /users/{uid}/pushTokens/{tokenHash}
+Registro de tokens push por dispositivo/token.
+
+Campos:
+- token: string
+- tokenHash: string
+- platform: string (`"android" | "ios"`)
+- appVersion: string (opcional)
+- locale: string (opcional)
+- timezone: string (opcional)
+- permissionGranted: boolean
+- enabled: boolean
+- lastSeenAt: timestamp
+- lastSuccessAt: timestamp (opcional)
+- lastFailureAt: timestamp (opcional)
+- failureCount: number (opcional)
+- invalidatedAt: timestamp (opcional)
+- invalidateReason: string (opcional)
+
+Notas:
+- `docId = sha256(token)`.
+- El `token` raw se conserva para envíos backend (FCM/Admin SDK).
+- Cliente no debe leer `token` raw.
+- Logout futuro: unregister explícito del token.
+- Tokens inválidos se deshabilitan/limpian desde backend.
+
