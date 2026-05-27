@@ -65,8 +65,14 @@ private fun buildRevealSteps(nodeCount: Int, edges: List<ConstellationEdge>): Li
 // No representan posiciones astronómicas reales.
 val AriesSimplifiedTemplate = template(
     "Aries",
-    listOf(ConstellationNode(0.18f, 0.72f), ConstellationNode(0.33f, 0.38f), ConstellationNode(0.52f, 0.26f), ConstellationNode(0.64f, 0.45f), ConstellationNode(0.76f, 0.28f), ConstellationNode(0.86f, 0.40f)),
-    listOf(ConstellationEdge(0, 1), ConstellationEdge(1, 2), ConstellationEdge(2, 3), ConstellationEdge(3, 4), ConstellationEdge(4, 5)),
+    listOf(
+        ConstellationNode(0.118f, 0.328f),
+        ConstellationNode(0.358f, 0.120f),
+        ConstellationNode(0.616f, 0.438f),
+        ConstellationNode(0.831f, 0.605f),
+        ConstellationNode(0.854f, 0.811f),
+    ),
+    listOf(ConstellationEdge(0, 1), ConstellationEdge(1, 2), ConstellationEdge(2, 3), ConstellationEdge(3, 4)),
 )
 val TaurusStylizedTemplate = template(
     "Taurus",
