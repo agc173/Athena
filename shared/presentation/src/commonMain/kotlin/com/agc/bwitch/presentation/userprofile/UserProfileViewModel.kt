@@ -149,7 +149,7 @@ class UserProfileViewModel(
         }
 
         loadHabitsProgress()
-        refreshConstellationProgressIfNeeded(sessionVm.uiState.value.uid)
+        scheduleConstellationProgressRefresh(sessionVm.uiState.value.uid)
 
         scope.launch {
             sessionVm.uiState
@@ -157,7 +157,7 @@ class UserProfileViewModel(
                 .distinctUntilChanged()
                 .collectLatest { uid ->
                     if (uid.isNullOrBlank()) return@collectLatest
-                    refreshConstellationProgressIfNeeded(uid)
+                    scheduleConstellationProgressRefresh(uid)
                     if (seededForUid == uid) return@collectLatest
                     if (isSeeding) return@collectLatest
                     isSeeding = true
@@ -190,11 +190,22 @@ class UserProfileViewModel(
         }
     }
 
-    private suspend fun refreshConstellationProgressIfNeeded(uid: String?) {
+    private fun scheduleConstellationProgressRefresh(uid: String?) {
         if (uid.isNullOrBlank()) return
         if (refreshedProgressForUid == uid) return
-        runCatching { refreshConstellationProgressUseCase() }
         refreshedProgressForUid = uid
+        scope.launch {
+            refreshConstellationProgressIfNeeded(uid)
+        }
+    }
+
+
+    private suspend fun refreshConstellationProgressIfNeeded(uid: String?) {
+        if (uid.isNullOrBlank()) return
+        val result = runCatching { refreshConstellationProgressUseCase() }
+        if (result.isFailure && refreshedProgressForUid == uid) {
+            refreshedProgressForUid = null
+        }
     }
 
     fun updateAndSave(
