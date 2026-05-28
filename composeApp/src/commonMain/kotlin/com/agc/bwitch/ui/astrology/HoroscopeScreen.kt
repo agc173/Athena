@@ -105,9 +105,10 @@ import com.agc.bwitch.presentation.economy.UNLOCK_FLOW_ORIGIN_DIRECT_BALANCE
 import com.agc.bwitch.presentation.economy.UNLOCK_FLOW_ORIGIN_PREMIUM
 import com.agc.bwitch.ui.common.designsystem.BWitchPrimaryButton
 import com.agc.bwitch.ui.common.designsystem.BWitchSecondaryButton
+import com.agc.bwitch.ui.common.ConstellationBadgeCard
+import com.agc.bwitch.ui.common.ZodiacStylizedTemplates
 import com.agc.bwitch.ui.tarot.DeckCardUnlockRewardDialog
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
@@ -130,7 +131,6 @@ fun HoroscopeScreen(
     val shareScope = rememberCoroutineScope()
     var shareErrorMessage by remember { mutableStateOf<String?>(null) }
     var rewardDialogRewards by remember { mutableStateOf<List<DeckCardUnlockReward>>(emptyList()) }
-    var constellationRewardMessage by remember { mutableStateOf<String?>(null) }
     var isRewardedAdFlowRunning by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(preselectedSign) { preselectedSign?.let(viewModel::onSelectSign) }
@@ -146,13 +146,6 @@ fun HoroscopeScreen(
                 is HoroscopeUiEffect.ConstellationProgressRewarded -> Unit
             }
         }
-    }
-    LaunchedEffect(state.pendingConstellationReward) {
-        val pendingReward = state.pendingConstellationReward ?: return@LaunchedEffect
-        constellationRewardMessage = buildConstellationRewardMessage(pendingReward)
-        delay(2200)
-        constellationRewardMessage = null
-        viewModel.onConstellationRewardShown()
     }
     Scaffold(modifier = modifier) { innerPadding ->
         Box(modifier = Modifier.fillMaxSize()) {
@@ -274,15 +267,13 @@ fun HoroscopeScreen(
                 },
                 shareErrorMessage = shareErrorMessage,
             )
-            ConstellationRewardOverlay(
-                message = constellationRewardMessage,
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(innerPadding)
-                    .padding(contentPadding)
-                    .padding(top = 12.dp),
-            )
         }
+    }
+    state.pendingConstellationReward?.let { reward ->
+        ConstellationRewardDialog(
+            reward = reward,
+            onDismiss = viewModel::onConstellationRewardShown,
+        )
     }
     if (rewardDialogRewards.isNotEmpty()) {
         DeckCardUnlockRewardDialog(
@@ -297,45 +288,64 @@ fun HoroscopeScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ConstellationRewardOverlay(
-    message: String?,
-    modifier: Modifier = Modifier,
-) {
-    if (message.isNullOrBlank()) return
-    val pulse = rememberInfiniteTransition(label = "constellation_reward_pulse")
-    val scale by pulse.animateFloat(
-        initialValue = 1f,
-        targetValue = 1.03f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 550, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "constellation_reward_scale",
-    )
-    Surface(
-        modifier = modifier
-            .padding(horizontal = 16.dp)
-            .scale(scale),
-        shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.92f),
-    ) {
-        Text(
-            text = message,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSecondaryContainer,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-            textAlign = TextAlign.Center,
-        )
-    }
-}
-
-private fun buildConstellationRewardMessage(
+private fun ConstellationRewardDialog(
     reward: ConstellationRewardUi,
-): String {
-    val base = "Una estrella se ha despertado"
-    val signPart = reward.sign?.name?.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
-    return if (signPart.isNullOrBlank()) base else "$base · $signPart avanza"
+    onDismiss: () -> Unit,
+) {
+    BasicAlertDialog(onDismissRequest = onDismiss) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .widthIn(max = 420.dp),
+            shape = MaterialTheme.shapes.extraLarge,
+            color = Color(0xFF10162A),
+            tonalElevation = 10.dp,
+            shadowElevation = 20.dp,
+            border = BorderStroke(1.dp, Color(0x33F4CB7D)),
+        ) {
+            Column(
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 22.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                Text(
+                    text = "Constelación despertada",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = Color(0xFFFFE4A3),
+                    textAlign = TextAlign.Center,
+                )
+                Text(
+                    text = "Has encendido una nueva estrella",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color(0xFFE5E9F7),
+                    textAlign = TextAlign.Center,
+                )
+                val template = reward.sign?.let { sign -> ZodiacStylizedTemplates.firstOrNull { it.sign == sign } }
+                if (template != null) {
+                    ConstellationBadgeCard(
+                        progressSteps = reward.progressInSign ?: 0,
+                        template = template,
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                    )
+                } else {
+                    val signName = reward.sign?.name?.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+                    Text(
+                        text = signName ?: "Constelación",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Color(0xFFF4DDA9),
+                        textAlign = TextAlign.Center,
+                    )
+                }
+                BWitchPrimaryButton(
+                    text = "Continuar",
+                    onClick = onDismiss,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        }
+    }
 }
 
 @OptIn(ExperimentalLayoutApi::class)
