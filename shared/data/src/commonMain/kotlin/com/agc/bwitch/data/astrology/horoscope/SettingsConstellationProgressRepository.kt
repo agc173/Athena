@@ -1,6 +1,7 @@
 package com.agc.bwitch.data.astrology.horoscope
 
 import com.agc.bwitch.domain.astrology.horoscope.ConstellationProgressRepository
+import com.agc.bwitch.domain.astrology.horoscope.ConstellationProgressRewardResult
 import com.russhwolf.settings.Settings
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,6 +26,19 @@ class SettingsConstellationProgressRepository(
 
     override suspend fun saveLastRewardDateIso(value: String) {
         settings.putString(LAST_REWARD_DATE_KEY, value)
+    }
+
+    override suspend fun claimDailyProgress(todayIso: String, maxTotalProgress: Int): ConstellationProgressRewardResult {
+        val lastRewardDate = getLastRewardDateIso()
+        val previousTotal = getTotalProgress().coerceIn(0, maxTotalProgress)
+        if (lastRewardDate == todayIso) {
+            return ConstellationProgressRewardResult(previousTotal, previousTotal, rewarded = false, isComplete = previousTotal >= maxTotalProgress)
+        }
+        val isComplete = previousTotal >= maxTotalProgress
+        val totalProgress = if (isComplete) previousTotal else (previousTotal + 1).coerceAtMost(maxTotalProgress)
+        saveTotalProgress(totalProgress)
+        saveLastRewardDateIso(todayIso)
+        return ConstellationProgressRewardResult(totalProgress, previousTotal, rewarded = !isComplete, isComplete = totalProgress >= maxTotalProgress)
     }
 }
 
