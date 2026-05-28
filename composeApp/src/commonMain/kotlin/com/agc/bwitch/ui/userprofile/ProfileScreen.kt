@@ -54,6 +54,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.agc.bwitch.domain.astrology.birthchart.BirthEssenceProfile
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
+import com.agc.bwitch.domain.astrology.horoscope.ConstellationProgressRules
 import com.agc.bwitch.domain.rituals.completedHabitBadgesForCycles
 import com.agc.bwitch.localization.AppStrings
 import com.agc.bwitch.localization.appStrings
@@ -399,7 +400,7 @@ fun ProfileScreen(
                     .fillMaxSize()
                     .padding(horizontal = 12.dp, vertical = 24.dp),
                 shape = RoundedCornerShape(24.dp),
-                color = MaterialTheme.colorScheme.surface,
+                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f),
             ) {
                 Column(
                     modifier = Modifier
@@ -417,15 +418,26 @@ fun ProfileScreen(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    val demoProgressBySign = mapOf("Aries" to 3, "Scorpio" to 2, "Aquarius" to 1)
+                    // Importante: el orden de ZodiacStylizedTemplates debe coincidir con
+                    // ConstellationProgressRules.zodiacOrder para mantener el reparto secuencial.
+                    val templates = ZodiacStylizedTemplates
+                    val maxTotalProgress = ConstellationProgressRules.maxTotalProgress
+                    var remaining = state.totalConstellationProgress.coerceIn(0, maxTotalProgress)
+                    val progressBySign = buildMap<String, Int> {
+                        templates.forEach { template ->
+                            val current = remaining.coerceAtMost(template.totalSteps)
+                            put(template.name, current)
+                            remaining = (remaining - current).coerceAtLeast(0)
+                        }
+                    }
                     LazyVerticalGrid(
-                        columns = GridCells.Adaptive(minSize = 170.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        columns = GridCells.Adaptive(minSize = 132.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier.weight(1f),
                     ) {
-                        items(ZodiacStylizedTemplates) { template ->
-                            ConstellationBadgeCard(template = template, progressSteps = demoProgressBySign[template.name] ?: 0)
+                        items(templates) { template ->
+                            ConstellationBadgeCard(template = template, progressSteps = progressBySign[template.name] ?: 0)
                         }
                     }
                     Button(onClick = { showConstellationsDialog = false }, modifier = Modifier.align(Alignment.End)) { Text("Cerrar") }
