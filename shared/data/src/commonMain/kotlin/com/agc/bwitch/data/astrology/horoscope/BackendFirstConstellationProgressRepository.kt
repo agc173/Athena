@@ -56,12 +56,12 @@ class BackendFirstConstellationProgressRepository(
 }
 
 @Serializable
-private data class ClaimDailyConstellationProgressRequestDto(
+internal data class ClaimDailyConstellationProgressRequestDto(
     val todayIso: String,
 )
 
 @Serializable
-private data class ClaimDailyConstellationProgressResponseDto(
+internal data class ClaimDailyConstellationProgressResponseDto(
     val totalProgress: Int,
     val previousTotalProgress: Int,
     val rewarded: Boolean,
