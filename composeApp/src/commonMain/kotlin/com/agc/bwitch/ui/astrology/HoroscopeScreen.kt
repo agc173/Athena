@@ -58,6 +58,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
@@ -339,10 +340,11 @@ private fun ConstellationRewardDialog(
                     )
                 }
                 BWitchPrimaryButton(
-                    text = "Continuar",
                     onClick = onDismiss,
                     modifier = Modifier.fillMaxWidth(),
-                )
+                ) {
+                    Text("Continuar")
+                }
             }
         }
     }
