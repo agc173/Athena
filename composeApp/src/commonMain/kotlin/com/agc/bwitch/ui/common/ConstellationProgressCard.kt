@@ -428,18 +428,24 @@ fun ConstellationBadgeCard(progressSteps: Int, template: ConstellationTemplate, 
     val pulseTransition = rememberInfiniteTransition(label = "badge-pulse")
     val pulse by pulseTransition.animateFloat(initialValue = 0.82f, targetValue = 1f, animationSpec = infiniteRepeatable(animation = tween(durationMillis = 1800), repeatMode = RepeatMode.Reverse), label = "badge-pulse-alpha")
 
-    val inactiveLine = Color(0xFF90A4B8).copy(alpha = 0.62f)
-    val inactiveNode = Color(0xFFDCE6F2).copy(alpha = 0.84f)
+    val isComplete = activeCount == totalSteps && totalSteps > 0
+    val isPartial = activeCount in 1 until totalSteps
+    val inactiveLine = Color(0xFF4A415E).copy(alpha = 0.72f)
+    val inactiveNode = Color(0xFF6B5A84).copy(alpha = 0.72f)
     val activeLine = Color(0xFFF4CB7D).copy(alpha = 0.98f)
     val activeNode = Color(0xFFFFE2A2)
-    val frame = Color(0xFFB5C7DC).copy(alpha = 0.32f)
+    val frame = when {
+        isComplete -> Color(0xFFFFD88A).copy(alpha = 0.62f)
+        isPartial -> Color(0xFFC4A5FF).copy(alpha = 0.40f)
+        else -> Color(0xFF7D6A98).copy(alpha = 0.22f)
+    }
 
-    Card(modifier = modifier, shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.38f))) {
-        Column(modifier = Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text(text = template.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-            Text(text = "$activeCount/$totalSteps", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
-            Box(modifier = Modifier.fillMaxWidth().aspectRatio(1.05f).border(width = 1.dp, color = frame, shape = RoundedCornerShape(18.dp)), contentAlignment = Alignment.Center) {
-                Canvas(modifier = Modifier.fillMaxWidth().aspectRatio(1.05f).padding(4.dp)) {
+    Card(modifier = modifier, shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFF161123).copy(alpha = 0.9f))) {
+        Column(modifier = Modifier.fillMaxWidth().padding(10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(text = template.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+            Text(text = "$activeCount/$totalSteps", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
+            Box(modifier = Modifier.fillMaxWidth().aspectRatio(1.02f).border(width = 1.dp, color = frame, shape = RoundedCornerShape(12.dp)), contentAlignment = Alignment.Center) {
+                Canvas(modifier = Modifier.fillMaxWidth().aspectRatio(1.02f).padding(3.dp)) {
                     val scaledPoints = template.nodes.map { Offset(it.x * size.width, it.y * size.height) }
                     template.edges.forEachIndexed { lineIndex, edge ->
                         drawLine(color = inactiveLine, start = scaledPoints[edge.from], end = scaledPoints[edge.to], strokeWidth = 16f, cap = StrokeCap.Round)
@@ -449,8 +455,13 @@ fun ConstellationBadgeCard(progressSteps: Int, template: ConstellationTemplate, 
                         drawCircle(color = inactiveNode.copy(alpha = 0.18f * pulse), radius = 44f, center = point, style = Stroke(width = 6f))
                         drawCircle(color = inactiveNode, radius = 26f, center = point)
                         if (index in revealedNodeIndexes) {
+                            val baseGlow = when {
+                                isComplete -> 0.35f
+                                isPartial -> 0.22f
+                                else -> 0.14f
+                            }
                             val glowAlpha = if (lastRevealedNodeIndex == index) pulse else 0.85f
-                            drawCircle(color = activeNode.copy(alpha = 0.20f * glowAlpha), radius = 44f, center = point)
+                            drawCircle(color = activeNode.copy(alpha = baseGlow * glowAlpha), radius = 44f, center = point)
                             drawCircle(color = activeNode.copy(alpha = glowAlpha), radius = 30f, center = point)
                         }
                     }

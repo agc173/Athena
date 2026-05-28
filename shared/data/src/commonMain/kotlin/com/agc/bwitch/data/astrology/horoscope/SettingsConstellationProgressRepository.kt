@@ -1,0 +1,33 @@
+package com.agc.bwitch.data.astrology.horoscope
+
+import com.agc.bwitch.domain.astrology.horoscope.ConstellationProgressRepository
+import com.russhwolf.settings.Settings
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+
+class SettingsConstellationProgressRepository(
+    private val settings: Settings,
+) : ConstellationProgressRepository {
+
+    private val totalProgressFlow = MutableStateFlow(settings.getInt(TOTAL_PROGRESS_KEY, 0).coerceAtLeast(0))
+
+    override fun observeTotalProgress(): Flow<Int> = totalProgressFlow.distinctUntilChanged()
+
+    override suspend fun getTotalProgress(): Int = settings.getInt(TOTAL_PROGRESS_KEY, 0).coerceAtLeast(0)
+
+    override suspend fun getLastRewardDateIso(): String? = settings.getStringOrNull(LAST_REWARD_DATE_KEY)
+
+    override suspend fun saveTotalProgress(value: Int) {
+        val safeValue = value.coerceAtLeast(0)
+        settings.putInt(TOTAL_PROGRESS_KEY, safeValue)
+        totalProgressFlow.value = safeValue
+    }
+
+    override suspend fun saveLastRewardDateIso(value: String) {
+        settings.putString(LAST_REWARD_DATE_KEY, value)
+    }
+}
+
+private const val TOTAL_PROGRESS_KEY = "constellation_total_progress"
+private const val LAST_REWARD_DATE_KEY = "constellation_last_reward_date"

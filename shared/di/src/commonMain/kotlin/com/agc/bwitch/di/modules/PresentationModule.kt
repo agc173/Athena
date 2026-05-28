@@ -42,7 +42,7 @@ val presentationModule: Module = module {
     /**
      * Horoscope
      */
-    factory { HoroscopeViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
+    factory { HoroscopeViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
 
     /**
      * BirthChart
@@ -51,7 +51,7 @@ val presentationModule: Module = module {
 
     factory { SynastryViewModel(get(), get(), get(), get()) }
 
-    factory { UserProfileViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
+    factory { UserProfileViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     factory { SettingsViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     factory { OnboardingProfileViewModel(get(), get(), get(), get(), get(), get()) }
 

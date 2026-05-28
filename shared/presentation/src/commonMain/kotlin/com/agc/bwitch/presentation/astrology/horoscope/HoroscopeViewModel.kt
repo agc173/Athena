@@ -14,6 +14,8 @@ import com.agc.bwitch.domain.astrology.horoscope.ObserveMonthlyHoroscopeUseCase
 import com.agc.bwitch.domain.astrology.horoscope.ObserveWeeklyHoroscopeUseCase
 import com.agc.bwitch.domain.astrology.horoscope.ObserveDailyHoroscopeUseCase
 import com.agc.bwitch.domain.astrology.horoscope.PullDailyHoroscopeUseCase
+import com.agc.bwitch.domain.astrology.horoscope.RewardDailyConstellationProgressUseCase
+import com.agc.bwitch.domain.astrology.horoscope.ConstellationProgressRules
 import com.agc.bwitch.domain.astrology.horoscope.UnlockHoroscopeFutureDayUseCase
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSignResolver
@@ -66,6 +68,7 @@ class HoroscopeViewModel(
     private val isHoroscopeDayUnlockedUseCase: IsHoroscopeDayUnlockedUseCase,
     private val unlockHoroscopeFutureDayUseCase: UnlockHoroscopeFutureDayUseCase,
     private val unlockRepository: HoroscopeUnlockRepository,
+    private val rewardDailyConstellationProgressUseCase: RewardDailyConstellationProgressUseCase,
     private val analyticsTracker: AnalyticsTracker = NoOpAnalyticsTracker,
     private val dispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {
@@ -94,6 +97,12 @@ class HoroscopeViewModel(
     init {
         scope.launch { runCatching { resolveCurrentLanguageUseCase() } }
         scope.launch { loadCostsAndPeriods() }
+        scope.launch {
+            rewardDailyConstellationProgressUseCase(
+                todayIso = todayIso(),
+                maxTotalProgress = ConstellationProgressRules.maxTotalProgress,
+            )
+        }
 
         scope.launch {
             observeCurrentLanguageUseCase()
