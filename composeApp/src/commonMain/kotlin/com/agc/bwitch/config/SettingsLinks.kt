@@ -12,10 +12,10 @@ object SettingsLinks {
     const val supportEmail: String = "athenaapp.support@gmail.com"
 
     // TODO(product): Sustituir por la URL real publicada de Privacy Policy.
-    const val privacyPolicyUrl: String = "https://bwitch-4f01a.web.app/privacy"
+    const val privacyPolicyUrl: String = "https://bwitch-4f01a.web.app/privacy.html"
 
     // TODO(product): Sustituir por la URL real publicada de Terms & Conditions.
-    const val termsAndConditionsUrl: String = "https://bwitch-4f01a.web.app/terms"
+    const val termsAndConditionsUrl: String = "https://bwitch-4f01a.web.app/terms.html"
 
     fun contactSupportMailto(): String = "mailto:$supportEmail"
 
