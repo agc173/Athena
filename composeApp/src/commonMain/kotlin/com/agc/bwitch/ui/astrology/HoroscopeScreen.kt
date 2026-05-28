@@ -276,7 +276,11 @@ fun HoroscopeScreen(
             )
             ConstellationRewardOverlay(
                 message = constellationRewardMessage,
-                modifier = Modifier.align(Alignment.TopCenter).padding(top = 22.dp),
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(innerPadding)
+                    .padding(contentPadding)
+                    .padding(top = 12.dp),
             )
         }
     }
