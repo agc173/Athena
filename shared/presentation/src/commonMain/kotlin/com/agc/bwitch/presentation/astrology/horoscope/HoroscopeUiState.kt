@@ -33,6 +33,15 @@ data class HoroscopeUiState(
     val overlay: HoroscopeOverlayUi? = null,
     val errorMessage: HoroscopeFeedbackMessage? = null,
     val infoMessage: HoroscopeFeedbackMessage? = null,
+    val pendingConstellationReward: ConstellationRewardUi? = null,
+)
+
+data class ConstellationRewardUi(
+    val previousTotalProgress: Int,
+    val totalProgress: Int,
+    val sign: ZodiacSign?,
+    val progressInSign: Int?,
+    val totalStepsInSign: Int?,
 )
 
 enum class HoroscopeTab { Daily, Weekly, Monthly }

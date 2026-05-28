@@ -86,6 +86,7 @@ import com.agc.bwitch.localization.AppStrings
 import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.domain.model.DeckCardUnlockReward
 import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeUiEffect
+import com.agc.bwitch.presentation.astrology.horoscope.ConstellationRewardUi
 import com.agc.bwitch.platform.share.ShareResult
 import com.agc.bwitch.platform.share.ShareTextPayload
 import com.agc.bwitch.platform.share.rememberShareLauncher
@@ -142,13 +143,16 @@ fun HoroscopeScreen(
         viewModel.uiEffects.collect { effect ->
             when (effect) {
                 is HoroscopeUiEffect.ShowDeckCardUnlockRewards -> rewardDialogRewards = effect.rewards
-                is HoroscopeUiEffect.ConstellationProgressRewarded -> {
-                    constellationRewardMessage = buildConstellationRewardMessage(effect)
-                    delay(2200)
-                    constellationRewardMessage = null
-                }
+                is HoroscopeUiEffect.ConstellationProgressRewarded -> Unit
             }
         }
+    }
+    LaunchedEffect(state.pendingConstellationReward) {
+        val pendingReward = state.pendingConstellationReward ?: return@LaunchedEffect
+        constellationRewardMessage = buildConstellationRewardMessage(pendingReward)
+        delay(2200)
+        constellationRewardMessage = null
+        viewModel.onConstellationRewardShown()
     }
     Scaffold(modifier = modifier) { innerPadding ->
         Box(modifier = Modifier.fillMaxSize()) {
@@ -323,10 +327,10 @@ private fun ConstellationRewardOverlay(
 }
 
 private fun buildConstellationRewardMessage(
-    effect: HoroscopeUiEffect.ConstellationProgressRewarded,
+    reward: ConstellationRewardUi,
 ): String {
     val base = "Una estrella se ha despertado"
-    val signPart = effect.sign?.name?.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+    val signPart = reward.sign?.name?.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
     return if (signPart.isNullOrBlank()) base else "$base · $signPart avanza"
 }
 
