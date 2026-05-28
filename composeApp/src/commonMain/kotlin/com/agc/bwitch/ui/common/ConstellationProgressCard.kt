@@ -6,7 +6,6 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,9 +24,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.agc.bwitch.domain.astrology.horoscope.ConstellationProgressRules
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
@@ -452,40 +453,55 @@ fun ConstellationBadgeCard(progressSteps: Int, template: ConstellationTemplate, 
 
     val isComplete = activeCount == totalSteps && totalSteps > 0
     val isPartial = activeCount in 1 until totalSteps
-    val inactiveLine = Color(0xFF4A415E).copy(alpha = 0.72f)
-    val inactiveNode = Color(0xFF6B5A84).copy(alpha = 0.72f)
+    val inactiveLine = Color(0xFF5F6A88).copy(alpha = 0.52f)
+    val inactiveNode = Color(0xFF90A2C0).copy(alpha = 0.56f)
     val activeLine = Color(0xFFF4CB7D).copy(alpha = 0.98f)
     val activeNode = Color(0xFFFFE2A2)
-    val frame = when {
-        isComplete -> Color(0xFFFFD88A).copy(alpha = 0.62f)
-        isPartial -> Color(0xFFC4A5FF).copy(alpha = 0.40f)
-        else -> Color(0xFF7D6A98).copy(alpha = 0.22f)
+    val nameColor = when {
+        isComplete -> Color(0xFFFFE5A6).copy(alpha = 0.96f)
+        isPartial -> Color(0xFFF4DDA9).copy(alpha = 0.92f)
+        else -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.78f)
+    }
+    val glowBrush = when {
+        isComplete -> Brush.radialGradient(listOf(Color(0x66FFD88A), Color.Transparent))
+        isPartial -> Brush.radialGradient(listOf(Color(0x33F4CB7D), Color.Transparent))
+        else -> Brush.radialGradient(listOf(Color(0x155A6F9C), Color.Transparent))
     }
 
-    Card(modifier = modifier, shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFF161123).copy(alpha = 0.9f))) {
-        Column(modifier = Modifier.fillMaxWidth().padding(10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(text = template.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-            Text(text = "$activeCount/$totalSteps", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
-            Box(modifier = Modifier.fillMaxWidth().aspectRatio(1.02f).border(width = 1.dp, color = frame, shape = RoundedCornerShape(12.dp)), contentAlignment = Alignment.Center) {
-                Canvas(modifier = Modifier.fillMaxWidth().aspectRatio(1.02f).padding(3.dp)) {
-                    val scaledPoints = template.nodes.map { Offset(it.x * size.width, it.y * size.height) }
-                    template.edges.forEachIndexed { lineIndex, edge ->
-                        drawLine(color = inactiveLine, start = scaledPoints[edge.from], end = scaledPoints[edge.to], strokeWidth = 16f, cap = StrokeCap.Round)
-                        if (lineIndex in revealedEdgeIndexes) drawLine(color = activeLine, start = scaledPoints[edge.from], end = scaledPoints[edge.to], strokeWidth = 18f, cap = StrokeCap.Round)
-                    }
-                    scaledPoints.forEachIndexed { index, point ->
-                        drawCircle(color = inactiveNode.copy(alpha = 0.18f * pulse), radius = 44f, center = point, style = Stroke(width = 6f))
-                        drawCircle(color = inactiveNode, radius = 26f, center = point)
-                        if (index in revealedNodeIndexes) {
-                            val baseGlow = when {
-                                isComplete -> 0.35f
-                                isPartial -> 0.22f
-                                else -> 0.14f
-                            }
-                            val glowAlpha = if (lastRevealedNodeIndex == index) pulse else 0.85f
-                            drawCircle(color = activeNode.copy(alpha = baseGlow * glowAlpha), radius = 44f, center = point)
-                            drawCircle(color = activeNode.copy(alpha = glowAlpha), radius = 30f, center = point)
+    Box(modifier = modifier) {
+        Canvas(modifier = Modifier.matchParentSize()) {
+            drawCircle(
+                brush = glowBrush,
+                radius = size.minDimension * 0.72f,
+                center = Offset(size.width / 2f, size.height * 0.52f),
+            )
+        }
+        Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = template.name,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Medium,
+                textAlign = TextAlign.Center,
+                color = nameColor,
+            )
+            Canvas(modifier = Modifier.fillMaxWidth().aspectRatio(1.05f)) {
+                val scaledPoints = template.nodes.map { Offset(it.x * size.width, it.y * size.height) }
+                template.edges.forEachIndexed { lineIndex, edge ->
+                    drawLine(color = inactiveLine, start = scaledPoints[edge.from], end = scaledPoints[edge.to], strokeWidth = 13f, cap = StrokeCap.Round)
+                    if (lineIndex in revealedEdgeIndexes) drawLine(color = activeLine, start = scaledPoints[edge.from], end = scaledPoints[edge.to], strokeWidth = 15f, cap = StrokeCap.Round)
+                }
+                scaledPoints.forEachIndexed { index, point ->
+                    drawCircle(color = inactiveNode.copy(alpha = 0.12f * pulse), radius = 36f, center = point, style = Stroke(width = 4f))
+                    drawCircle(color = inactiveNode, radius = 20f, center = point)
+                    if (index in revealedNodeIndexes) {
+                        val baseGlow = when {
+                            isComplete -> 0.45f
+                            isPartial -> 0.22f
+                            else -> 0.08f
                         }
+                        val glowAlpha = if (lastRevealedNodeIndex == index) pulse else 0.85f
+                        drawCircle(color = activeNode.copy(alpha = baseGlow * glowAlpha), radius = 44f, center = point)
+                        drawCircle(color = activeNode.copy(alpha = glowAlpha), radius = 26f, center = point)
                     }
                 }
             }

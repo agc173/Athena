@@ -46,6 +46,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -400,46 +402,83 @@ fun ProfileScreen(
                     .fillMaxSize()
                     .padding(horizontal = 12.dp, vertical = 24.dp),
                 shape = RoundedCornerShape(24.dp),
-                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f),
+                color = Color(0xFF070913),
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    Text(
-                        text = "Constelaciones",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                    Text(
-                        text = "Despierta las insignias zodiacales",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    val templates = ZodiacStylizedTemplates
-                    val maxTotalProgress = ConstellationProgressRules.maxTotalProgress
-                    var remaining = state.totalConstellationProgress.coerceIn(0, maxTotalProgress)
-                    val progressBySign = buildMap<ZodiacSign, Int> {
-                        templates.forEach { template ->
-                            val signMaxSteps = ConstellationProgressRules.stepsBySign.getValue(template.sign)
-                            val current = remaining.coerceAtMost(signMaxSteps)
-                            put(template.sign, current)
-                            remaining = (remaining - current).coerceAtLeast(0)
+                Box(modifier = Modifier.fillMaxSize()) {
+                    Canvas(modifier = Modifier.matchParentSize()) {
+                        drawRect(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(Color(0xFF090D1C), Color(0xFF120B1F), Color(0xFF070913)),
+                            ),
+                        )
+                        drawCircle(
+                            brush = Brush.radialGradient(listOf(Color(0x223D5B96), Color.Transparent)),
+                            radius = size.minDimension * 0.72f,
+                            center = Offset(size.width * 0.24f, size.height * 0.18f),
+                        )
+                        drawCircle(
+                            brush = Brush.radialGradient(listOf(Color(0x1CA860FF), Color.Transparent)),
+                            radius = size.minDimension * 0.82f,
+                            center = Offset(size.width * 0.84f, size.height * 0.32f),
+                        )
+                        drawCircle(
+                            brush = Brush.radialGradient(listOf(Color(0x14FFE0AF), Color.Transparent)),
+                            radius = size.minDimension * 0.56f,
+                            center = Offset(size.width * 0.60f, size.height * 0.78f),
+                        )
+                        val stars = 60
+                        repeat(stars) { index ->
+                            val x = ((index * 37f) % 100f) / 100f
+                            val y = ((index * 61f) % 100f) / 100f
+                            val alpha = 0.18f + (index % 5) * 0.08f
+                            val radius = 1.2f + (index % 3) * 0.9f
+                            drawCircle(
+                                color = Color.White.copy(alpha = alpha),
+                                radius = radius,
+                                center = Offset(size.width * x, size.height * y),
+                            )
                         }
                     }
-                    LazyVerticalGrid(
-                        columns = GridCells.Adaptive(minSize = 132.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.weight(1f),
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(14.dp),
                     ) {
-                        items(templates) { template ->
-                            ConstellationBadgeCard(template = template, progressSteps = progressBySign[template.sign] ?: 0)
+                        Text(
+                            text = "Constelaciones",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFFF2E9FF),
+                        )
+                        Text(
+                            text = "Despierta las insignias zodiacales",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color(0xFFD2C7EA).copy(alpha = 0.88f),
+                        )
+                        val templates = ZodiacStylizedTemplates
+                        val maxTotalProgress = ConstellationProgressRules.maxTotalProgress
+                        var remaining = state.totalConstellationProgress.coerceIn(0, maxTotalProgress)
+                        val progressBySign = buildMap<ZodiacSign, Int> {
+                            templates.forEach { template ->
+                                val signMaxSteps = ConstellationProgressRules.stepsBySign.getValue(template.sign)
+                                val current = remaining.coerceAtMost(signMaxSteps)
+                                put(template.sign, current)
+                                remaining = (remaining - current).coerceAtLeast(0)
+                            }
                         }
+                        LazyVerticalGrid(
+                            columns = GridCells.Adaptive(minSize = 132.dp),
+                            horizontalArrangement = Arrangement.spacedBy(22.dp),
+                            verticalArrangement = Arrangement.spacedBy(20.dp),
+                            modifier = Modifier.weight(1f),
+                        ) {
+                            items(templates) { template ->
+                                ConstellationBadgeCard(template = template, progressSteps = progressBySign[template.sign] ?: 0)
+                            }
+                        }
+                        Button(onClick = { showConstellationsDialog = false }, modifier = Modifier.align(Alignment.End)) { Text("Cerrar") }
                     }
-                    Button(onClick = { showConstellationsDialog = false }, modifier = Modifier.align(Alignment.End)) { Text("Cerrar") }
                 }
             }
         }
