@@ -1,6 +1,7 @@
 package com.agc.bwitch.presentation.astrology.horoscope
 
 import com.agc.bwitch.domain.astrology.horoscope.ConstellationProgressRepository
+import com.agc.bwitch.domain.astrology.horoscope.ConstellationProgressRewardResult
 import com.agc.bwitch.domain.astrology.horoscope.DailyHoroscope
 import com.agc.bwitch.domain.astrology.horoscope.GetDailyHoroscopeUseCase
 import com.agc.bwitch.domain.astrology.horoscope.GetHoroscopeFutureDayCostUseCase
@@ -1110,6 +1111,36 @@ class HoroscopeViewModelTest {
 
         override suspend fun saveLastRewardDateIso(value: String) {
             lastRewardDateIso = value
+        }
+
+        override suspend fun claimDailyProgress(
+            todayIso: String,
+            maxTotalProgress: Int
+        ): ConstellationProgressRewardResult {
+            val lastRewardDate = getLastRewardDateIso()
+            val previousTotal = getTotalProgress().coerceIn(0, maxTotalProgress)
+            if (lastRewardDate == todayIso) {
+                return ConstellationProgressRewardResult(
+                    totalProgress = previousTotal,
+                    previousTotalProgress = previousTotal,
+                    rewarded = false,
+                    isComplete = previousTotal >= maxTotalProgress,
+                )
+            }
+            val isComplete = previousTotal >= maxTotalProgress
+            val totalProgress = if (isComplete) {
+                previousTotal
+            } else {
+                (previousTotal + 1).coerceAtMost(maxTotalProgress)
+            }
+            saveTotalProgress(totalProgress)
+            saveLastRewardDateIso(todayIso)
+            return ConstellationProgressRewardResult(
+                totalProgress = totalProgress,
+                previousTotalProgress = previousTotal,
+                rewarded = !isComplete,
+                isComplete = totalProgress >= maxTotalProgress,
+            )
         }
     }
 
