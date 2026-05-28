@@ -418,16 +418,14 @@ fun ProfileScreen(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    // Importante: el orden de ZodiacStylizedTemplates debe coincidir con
-                    // ConstellationProgressRules.zodiacOrder para mantener el reparto secuencial.
                     val templates = ZodiacStylizedTemplates
                     val maxTotalProgress = ConstellationProgressRules.maxTotalProgress
                     var remaining = state.totalConstellationProgress.coerceIn(0, maxTotalProgress)
-                    val progressBySign = buildMap<String, Int> {
+                    val progressBySign = buildMap<ZodiacSign, Int> {
                         templates.forEach { template ->
-                            val signMaxSteps = ConstellationProgressRules.stepsBySign.getValue(template.name)
+                            val signMaxSteps = ConstellationProgressRules.stepsBySign.getValue(template.sign)
                             val current = remaining.coerceAtMost(signMaxSteps)
-                            put(template.name, current)
+                            put(template.sign, current)
                             remaining = (remaining - current).coerceAtLeast(0)
                         }
                     }
@@ -438,7 +436,7 @@ fun ProfileScreen(
                         modifier = Modifier.weight(1f),
                     ) {
                         items(templates) { template ->
-                            ConstellationBadgeCard(template = template, progressSteps = progressBySign[template.name] ?: 0)
+                            ConstellationBadgeCard(template = template, progressSteps = progressBySign[template.sign] ?: 0)
                         }
                     }
                     Button(onClick = { showConstellationsDialog = false }, modifier = Modifier.align(Alignment.End)) { Text("Cerrar") }

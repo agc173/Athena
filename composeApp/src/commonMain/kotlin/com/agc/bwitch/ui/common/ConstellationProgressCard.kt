@@ -29,6 +29,8 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.agc.bwitch.domain.astrology.horoscope.ConstellationProgressRules
+import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
 
 data class ConstellationNode(val x: Float, val y: Float)
 
@@ -40,6 +42,7 @@ sealed interface RevealStep {
 }
 
 data class ConstellationTemplate(
+    val sign: ZodiacSign,
     val name: String,
     val nodes: List<ConstellationNode>,
     val edges: List<ConstellationEdge>,
@@ -48,8 +51,8 @@ data class ConstellationTemplate(
     val totalSteps: Int get() = revealSteps.size
 }
 
-private fun template(name: String, nodes: List<ConstellationNode>, edges: List<ConstellationEdge>) =
-    ConstellationTemplate(name = name, nodes = nodes, edges = edges, revealSteps = buildRevealSteps(nodes.size, edges))
+private fun template(sign: ZodiacSign, name: String, nodes: List<ConstellationNode>, edges: List<ConstellationEdge>) =
+    ConstellationTemplate(sign = sign, name = name, nodes = nodes, edges = edges, revealSteps = buildRevealSteps(nodes.size, edges))
 
 private fun buildRevealSteps(nodeCount: Int, edges: List<ConstellationEdge>): List<RevealStep> = buildList {
     if (nodeCount == 0) return@buildList
@@ -64,6 +67,7 @@ private fun buildRevealSteps(nodeCount: Int, edges: List<ConstellationEdge>): Li
 // Nota UX importante: estas geometrías son estilizaciones zodiacales para identidad visual.
 // No representan posiciones astronómicas reales.
 val AriesSimplifiedTemplate = template(
+    ZodiacSign.aries,
     "Aries",
     listOf(
         ConstellationNode(0.118f, 0.328f),
@@ -75,6 +79,7 @@ val AriesSimplifiedTemplate = template(
     listOf(ConstellationEdge(0, 1), ConstellationEdge(1, 2), ConstellationEdge(2, 3), ConstellationEdge(3, 4)),
 )
 val TaurusStylizedTemplate = template(
+    ZodiacSign.taurus,
     "Taurus",
     listOf(
         ConstellationNode(0.199f, 0.103f), // 0 arriba izquierda
@@ -103,6 +108,7 @@ val TaurusStylizedTemplate = template(
     ),
 )
 val GeminiStylizedTemplate = template(
+    ZodiacSign.gemini,
     "Gemini",
     listOf(
         ConstellationNode(0.064f, 0.323f), // 0 izquierda
@@ -126,6 +132,7 @@ val GeminiStylizedTemplate = template(
     ),
 )
 val CancerStylizedTemplate = template(
+    ZodiacSign.cancer,
     "Cancer",
     listOf(
         ConstellationNode(0.106f, 0.491f),
@@ -142,6 +149,7 @@ val CancerStylizedTemplate = template(
     ),
 )
 val LeoStylizedTemplate = template(
+    ZodiacSign.leo,
     "Leo",
     listOf(
         ConstellationNode(0.121f, 0.799f),
@@ -167,6 +175,7 @@ val LeoStylizedTemplate = template(
     ),
 )
 val VirgoStylizedTemplate = template(
+    ZodiacSign.virgo,
     "Virgo",
     listOf(
         ConstellationNode(0.783f, 0.103f), // 0 arriba derecha
@@ -198,6 +207,7 @@ val VirgoStylizedTemplate = template(
     ),
 )
 val LibraStylizedTemplate = template(
+    ZodiacSign.libra,
     "Libra",
     listOf(
         ConstellationNode(0.065f, 0.128f), // 0 izquierda
@@ -220,6 +230,7 @@ val LibraStylizedTemplate = template(
 )
 
 val ScorpioStylizedTemplate = template(
+    ZodiacSign.scorpio,
     "Scorpio",
     listOf(
         ConstellationNode(0.119f, 0.670f),
@@ -246,6 +257,7 @@ val ScorpioStylizedTemplate = template(
     ),
 )
 val SagittariusStylizedTemplate = template(
+    ZodiacSign.sagittarius,
     "Sagittarius",
     listOf(
         ConstellationNode(0.302f, 0.082f), // 0
@@ -289,6 +301,7 @@ val SagittariusStylizedTemplate = template(
     ),
 )
 val CapricornStylizedTemplate = template(
+    ZodiacSign.capricorn,
     "Capricorn",
     listOf(
         ConstellationNode(0.084f, 0.612f), // 0 izquierda
@@ -314,6 +327,7 @@ val CapricornStylizedTemplate = template(
     ),
 )
 val AquariusStylizedTemplate = template(
+    ZodiacSign.aquarius,
     "Aquarius",
     listOf(
         ConstellationNode(0.085f, 0.525f),
@@ -342,6 +356,7 @@ val AquariusStylizedTemplate = template(
     ),
 )
 val PiscesStylizedTemplate = template(
+    ZodiacSign.pisces,
     "Pisces",
     listOf(
         ConstellationNode(0.111f, 0.559f),
@@ -371,10 +386,17 @@ val PiscesStylizedTemplate = template(
     ),
 )
 
-val ZodiacStylizedTemplates = listOf(
+private val zodiacTemplatesBySign: Map<ZodiacSign, ConstellationTemplate> = listOf(
     AriesSimplifiedTemplate, TaurusStylizedTemplate, GeminiStylizedTemplate, CancerStylizedTemplate, LeoStylizedTemplate, VirgoStylizedTemplate,
     LibraStylizedTemplate, ScorpioStylizedTemplate, SagittariusStylizedTemplate, CapricornStylizedTemplate, AquariusStylizedTemplate, PiscesStylizedTemplate,
-)
+).associateBy(ConstellationTemplate::sign).also { templatesBySign ->
+    require(templatesBySign.size == ConstellationProgressRules.zodiacOrder.size) { "Duplicate templates by zodiac sign." }
+    require(ConstellationProgressRules.zodiacOrder.all(templatesBySign::containsKey)) { "Missing zodiac template for configured order." }
+}
+
+val ZodiacStylizedTemplates: List<ConstellationTemplate> = ConstellationProgressRules.zodiacOrder.map { sign ->
+    zodiacTemplatesBySign.getValue(sign)
+}
 
 @Composable
 fun ConstellationProgressCard(progressSteps: Int, template: ConstellationTemplate, modifier: Modifier = Modifier) {

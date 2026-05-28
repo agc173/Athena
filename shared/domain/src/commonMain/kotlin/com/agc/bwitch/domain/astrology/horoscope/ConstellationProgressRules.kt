@@ -1,35 +1,34 @@
 package com.agc.bwitch.domain.astrology.horoscope
 
 object ConstellationProgressRules {
-    val zodiacOrder: List<String> = listOf(
-        "Aries",
-        "Taurus",
-        "Gemini",
-        "Cancer",
-        "Leo",
-        "Virgo",
-        "Libra",
-        "Scorpio",
-        "Sagittarius",
-        "Capricorn",
-        "Aquarius",
-        "Pisces",
+    val zodiacOrder: List<ZodiacSign> = listOf(
+        ZodiacSign.aries,
+        ZodiacSign.taurus,
+        ZodiacSign.gemini,
+        ZodiacSign.cancer,
+        ZodiacSign.leo,
+        ZodiacSign.virgo,
+        ZodiacSign.libra,
+        ZodiacSign.scorpio,
+        ZodiacSign.sagittarius,
+        ZodiacSign.capricorn,
+        ZodiacSign.aquarius,
+        ZodiacSign.pisces,
     )
 
-    // Must stay in sync with ZodiacStylizedTemplates totalSteps in composeApp.
-    val stepsBySign: Map<String, Int> = mapOf(
-        "Aries" to 9,
-        "Taurus" to 21,
-        "Gemini" to 17,
-        "Cancer" to 9,
-        "Leo" to 19,
-        "Virgo" to 25,
-        "Libra" to 15,
-        "Scorpio" to 19,
-        "Sagittarius" to 29,
-        "Capricorn" to 19,
-        "Aquarius" to 21,
-        "Pisces" to 23,
+    val stepsBySign: Map<ZodiacSign, Int> = mapOf(
+        ZodiacSign.aries to 9,
+        ZodiacSign.taurus to 21,
+        ZodiacSign.gemini to 17,
+        ZodiacSign.cancer to 9,
+        ZodiacSign.leo to 19,
+        ZodiacSign.virgo to 25,
+        ZodiacSign.libra to 15,
+        ZodiacSign.scorpio to 19,
+        ZodiacSign.sagittarius to 29,
+        ZodiacSign.capricorn to 19,
+        ZodiacSign.aquarius to 21,
+        ZodiacSign.pisces to 23,
     )
 
     val maxTotalProgress: Int = zodiacOrder.sumOf { stepsBySign.getValue(it) }
