@@ -40,7 +40,6 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -54,20 +53,34 @@ import kotlinx.datetime.toLocalDateTime
 @OptIn(ExperimentalCoroutinesApi::class)
 class HoroscopeViewModelTest {
     @Test
-    fun init_emitsRewardEffect_whenDailyRewardIsGranted() = runTest {
+    fun init_setsPendingReward_whenDailyRewardIsGranted() = runTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
         val unlockRepository = FakeUnlockRepository()
-        val effects = mutableListOf<HoroscopeUiEffect>()
 
         val viewModel = createViewModel(dispatcher, unlockRepository)
-        backgroundScope.launch { viewModel.uiEffects.collect { effects += it } }
 
         advanceUntilIdle()
 
-        val rewardEffect = effects.filterIsInstance<HoroscopeUiEffect.ConstellationProgressRewarded>().firstOrNull()
-        assertNotNull(rewardEffect)
-        assertEquals(0, rewardEffect.previousTotalProgress)
-        assertEquals(1, rewardEffect.totalProgress)
+        val reward = viewModel.uiState.value.pendingConstellationReward
+        assertNotNull(reward)
+        assertEquals(0, reward.previousTotalProgress)
+        assertEquals(1, reward.totalProgress)
+        assertEquals(ZodiacSign.aries, reward.sign)
+        assertEquals(1, reward.progressInSign)
+    }
+
+    @Test
+    fun onConstellationRewardShown_clearsPendingReward() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val unlockRepository = FakeUnlockRepository()
+        val viewModel = createViewModel(dispatcher, unlockRepository)
+
+        advanceUntilIdle()
+        assertNotNull(viewModel.uiState.value.pendingConstellationReward)
+
+        viewModel.onConstellationRewardShown()
+
+        assertNull(viewModel.uiState.value.pendingConstellationReward)
     }
 
     @Test
