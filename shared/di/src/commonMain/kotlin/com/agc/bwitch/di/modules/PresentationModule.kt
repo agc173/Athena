@@ -35,7 +35,7 @@ val presentationModule: Module = module {
      * Session global
      */
     single {
-        SessionViewModel(get())
+        SessionViewModel(get(), get())
     }
     single { AppLanguageViewModel(get(), get(), get()) }
 
@@ -52,7 +52,7 @@ val presentationModule: Module = module {
     factory { SynastryViewModel(get(), get(), get(), get()) }
 
     factory { UserProfileViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
-    factory { SettingsViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
+    factory { SettingsViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     factory { OnboardingProfileViewModel(get(), get(), get(), get(), get(), get()) }
 
     factory { OracleStatusViewModel(get()) }

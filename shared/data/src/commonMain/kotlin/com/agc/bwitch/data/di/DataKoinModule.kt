@@ -1,5 +1,6 @@
 package com.agc.bwitch.data.di
 
+import com.agc.bwitch.data.account.FunctionsAccountDeletionRepository
 import com.agc.bwitch.data.astrology.birthchart.SettingsBirthChartRepository
 import com.agc.bwitch.data.astrology.birthchart.SyncBirthChartRepository
 import com.agc.bwitch.data.auth.FirebaseAuthRepository
@@ -37,6 +38,7 @@ import com.agc.bwitch.data.tarot.SettingsSelectedTarotDeckRepository
 import com.agc.bwitch.data.userprofile.FirebaseAvatarRepository
 import com.agc.bwitch.data.userprofile.SettingsUserProfileRepository
 import com.agc.bwitch.data.userprofile.SyncUserProfileRepository
+import com.agc.bwitch.domain.account.AccountDeletionRepository
 import com.agc.bwitch.domain.astrology.birthchart.BirthChartRepository
 import com.agc.bwitch.domain.astrology.horoscope.HoroscopeRepository
 import com.agc.bwitch.domain.astrology.horoscope.HoroscopeUnlockRepository
@@ -101,6 +103,7 @@ val dataKoinModule: Module = module {
      * Auth
      */
     single<AuthRepository> { FirebaseAuthRepository() }
+    single<AccountDeletionRepository> { FunctionsAccountDeletionRepository(get(), get()) }
 
     /**
      * Horoscope

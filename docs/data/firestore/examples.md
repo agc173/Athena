@@ -112,3 +112,12 @@
 "completedCycles": 1,
 "updatedAtEpochMillis": 1775529600000
 }
+
+## userAccountStatus/{uid}
+{
+"pendingDeletion": true,
+"deletionRequestedAt": "<timestamp>",
+"scheduledDeletionAt": "<timestamp + 30 days>",
+"restoredAt": null,
+"updatedAt": "<timestamp>"
+}

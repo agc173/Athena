@@ -8,6 +8,7 @@ export {oracleGetStatus, tarotDraw, oracleAsk} from './oracle';
 export {saveUserProfile} from './userprofile';
 export {birthEssenceGenerate} from './birthessence';
 export {validateGooglePlayPurchase, restoreGooglePlayPurchases, refreshEntitlement} from './premium';
+export {requestAccountDeletion, restoreAccount} from './account';
 export {backfillPeriodHoroscopes} from './admin/callables/backfillPeriodHoroscopes';
 export {
   registerPushToken,
