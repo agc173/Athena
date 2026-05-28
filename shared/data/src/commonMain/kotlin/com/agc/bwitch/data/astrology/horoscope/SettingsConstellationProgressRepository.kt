@@ -15,6 +15,7 @@ class SettingsConstellationProgressRepository(
     override fun observeTotalProgress(): Flow<Int> = totalProgressFlow
 
     override suspend fun getTotalProgress(): Int = settings.getInt(TOTAL_PROGRESS_KEY, 0).coerceAtLeast(0)
+    override suspend fun refreshProgress(): Int = getTotalProgress()
 
     override suspend fun getLastRewardDateIso(): String? = settings.getStringOrNull(LAST_REWARD_DATE_KEY)
 

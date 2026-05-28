@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.Flow
 interface ConstellationProgressRepository {
     fun observeTotalProgress(): Flow<Int>
     suspend fun getTotalProgress(): Int
+    suspend fun refreshProgress(): Int
     suspend fun getLastRewardDateIso(): String?
     suspend fun saveTotalProgress(value: Int)
     suspend fun saveLastRewardDateIso(value: String)

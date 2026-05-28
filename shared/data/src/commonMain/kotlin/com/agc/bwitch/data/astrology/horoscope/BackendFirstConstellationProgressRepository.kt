@@ -17,6 +17,28 @@ class BackendFirstConstellationProgressRepository(
 
     override fun observeTotalProgress(): Flow<Int> = localRepository.observeTotalProgress()
     override suspend fun getTotalProgress(): Int = localRepository.getTotalProgress()
+    override suspend fun refreshProgress(): Int {
+        val localProgress = localRepository.getTotalProgress()
+        val isLoggedIn = authRepository.authState.first() != null
+        if (!isLoggedIn) return localProgress
+
+        val backendResult = functionsClient.call(
+            name = GET_CONSTELLATION_PROGRESS_CALLABLE,
+            data = UnitRequestDto,
+            requestSerializer = UnitRequestDto.serializer(),
+            responseSerializer = GetConstellationProgressResponseDto.serializer(),
+        )
+
+        return when (backendResult) {
+            is ApiResult.Ok -> {
+                val payload = backendResult.value
+                localRepository.saveTotalProgress(payload.totalProgress)
+                payload.lastRewardDateIso?.let { localRepository.saveLastRewardDateIso(it) }
+                payload.totalProgress
+            }
+            is ApiResult.Err -> localProgress
+        }
+    }
     override suspend fun getLastRewardDateIso(): String? = localRepository.getLastRewardDateIso()
     override suspend fun saveTotalProgress(value: Int) = localRepository.saveTotalProgress(value)
     override suspend fun saveLastRewardDateIso(value: String) = localRepository.saveLastRewardDateIso(value)
@@ -52,8 +74,12 @@ class BackendFirstConstellationProgressRepository(
 
     private companion object {
         const val CLAIM_DAILY_CONSTELLATION_PROGRESS_CALLABLE = "claimDailyConstellationProgress"
+        const val GET_CONSTELLATION_PROGRESS_CALLABLE = "getConstellationProgress"
     }
 }
+
+@Serializable
+internal data object UnitRequestDto
 
 @Serializable
 internal data class ClaimDailyConstellationProgressRequestDto(
@@ -65,5 +91,12 @@ internal data class ClaimDailyConstellationProgressResponseDto(
     val totalProgress: Int,
     val previousTotalProgress: Int,
     val rewarded: Boolean,
+    val isComplete: Boolean,
+)
+
+@Serializable
+internal data class GetConstellationProgressResponseDto(
+    val totalProgress: Int,
+    val lastRewardDateIso: String?,
     val isComplete: Boolean,
 )
