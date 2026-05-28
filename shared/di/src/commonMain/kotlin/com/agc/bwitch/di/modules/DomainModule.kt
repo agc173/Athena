@@ -15,6 +15,7 @@ import com.agc.bwitch.domain.astrology.horoscope.ObserveWeeklyHoroscopeUseCase
 import com.agc.bwitch.domain.astrology.horoscope.PullDailyHoroscopeUseCase
 import com.agc.bwitch.domain.astrology.horoscope.ObserveConstellationProgressUseCase
 import com.agc.bwitch.domain.astrology.horoscope.RewardDailyConstellationProgressUseCase
+import com.agc.bwitch.domain.astrology.horoscope.RefreshConstellationProgressUseCase
 import com.agc.bwitch.domain.astrology.horoscope.UnlockHoroscopeFutureDayUseCase
 import com.agc.bwitch.domain.astrology.horoscope.IsHoroscopeDayUnlockedUseCase
 import com.agc.bwitch.domain.astrology.horoscope.GetHoroscopeFutureDayCostUseCase
@@ -68,6 +69,7 @@ val domainModule: Module = module {
     factory { IsHoroscopeDayUnlockedUseCase(get()) }
     factory { UnlockHoroscopeFutureDayUseCase(get()) }
     factory { ObserveConstellationProgressUseCase(get()) }
+    factory { RefreshConstellationProgressUseCase(get()) }
     factory { RewardDailyConstellationProgressUseCase(get()) }
 
     // Birth Essence

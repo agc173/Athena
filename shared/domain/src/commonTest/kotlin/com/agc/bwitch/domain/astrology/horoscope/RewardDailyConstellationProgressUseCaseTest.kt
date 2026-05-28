@@ -71,6 +71,7 @@ class RewardDailyConstellationProgressUseCaseTest {
         override fun observeTotalProgress(): Flow<Int> = totalProgressFlow.asStateFlow()
 
         override suspend fun getTotalProgress(): Int = totalProgressFlow.value
+        override suspend fun refreshProgress(): Int = totalProgressFlow.value
 
         override suspend fun getLastRewardDateIso(): String? = lastRewardDateIso
 

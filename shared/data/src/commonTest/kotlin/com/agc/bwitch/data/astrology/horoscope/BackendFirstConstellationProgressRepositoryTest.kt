@@ -16,6 +16,47 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.KSerializer
 
 class BackendFirstConstellationProgressRepositoryTest {
+    @Test
+    fun refreshProgress_backendSuccess_updatesLocalCache() = runTest {
+        val local = SettingsConstellationProgressRepository(MapSettings())
+        local.saveTotalProgress(1)
+        val repository = BackendFirstConstellationProgressRepository(
+            localRepository = local,
+            authRepository = FakeAuthRepository(AuthUser(uid = "u1", email = null, isAnonymous = false, displayName = null, photoUrl = null)),
+            functionsClient = FakeFunctionsClient(ApiResult.Ok(GetConstellationProgressResponseDto(7, "2026-05-28", false)))
+        )
+        val result = repository.refreshProgress()
+        assertEquals(7, result)
+        assertEquals(7, local.getTotalProgress())
+        assertEquals("2026-05-28", local.getLastRewardDateIso())
+    }
+
+    @Test
+    fun refreshProgress_backendFailure_keepsLocalFallback() = runTest {
+        val local = SettingsConstellationProgressRepository(MapSettings())
+        local.saveTotalProgress(5)
+        val repository = BackendFirstConstellationProgressRepository(
+            localRepository = local,
+            authRepository = FakeAuthRepository(AuthUser(uid = "u1", email = null, isAnonymous = false, displayName = null, photoUrl = null)),
+            functionsClient = FakeFunctionsClient(ApiResult.Err(ApiError.Internal("boom")))
+        )
+        val result = repository.refreshProgress()
+        assertEquals(5, result)
+        assertEquals(5, local.getTotalProgress())
+    }
+
+    @Test
+    fun refreshProgress_noAuth_usesLocal() = runTest {
+        val local = SettingsConstellationProgressRepository(MapSettings())
+        local.saveTotalProgress(6)
+        val repository = BackendFirstConstellationProgressRepository(
+            localRepository = local,
+            authRepository = FakeAuthRepository(null),
+            functionsClient = FakeFunctionsClient(ApiResult.Err(ApiError.Internal("unused")))
+        )
+        val result = repository.refreshProgress()
+        assertEquals(6, result)
+    }
 
     @Test
     fun backendSuccess_updatesLocalCache() = runTest {
@@ -71,7 +112,7 @@ class BackendFirstConstellationProgressRepositoryTest {
     }
 
     private class FakeFunctionsClient(
-        private val result: ApiResult<ClaimDailyConstellationProgressResponseDto>
+        private val result: ApiResult<out Any>
     ) : FunctionsClient {
         override suspend fun <Req : Any, Res : Any> call(
             name: String,

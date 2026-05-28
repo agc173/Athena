@@ -4,6 +4,7 @@ import com.agc.bwitch.domain.astrology.birthchart.BirthEssenceProfile
 import com.agc.bwitch.domain.astrology.birthchart.ObserveBirthEssenceUseCase
 import com.agc.bwitch.domain.astrology.horoscope.DeriveZodiacSignUseCase
 import com.agc.bwitch.domain.astrology.horoscope.ObserveConstellationProgressUseCase
+import com.agc.bwitch.domain.astrology.horoscope.RefreshConstellationProgressUseCase
 import com.agc.bwitch.domain.moons.ObserveMoonBalanceUseCase
 import com.agc.bwitch.domain.rituals.DailyRitualRepository
 import com.agc.bwitch.domain.rituals.HabitBadgeType
@@ -77,6 +78,7 @@ class UserProfileViewModel(
     private val habitsRepository: HabitsRepository,
     private val dailyRitualRepository: DailyRitualRepository,
     private val observeConstellationProgressUseCase: ObserveConstellationProgressUseCase,
+    private val refreshConstellationProgressUseCase: RefreshConstellationProgressUseCase,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
@@ -92,6 +94,7 @@ class UserProfileViewModel(
 
     private var seededForUid: String? = null
     private var isSeeding: Boolean = false
+    private var refreshedProgressForUid: String? = null
 
     init {
         scope.launch {
@@ -146,6 +149,7 @@ class UserProfileViewModel(
         }
 
         loadHabitsProgress()
+        refreshConstellationProgressIfNeeded(sessionVm.uiState.value.uid)
 
         scope.launch {
             sessionVm.uiState
@@ -153,6 +157,7 @@ class UserProfileViewModel(
                 .distinctUntilChanged()
                 .collectLatest { uid ->
                     if (uid.isNullOrBlank()) return@collectLatest
+                    refreshConstellationProgressIfNeeded(uid)
                     if (seededForUid == uid) return@collectLatest
                     if (isSeeding) return@collectLatest
                     isSeeding = true
@@ -183,6 +188,13 @@ class UserProfileViewModel(
                     }
                 }
         }
+    }
+
+    private suspend fun refreshConstellationProgressIfNeeded(uid: String?) {
+        if (uid.isNullOrBlank()) return
+        if (refreshedProgressForUid == uid) return
+        runCatching { refreshConstellationProgressUseCase() }
+        refreshedProgressForUid = uid
     }
 
     fun updateAndSave(
