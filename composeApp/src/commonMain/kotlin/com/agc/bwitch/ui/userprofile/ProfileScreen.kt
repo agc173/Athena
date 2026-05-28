@@ -53,7 +53,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.agc.bwitch.domain.astrology.birthchart.BirthEssenceProfile
-import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
 import com.agc.bwitch.domain.astrology.horoscope.ConstellationProgressRules
 import com.agc.bwitch.domain.rituals.completedHabitBadgesForCycles
 import com.agc.bwitch.localization.AppStrings
@@ -425,7 +424,8 @@ fun ProfileScreen(
                     var remaining = state.totalConstellationProgress.coerceIn(0, maxTotalProgress)
                     val progressBySign = buildMap<String, Int> {
                         templates.forEach { template ->
-                            val current = remaining.coerceAtMost(template.totalSteps)
+                            val signMaxSteps = ConstellationProgressRules.stepsBySign.getValue(template.name)
+                            val current = remaining.coerceAtMost(signMaxSteps)
                             put(template.name, current)
                             remaining = (remaining - current).coerceAtLeast(0)
                         }
