@@ -20,5 +20,5 @@ object SettingsLinks {
     fun contactSupportMailto(): String = "mailto:$supportEmail"
 
     fun reportIssueMailto(): String =
-        "mailto:$supportEmail?subject=BWitch%20Issue%20Report&body=Please%20describe%20the%20issue%20you%20found."
+        "mailto:$supportEmail?subject=ATHENA%20Issue%20Report&body=Please%20describe%20the%20issue%20you%20found."
 }
