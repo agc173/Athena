@@ -1,5 +1,6 @@
 package com.agc.bwitch.presentation.astrology.horoscope
 
+import com.agc.bwitch.domain.astrology.horoscope.ConstellationProgressRepository
 import com.agc.bwitch.domain.astrology.horoscope.DailyHoroscope
 import com.agc.bwitch.domain.astrology.horoscope.GetDailyHoroscopeUseCase
 import com.agc.bwitch.domain.astrology.horoscope.GetHoroscopeFutureDayCostUseCase
@@ -16,6 +17,7 @@ import com.agc.bwitch.domain.astrology.horoscope.ObserveMonthlyHoroscopeUseCase
 import com.agc.bwitch.domain.astrology.horoscope.ObserveWeeklyHoroscopeUseCase
 import com.agc.bwitch.domain.astrology.horoscope.ObserveDailyHoroscopeUseCase
 import com.agc.bwitch.domain.astrology.horoscope.PullDailyHoroscopeUseCase
+import com.agc.bwitch.domain.astrology.horoscope.RewardDailyConstellationProgressUseCase
 import com.agc.bwitch.domain.astrology.horoscope.UnlockHoroscopeFutureDayUseCase
 import com.agc.bwitch.domain.astrology.horoscope.WeeklyHoroscope
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
@@ -50,6 +52,17 @@ import kotlinx.datetime.toLocalDateTime
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class HoroscopeViewModelTest {
+
+    @Test
+    fun createViewModel_doesNotFailByDailyRewardProgress() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val unlockRepository = FakeUnlockRepository()
+
+        val viewModel = createViewModel(dispatcher, unlockRepository)
+
+        advanceUntilIdle()
+        assertNotNull(viewModel.uiState.value)
+    }
 
     @Test
     fun initLoadsDefaultSignAndHoroscopeIsNotNull() = runTest {
@@ -103,6 +116,7 @@ class HoroscopeViewModelTest {
             isHoroscopeDayUnlockedUseCase = isHoroscopeDayUnlockedUseCase,
             unlockHoroscopeFutureDayUseCase = unlockHoroscopeFutureDayUseCase,
             unlockRepository = unlockRepository,
+            rewardDailyConstellationProgressUseCase = buildRewardDailyProgressUseCase(),
             dispatcher = dispatcher,
         )
 
@@ -612,6 +626,7 @@ class HoroscopeViewModelTest {
             isHoroscopeDayUnlockedUseCase = isHoroscopeDayUnlockedUseCase,
             unlockHoroscopeFutureDayUseCase = unlockHoroscopeFutureDayUseCase,
             unlockRepository = unlockRepository,
+            rewardDailyConstellationProgressUseCase = buildRewardDailyProgressUseCase(),
             dispatcher = dispatcher,
         )
 
@@ -691,6 +706,7 @@ class HoroscopeViewModelTest {
             isHoroscopeDayUnlockedUseCase = isHoroscopeDayUnlockedUseCase,
             unlockHoroscopeFutureDayUseCase = unlockHoroscopeFutureDayUseCase,
             unlockRepository = unlockRepository,
+            rewardDailyConstellationProgressUseCase = buildRewardDailyProgressUseCase(),
             dispatcher = dispatcher,
         )
 
@@ -739,6 +755,7 @@ class HoroscopeViewModelTest {
             isHoroscopeDayUnlockedUseCase = isHoroscopeDayUnlockedUseCase,
             unlockHoroscopeFutureDayUseCase = unlockHoroscopeFutureDayUseCase,
             unlockRepository = unlockRepository,
+            rewardDailyConstellationProgressUseCase = buildRewardDailyProgressUseCase(),
             dispatcher = dispatcher,
         )
 
@@ -794,6 +811,7 @@ class HoroscopeViewModelTest {
             isHoroscopeDayUnlockedUseCase = isHoroscopeDayUnlockedUseCase,
             unlockHoroscopeFutureDayUseCase = unlockHoroscopeFutureDayUseCase,
             unlockRepository = unlockRepository,
+            rewardDailyConstellationProgressUseCase = buildRewardDailyProgressUseCase(),
             dispatcher = dispatcher,
         )
 
@@ -848,6 +866,7 @@ class HoroscopeViewModelTest {
             isHoroscopeDayUnlockedUseCase = isHoroscopeDayUnlockedUseCase,
             unlockHoroscopeFutureDayUseCase = unlockHoroscopeFutureDayUseCase,
             unlockRepository = unlockRepository,
+            rewardDailyConstellationProgressUseCase = buildRewardDailyProgressUseCase(),
             dispatcher = dispatcher,
         )
 
@@ -901,6 +920,7 @@ class HoroscopeViewModelTest {
             isHoroscopeDayUnlockedUseCase = isHoroscopeDayUnlockedUseCase,
             unlockHoroscopeFutureDayUseCase = unlockHoroscopeFutureDayUseCase,
             unlockRepository = unlockRepository,
+            rewardDailyConstellationProgressUseCase = buildRewardDailyProgressUseCase(),
             dispatcher = dispatcher,
         )
 
@@ -995,9 +1015,14 @@ class HoroscopeViewModelTest {
             isHoroscopeDayUnlockedUseCase = isHoroscopeDayUnlockedUseCase,
             unlockHoroscopeFutureDayUseCase = unlockHoroscopeFutureDayUseCase,
             unlockRepository = unlockRepository,
+            rewardDailyConstellationProgressUseCase = buildRewardDailyProgressUseCase(),
             analyticsTracker = analyticsTracker,
             dispatcher = dispatcher,
         )
+    }
+
+    private fun buildRewardDailyProgressUseCase(): RewardDailyConstellationProgressUseCase {
+        return RewardDailyConstellationProgressUseCase(FakeConstellationProgressRepository())
     }
 
     private class FakeSync : HoroscopeDailySyncController {
@@ -1036,6 +1061,26 @@ class HoroscopeViewModelTest {
         override suspend fun getUserProfile(): UserProfile? = null
 
         override suspend fun saveUserProfile(profile: UserProfile) = Unit
+    }
+
+
+    private class FakeConstellationProgressRepository : ConstellationProgressRepository {
+        private val totalProgressFlow = MutableStateFlow(0)
+        private var lastRewardDateIso: String? = null
+
+        override fun observeTotalProgress(): Flow<Int> = totalProgressFlow.asStateFlow()
+
+        override suspend fun getTotalProgress(): Int = totalProgressFlow.value
+
+        override suspend fun getLastRewardDateIso(): String? = lastRewardDateIso
+
+        override suspend fun saveTotalProgress(value: Int) {
+            totalProgressFlow.value = value
+        }
+
+        override suspend fun saveLastRewardDateIso(value: String) {
+            lastRewardDateIso = value
+        }
     }
 
 
