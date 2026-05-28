@@ -40,6 +40,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -52,6 +53,22 @@ import kotlinx.datetime.toLocalDateTime
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class HoroscopeViewModelTest {
+    @Test
+    fun init_emitsRewardEffect_whenDailyRewardIsGranted() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val unlockRepository = FakeUnlockRepository()
+        val effects = mutableListOf<HoroscopeUiEffect>()
+
+        val viewModel = createViewModel(dispatcher, unlockRepository)
+        backgroundScope.launch { viewModel.uiEffects.collect { effects += it } }
+
+        advanceUntilIdle()
+
+        val rewardEffect = effects.filterIsInstance<HoroscopeUiEffect.ConstellationProgressRewarded>().firstOrNull()
+        assertNotNull(rewardEffect)
+        assertEquals(0, rewardEffect.previousTotalProgress)
+        assertEquals(1, rewardEffect.totalProgress)
+    }
 
     @Test
     fun createViewModel_doesNotFailByDailyRewardProgress() = runTest {

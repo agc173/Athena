@@ -108,6 +108,14 @@ enum class HoroscopeFeedbackMessage {
 }
 
 sealed interface HoroscopeUiEffect {
+    data class ConstellationProgressRewarded(
+        val previousTotalProgress: Int,
+        val totalProgress: Int,
+        val sign: ZodiacSign?,
+        val progressInSign: Int?,
+        val totalStepsInSign: Int?,
+    ) : HoroscopeUiEffect
+
     data class ShowDeckCardUnlockRewards(
         val rewards: List<DeckCardUnlockReward>,
     ) : HoroscopeUiEffect

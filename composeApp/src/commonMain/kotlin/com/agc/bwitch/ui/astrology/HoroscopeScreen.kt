@@ -37,6 +37,12 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -50,6 +56,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -99,6 +106,7 @@ import com.agc.bwitch.ui.common.designsystem.BWitchPrimaryButton
 import com.agc.bwitch.ui.common.designsystem.BWitchSecondaryButton
 import com.agc.bwitch.ui.tarot.DeckCardUnlockRewardDialog
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
@@ -121,6 +129,7 @@ fun HoroscopeScreen(
     val shareScope = rememberCoroutineScope()
     var shareErrorMessage by remember { mutableStateOf<String?>(null) }
     var rewardDialogRewards by remember { mutableStateOf<List<DeckCardUnlockReward>>(emptyList()) }
+    var constellationRewardMessage by remember { mutableStateOf<String?>(null) }
     var isRewardedAdFlowRunning by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(preselectedSign) { preselectedSign?.let(viewModel::onSelectSign) }
@@ -133,21 +142,27 @@ fun HoroscopeScreen(
         viewModel.uiEffects.collect { effect ->
             when (effect) {
                 is HoroscopeUiEffect.ShowDeckCardUnlockRewards -> rewardDialogRewards = effect.rewards
+                is HoroscopeUiEffect.ConstellationProgressRewarded -> {
+                    constellationRewardMessage = buildConstellationRewardMessage(effect)
+                    delay(2200)
+                    constellationRewardMessage = null
+                }
             }
         }
     }
     Scaffold(modifier = modifier) { innerPadding ->
-        HoroscopeScreenContent(
-            modifier = Modifier.padding(innerPadding).padding(contentPadding),
-            state = state,
-            strings = strings,
-            onSelectTab = viewModel::onSelectTab,
-            onSelectDate = viewModel::onSelectDate,
-            onSelectWeek = viewModel::onSelectWeek,
-            onSelectMonth = viewModel::onSelectMonth,
-            onOpenSign = viewModel::onOpenSign,
-            canEarnMoonsWithRewardedAd = economyState.rewardedAdsRemaining > 0 && !isRewardedAdFlowRunning,
-            onEarnMoonsWithRewardedAd = {
+        Box(modifier = Modifier.fillMaxSize()) {
+            HoroscopeScreenContent(
+                modifier = Modifier.padding(innerPadding).padding(contentPadding),
+                state = state,
+                strings = strings,
+                onSelectTab = viewModel::onSelectTab,
+                onSelectDate = viewModel::onSelectDate,
+                onSelectWeek = viewModel::onSelectWeek,
+                onSelectMonth = viewModel::onSelectMonth,
+                onOpenSign = viewModel::onOpenSign,
+                canEarnMoonsWithRewardedAd = economyState.rewardedAdsRemaining > 0 && !isRewardedAdFlowRunning,
+                onEarnMoonsWithRewardedAd = {
                 if (isRewardedAdFlowRunning) return@HoroscopeScreenContent
                 shareScope.launch {
                     isRewardedAdFlowRunning = true
@@ -165,14 +180,14 @@ fun HoroscopeScreen(
                         isRewardedAdFlowRunning = false
                     }
                 }
-            },
-            onRewardedAdCtaShown = {
+                },
+                onRewardedAdCtaShown = {
                 economyViewModel.onRewardedAdCtaShown(
                     placement = "horoscope_period_lock_overlay",
                     rewardedAdsRemaining = economyState.rewardedAdsRemaining,
                 )
-            },
-            onUnlock = {
+                },
+                onUnlock = {
                 val hasEnoughBalance = economyState.hasUsableSnapshot && economyState.balance >= state.futureDayCost
                 if (hasEnoughBalance) {
                     viewModel.onUnlockSelectedDay(
@@ -192,8 +207,8 @@ fun HoroscopeScreen(
                         source = "horoscope_daily_unlock",
                     ) { context -> viewModel.onUnlockSelectedDay(context) }
                 }
-            },
-            onUnlockWeek = {
+                },
+                onUnlockWeek = {
                 val hasEnoughBalance = economyState.hasUsableSnapshot && economyState.balance >= state.weeklyCost
                 if (hasEnoughBalance) {
                     viewModel.onUnlockSelectedWeek(
@@ -213,8 +228,8 @@ fun HoroscopeScreen(
                         source = "horoscope_weekly_unlock",
                     ) { context -> viewModel.onUnlockSelectedWeek(context) }
                 }
-            },
-            onUnlockMonth = {
+                },
+                onUnlockMonth = {
                 val hasEnoughBalance = economyState.hasUsableSnapshot && economyState.balance >= state.monthlyCost
                 if (hasEnoughBalance) {
                     viewModel.onUnlockSelectedMonth(
@@ -234,10 +249,10 @@ fun HoroscopeScreen(
                         source = "horoscope_monthly_unlock",
                     ) { context -> viewModel.onUnlockSelectedMonth(context) }
                 }
-            },
-            onCloseOverlay = viewModel::onCloseOverlay,
-            onOverlaySignChanged = viewModel::onOverlaySignChanged,
-            onShareOverlay = { overlay ->
+                },
+                onCloseOverlay = viewModel::onCloseOverlay,
+                onOverlaySignChanged = viewModel::onOverlaySignChanged,
+                onShareOverlay = { overlay ->
                 shareErrorMessage = null
                 val shareText = overlay.toShareText(strings)
                 if (shareText.isBlank()) return@HoroscopeScreenContent
@@ -252,9 +267,14 @@ fun HoroscopeScreen(
                         shareErrorMessage = result.message ?: strings.birthChart.shareFailedFallback
                     }
                 }
-            },
-            shareErrorMessage = shareErrorMessage,
-        )
+                },
+                shareErrorMessage = shareErrorMessage,
+            )
+            ConstellationRewardOverlay(
+                message = constellationRewardMessage,
+                modifier = Modifier.align(Alignment.TopCenter).padding(top = 22.dp),
+            )
+        }
     }
     if (rewardDialogRewards.isNotEmpty()) {
         DeckCardUnlockRewardDialog(
@@ -267,6 +287,47 @@ fun HoroscopeScreen(
             },
         )
     }
+}
+
+@Composable
+private fun ConstellationRewardOverlay(
+    message: String?,
+    modifier: Modifier = Modifier,
+) {
+    if (message.isNullOrBlank()) return
+    val pulse = rememberInfiniteTransition(label = "constellation_reward_pulse")
+    val scale by pulse.animateFloat(
+        initialValue = 1f,
+        targetValue = 1.03f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 550, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "constellation_reward_scale",
+    )
+    Surface(
+        modifier = modifier
+            .padding(horizontal = 16.dp)
+            .scale(scale),
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.92f),
+    ) {
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSecondaryContainer,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+            textAlign = TextAlign.Center,
+        )
+    }
+}
+
+private fun buildConstellationRewardMessage(
+    effect: HoroscopeUiEffect.ConstellationProgressRewarded,
+): String {
+    val base = "Una estrella se ha despertado"
+    val signPart = effect.sign?.name?.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+    return if (signPart.isNullOrBlank()) base else "$base · $signPart avanza"
 }
 
 @OptIn(ExperimentalLayoutApi::class)

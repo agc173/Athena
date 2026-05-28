@@ -3,18 +3,33 @@ package com.agc.bwitch.domain.astrology.horoscope
 class RewardDailyConstellationProgressUseCase(
     private val repository: ConstellationProgressRepository,
 ) {
-    suspend operator fun invoke(todayIso: String, maxTotalProgress: Int): Int {
+    suspend operator fun invoke(todayIso: String, maxTotalProgress: Int): ConstellationProgressRewardResult {
         val lastRewardDate = repository.getLastRewardDateIso()
-        val current = repository.getTotalProgress().coerceAtLeast(0)
-        if (lastRewardDate == todayIso) return current.coerceAtMost(maxTotalProgress)
-        val boundedCurrent = current.coerceAtMost(maxTotalProgress)
-        val next = if (boundedCurrent >= maxTotalProgress) {
-            boundedCurrent
-        } else {
-            boundedCurrent + 1
+        val previousTotal = repository.getTotalProgress().coerceIn(0, maxTotalProgress)
+        if (lastRewardDate == todayIso) {
+            return ConstellationProgressRewardResult(
+                totalProgress = previousTotal,
+                previousTotalProgress = previousTotal,
+                rewarded = false,
+                isComplete = previousTotal >= maxTotalProgress,
+            )
         }
-        repository.saveTotalProgress(next.coerceAtMost(maxTotalProgress))
+        val isComplete = previousTotal >= maxTotalProgress
+        val totalProgress = if (isComplete) previousTotal else (previousTotal + 1).coerceAtMost(maxTotalProgress)
+        repository.saveTotalProgress(totalProgress)
         repository.saveLastRewardDateIso(todayIso)
-        return next.coerceAtMost(maxTotalProgress)
+        return ConstellationProgressRewardResult(
+            totalProgress = totalProgress,
+            previousTotalProgress = previousTotal,
+            rewarded = !isComplete,
+            isComplete = totalProgress >= maxTotalProgress,
+        )
     }
 }
+
+data class ConstellationProgressRewardResult(
+    val totalProgress: Int,
+    val previousTotalProgress: Int,
+    val rewarded: Boolean,
+    val isComplete: Boolean,
+)
