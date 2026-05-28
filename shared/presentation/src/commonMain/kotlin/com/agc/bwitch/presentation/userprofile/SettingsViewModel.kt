@@ -1,5 +1,6 @@
 package com.agc.bwitch.presentation.userprofile
 
+import com.agc.bwitch.domain.account.RequestAccountDeletionUseCase
 import com.agc.bwitch.domain.analytics.AnalyticsEvent
 import com.agc.bwitch.domain.analytics.AnalyticsTracker
 import com.agc.bwitch.domain.analytics.NoOpAnalyticsTracker
@@ -10,6 +11,7 @@ import com.agc.bwitch.domain.notifications.PushPlatform
 import com.agc.bwitch.domain.notifications.PushTokenRegistration
 import com.agc.bwitch.domain.notifications.RegisterPushTokenUseCase
 import com.agc.bwitch.domain.notifications.UpdatePushNotificationPreferencesUseCase
+import com.agc.bwitch.domain.session.ClearLocalUserDataUseCase
 import com.agc.bwitch.domain.settings.GetNotificationSettingsUseCase
 import com.agc.bwitch.domain.settings.GooglePlayPurchase
 import com.agc.bwitch.domain.settings.GooglePlayPurchaseState
@@ -61,6 +63,7 @@ data class SettingsUiState(
     val subscriptionCatalog: List<SubscriptionPlanUi> = emptyList(),
     val subscriptionPrimaryAction: SubscriptionPrimaryAction = SubscriptionPrimaryAction.Subscribe,
     val isDeleteAccountConfirmationVisible: Boolean = false,
+    val isDeletingAccount: Boolean = false,
     val feedback: SettingsFeedback? = null,
     val error: String? = null,
 )
@@ -76,7 +79,7 @@ enum class SettingsFeedback {
     SubscriptionPurchaseFailed,
     RestorePurchasesSuccess,
     RestorePurchasesNoPurchases,
-    DeleteAccountComingSoon,
+    DeleteAccountRequested,
     NotificationsPermissionDenied,
     NotificationsUnavailable,
 }
@@ -145,6 +148,8 @@ class SettingsViewModel(
     private val validateGooglePlayPurchase: ValidateGooglePlayPurchaseUseCase,
     private val registerPushToken: RegisterPushTokenUseCase,
     private val updatePushNotificationPreferences: UpdatePushNotificationPreferencesUseCase,
+    private val requestAccountDeletion: RequestAccountDeletionUseCase,
+    private val clearLocalUserData: ClearLocalUserDataUseCase,
     private val analyticsTracker: AnalyticsTracker = NoOpAnalyticsTracker,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -572,11 +577,39 @@ class SettingsViewModel(
     }
 
     fun onDeleteAccountConfirmed() {
-        _uiState.update {
-            it.copy(
-                isDeleteAccountConfirmationVisible = false,
-                feedback = SettingsFeedback.DeleteAccountComingSoon,
-            )
+        if (_uiState.value.isDeletingAccount) return
+        scope.launch {
+            _uiState.update {
+                it.copy(
+                    isDeleteAccountConfirmationVisible = false,
+                    isDeletingAccount = true,
+                    isLoading = true,
+                    error = null,
+                    feedback = null,
+                )
+            }
+
+            runCatching { requestAccountDeletion() }
+                .onSuccess {
+                    runCatching { clearLocalUserData() }
+                    sessionViewModel.signOut()
+                    _uiState.update {
+                        it.copy(
+                            isDeletingAccount = false,
+                            isLoading = false,
+                            feedback = SettingsFeedback.DeleteAccountRequested,
+                        )
+                    }
+                }
+                .onFailure { error ->
+                    _uiState.update {
+                        it.copy(
+                            isDeletingAccount = false,
+                            isLoading = false,
+                            error = error.message ?: "No se pudo solicitar la eliminación de la cuenta",
+                        )
+                    }
+                }
         }
     }
 

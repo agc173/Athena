@@ -108,7 +108,7 @@ fun SettingsScreen(contentPadding: PaddingValues) {
             SettingsFeedback.SubscriptionPurchaseFailed -> strings.subscriptionPurchaseFailed
             SettingsFeedback.RestorePurchasesSuccess -> strings.subscriptionRestoreSuccess
             SettingsFeedback.RestorePurchasesNoPurchases -> strings.subscriptionRestoreNoPurchases
-            SettingsFeedback.DeleteAccountComingSoon -> strings.deleteAccountComingSoonFeedback
+            SettingsFeedback.DeleteAccountRequested -> strings.deleteAccountRequestedFeedback
             SettingsFeedback.NotificationsPermissionDenied -> strings.comingSoon
             SettingsFeedback.NotificationsUnavailable -> strings.comingSoon
         }
@@ -184,6 +184,8 @@ fun SettingsScreen(contentPadding: PaddingValues) {
             message = strings.deleteAccountDialogMessage,
             dismissLabel = strings.deleteAccountDialogCancel,
             confirmLabel = strings.deleteAccountDialogConfirm,
+            loadingLabel = strings.deleteAccountDeleting,
+            isLoading = settingsState.isDeletingAccount,
             onDismiss = settingsVm::onDeleteAccountConfirmationDismissed,
             onConfirm = settingsVm::onDeleteAccountConfirmed,
         )
@@ -313,7 +315,7 @@ fun SettingsScreen(contentPadding: PaddingValues) {
                     label = strings.deleteAccount,
                     isDestructive = true,
                     showDivider = false,
-                    onClick = settingsVm::onDeleteAccountClicked,
+                    onClick = if (settingsState.isDeletingAccount) null else settingsVm::onDeleteAccountClicked,
                 )
             }
         }
@@ -334,21 +336,23 @@ private fun DeleteAccountConfirmationDialog(
     message: String,
     dismissLabel: String,
     confirmLabel: String,
+    loadingLabel: String,
+    isLoading: Boolean,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
 ) {
     AlertDialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = { if (!isLoading) onDismiss() },
         title = { Text(text = title) },
         text = { Text(text = message) },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(onClick = onDismiss, enabled = !isLoading) {
                 Text(dismissLabel)
             }
         },
         confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text(confirmLabel)
+            TextButton(onClick = onConfirm, enabled = !isLoading) {
+                Text(if (isLoading) loadingLabel else confirmLabel)
             }
         },
     )

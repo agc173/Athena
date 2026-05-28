@@ -1,5 +1,8 @@
 package com.agc.bwitch.di.modules
 
+import com.agc.bwitch.domain.account.RequestAccountDeletionUseCase
+import com.agc.bwitch.domain.account.RestoreAccountUseCase
+import com.agc.bwitch.domain.account.RestorePendingAccountDeletionUseCase
 import com.agc.bwitch.domain.astrology.birthchart.GenerateBirthEssenceUseCase
 import com.agc.bwitch.domain.astrology.birthchart.GetBirthEssenceUseCase
 import com.agc.bwitch.domain.astrology.birthchart.ObserveBirthEssenceUseCase
@@ -81,6 +84,11 @@ val domainModule: Module = module {
 
     // Synastry
     factory { SynastryReadingGenerator() }
+
+    // Account deletion
+    factory { RequestAccountDeletionUseCase(get()) }
+    factory { RestoreAccountUseCase(get()) }
+    factory { RestorePendingAccountDeletionUseCase(get()) }
 
     // User profile
     factory { ObserveUserProfileUseCase(get()) }

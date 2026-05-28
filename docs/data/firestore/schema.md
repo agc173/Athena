@@ -669,3 +669,20 @@ Notas:
 - Logout futuro: unregister explícito del token.
 - Tokens inválidos se deshabilitan/limpian desde backend.
 
+
+---
+
+### /userAccountStatus/{uid}
+Estado backend-owned de eliminación suave de cuenta. El documento se crea/actualiza mediante Cloud Functions callables y lo lee el cliente durante el bootstrap de sesión para restaurar automáticamente si aún está dentro de la ventana de recuperación.
+
+Campos:
+- pendingDeletion: boolean
+- deletionRequestedAt: Timestamp (opcional; presente mientras `pendingDeletion=true`)
+- scheduledDeletionAt: Timestamp (opcional; `deletionRequestedAt + 30 días`, preparado para cleanup definitivo futuro)
+- restoredAt: Timestamp (opcional; última restauración)
+- updatedAt: Timestamp (opcional)
+
+Notas:
+- `requestAccountDeletion` marca `pendingDeletion=true`; no borra Auth, Firestore, Storage, purchases ni historial.
+- `restoreAccount` limpia `deletionRequestedAt` y `scheduledDeletionAt`, marca `pendingDeletion=false` y registra `restoredAt`; en fase 1 permite restaurar aunque `scheduledDeletionAt` ya haya pasado porque aún no existe cleanup físico definitivo.
+- TODO fase 2: job backend/Admin SDK que procese documentos vencidos (`pendingDeletion=true` y `scheduledDeletionAt <= now`) para borrado/anonymization definitivo y, solo entonces, definir cuándo bloquear restores vencidos.

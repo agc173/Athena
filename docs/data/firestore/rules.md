@@ -15,6 +15,9 @@ Archivo fuente de reglas: `firestore.rules`.
   - `/users/{uid}/birthEssence/current`
   - `/users/{uid}/dailyRitual/current`
   - `/users/{uid}/habits/current`
+- `userAccountStatus/{uid}`:
+  - Permitir **get** solo al dueño autenticado (`request.auth.uid == uid`) para que el bootstrap de sesión detecte eliminación pendiente.
+  - Denegar **list/write** desde cliente; las escrituras son backend-owned vía callables `requestAccountDeletion`/`restoreAccount`.
 - `usernames`:
   - Permitir **read** autenticado (`/usernames/{username}`)
   - Denegar **write** desde cliente (el índice lo mantiene backend)
@@ -32,6 +35,9 @@ Archivo fuente de reglas: `firestore.rules`.
    - `A` puede leer/escribir `users/A/dailyRitual/current` ✅
    - `A` puede leer/escribir `users/A/habits/current` ✅
    - `A` **no** puede leer/escribir `users/B/profile/current` ❌
+   - `A` puede leer `userAccountStatus/A` ✅
+   - `A` no puede leer `userAccountStatus/B` ❌
+   - `A` no puede escribir `userAccountStatus/A` ❌
    - `A` puede leer `usernames/{any}` ✅
    - `A` **no** puede escribir `usernames/{any}` ❌
 3. Probar callable `saveUserProfile` y revisar logs sanitizados para errores inesperados.

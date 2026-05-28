@@ -72,6 +72,15 @@ service cloud.firestore {
       }
     }
 
+
+    // Account deletion status is readable by the owner so the client can auto-restore
+    // during auth bootstrap. Writes are backend-owned via callables.
+    match /userAccountStatus/{uid} {
+      allow get: if isOwner(uid);
+      allow list: if false;
+      allow write: if false;
+    }
+
     // Username index is backend-owned for writes (Functions/Admin SDK), readable for checks.
     match /usernames/{username} {
       allow read: if isAuthenticated();

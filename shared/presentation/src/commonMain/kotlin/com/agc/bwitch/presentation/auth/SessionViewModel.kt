@@ -1,5 +1,6 @@
 package com.agc.bwitch.presentation.auth
 
+import com.agc.bwitch.domain.account.RestorePendingAccountDeletionUseCase
 import com.agc.bwitch.domain.auth.AuthRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -13,7 +14,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class SessionViewModel(
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val restorePendingAccountDeletion: RestorePendingAccountDeletionUseCase? = null,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
@@ -27,20 +29,56 @@ class SessionViewModel(
                     _uiState.update { it.copy(isLoading = false, error = e.message) }
                 }
                 .collect { user ->
-                    _uiState.update {
-                        SessionUiState(
-                            isLoading = false,
-                            isLoggedIn = user != null,
-                            uid = user?.uid,
-                            email = user?.email,
-                            displayName = user?.displayName,
-                            photoUrl = user?.photoUrl,
-                            isAnonymous = user?.isAnonymous ?: false,
-                            error = null
-                        )
+                    if (user == null) {
+                        _uiState.update { SessionUiState(isLoading = false) }
+                        return@collect
                     }
+
+                    _uiState.update { it.copy(isLoading = true, error = null) }
+
+                    runCatching { restorePendingAccountDeletion?.invoke(user.uid) }
+                        .onSuccess {
+                            _uiState.update { user.toLoggedInState() }
+                        }
+                        .onFailure { error ->
+                            if (error.isAccountDeletionWindowExpired()) {
+                                runCatching { authRepository.signOut() }
+                                _uiState.update {
+                                    SessionUiState(
+                                        isLoading = false,
+                                        isLoggedIn = false,
+                                        error = error.message ?: "No se pudo restaurar la cuenta"
+                                    )
+                                }
+                            } else {
+                                println("BWITCH_ACCOUNT_DELETE restore_pending_non_blocking_error=${error.message}")
+                                _uiState.update { user.toLoggedInState() }
+                            }
+                        }
                 }
         }
+    }
+
+    private fun com.agc.bwitch.domain.auth.AuthUser.toLoggedInState(): SessionUiState = SessionUiState(
+        isLoading = false,
+        isLoggedIn = true,
+        uid = uid,
+        email = email,
+        displayName = displayName,
+        photoUrl = photoUrl,
+        isAnonymous = isAnonymous,
+        error = null,
+    )
+
+    private fun Throwable.isAccountDeletionWindowExpired(): Boolean {
+        val haystack = buildString {
+            append(message.orEmpty())
+            append(' ')
+            append(toString())
+        }.lowercase()
+        return "account_deletion_window_expired" in haystack ||
+            "failed-precondition" in haystack ||
+            "failed precondition" in haystack
     }
 
     fun signInWithEmail(email: String, password: String) = scope.launch {

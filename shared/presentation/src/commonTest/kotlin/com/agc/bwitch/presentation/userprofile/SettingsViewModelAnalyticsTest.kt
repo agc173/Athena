@@ -1,5 +1,8 @@
 package com.agc.bwitch.presentation.userprofile
 
+import com.agc.bwitch.domain.account.AccountDeletionRepository
+import com.agc.bwitch.domain.account.AccountDeletionStatus
+import com.agc.bwitch.domain.account.RequestAccountDeletionUseCase
 import com.agc.bwitch.domain.analytics.AnalyticsEvent
 import com.agc.bwitch.domain.auth.AuthRepository
 import com.agc.bwitch.domain.auth.AuthUser
@@ -12,6 +15,8 @@ import com.agc.bwitch.domain.notifications.PushRegistrationRepository
 import com.agc.bwitch.domain.notifications.PushTokenRegistration
 import com.agc.bwitch.domain.notifications.RegisterPushTokenUseCase
 import com.agc.bwitch.domain.notifications.UpdatePushNotificationPreferencesUseCase
+import com.agc.bwitch.domain.session.ClearLocalUserDataUseCase
+import com.agc.bwitch.domain.session.LocalUserDataRepository
 import com.agc.bwitch.domain.settings.GetNotificationSettingsUseCase
 import com.agc.bwitch.domain.settings.GetSubscriptionCatalogUseCase
 import com.agc.bwitch.domain.settings.GetSubscriptionStatusUseCase
@@ -466,6 +471,8 @@ class SettingsViewModelAnalyticsTest {
             validateGooglePlayPurchase = ValidateGooglePlayPurchaseUseCase(entitlements),
             registerPushToken = RegisterPushTokenUseCase(pushRepo),
             updatePushNotificationPreferences = UpdatePushNotificationPreferencesUseCase(pushRepo),
+            requestAccountDeletion = RequestAccountDeletionUseCase(FakeAccountDeletionRepository()),
+            clearLocalUserData = ClearLocalUserDataUseCase(FakeLocalUserDataRepository()),
             analyticsTracker = analytics,
         )
     }
@@ -548,6 +555,16 @@ class SettingsViewModelAnalyticsTest {
         override suspend fun getCurrentLanguage(): AppLanguage = AppLanguage.English
         override suspend fun setCurrentLanguage(language: AppLanguage) = Unit
         override fun observeCurrentLanguage(): Flow<AppLanguage> = MutableStateFlow(AppLanguage.English)
+    }
+
+    private class FakeAccountDeletionRepository : AccountDeletionRepository {
+        override suspend fun getStatus(uid: String): AccountDeletionStatus? = null
+        override suspend fun requestAccountDeletion() = Unit
+        override suspend fun restoreAccount() = Unit
+    }
+
+    private class FakeLocalUserDataRepository : LocalUserDataRepository {
+        override suspend fun clear() = Unit
     }
 
     private class FakeAuthRepository(user: AuthUser?) : AuthRepository {

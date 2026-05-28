@@ -104,7 +104,7 @@ fun MoonStoreScreen(
             SettingsFeedback.SubscriptionPurchaseFailed -> settingsStrings.subscriptionPurchaseFailed
             SettingsFeedback.RestorePurchasesSuccess -> settingsStrings.subscriptionRestoreSuccess
             SettingsFeedback.RestorePurchasesNoPurchases -> settingsStrings.subscriptionRestoreNoPurchases
-            SettingsFeedback.DeleteAccountComingSoon -> settingsStrings.deleteAccountComingSoonFeedback
+            SettingsFeedback.DeleteAccountRequested -> settingsStrings.deleteAccountRequestedFeedback
             SettingsFeedback.NotificationsPermissionDenied,
             SettingsFeedback.NotificationsUnavailable -> return@LaunchedEffect
         }
