@@ -104,6 +104,17 @@ class HoroscopeViewModel(
             )
             if (rewardResult.rewarded) {
                 val progressState = resolveConstellationProgressState(rewardResult.totalProgress)
+                _uiState.update {
+                    it.copy(
+                        pendingConstellationReward = ConstellationRewardUi(
+                            previousTotalProgress = rewardResult.previousTotalProgress,
+                            totalProgress = rewardResult.totalProgress,
+                            sign = progressState?.sign,
+                            progressInSign = progressState?.progressInSign,
+                            totalStepsInSign = progressState?.totalStepsInSign,
+                        ),
+                    )
+                }
                 _uiEffects.emit(
                     HoroscopeUiEffect.ConstellationProgressRewarded(
                         previousTotalProgress = rewardResult.previousTotalProgress,
@@ -138,6 +149,10 @@ class HoroscopeViewModel(
         }
 
         reloadForCurrentSelection()
+    }
+
+    fun onConstellationRewardShown() {
+        _uiState.update { it.copy(pendingConstellationReward = null) }
     }
 
     fun onSelectSign(sign: ZodiacSign) = onSelectSign(sign, fromUserInteraction = true)
