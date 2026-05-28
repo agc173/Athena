@@ -25,7 +25,7 @@ class BackendFirstConstellationProgressRepositoryTest {
             authRepository = FakeAuthRepository(AuthUser(uid = "u1", email = null, isAnonymous = false, displayName = null, photoUrl = null)),
             functionsClient = FakeFunctionsClient(
                 ApiResult.Ok(
-                    BackendResponseDto(4, 3, rewarded = true, isComplete = false)
+                    ClaimDailyConstellationProgressResponseDto(4, 3, rewarded = true, isComplete = false)
                 )
             )
         )
@@ -70,14 +70,9 @@ class BackendFirstConstellationProgressRepositoryTest {
         assertEquals(4, result.totalProgress)
     }
 
-    private data class BackendResponseDto(
-        val totalProgress: Int,
-        val previousTotalProgress: Int,
-        val rewarded: Boolean,
-        val isComplete: Boolean,
-    )
-
-    private class FakeFunctionsClient(private val result: ApiResult<BackendResponseDto>) : FunctionsClient {
+    private class FakeFunctionsClient(
+        private val result: ApiResult<ClaimDailyConstellationProgressResponseDto>
+    ) : FunctionsClient {
         override suspend fun <Req : Any, Res : Any> call(
             name: String,
             data: Req,
