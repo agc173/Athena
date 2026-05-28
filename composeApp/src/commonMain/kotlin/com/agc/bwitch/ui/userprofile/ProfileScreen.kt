@@ -54,6 +54,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.agc.bwitch.domain.astrology.birthchart.BirthEssenceProfile
 import com.agc.bwitch.domain.astrology.horoscope.ConstellationProgressRules
+import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
 import com.agc.bwitch.domain.rituals.completedHabitBadgesForCycles
 import com.agc.bwitch.localization.AppStrings
 import com.agc.bwitch.localization.appStrings
