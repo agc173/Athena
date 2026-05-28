@@ -4,7 +4,6 @@ import com.agc.bwitch.domain.astrology.horoscope.ConstellationProgressRepository
 import com.russhwolf.settings.Settings
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
 
 class SettingsConstellationProgressRepository(
     private val settings: Settings,
@@ -12,7 +11,7 @@ class SettingsConstellationProgressRepository(
 
     private val totalProgressFlow = MutableStateFlow(settings.getInt(TOTAL_PROGRESS_KEY, 0).coerceAtLeast(0))
 
-    override fun observeTotalProgress(): Flow<Int> = totalProgressFlow.distinctUntilChanged()
+    override fun observeTotalProgress(): Flow<Int> = totalProgressFlow
 
     override suspend fun getTotalProgress(): Int = settings.getInt(TOTAL_PROGRESS_KEY, 0).coerceAtLeast(0)
 

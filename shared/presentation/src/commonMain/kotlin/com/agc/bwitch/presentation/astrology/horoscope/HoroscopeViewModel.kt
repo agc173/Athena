@@ -398,12 +398,13 @@ class HoroscopeViewModel(
                     } else {
                         HoroscopeFeedbackMessage.UnlockFailed
                     }
-                    val overlayMatchesTarget = (it.overlay as? HoroscopeOverlayUi.DailyOverlay)?.let { currentOverlay ->
+                    val dailyOverlay = it.overlay as? HoroscopeOverlayUi.DailyOverlay
+                    val overlayMatchesTarget = dailyOverlay?.let { currentOverlay ->
                         currentOverlay.dateIso == target.dateIso && currentOverlay.sign == target.sign
                     } == true
                     if (overlayMatchesTarget) {
                         it.copy(
-                            overlay = (it.overlay as? HoroscopeOverlayUi.DailyOverlay)?.copy(
+                            overlay = dailyOverlay?.copy(
                                 unlockErrorMessage = unlockErrorMessage,
                                 unlockErrorType = if (isInsufficient) InsufficientMoons else Backend,
                             ),
