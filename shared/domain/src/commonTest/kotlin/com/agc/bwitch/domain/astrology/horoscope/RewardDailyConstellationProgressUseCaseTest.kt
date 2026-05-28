@@ -81,5 +81,18 @@ class RewardDailyConstellationProgressUseCaseTest {
         override suspend fun saveLastRewardDateIso(value: String) {
             lastRewardDateIso = value
         }
+
+        override suspend fun claimDailyProgress(todayIso: String, maxTotalProgress: Int): ConstellationProgressRewardResult {
+            val lastRewardDate = getLastRewardDateIso()
+            val previousTotal = getTotalProgress().coerceIn(0, maxTotalProgress)
+            if (lastRewardDate == todayIso) {
+                return ConstellationProgressRewardResult(previousTotal, previousTotal, rewarded = false, isComplete = previousTotal >= maxTotalProgress)
+            }
+            val isComplete = previousTotal >= maxTotalProgress
+            val totalProgress = if (isComplete) previousTotal else (previousTotal + 1).coerceAtMost(maxTotalProgress)
+            saveTotalProgress(totalProgress)
+            saveLastRewardDateIso(todayIso)
+            return ConstellationProgressRewardResult(totalProgress, previousTotal, rewarded = !isComplete, isComplete = totalProgress >= maxTotalProgress)
+        }
     }
 }

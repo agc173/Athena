@@ -31,6 +31,7 @@ export {
   synastryAuthorize,
   pendulumAuthorize,
   claimMoonPackPurchase,
+  claimDailyConstellationProgress,
 } from './economy';
 
 initializeApp();

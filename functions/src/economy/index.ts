@@ -24,3 +24,5 @@ export * from './callables/synastryAuthorize';
 export * from './pendulumEconomy';
 export * from './callables/pendulumAuthorize';
 export * from './callables/claimMoonPackPurchase';
+
+export * from './callables/claimDailyConstellationProgress';

@@ -8,4 +8,5 @@ interface ConstellationProgressRepository {
     suspend fun getLastRewardDateIso(): String?
     suspend fun saveTotalProgress(value: Int)
     suspend fun saveLastRewardDateIso(value: String)
+    suspend fun claimDailyProgress(todayIso: String, maxTotalProgress: Int): ConstellationProgressRewardResult
 }

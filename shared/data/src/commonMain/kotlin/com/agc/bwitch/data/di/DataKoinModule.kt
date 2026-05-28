@@ -71,6 +71,7 @@ import com.agc.bwitch.data.astrology.horoscope.SyncHoroscopeUnlockRepository
 import com.agc.bwitch.domain.astrology.horoscope.HoroscopeDailySyncController
 import com.agc.bwitch.data.astrology.horoscope.SettingsHoroscopePullMarkerRepository
 import com.agc.bwitch.data.astrology.horoscope.SettingsConstellationProgressRepository
+import com.agc.bwitch.data.astrology.horoscope.BackendFirstConstellationProgressRepository
 import com.agc.bwitch.domain.astrology.horoscope.HoroscopePullMarker
 import com.agc.bwitch.domain.astrology.horoscope.ConstellationProgressRepository
 import dev.gitlive.firebase.Firebase
@@ -120,7 +121,8 @@ val dataKoinModule: Module = module {
 
     single<HoroscopePullMarker> { SettingsHoroscopePullMarkerRepository(get()) }
     single<HoroscopeUnlockRepository> { SyncHoroscopeUnlockRepository(get()) }
-    single<ConstellationProgressRepository> { SettingsConstellationProgressRepository(get()) }
+    single { SettingsConstellationProgressRepository(get()) }
+    single<ConstellationProgressRepository> { BackendFirstConstellationProgressRepository(localRepository = get(), authRepository = get(), functionsClient = get()) }
 
     /**
      * BirthChart - LOCAL
