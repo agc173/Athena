@@ -98,10 +98,22 @@ class HoroscopeViewModel(
         scope.launch { runCatching { resolveCurrentLanguageUseCase() } }
         scope.launch { loadCostsAndPeriods() }
         scope.launch {
-            rewardDailyConstellationProgressUseCase(
+            val rewardResult = rewardDailyConstellationProgressUseCase(
                 todayIso = todayIso(),
                 maxTotalProgress = ConstellationProgressRules.maxTotalProgress,
             )
+            if (rewardResult.rewarded) {
+                val progressState = resolveConstellationProgressState(rewardResult.totalProgress)
+                _uiEffects.emit(
+                    HoroscopeUiEffect.ConstellationProgressRewarded(
+                        previousTotalProgress = rewardResult.previousTotalProgress,
+                        totalProgress = rewardResult.totalProgress,
+                        sign = progressState?.sign,
+                        progressInSign = progressState?.progressInSign,
+                        totalStepsInSign = progressState?.totalStepsInSign,
+                    ),
+                )
+            }
         }
 
         scope.launch {
@@ -1049,6 +1061,30 @@ class HoroscopeViewModel(
         if (rewards.isEmpty()) return
         _uiEffects.tryEmit(HoroscopeUiEffect.ShowDeckCardUnlockRewards(rewards))
     }
+
+    private fun resolveConstellationProgressState(totalProgress: Int): ConstellationSignProgress? {
+        var remaining = totalProgress.coerceAtLeast(0)
+        ConstellationProgressRules.zodiacOrder.forEach { sign ->
+            val signSteps = ConstellationProgressRules.stepsBySign.getValue(sign)
+            if (remaining <= signSteps) {
+                return ConstellationSignProgress(
+                    sign = sign,
+                    progressInSign = remaining.coerceAtLeast(0),
+                    totalStepsInSign = signSteps,
+                )
+            }
+            remaining -= signSteps
+        }
+        val lastSign = ConstellationProgressRules.zodiacOrder.lastOrNull() ?: return null
+        val totalSteps = ConstellationProgressRules.stepsBySign.getValue(lastSign)
+        return ConstellationSignProgress(lastSign, totalSteps, totalSteps)
+    }
+
+    private data class ConstellationSignProgress(
+        val sign: ZodiacSign,
+        val progressInSign: Int,
+        val totalStepsInSign: Int,
+    )
 
 }
 
