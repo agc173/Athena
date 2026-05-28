@@ -640,7 +640,7 @@ val fallbackAppStrings: AppStrings = AppStrings(
         selectAvatarButton = "Seleccionar avatar",
     ),
     settings = SettingsStrings(
-        subtitle = "Gestiona tu cuenta y la configuración principal de BWitch.",
+        subtitle = "Gestiona tu cuenta y la configuración principal de ATHENA.",
         sectionAccount = "Cuenta",
         sectionNotifications = "Notificaciones",
         sectionPurchasesSubscription = "Compras y suscripción",
@@ -710,7 +710,7 @@ val fallbackAppStrings: AppStrings = AppStrings(
         languageSectionTitle = "Idioma de la app",
         languageSectionSubtitle = "Este cambio se aplicará en próximas pantallas migradas.",
         languageSelectedPrefix = "✓ ",
-        appName = "BWitch",
+        appName = "ATHENA",
     ),
     guide = GuideStrings(
         headerTitle = "Explora tu intuición",
@@ -842,7 +842,7 @@ val fallbackAppStrings: AppStrings = AppStrings(
     ),
     birthChart = BirthChartStrings(
         title = "Esencia natal",
-        subtitle = "Selecciona Sol, Luna y Ascendente para recibir una lectura breve estilo BWitch.",
+        subtitle = "Selecciona Sol, Luna y Ascendente para recibir una lectura breve estilo ATHENA.",
         sunSignLabel = "Signo solar",
         moonSignLabel = "Signo lunar",
         risingSignLabel = "Ascendente",
@@ -1160,7 +1160,7 @@ private val englishAppStrings = fallbackAppStrings.copy(
         selectAvatarButton = "Select avatar",
     ),
     settings = fallbackAppStrings.settings.copy(
-        subtitle = "Manage your account and BWitch core settings.",
+        subtitle = "Manage your account and ATHENA core settings.",
         sectionAccount = "Account",
         sectionNotifications = "Notifications",
         sectionPurchasesSubscription = "Purchases and subscription",
@@ -1227,7 +1227,7 @@ private val englishAppStrings = fallbackAppStrings.copy(
     common = fallbackAppStrings.common.copy(
         languageSectionTitle = "App language",
         languageSectionSubtitle = "This change will apply to migrated screens.",
-        appName = "BWitch",
+        appName = "ATHENA",
     ),
     guide = fallbackAppStrings.guide.copy(
         headerTitle = "Explore your intuition",
@@ -1384,7 +1384,7 @@ private val englishAppStrings = fallbackAppStrings.copy(
     ),
     birthChart = fallbackAppStrings.birthChart.copy(
         title = "Birth essence",
-        subtitle = "Choose Sun, Moon and Rising to receive a short BWitch-style reading.",
+        subtitle = "Choose Sun, Moon and Rising to receive a short ATHENA-style reading.",
         sunSignLabel = "Sun sign",
         moonSignLabel = "Moon sign",
         risingSignLabel = "Rising sign",
@@ -1701,7 +1701,7 @@ private val portugueseAppStrings = fallbackAppStrings.copy(
         selectAvatarButton = "Selecionar avatar",
     ),
     settings = fallbackAppStrings.settings.copy(
-        subtitle = "Gerencie sua conta e as configurações principais do BWitch.",
+        subtitle = "Gerencie sua conta e as configurações principais do ATHENA.",
         sectionAccount = "Conta",
         sectionNotifications = "Notificações",
         sectionPurchasesSubscription = "Compras e assinatura",
@@ -1767,7 +1767,7 @@ private val portugueseAppStrings = fallbackAppStrings.copy(
     common = fallbackAppStrings.common.copy(
         languageSectionTitle = "Idioma do app",
         languageSectionSubtitle = "Esta mudança será aplicada nas telas migradas.",
-        appName = "BWitch",
+        appName = "ATHENA",
     ),
     guide = fallbackAppStrings.guide.copy(
         headerTitle = "Explore sua intuição",
@@ -1911,7 +1911,7 @@ private val portugueseAppStrings = fallbackAppStrings.copy(
     ),
     birthChart = fallbackAppStrings.birthChart.copy(
         title = "Essência natal",
-        subtitle = "Selecione Sol, Lua e Ascendente para receber uma leitura breve no estilo BWitch.",
+        subtitle = "Selecione Sol, Lua e Ascendente para receber uma leitura breve no estilo ATHENA.",
         sunSignLabel = "Signo solar",
         moonSignLabel = "Signo lunar",
         discoverLoading = "Descobrindo...",
@@ -2212,7 +2212,7 @@ private val russianAppStrings = fallbackAppStrings.copy(
         selectAvatarButton = "Выбрать аватар",
     ),
     settings = fallbackAppStrings.settings.copy(
-        subtitle = "Управляйте аккаунтом и основными настройками BWitch.",
+        subtitle = "Управляйте аккаунтом и основными настройками ATHENA.",
         sectionAccount = "Аккаунт",
         sectionNotifications = "Уведомления",
         sectionPurchasesSubscription = "Покупки и подписка",
@@ -2278,7 +2278,7 @@ private val russianAppStrings = fallbackAppStrings.copy(
     common = fallbackAppStrings.common.copy(
         languageSectionTitle = "Язык приложения",
         languageSectionSubtitle = "Изменение применится к уже мигрированным экранам.",
-        appName = "BWitch",
+        appName = "ATHENA",
     ),
     guide = fallbackAppStrings.guide.copy(
         headerTitle = "Исследуй свою интуицию",
@@ -2428,7 +2428,7 @@ private val russianAppStrings = fallbackAppStrings.copy(
     ),
     birthChart = fallbackAppStrings.birthChart.copy(
         title = "Натальная сущность",
-        subtitle = "Выберите Солнце, Луну и Асцендент, чтобы получить краткое чтение в стиле BWitch.",
+        subtitle = "Выберите Солнце, Луну и Асцендент, чтобы получить краткое чтение в стиле ATHENA.",
         sunSignLabel = "Солнечный знак",
         moonSignLabel = "Лунный знак",
         risingSignLabel = "Асцендент",
@@ -2738,7 +2738,7 @@ private val frenchAppStrings = fallbackAppStrings.copy(
         selectAvatarButton = "Sélectionner un avatar",
     ),
     settings = fallbackAppStrings.settings.copy(
-        subtitle = "Gérez votre compte et les réglages principaux de BWitch.",
+        subtitle = "Gérez votre compte et les réglages principaux de ATHENA.",
         sectionAccount = "Compte",
         sectionNotifications = "Notifications",
         sectionPurchasesSubscription = "Achats et abonnement",
@@ -2804,7 +2804,7 @@ private val frenchAppStrings = fallbackAppStrings.copy(
     common = fallbackAppStrings.common.copy(
         languageSectionTitle = "Langue de l'application",
         languageSectionSubtitle = "Ce changement s'appliquera aux écrans migrés.",
-        appName = "BWitch",
+        appName = "ATHENA",
     ),
     guide = fallbackAppStrings.guide.copy(
         headerTitle = "Explore ton intuition",
@@ -2947,7 +2947,7 @@ private val frenchAppStrings = fallbackAppStrings.copy(
     ),
     birthChart = fallbackAppStrings.birthChart.copy(
         title = "Essence natale",
-        subtitle = "Sélectionne Soleil, Lune et Ascendant pour recevoir une lecture brève style BWitch.",
+        subtitle = "Sélectionne Soleil, Lune et Ascendant pour recevoir une lecture brève style ATHENA.",
         sunSignLabel = "Signe solaire",
         moonSignLabel = "Signe lunaire",
         risingSignLabel = "Ascendant",
@@ -3253,7 +3253,7 @@ private val italianAppStrings = fallbackAppStrings.copy(
         selectAvatarButton = "Seleziona avatar",
     ),
     settings = fallbackAppStrings.settings.copy(
-        subtitle = "Gestisci il tuo account e le impostazioni principali di BWitch.",
+        subtitle = "Gestisci il tuo account e le impostazioni principali di ATHENA.",
         sectionAccount = "Account",
         sectionNotifications = "Notifiche",
         sectionPurchasesSubscription = "Acquisti e abbonamento",
@@ -3319,7 +3319,7 @@ private val italianAppStrings = fallbackAppStrings.copy(
     common = fallbackAppStrings.common.copy(
         languageSectionTitle = "Lingua dell'app",
         languageSectionSubtitle = "La modifica sarà applicata alle schermate migrate.",
-        appName = "BWitch",
+        appName = "ATHENA",
     ),
     guide = fallbackAppStrings.guide.copy(
         headerTitle = "Esplora la tua intuizione",
@@ -3462,7 +3462,7 @@ private val italianAppStrings = fallbackAppStrings.copy(
     ),
     birthChart = fallbackAppStrings.birthChart.copy(
         title = "Essenza natale",
-        subtitle = "Seleziona Sole, Luna e Ascendente per ricevere una breve lettura in stile BWitch.",
+        subtitle = "Seleziona Sole, Luna e Ascendente per ricevere una breve lettura in stile ATHENA.",
         sunSignLabel = "Segno solare",
         moonSignLabel = "Segno lunare",
         risingSignLabel = "Ascendente",
@@ -3766,7 +3766,7 @@ private val germanAppStrings = fallbackAppStrings.copy(
         selectAvatarButton = "Avatar auswählen",
     ),
     settings = fallbackAppStrings.settings.copy(
-        subtitle = "Verwalte dein Konto und die wichtigsten BWitch-Einstellungen.",
+        subtitle = "Verwalte dein Konto und die wichtigsten ATHENA-Einstellungen.",
         sectionAccount = "Konto",
         sectionNotifications = "Benachrichtigungen",
         sectionPurchasesSubscription = "Käufe und Abonnement",
@@ -3832,7 +3832,7 @@ private val germanAppStrings = fallbackAppStrings.copy(
     common = fallbackAppStrings.common.copy(
         languageSectionTitle = "App-Sprache",
         languageSectionSubtitle = "Diese Änderung gilt für bereits migrierte Screens.",
-        appName = "BWitch",
+        appName = "ATHENA",
     ),
     guide = fallbackAppStrings.guide.copy(
         headerTitle = "Erkunde deine Intuition",
@@ -3975,7 +3975,7 @@ private val germanAppStrings = fallbackAppStrings.copy(
     ),
     birthChart = fallbackAppStrings.birthChart.copy(
         title = "Geburtsessenz",
-        subtitle = "Wähle Sonne, Mond und Aszendent, um eine kurze BWitch-Lesung zu erhalten.",
+        subtitle = "Wähle Sonne, Mond und Aszendent, um eine kurze ATHENA-Lesung zu erhalten.",
         sunSignLabel = "Sternzeichen Sonne",
         moonSignLabel = "Sternzeichen Mond",
         risingSignLabel = "Aszendent",

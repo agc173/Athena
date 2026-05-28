@@ -1,6 +1,6 @@
 <resources>
     <string name="app_language_section_title">Langue de l'app</string>
-    <string name="app_language_section_subtitle">Choisissez la langue que BWitch utilisera dans l'interface.</string>
+    <string name="app_language_section_subtitle">Choisissez la langue que ATHENA utilisera dans l'interface.</string>
     <string name="app_language_selected_prefix">✓ </string>
 
     <string name="onboarding_profile_title">Complétez votre profil</string>
@@ -24,7 +24,7 @@
     <string name="bottom_tab_rituals">Rituels</string>
 
 
-    <string name="app_brand_name">BWitch</string>
+    <string name="app_brand_name">ATHENA</string>
     <string name="auth_sign_in_subtitle">Connectez-vous pour synchroniser vos données.</string>
     <string name="auth_continue_with_google">Continuer avec Google</string>
     <string name="auth_email_label">E-mail</string>
