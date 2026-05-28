@@ -31,8 +31,8 @@ export {
   synastryAuthorize,
   pendulumAuthorize,
   claimMoonPackPurchase,
-  claimDailyConstellationProgress,
 } from './economy';
+export {claimDailyConstellationProgress} from './economy/callables/claimDailyConstellationProgress';
 
 initializeApp();
 
