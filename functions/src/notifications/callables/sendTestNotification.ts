@@ -70,7 +70,7 @@ export const sendTestNotification = onCall({
   if (!uid) throw new HttpsError('unauthenticated', 'Authentication is required');
 
   const data = (request.data ?? {}) as SendTestNotificationData;
-  const title = asOptionalString(data.title, 'title') ?? 'BWitch';
+  const title = asOptionalString(data.title, 'title') ?? 'ATHENA';
   const body = asOptionalString(data.body, 'body') ?? 'Tus notificaciones ya están activas ✨';
   const type = asOptionalType(data.type);
   const route = asRoute(type);

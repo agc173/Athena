@@ -45,7 +45,7 @@ export const sendDailyHoroscopeNotifications = onSchedule({
   const db = getFirestore();
   const sentAtIso = new Date().toISOString();
   const title = 'Tu horóscopo diario está listo';
-  const body = 'Descubre la energía de hoy en BWitch ✨';
+  const body = 'Descubre la energía de hoy en ATHENA ✨';
 
   let attempted = 0;
   let sent = 0;
