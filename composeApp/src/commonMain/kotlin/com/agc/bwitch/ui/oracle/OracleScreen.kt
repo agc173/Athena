@@ -36,6 +36,7 @@ import com.agc.bwitch.domain.model.DeckCardUnlockReward
 import com.agc.bwitch.platform.share.ShareResult
 import com.agc.bwitch.platform.share.ShareTextPayload
 import com.agc.bwitch.platform.share.rememberShareLauncher
+import com.agc.bwitch.ui.common.share.withAthenaShareSignature
 import com.agc.bwitch.presentation.oracle.OracleAskMessage
 import com.agc.bwitch.presentation.oracle.OracleAskMessageId
 import com.agc.bwitch.domain.security.InputPolicy
@@ -296,7 +297,7 @@ fun OracleScreen(
                     coroutineScope.launch {
                         val shareResult = shareLauncher.shareText(
                             ShareTextPayload(
-                                text = buildOracleShareText(answer, strings),
+                                text = buildOracleShareText(answer, strings).withAthenaShareSignature(appStrings.common.appName),
                                 title = shareTitle,
                             ),
                         )

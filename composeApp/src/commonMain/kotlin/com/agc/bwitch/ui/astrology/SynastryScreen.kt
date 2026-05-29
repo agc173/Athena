@@ -64,6 +64,7 @@ import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.platform.share.ShareResult
 import com.agc.bwitch.platform.share.ShareTextPayload
 import com.agc.bwitch.platform.share.rememberShareLauncher
+import com.agc.bwitch.ui.common.share.withAthenaShareSignature
 import com.agc.bwitch.presentation.astrology.synastry.SynastryPersonForm
 import com.agc.bwitch.presentation.astrology.synastry.SynastryViewModel
 import com.agc.bwitch.presentation.astrology.synastry.SynastryUiEffect
@@ -216,7 +217,10 @@ fun SynastryScreen(
                     shareErrorMessage = null
                     shareScope.launch {
                         val shareResult = shareLauncher.shareText(
-                            ShareTextPayload(text = it, title = strings.horoscope.shareCta),
+                            ShareTextPayload(
+                                text = it.withAthenaShareSignature(strings.common.appName),
+                                title = strings.horoscope.shareCta,
+                            ),
                         )
                         if (shareResult is ShareResult.Error) {
                             shareErrorMessage = shareResult.message ?: strings.birthChart.shareFailedFallback

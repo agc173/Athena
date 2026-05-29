@@ -62,6 +62,7 @@ import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.platform.share.ShareResult
 import com.agc.bwitch.platform.share.ShareTextPayload
 import com.agc.bwitch.platform.share.rememberShareLauncher
+import com.agc.bwitch.ui.common.share.withAthenaShareSignature
 import com.agc.bwitch.presentation.tarot.TarotRevealPhase
 import com.agc.bwitch.presentation.tarot.TarotUiEffect
 import com.agc.bwitch.presentation.tarot.TAROT_LIMIT_REACHED_ERROR_KEY
@@ -300,7 +301,10 @@ fun TarotScreen(
                                             shareErrorMessage = null
                                             shareScope.launch {
                                                 val shareResult = shareLauncher.shareText(
-                                                    ShareTextPayload(text = shareText, title = shareTitle),
+                                                    ShareTextPayload(
+                                                        text = shareText.withAthenaShareSignature(appStrings.common.appName),
+                                                        title = shareTitle,
+                                                    ),
                                                 )
                                                 if (shareResult is ShareResult.Error) {
                                                     shareErrorMessage = shareResult.message ?: shareErrorFallback
@@ -388,7 +392,10 @@ fun TarotScreen(
                                             shareErrorMessage = null
                                             shareScope.launch {
                                                 val shareResult = shareLauncher.shareText(
-                                                    ShareTextPayload(text = shareText, title = shareTitle),
+                                                    ShareTextPayload(
+                                                        text = shareText.withAthenaShareSignature(appStrings.common.appName),
+                                                        title = shareTitle,
+                                                    ),
                                                 )
                                                 if (shareResult is ShareResult.Error) {
                                                     shareErrorMessage = shareResult.message ?: shareErrorFallback
