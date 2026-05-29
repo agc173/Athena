@@ -317,12 +317,12 @@ fun ProfileScreen(
                 verticalArrangement = Arrangement.spacedBy(dimens.spacingXs),
             ) {
                 Text(
-                    text = "Constelaciones",
+                    text = profileStrings.constellationsTitle,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                 )
                 Text(
-                    text = "Explora tu colección astral",
+                    text = profileStrings.constellationsSubtitle,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -446,13 +446,13 @@ fun ProfileScreen(
                         verticalArrangement = Arrangement.spacedBy(14.dp),
                     ) {
                         Text(
-                            text = "Constelaciones",
+                            text = profileStrings.constellationsTitle,
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.SemiBold,
                             color = Color(0xFFF2E9FF),
                         )
                         Text(
-                            text = "Despierta las insignias zodiacales",
+                            text = profileStrings.constellationsDialogSubtitle,
                             style = MaterialTheme.typography.bodyMedium,
                             color = Color(0xFFD2C7EA).copy(alpha = 0.88f),
                         )
@@ -474,10 +474,14 @@ fun ProfileScreen(
                             modifier = Modifier.weight(1f),
                         ) {
                             items(templates) { template ->
-                                ConstellationBadgeCard(template = template, progressSteps = progressBySign[template.sign] ?: 0)
+                                ConstellationBadgeCard(
+                                    template = template,
+                                    progressSteps = progressBySign[template.sign] ?: 0,
+                                    signName = template.sign.localizedLabel(strings),
+                                )
                             }
                         }
-                        Button(onClick = { showConstellationsDialog = false }, modifier = Modifier.align(Alignment.End)) { Text("Cerrar") }
+                        Button(onClick = { showConstellationsDialog = false }, modifier = Modifier.align(Alignment.End)) { Text(profileStrings.constellationsCloseCta) }
                     }
                 }
             }

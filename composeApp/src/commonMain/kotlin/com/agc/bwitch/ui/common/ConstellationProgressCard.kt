@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -32,6 +31,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.agc.bwitch.domain.astrology.horoscope.ConstellationProgressRules
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
+import com.agc.bwitch.localization.HoroscopeStrings
 
 data class ConstellationNode(val x: Float, val y: Float)
 
@@ -400,7 +400,13 @@ val ZodiacStylizedTemplates: List<ConstellationTemplate> = ConstellationProgress
 }
 
 @Composable
-fun ConstellationProgressCard(progressSteps: Int, template: ConstellationTemplate, modifier: Modifier = Modifier) {
+fun ConstellationProgressCard(
+    progressSteps: Int,
+    template: ConstellationTemplate,
+    strings: HoroscopeStrings,
+    signName: String = template.name,
+    modifier: Modifier = Modifier,
+) {
     val totalSteps = template.totalSteps
     val activeCount = progressSteps.coerceIn(0, totalSteps)
     val revealedSteps = remember(activeCount, template) { template.revealSteps.take(activeCount) }
@@ -417,8 +423,18 @@ fun ConstellationProgressCard(progressSteps: Int, template: ConstellationTemplat
 
     Card(modifier = modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = cardColor)) {
         Column(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(text = "Constelación de ${template.name}", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
-            Text(text = "$activeCount/$totalSteps luces despertadas", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.72f))
+            Text(
+                text = strings.constellationCardTitleFormat.replaceFirst("%s", signName),
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                text = strings.constellationLightsAwakenedFormat
+                    .replaceFirst("%d", activeCount.toString())
+                    .replaceFirst("%d", totalSteps.toString()),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.72f),
+            )
             Canvas(modifier = Modifier.fillMaxWidth().aspectRatio(1.9f)) {
                 val scaledPoints = template.nodes.map { Offset(it.x * size.width, it.y * size.height) }
                 template.edges.forEachIndexed { lineIndex, edge ->
@@ -441,7 +457,12 @@ fun ConstellationProgressCard(progressSteps: Int, template: ConstellationTemplat
 }
 
 @Composable
-fun ConstellationBadgeCard(progressSteps: Int, template: ConstellationTemplate, modifier: Modifier = Modifier) {
+fun ConstellationBadgeCard(
+    progressSteps: Int,
+    template: ConstellationTemplate,
+    signName: String = template.name,
+    modifier: Modifier = Modifier,
+) {
     val totalSteps = template.totalSteps
     val activeCount = progressSteps.coerceIn(0, totalSteps)
     val revealedSteps = remember(activeCount, template) { template.revealSteps.take(activeCount) }
@@ -478,7 +499,7 @@ fun ConstellationBadgeCard(progressSteps: Int, template: ConstellationTemplate, 
         }
         Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = template.name,
+                text = signName,
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Medium,
                 textAlign = TextAlign.Center,
