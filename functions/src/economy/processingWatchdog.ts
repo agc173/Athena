@@ -1,9 +1,6 @@
 import {Timestamp, getFirestore} from 'firebase-admin/firestore';
 import {onSchedule} from 'firebase-functions/v2/scheduler';
 import {dateIsoMadrid} from './firestorePaths';
-import {refundBirthEssenceEconomyRequest} from './birthEssenceEconomy';
-import {refundOracleEconomyRequest} from './oracleEconomy';
-import {refundTarotEconomyRequest} from './tarotEconomy';
 import type {EconomyRequestDoc, EconomyRequestType} from './types';
 
 const PROCESSING_TIMEOUT_MINUTES = 15;
@@ -38,7 +35,8 @@ async function refundTimedOutRequest(params: {
   const dateIso = params.request.dateIso ?? params.fallbackDateIso;
 
   switch (params.request.type) {
-    case 'ORACLE_1Q':
+    case 'ORACLE_1Q': {
+      const {refundOracleEconomyRequest} = await import('./oracleEconomy.js');
       return refundOracleEconomyRequest({
         uid: params.uid,
         requestId: params.request.requestId,
@@ -46,8 +44,10 @@ async function refundTimedOutRequest(params: {
         errorMessage,
         recoveredResult: 'FAILED_TIMEOUT',
       });
+    }
     case 'TAROT_1':
-    case 'TAROT_3':
+    case 'TAROT_3': {
+      const {refundTarotEconomyRequest} = await import('./tarotEconomy.js');
       return refundTarotEconomyRequest({
         uid: params.uid,
         requestId: params.request.requestId,
@@ -55,7 +55,9 @@ async function refundTimedOutRequest(params: {
         errorMessage,
         recoveredResult: 'FAILED_TIMEOUT',
       });
-    case 'BIRTH_ESSENCE':
+    }
+    case 'BIRTH_ESSENCE': {
+      const {refundBirthEssenceEconomyRequest} = await import('./birthEssenceEconomy.js');
       return refundBirthEssenceEconomyRequest({
         uid: params.uid,
         requestId: params.request.requestId,
@@ -63,6 +65,7 @@ async function refundTimedOutRequest(params: {
         errorMessage,
         recoveredResult: 'FAILED_TIMEOUT',
       });
+    }
     default:
       return;
   }
