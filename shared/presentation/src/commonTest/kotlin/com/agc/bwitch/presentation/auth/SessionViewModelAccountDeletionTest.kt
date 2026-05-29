@@ -5,6 +5,7 @@ import com.agc.bwitch.domain.account.AccountDeletionStatus
 import com.agc.bwitch.domain.account.RestorePendingAccountDeletionUseCase
 import com.agc.bwitch.domain.auth.AuthRepository
 import com.agc.bwitch.domain.auth.AuthUser
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -99,13 +100,46 @@ class SessionViewModelAccountDeletionTest {
         }
     }
 
-    private class FakeAuthRepository(currentUser: AuthUser?) : AuthRepository {
+    @Test
+    fun `sign out job completes only after repository sign out completes`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val signOutGate = CompletableDeferred<Unit>()
+            val authRepository = FakeAuthRepository(currentUser = null, signOutGate = signOutGate)
+            val viewModel = SessionViewModel(authRepository = authRepository)
+
+            advanceUntilIdle()
+
+            val signOutJob = viewModel.signOut()
+            advanceUntilIdle()
+
+            assertTrue(authRepository.signOutStarted)
+            assertFalse(signOutJob.isCompleted)
+
+            signOutGate.complete(Unit)
+            advanceUntilIdle()
+
+            assertTrue(signOutJob.isCompleted)
+            assertTrue(authRepository.signOutCalled)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    private class FakeAuthRepository(
+        currentUser: AuthUser?,
+        private val signOutGate: CompletableDeferred<Unit>? = null,
+    ) : AuthRepository {
         override val authState: Flow<AuthUser?> = MutableStateFlow(currentUser)
+        var signOutStarted = false
         var signOutCalled = false
 
         override suspend fun signInWithEmail(email: String, password: String) = Unit
         override suspend fun signUpWithEmail(email: String, password: String) = Unit
         override suspend fun signOut() {
+            signOutStarted = true
+            signOutGate?.await()
             signOutCalled = true
         }
         override suspend fun signInWithGoogleIdToken(idToken: String) = Unit

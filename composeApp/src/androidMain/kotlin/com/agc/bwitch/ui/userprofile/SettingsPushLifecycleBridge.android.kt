@@ -38,7 +38,7 @@ actual fun rememberHandleSecureSignOut(
 
     return {
         synchronizer.unregisterCurrentTokenBeforeSignOut()
-        sessionViewModel.signOut()
+        sessionViewModel.signOut().join()
         clearLocalUserData()
     }
 }
