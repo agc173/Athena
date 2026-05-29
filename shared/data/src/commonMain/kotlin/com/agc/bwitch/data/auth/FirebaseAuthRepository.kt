@@ -19,13 +19,7 @@ class FirebaseAuthRepository : AuthRepository {
 
     override suspend fun signInWithGoogleIdToken(idToken: String) {
         val credential = GoogleAuthProvider.credential(idToken, null)
-        val result = auth.signInWithCredential(credential)
-
-        // 🔎 DEBUG
-        val user = auth.currentUser
-        val token = user?.getIdToken(forceRefresh = true)
-
-        println("BWITCH_AUTH uid=${user?.uid} tokenPresent=${token != null}")
+        auth.signInWithCredential(credential)
     }
 
 
