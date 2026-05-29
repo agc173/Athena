@@ -20,7 +20,6 @@ actual class ShareLauncher {
                 activityItems = listOf(payload.text),
                 applicationActivities = null,
             )
-            activityViewController.popoverPresentationController?.sourceView = presenter.view
             presenter.presentViewController(
                 activityViewController,
                 animated = true,
