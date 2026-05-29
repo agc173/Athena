@@ -1,7 +1,6 @@
 package com.agc.bwitch.ui.astrology
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -30,7 +29,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Scaffold
@@ -58,10 +56,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
@@ -94,6 +90,7 @@ import com.agc.bwitch.presentation.astrology.horoscope.ConstellationRewardUi
 import com.agc.bwitch.platform.share.ShareResult
 import com.agc.bwitch.platform.share.ShareTextPayload
 import com.agc.bwitch.platform.share.rememberShareLauncher
+import com.agc.bwitch.ui.common.share.AthenaShareIconButton
 import com.agc.bwitch.ui.common.share.withAthenaShareSignature
 import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeFeedbackMessage
 import com.agc.bwitch.presentation.astrology.horoscope.HoroscopeMonthPeriod
@@ -736,49 +733,11 @@ private fun HoroscopeOverlayHeader(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        IconButton(
-            onClick = onShare,
+        AthenaShareIconButton(
+            contentDescription = strings.horoscope.shareCta,
             enabled = canShare,
-            modifier = Modifier.semantics {
-                contentDescription = strings.horoscope.shareCta
-            },
-        ) {
-            ShareGlyph(
-                tint = MaterialTheme.colorScheme.primary.copy(alpha = if (canShare) 1f else 0.38f),
-                modifier = Modifier.size(24.dp),
-            )
-        }
-    }
-}
-
-@Composable
-private fun ShareGlyph(
-    tint: Color,
-    modifier: Modifier = Modifier,
-) {
-    Canvas(modifier = modifier) {
-        val strokeWidth = size.minDimension * 0.09f
-        val start = Offset(size.width * 0.28f, size.height * 0.62f)
-        val top = Offset(size.width * 0.72f, size.height * 0.32f)
-        val bottom = Offset(size.width * 0.72f, size.height * 0.78f)
-        drawLine(
-            color = tint,
-            start = start,
-            end = top,
-            strokeWidth = strokeWidth,
-            cap = StrokeCap.Round,
+            onClick = onShare,
         )
-        drawLine(
-            color = tint,
-            start = start,
-            end = bottom,
-            strokeWidth = strokeWidth,
-            cap = StrokeCap.Round,
-        )
-        val radius = size.minDimension * 0.13f
-        drawCircle(color = tint, radius = radius, center = start)
-        drawCircle(color = tint, radius = radius, center = top)
-        drawCircle(color = tint, radius = radius, center = bottom)
     }
 }
 

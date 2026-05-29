@@ -36,6 +36,7 @@ import com.agc.bwitch.domain.model.DeckCardUnlockReward
 import com.agc.bwitch.platform.share.ShareResult
 import com.agc.bwitch.platform.share.ShareTextPayload
 import com.agc.bwitch.platform.share.rememberShareLauncher
+import com.agc.bwitch.ui.common.share.AthenaShareIconButton
 import com.agc.bwitch.ui.common.share.withAthenaShareSignature
 import com.agc.bwitch.presentation.oracle.OracleAskMessage
 import com.agc.bwitch.presentation.oracle.OracleAskMessageId
@@ -230,14 +231,44 @@ fun OracleScreen(
         }
 
         state.answer?.let { answer ->
+            val oracleShareText = buildOracleShareText(answer, strings)
+
             BWitchCard(
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                answer.title?.let {
-                    Text(it, style = MaterialTheme.typography.titleLarge)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(dimens.spacingSm),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = answer.title ?: strings.guidanceTitle,
+                        style = MaterialTheme.typography.titleLarge,
+                        modifier = Modifier.weight(1f),
+                    )
+                    AthenaShareIconButton(
+                        contentDescription = shareTitle,
+                        enabled = !state.isLoading && !state.inProgress && oracleShareText.isNotBlank(),
+                        onClick = {
+                            shareError = null
+                            coroutineScope.launch {
+                                val shareResult = shareLauncher.shareText(
+                                    ShareTextPayload(
+                                        text = oracleShareText.withAthenaShareSignature(appName),
+                                        title = shareTitle,
+                                    ),
+                                )
+                                if (shareResult is ShareResult.Error) {
+                                    shareError = shareResult.message ?: shareErrorFallback
+                                }
+                            }
+                        },
+                    )
                 }
 
-                Text(strings.guidanceTitle, style = MaterialTheme.typography.titleMedium)
+                if (answer.title != null) {
+                    Text(strings.guidanceTitle, style = MaterialTheme.typography.titleMedium)
+                }
                 Text(answer.coreGuidance, style = MaterialTheme.typography.bodyLarge)
 
                 if (answer.doList.isNotEmpty()) {
@@ -290,27 +321,6 @@ fun OracleScreen(
                         }
                     }
                 }
-            }
-
-            BWitchSecondaryButton(
-                onClick = {
-                    shareError = null
-                    coroutineScope.launch {
-                        val shareResult = shareLauncher.shareText(
-                            ShareTextPayload(
-                                text = buildOracleShareText(answer, strings).withAthenaShareSignature(appName),
-                                title = shareTitle,
-                            ),
-                        )
-                        if (shareResult is ShareResult.Error) {
-                            shareError = shareResult.message ?: shareErrorFallback
-                        }
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !state.isLoading && !state.inProgress,
-            ) {
-                Text(shareTitle)
             }
 
             BWitchSecondaryButton(
