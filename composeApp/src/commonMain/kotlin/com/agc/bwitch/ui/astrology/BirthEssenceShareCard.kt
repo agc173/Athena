@@ -19,12 +19,14 @@ import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
 import com.agc.bwitch.localization.ZodiacStrings
 import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.ui.common.toVisualResource
+import com.agc.bwitch.ui.common.share.visual.AthenaShareWatermark
 import com.agc.bwitch.ui.theme.BWitchThemeTokens
 import org.jetbrains.compose.resources.painterResource
 
 @Composable
 fun BirthEssenceShareCard(
     essence: BirthEssenceProfile,
+    appName: String,
     modifier: Modifier = Modifier,
 ) {
     val dimens = BWitchThemeTokens.dimens
@@ -74,6 +76,12 @@ fun BirthEssenceShareCard(
                 style = MaterialTheme.typography.bodyMedium,
                 fontStyle = FontStyle.Italic,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+
+            AthenaShareWatermark(
+                appName = appName,
+                tagline = "Spiritual Guidance",
+                modifier = Modifier.padding(top = dimens.spacingXs),
             )
         }
     }

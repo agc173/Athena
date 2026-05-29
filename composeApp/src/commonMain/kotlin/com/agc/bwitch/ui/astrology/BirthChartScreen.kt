@@ -73,6 +73,7 @@ fun BirthChartScreen(
     val extras = BWitchThemeTokens.extras
     val strings = appStrings
     val birthChartStrings = strings.birthChart
+    val appName = strings.common.appName
     val state by viewModel.uiState.collectAsState()
     val economyState by economyViewModel.uiState.collectAsState()
     val birthEssencePreview = economyState.modulePreviews.firstOrNull {
@@ -242,6 +243,7 @@ fun BirthChartScreen(
     sharePreviewEssence?.let { essence ->
         ShareEssencePreviewDialog(
             essence = essence,
+            appName = appName,
             onDismiss = { sharePreviewEssence = null },
             onShareNow = { captureBounds ->
                 shareLauncher
@@ -420,6 +422,7 @@ private fun ZodiacSign.toDisplayName(strings: AppStrings): String = when (this) 
 @Composable
 private fun ShareEssencePreviewDialog(
     essence: BirthEssenceProfile,
+    appName: String,
     onDismiss: () -> Unit,
     onShareNow: (ShareCaptureBounds) -> Unit,
 ) {
@@ -448,6 +451,7 @@ private fun ShareEssencePreviewDialog(
                 )
                 BirthEssenceShareCard(
                     essence = essence,
+                    appName = appName,
                     modifier = Modifier
                         .fillMaxWidth()
                         .onGloballyPositioned { coordinates ->
