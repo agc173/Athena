@@ -73,6 +73,7 @@ fun OracleScreen(
     val strings = appStrings.oracle
     val shareTitle = appStrings.horoscope.shareCta
     val shareErrorFallback = appStrings.birthChart.shareFailedFallback
+    val appName = appStrings.common.appName
     val state by viewModel.uiState.collectAsState()
     val economyState by economyViewModel.uiState.collectAsState()
     val oraclePreview = economyState.modulePreviews
@@ -297,7 +298,7 @@ fun OracleScreen(
                     coroutineScope.launch {
                         val shareResult = shareLauncher.shareText(
                             ShareTextPayload(
-                                text = buildOracleShareText(answer, strings).withAthenaShareSignature(appStrings.common.appName),
+                                text = buildOracleShareText(answer, strings).withAthenaShareSignature(appName),
                                 title = shareTitle,
                             ),
                         )

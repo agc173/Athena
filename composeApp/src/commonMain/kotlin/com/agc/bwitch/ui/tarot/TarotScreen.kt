@@ -93,6 +93,7 @@ fun TarotScreen(
     val strings = appStrings.tarot
     val shareTitle = appStrings.horoscope.shareCta
     val shareErrorFallback = appStrings.birthChart.shareFailedFallback
+    val appName = appStrings.common.appName
     val showDailyLimitPaywall = state.error == TAROT_LIMIT_REACHED_ERROR_KEY
     val shareLauncher = rememberShareLauncher()
     val shareScope = rememberCoroutineScope()
@@ -302,7 +303,7 @@ fun TarotScreen(
                                             shareScope.launch {
                                                 val shareResult = shareLauncher.shareText(
                                                     ShareTextPayload(
-                                                        text = shareText.withAthenaShareSignature(appStrings.common.appName),
+                                                        text = shareText.withAthenaShareSignature(appName),
                                                         title = shareTitle,
                                                     ),
                                                 )
@@ -393,7 +394,7 @@ fun TarotScreen(
                                             shareScope.launch {
                                                 val shareResult = shareLauncher.shareText(
                                                     ShareTextPayload(
-                                                        text = shareText.withAthenaShareSignature(appStrings.common.appName),
+                                                        text = shareText.withAthenaShareSignature(appName),
                                                         title = shareTitle,
                                                     ),
                                                 )
