@@ -9,10 +9,6 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == uid;
     }
 
-    function isStringOrMissing(field) {
-      return !(field in request.resource.data) || request.resource.data[field] is string;
-    }
-
     function isStringWithin(field, maxLength) {
       return !(field in request.resource.data) ||
         (request.resource.data[field] is string && request.resource.data[field].size() <= maxLength);
@@ -90,7 +86,9 @@ service cloud.firestore {
         isNullableStringWithin('displayName', 60) &&
         isNullableStringWithin('photoUrl', 2048) &&
         (!( 'photoUrl' in request.resource.data) || request.resource.data.photoUrl == null ||
-          request.resource.data.photoUrl == '' || request.resource.data.photoUrl.matches('^https://.{1,2040}$')) &&
+          request.resource.data.photoUrl == '' ||
+          (request.resource.data.photoUrl is string && request.resource.data.photoUrl.size() <= 2048 &&
+            request.resource.data.photoUrl.matches('^https://.*'))) &&
         isNullableStringWithin('email', 254) &&
         (!( 'email' in request.resource.data) || request.resource.data.email == null ||
           request.resource.data.email.matches('^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$')) &&
