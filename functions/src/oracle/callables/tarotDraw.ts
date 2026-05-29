@@ -196,6 +196,19 @@ async function updateProviderUsage(params: {
   }, {merge: true});
 }
 
+
+async function recordProviderUsageBestEffort(params: Parameters<typeof updateProviderUsage>[0]) {
+  try {
+    await updateProviderUsage(params);
+  } catch (error) {
+    console.warn('LLM_PROVIDER_USAGE_TRACKING_FAILED', {
+      provider: params.provider,
+      success: params.success,
+      error: safeErrorMessage(error),
+    });
+  }
+}
+
 export const tarotDraw = onCall(
     {
       region: 'europe-west1',
@@ -518,14 +531,22 @@ export const tarotDraw = onCall(
             });
           }
 
-          await addLlmTokens(
-              'tarot',
-              usageDateIso,
-              generated.llmMeta.inputTokens,
-              generated.llmMeta.outputTokens
-          );
+          try {
+            await addLlmTokens(
+                'tarot',
+                usageDateIso,
+                generated.llmMeta.inputTokens,
+                generated.llmMeta.outputTokens
+            );
+          } catch (error) {
+            console.warn('LLM_TOKEN_TRACKING_FAILED', {
+              scope: 'tarot',
+              requestId,
+              error: safeErrorMessage(error),
+            });
+          }
 
-          await updateProviderUsage({
+          await recordProviderUsageBestEffort({
             dateIso,
             provider: generated.llmMeta.provider,
             success: true,
@@ -553,16 +574,16 @@ export const tarotDraw = onCall(
               errorMessage,
             });
           } else {
-            await requestRef.set({
-              status: 'FAILED',
-              error: {
-                message: errorMessage,
-              },
-              updatedAt: FieldValue.serverTimestamp(),
-            }, {merge: true});
+            await failRequestAndCompensateQuota({
+              requestRef,
+              userDailyRef,
+              requestType: data.requestType,
+              intent: legacyIntent ?? ConsumeIntent.AD_UNLOCK,
+              errorMessage,
+            });
           }
 
-          await updateProviderUsage({
+          await recordProviderUsageBestEffort({
             dateIso,
             provider: router.name,
             success: false,

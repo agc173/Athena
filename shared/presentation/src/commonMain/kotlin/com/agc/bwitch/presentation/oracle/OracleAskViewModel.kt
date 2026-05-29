@@ -109,6 +109,7 @@ class OracleAskViewModel(
         _uiState.update {
             it.copy(
                 question = limitedQuestion,
+                requestId = null,
                 error = null,
                 answer = null,
                 quotaSnapshot = null,
@@ -142,7 +143,16 @@ class OracleAskViewModel(
             return
         }
 
-        val requestId = generateRequestId()
+        val currentState = _uiState.value
+        val requestId = if (
+            currentState.requestId != null &&
+            lastSubmittedQuestion == trimmedQuestion &&
+            (currentState.error != null || currentState.inProgress)
+        ) {
+            currentState.requestId
+        } else {
+            generateRequestId()
+        }
         analyticsTracker.track(AnalyticsEvent.ModuleUsed(module = "oracle", action = "ask"))
         _uiState.update {
             it.copy(

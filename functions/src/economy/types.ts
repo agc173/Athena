@@ -63,6 +63,7 @@ export type EconomyRequestResult =
   | 'RESERVED'
   | 'COMPLETED_SUCCESS'
   | 'REFUNDED'
+  | 'FAILED_TIMEOUT'
   | 'FAILED';
 
 export type EconomyRequestType =

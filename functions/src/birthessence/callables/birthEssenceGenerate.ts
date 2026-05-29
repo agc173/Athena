@@ -332,7 +332,15 @@ export const birthEssenceGenerate = onCall(
           maxOutputTokens: 180,
         });
 
-        await addLlmTokens('unknown', usageDateIso, response.inputTokens ?? 0, response.outputTokens ?? 0);
+        try {
+          await addLlmTokens('unknown', usageDateIso, response.inputTokens ?? 0, response.outputTokens ?? 0);
+        } catch (error) {
+          console.warn('LLM_TOKEN_TRACKING_FAILED', {
+            scope: 'unknown',
+            requestId: requestId || null,
+            error: safeErrorMessage(error),
+          });
+        }
 
         const parsed = parseModelOutput(response.text);
         const possibleSpanishMismatch = languageCode !== 'es' && looksSpanish(parsed.interpretation);

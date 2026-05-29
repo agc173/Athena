@@ -15,3 +15,10 @@
 ## Premium entitlements
 - `/purchaseTokenIndex/{hash}` se lee/escribe por ID de documento desde Cloud Functions. No requiere índice compuesto.
 - `/userEntitlements/{uid}` se lee/escribe por ID de documento desde Cloud Functions. No requiere índice compuesto.
+
+## Economy request watchdog
+- Scheduler `recoverTimedOutEconomyRequestsScheduled` consulta `collectionGroup('requests')` con:
+    - `where(status == PROCESSING)`
+    - `where(updatedAt <= cutoff)`
+    - `limit(200)`
+  Puede requerir índice de collection group para `requests` por `status` + `updatedAt` según el proyecto Firebase.

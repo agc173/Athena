@@ -25,8 +25,6 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.datetime.Clock
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 import kotlinx.serialization.Serializable
 
 class SyncBirthChartRepository(
@@ -101,7 +99,7 @@ class SyncBirthChartRepository(
     }
 
     override suspend fun generateBirthEssence(input: BirthEssenceInput): ApiResult<BirthEssenceReading> {
-        val requestId = generateRequestId()
+        val requestId = input.requestId.orEmpty()
         return when (
             val result = functionsClient.call(
                 name = "birthEssenceGenerate",
@@ -125,13 +123,16 @@ class SyncBirthChartRepository(
                 result
             }
             is ApiResult.Ok -> {
+                val status = result.value.status ?: "COMPLETED_SUCCESS"
                 ApiResult.Ok(
                     BirthEssenceReading(
-                        interpretation = result.value.interpretation,
+                        interpretation = result.value.interpretation.orEmpty(),
                         languageCode = normalizeLanguageCode(result.value.languageCode).orEmpty()
                             .ifBlank { input.languageCode },
                         archetype = null,
                         deckCardUnlockRewards = result.value.deckCardUnlockRewards.map { it.toDomain() },
+                        requestId = result.value.requestId ?: requestId.ifBlank { null },
+                        status = status,
                     )
                 )
             }
@@ -248,10 +249,12 @@ data class BirthEssenceGenerateRequestDto(
 
 @Serializable
 data class BirthEssenceGenerateResponseDto(
-    val interpretation: String,
+    val interpretation: String? = null,
     val languageCode: String? = null,
     val archetype: String? = null,
     val deckCardUnlockRewards: List<com.agc.bwitch.data.remote.economy.DeckCardUnlockRewardDto> = emptyList(),
+    val requestId: String? = null,
+    val status: String? = null,
 )
 
 private fun com.agc.bwitch.data.remote.economy.DeckCardUnlockRewardDto.toDomain(): DeckCardUnlockReward =
@@ -264,6 +267,3 @@ private fun normalizeLanguageCode(raw: String?): String? =
         ?.substringBefore('-')
         ?.substringBefore('_')
         ?.ifBlank { null }
-
-@OptIn(ExperimentalUuidApi::class)
-private fun generateRequestId(): String = Uuid.random().toString()

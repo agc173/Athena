@@ -509,7 +509,7 @@ Control de idempotencia para callables de economía.
 Campos (fase 6):
 - requestId: string
 - type: string (`CLAIM_DAILY_LOGIN` | `CLAIM_REWARDED_AD` | `TAROT_1` | `TAROT_3` | `ORACLE_1Q` | `BIRTH_ESSENCE` | `HOROSCOPE_UNLOCK_DAY` | `HOROSCOPE_UNLOCK_WEEKLY` | `HOROSCOPE_UNLOCK_MONTHLY`)
-- result: string (`CLAIMED` | `DAILY_LIMIT_REACHED` | `ALREADY_CLAIMED` | `RESERVED` | `COMPLETED_SUCCESS` | `REFUNDED` | `FAILED`)
+- result: string (`CLAIMED` | `DAILY_LIMIT_REACHED` | `ALREADY_CLAIMED` | `RESERVED` | `COMPLETED_SUCCESS` | `REFUNDED` | `FAILED_TIMEOUT` | `FAILED`)
 - status: string opcional (`PROCESSING` | `FAILED` | `COMPLETED_SUCCESS`)
 - decisionSource: string opcional (`FREE` | `PREMIUM_INCLUDED` | `MOON` | `REJECT`)
 - moonCostCharged: number opcional
@@ -532,6 +532,7 @@ Campos (fase 6):
 - updatedAt: timestamp
 
 Notas:
+- `ORACLE_1Q`, `TAROT_1`, `TAROT_3` y `BIRTH_ESSENCE` en Economy V2 usan `status=PROCESSING` durante generación LLM; un scheduler backend puede marcar `result=FAILED_TIMEOUT`, `status=FAILED`, `refundedAt` y compensar contadores/lunas si `updatedAt` supera el umbral operativo.
 - En fase 5, `claimRewardedAd` guarda `responsePayload.adProof` como evidencia mínima estructural para idempotencia/auditoría.
 - La validación de `adProof` en esta fase es preparatoria (presencia + formato básico), sin verificación criptográfica/SSV real.
 

@@ -9,6 +9,8 @@ data class BirthChartUiState(
     val isGenerating: Boolean = false,
     val isSaving: Boolean = false,
     val isRefreshing: Boolean = false,
+    val requestId: String? = null,
+    val inProgress: Boolean = false,
     val currentLanguageCode: String = "es",
     val selectedSunSign: ZodiacSign = ZodiacSign.aries,
     val selectedMoonSign: ZodiacSign = ZodiacSign.aries,

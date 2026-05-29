@@ -213,7 +213,25 @@ class TarotViewModel(
     }
 
     fun retry() {
-        newRequest(_uiState.value.selectedType)
+        val state = _uiState.value
+        val requestId = state.requestId ?: return newRequest(state.selectedType)
+        val playableDeckId = state.selectedDeckId
+        _uiState.update {
+            it.copy(
+                response = null,
+                error = null,
+                revealPhase = TarotRevealPhase.WAITING_TO_SHUFFLE,
+                revealedCardCount = 0,
+                activeCardIndex = 0,
+                activeCardRevealed = false,
+                overlayVisible = false,
+                overlayCardIndex = null,
+                overlayCardRevealed = false,
+                openedMiniCardIndex = null,
+                insufficientMoonsMessage = null,
+            )
+        }
+        draw(requestId, state.selectedType, playableDeckId)
     }
 
     fun hasSavedReading(): Boolean = runCatching { lastTarotReadingRepository.get() }.getOrNull() != null
@@ -311,14 +329,21 @@ class TarotViewModel(
 
             when (result) {
                 is ApiResult.Ok -> {
-                    emitDeckUnlockRewardsIfNeeded(result.value.deckCardUnlockRewards)
                     val responseWithDeck = result.value.copy(deckId = playableDeckId)
+                    if (responseWithDeck.status != "IN_PROGRESS" && responseWithDeck.status != "PROCESSING") {
+                        emitDeckUnlockRewardsIfNeeded(responseWithDeck.deckCardUnlockRewards)
+                    }
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            response = responseWithDeck,
+                            response = if (
+                                responseWithDeck.status == "IN_PROGRESS" ||
+                                responseWithDeck.status == "PROCESSING"
+                            ) null else responseWithDeck,
                             error = null,
-                            revealPhase = if (
+                            revealPhase = if (responseWithDeck.status == "IN_PROGRESS" || responseWithDeck.status == "PROCESSING") {
+                                TarotRevealPhase.IDLE
+                            } else if (
                                 it.revealPhase == TarotRevealPhase.SHUFFLING &&
                                 shuffleMinDurationElapsed &&
                                 it.requestId == shuffleRequestId
@@ -333,7 +358,9 @@ class TarotViewModel(
                         )
                     }
                     refreshMoonBalanceFromBackend()
-                    runCatching { lastTarotReadingRepository.save(responseWithDeck) }
+                    if (responseWithDeck.status != "IN_PROGRESS" && responseWithDeck.status != "PROCESSING") {
+                        runCatching { lastTarotReadingRepository.save(responseWithDeck) }
+                    }
                 }
 
                 is ApiResult.Err -> {
