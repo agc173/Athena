@@ -12,6 +12,8 @@ actual fun rememberBirthEssenceShareLauncher(strings: BirthChartStrings): BirthE
 private data class IosBirthEssenceShareLauncher(
     private val strings: BirthChartStrings,
 ) : BirthEssenceShareLauncher {
+    // TODO: Implement iOS visual share capture/export.
+    // Text-only fallback sharing already exists in ShareLauncher iOS.
     override fun share(essence: BirthEssenceProfile, captureBounds: ShareCaptureBounds): Result<Unit> =
         Result.failure(NotImplementedError(strings.shareNotAvailablePlatformError))
 }
