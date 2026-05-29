@@ -160,17 +160,20 @@ Notas:
 Perfil consumido por la app cliente actual.
 
 Campos:
-- displayName: string (opcional)
-- photoUrl: string (opcional)
-- email: string (opcional)
-- username: string (opcional)
+- displayName: string (opcional, máx. 60)
+- photoUrl: string (opcional, vacío/null o `https://`, máx. 2048)
+- email: string (opcional, formato básico email, máx. 254; backend prefiere el email de Auth)
+- username: string (opcional, `^[a-z0-9._]{3,30}$`)
 - birthDate: string ISO `YYYY-MM-DD` (opcional)
 - zodiacSign: string (enum en domain, opcional)
-- birthEssenceSummary: string (opcional, resumen de la esencia activa)
-- updatedAtEpochMillis: number
+- description: string (opcional, máx. 160)
+- birthEssenceSummary: string (opcional, resumen de la esencia activa, máx. 120)
+- updatedAtEpochMillis: number (epoch millis 0..2100-01-01 para compat sync)
+- updatedAt: timestamp (opcional, backend/callable)
 
 Notas:
 - Campos opcionales para mantener compatibilidad con perfiles antiguos.
+- Las reglas de seguridad validan claves permitidas y límites en escrituras directas del cliente; Cloud Functions con Admin SDK mantienen compatibilidad para migraciones/backend.
 - Si `zodiacSign` no existe, puede derivarse desde `birthDate` en capa domain/presentation.
 
 ---
@@ -185,11 +188,11 @@ Campos:
 - sunSign: string (enum ZodiacSign, obligatorio)
 - moonSign: string (enum ZodiacSign, obligatorio)
 - risingSign: string (enum ZodiacSign, obligatorio)
-- interpretation: string (lectura breve generada por LLM)
+- interpretation: string (lectura breve generada por LLM, máx. 800 en rules cliente)
 - languageCode: string (ISO corto `es|en|pt|ru|fr|it|de`, opcional en docs legacy)
-- archetype: string (opcional)
-- savedAtEpochMillis: number
-- updatedAtEpochMillis: number
+- archetype: string (opcional, enum `MISTICA|GUERRERA|SANADORA|VIDENTE|ALQUIMISTA|GUARDIANA`)
+- savedAtEpochMillis: number (epoch millis 0..2100-01-01)
+- updatedAtEpochMillis: number (epoch millis 0..2100-01-01)
 
 Notas:
 - Solo existe un documento activo (`current`) por usuario.
@@ -203,13 +206,13 @@ Estado sincronizado del ritual diario (single doc activo por usuario).
 
 Campos:
 - selectedDateIso: string ISO `YYYY-MM-DD` (opcional)
-- selectedTemplateId: string (opcional)
-- selectedTheme: string (enum `DailyRitualTheme`, opcional)
+- selectedTemplateId: string (opcional, máx. 80)
+- selectedTheme: string (enum `DailyRitualTheme`: `Calm|Clarity|Release|Energy`, opcional)
 - dailyCompletionDateIso: string ISO `YYYY-MM-DD` (opcional)
 - dailyCompleted: boolean
 - lastCompletedDateIso: string ISO `YYYY-MM-DD` (opcional)
-- streakCount: number
-- updatedAtEpochMillis: number
+- streakCount: number (entero 0..3660)
+- updatedAtEpochMillis: number (epoch millis 0..2100-01-01)
 
 Notas:
 - Merge cliente por `updatedAtEpochMillis` (last-write-wins).
@@ -222,16 +225,17 @@ Snapshot sincronizado de Hábitos (single doc activo por usuario).
 
 Campos:
 - todayDateIso: string ISO `YYYY-MM-DD`
-- selectedIntentionIds: array<string>
-- completedIntentionIds: array<string>
-- progressPoints: number
-- completedCycles: number
-- updatedAtEpochMillis: number
+- selectedIntentionIds: array<string> (máx. 12 ids, cada id máx. 40 chars en rules)
+- completedIntentionIds: array<string> (máx. 12 ids, cada id máx. 40 chars en rules)
+- progressPoints: number (entero 0..60)
+- completedCycles: number (entero 0..10000)
+- updatedAtEpochMillis: number (epoch millis 0..2100-01-01)
 
 Notas:
 - Estrategia local-first: Settings sigue siendo la fuente inmediata para lectura.
 - Merge cliente por `updatedAtEpochMillis` (last-write-wins).
 - Documento: `users/{uid}/habits/current`.
+- Validación conservadora: las rules no enumeran los IDs de hábito para no bloquear catálogo legacy/futuro, pero limitan tamaño y tipo de arrays.
 
 ---
 

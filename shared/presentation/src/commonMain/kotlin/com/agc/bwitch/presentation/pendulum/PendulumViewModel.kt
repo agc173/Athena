@@ -1,5 +1,6 @@
 package com.agc.bwitch.presentation.pendulum
 
+import com.agc.bwitch.domain.security.InputPolicy
 import com.agc.bwitch.domain.economy.EconomyRepository
 import com.agc.bwitch.domain.model.DeckCardUnlockReward
 import com.agc.bwitch.domain.pendulum.PendulumAnswer
@@ -29,7 +30,10 @@ class PendulumViewModel(
     private val _uiEffects = MutableSharedFlow<PendulumUiEffect>(extraBufferCapacity = 16)
     val uiEffects: SharedFlow<PendulumUiEffect> = _uiEffects.asSharedFlow()
 
-    fun onQuestionChange(value: String) { _uiState.update { it.copy(question = value, error = null) } }
+    fun onQuestionChange(value: String) {
+        val limitedQuestion = InputPolicy.normalizeMultilineInput(value, InputPolicy.ORACLE_QUESTION_MAX_LENGTH)
+        _uiState.update { it.copy(question = limitedQuestion, error = null) }
+    }
 
     fun startSwing() {
         if (_uiState.value.phase == PendulumPhase.ANIMATING) return
