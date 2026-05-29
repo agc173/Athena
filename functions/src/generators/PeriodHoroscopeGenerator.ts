@@ -1,4 +1,4 @@
-import {getFirestore} from 'firebase-admin/firestore';
+import {type DocumentData, type DocumentSnapshot, getFirestore} from 'firebase-admin/firestore';
 import {DateTime} from 'luxon';
 import {ENV, type Lang} from '../config/env';
 import {
@@ -61,6 +61,8 @@ export type MonthlyHoroscopeDoc = {
   llmProvider: string;
 };
 
+type GenerationWriteMode = 'create' | 'repair';
+
 type PreviousCompact = {
   periodKey: string;
   title: string;
@@ -119,6 +121,50 @@ function normalizeMonthly(doc: unknown): Omit<MonthlyHoroscopeDoc,
     mantra: asNonEmptyString(source, 'mantra'),
     shareText: asNonEmptyString(source, 'shareText'),
   };
+}
+
+function hasNonEmptyStrings(data: DocumentData, keys: string[]): boolean {
+  return keys.every((key) => String(data[key] ?? '').trim().length > 0);
+}
+
+function isCompleteWeeklyDoc(data: DocumentData | undefined): boolean {
+  return Boolean(data && hasNonEmptyStrings(data, [
+    'sign',
+    'weekKey',
+    'languageCode',
+    'title',
+    'overview',
+    'loveAndRelationships',
+    'workAndMoney',
+    'spiritualEnergy',
+    'weeklyAdvice',
+    'mantra',
+    'shareText',
+  ]));
+}
+
+function isCompleteMonthlyDoc(data: DocumentData | undefined): boolean {
+  return Boolean(data && hasNonEmptyStrings(data, [
+    'sign',
+    'monthKey',
+    'languageCode',
+    'title',
+    'monthTheme',
+    'loveAndRelationships',
+    'workAndMoney',
+    'personalGrowth',
+    'ritualSuggestion',
+    'mantra',
+    'shareText',
+  ]));
+}
+
+function writeModeForExistingDoc(
+    snap: DocumentSnapshot,
+    isComplete: (data: DocumentData | undefined) => boolean
+): GenerationWriteMode | 'skip' {
+  if (!snap.exists) return 'create';
+  return isComplete(snap.data()) ? 'skip' : 'repair';
 }
 
 function seasonContextForPeriod(periodDate: DateTime) {
@@ -195,7 +241,7 @@ export class PeriodHoroscopeGenerator {
     if (!snap.exists) return [];
     const data = (snap.data() ?? {}) as Record<string, unknown>;
     const title = String(data.title ?? '').trim();
-    const overview = String(data.overview ?? '').trim();
+    const overview = String(data.monthTheme ?? '').trim();
     if (!title || !overview) return [];
     return [{periodKey: previousKey, title, overview}];
   }
@@ -203,7 +249,8 @@ export class PeriodHoroscopeGenerator {
   async generateWeeklyCanonical(weekKey: string, sign: ZodiacSign) {
     const path = horoscopeWeeklySignDocPath(weekKey, sign);
     const snap = await this.db.doc(path).get();
-    if (snap.exists) {
+    const writeMode = writeModeForExistingDoc(snap, isCompleteWeeklyDoc);
+    if (writeMode === 'skip') {
       return {result: 'skipped', path, provider: 'none'};
     }
 
@@ -251,7 +298,9 @@ export class PeriodHoroscopeGenerator {
       llmProvider: parsed.provider,
     };
 
-    const result = await createDocIfAbsent(path, doc);
+    const result = writeMode === 'repair' ?
+      await this.db.doc(path).set(doc).then(() => 'repaired') :
+      await createDocIfAbsent(path, doc);
     return {result, path, provider: parsed.provider};
   }
 
@@ -262,7 +311,8 @@ export class PeriodHoroscopeGenerator {
 
     const path = horoscopeWeeklyLangDocPath(weekKey, sign, lang);
     const translationSnap = await this.db.doc(path).get();
-    if (translationSnap.exists) {
+    const writeMode = writeModeForExistingDoc(translationSnap, isCompleteWeeklyDoc);
+    if (writeMode === 'skip') {
       return {result: 'skipped', path, provider: 'none'};
     }
 
@@ -303,14 +353,17 @@ export class PeriodHoroscopeGenerator {
       llmProvider: parsed.provider,
     };
 
-    const result = await createDocIfAbsent(path, doc);
+    const result = writeMode === 'repair' ?
+      await this.db.doc(path).set(doc).then(() => 'repaired') :
+      await createDocIfAbsent(path, doc);
     return {result, path, provider: parsed.provider};
   }
 
   async generateMonthlyCanonical(monthKey: string, sign: ZodiacSign) {
     const path = horoscopeMonthlySignDocPath(monthKey, sign);
     const snap = await this.db.doc(path).get();
-    if (snap.exists) {
+    const writeMode = writeModeForExistingDoc(snap, isCompleteMonthlyDoc);
+    if (writeMode === 'skip') {
       return {result: 'skipped', path, provider: 'none'};
     }
 
@@ -358,7 +411,9 @@ export class PeriodHoroscopeGenerator {
       llmProvider: parsed.provider,
     };
 
-    const result = await createDocIfAbsent(path, doc);
+    const result = writeMode === 'repair' ?
+      await this.db.doc(path).set(doc).then(() => 'repaired') :
+      await createDocIfAbsent(path, doc);
     return {result, path, provider: parsed.provider};
   }
 
@@ -369,7 +424,8 @@ export class PeriodHoroscopeGenerator {
 
     const path = horoscopeMonthlyLangDocPath(monthKey, sign, lang);
     const translationSnap = await this.db.doc(path).get();
-    if (translationSnap.exists) {
+    const writeMode = writeModeForExistingDoc(translationSnap, isCompleteMonthlyDoc);
+    if (writeMode === 'skip') {
       return {result: 'skipped', path, provider: 'none'};
     }
 
@@ -410,7 +466,9 @@ export class PeriodHoroscopeGenerator {
       llmProvider: parsed.provider,
     };
 
-    const result = await createDocIfAbsent(path, doc);
+    const result = writeMode === 'repair' ?
+      await this.db.doc(path).set(doc).then(() => 'repaired') :
+      await createDocIfAbsent(path, doc);
     return {result, path, provider: parsed.provider};
   }
 }

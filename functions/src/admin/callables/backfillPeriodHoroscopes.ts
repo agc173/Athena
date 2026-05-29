@@ -141,8 +141,8 @@ export const backfillPeriodHoroscopes = onCall(
       const router = buildRouter();
       const generator = new PeriodHoroscopeGenerator(router);
 
-      const canonical = {created: 0, skipped: 0, failed: 0};
-      const translation = {created: 0, skipped: 0, failed: 0, blockedByCanonicalFailure: 0};
+      const canonical = {created: 0, skipped: 0, repaired: 0, failed: 0};
+      const translation = {created: 0, skipped: 0, repaired: 0, failed: 0, blockedByCanonicalFailure: 0};
       const failedCanonicalPairs = new Set<string>();
 
       for (const periodKey of periodKeys) {
@@ -156,6 +156,7 @@ export const backfillPeriodHoroscopes = onCall(
                 ENV.LLM_MAX_RETRIES
             );
             if (result.result === 'created') canonical.created++;
+            else if (result.result === 'repaired') canonical.repaired++;
             else canonical.skipped++;
           } catch (error) {
             canonical.failed++;
@@ -186,6 +187,7 @@ export const backfillPeriodHoroscopes = onCall(
                   ENV.LLM_MAX_RETRIES
               );
               if (result.result === 'created') translation.created++;
+              else if (result.result === 'repaired') translation.repaired++;
               else translation.skipped++;
             } catch (error) {
               translation.failed++;

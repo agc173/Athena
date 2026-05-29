@@ -12,7 +12,7 @@ import {
   horoscopeUserPrompt,
 } from '../llm/prompts/horoscopePrompt';
 import {horoscopeLangDocPath, horoscopeSignDocPath} from '../firestore/paths';
-import {getFirestore} from 'firebase-admin/firestore';
+import {type DocumentData, type DocumentSnapshot, getFirestore} from 'firebase-admin/firestore';
 import {logger} from '../utils/logger';
 
 const DAILY_GENERATOR_VERSION = 3;
@@ -98,6 +98,8 @@ function normalizeTranslation(
   return out;
 }
 
+type GenerationWriteMode = 'create' | 'repair';
+
 type PreviousDailyCompact = {
   dateIso: string;
   text: string;
@@ -157,6 +159,22 @@ function getSimilaritySignals(current: Pick<HoroscopeDoc, 'text' | 'shareText'>,
   return {shareTextRepeated, textTooSimilar, similarityScore};
 }
 
+function isCompleteHoroscopeDoc(data: DocumentData | undefined): boolean {
+  if (!data) return false;
+  const text = String(data.text ?? '').trim();
+  const mood = String(data.mood ?? '').trim();
+  const luckyNumber = Number(data.luckyNumber);
+  const luckyColor = String(data.luckyColor ?? '').trim();
+  const shareText = String(data.shareText ?? '').trim();
+  return Boolean(text && mood && luckyColor && shareText &&
+    Number.isInteger(luckyNumber) && luckyNumber >= 1 && luckyNumber <= 99);
+}
+
+function writeModeForExistingDailyDoc(snap: DocumentSnapshot): GenerationWriteMode | 'skip' {
+  if (!snap.exists) return 'create';
+  return isCompleteHoroscopeDoc(snap.data()) ? 'skip' : 'repair';
+}
+
 export class HoroscopeGenerator {
   private readonly db = getFirestore();
 
@@ -168,9 +186,11 @@ export class HoroscopeGenerator {
       horoscopeLangDocPath(dateIso, sign, lang) :
       horoscopeSignDocPath(dateIso, sign);
 
-    // ✅ 1) COST GUARD: if doc exists -> skip without LLM
+    // ✅ 1) COST GUARD: if a complete doc exists -> skip without LLM.
+    // Incomplete legacy/failed writes are repaired in-place so backfill runs do not skip hollow docs forever.
     const snap = await this.db.doc(path).get();
-    if (snap.exists) {
+    const writeMode = writeModeForExistingDailyDoc(snap);
+    if (writeMode === 'skip') {
       return {result: 'skipped', path, provider: 'none'};
     }
 
@@ -198,8 +218,9 @@ export class HoroscopeGenerator {
       llmProvider: res.provider,
     };
 
-    // ✅ 3) Write-once create (still safe if a race happens)
-    const result = await createDocIfAbsent(path, doc);
+    const result = writeMode === 'repair' ?
+      await this.db.doc(path).set(doc).then(() => 'repaired') :
+      await createDocIfAbsent(path, doc);
 
     // If a race happened, createDocIfAbsent may report skipped; that's fine.
     return {result, path, provider: res.provider};
@@ -208,7 +229,8 @@ export class HoroscopeGenerator {
   async generateCanonical(dateIso: string, sign: ZodiacSign) {
     const path = horoscopeSignDocPath(dateIso, sign);
     const snap = await this.db.doc(path).get();
-    if (snap.exists) {
+    const writeMode = writeModeForExistingDailyDoc(snap);
+    if (writeMode === 'skip') {
       return {result: 'skipped', path, provider: 'none'};
     }
 
@@ -267,7 +289,9 @@ export class HoroscopeGenerator {
       });
     }
 
-    const result = await createDocIfAbsent(path, doc);
+    const result = writeMode === 'repair' ?
+      await this.db.doc(path).set(doc).then(() => 'repaired') :
+      await createDocIfAbsent(path, doc);
     return {result, path, provider: res.provider};
   }
 
@@ -278,7 +302,8 @@ export class HoroscopeGenerator {
 
     const path = horoscopeLangDocPath(dateIso, sign, lang);
     const translationSnap = await this.db.doc(path).get();
-    if (translationSnap.exists) {
+    const writeMode = writeModeForExistingDailyDoc(translationSnap);
+    if (writeMode === 'skip') {
       return {result: 'skipped', path, provider: 'none'};
     }
 
@@ -336,7 +361,9 @@ export class HoroscopeGenerator {
       llmProvider: res.provider,
     };
 
-    const result = await createDocIfAbsent(path, doc);
+    const result = writeMode === 'repair' ?
+      await this.db.doc(path).set(doc).then(() => 'repaired') :
+      await createDocIfAbsent(path, doc);
     return {result, path, provider: res.provider};
   }
 
