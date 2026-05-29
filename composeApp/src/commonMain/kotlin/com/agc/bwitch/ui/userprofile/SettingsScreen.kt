@@ -77,7 +77,8 @@ fun SettingsScreen(contentPadding: PaddingValues) {
     val purchaseLauncher = rememberSubscriptionPurchaseLauncher()
     val managementLauncher = rememberSubscriptionManagementLauncher()
     val handlePushPermissionRequest = rememberHandlePushPermissionRequest(settingsVm)
-
+    val syncPushPermissionState = rememberSyncPushPermissionState(settingsVm)
+    val handleSecureSignOut = rememberHandleSecureSignOut(sessionVm, clearLocalUserData)
 
     var showLanguageDialog by rememberSaveable { mutableStateOf(false) }
     var showSubscriptionPlanDialog by rememberSaveable { mutableStateOf(false) }
@@ -88,6 +89,10 @@ fun SettingsScreen(contentPadding: PaddingValues) {
 
     LaunchedEffect(appVersionLabel) {
         settingsVm.onAppVersionResolved(appVersionLabel)
+    }
+
+    LaunchedEffect(Unit) {
+        syncPushPermissionState()
     }
 
     LaunchedEffect(settingsState.error) {
@@ -211,8 +216,7 @@ fun SettingsScreen(contentPadding: PaddingValues) {
                     showDivider = false,
                     onClick = {
                         scope.launch {
-                            runCatching { sessionVm.signOut() }
-                            runCatching { clearLocalUserData() }
+                            runCatching { handleSecureSignOut() }
                         }
                     },
                 )

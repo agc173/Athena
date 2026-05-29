@@ -28,17 +28,30 @@ export const unregisterPushToken = onCall({
   const token = asNonEmptyToken(data.token);
   const platform = asPlatform(data.platform);
 
+  const db = getFirestore();
   const tokenHash = sha256Token(token);
-  const docRef = getFirestore().collection('users').doc(uid).collection('pushTokens').doc(tokenHash);
+  const docRef = db.collection('users').doc(uid).collection('pushTokens').doc(tokenHash);
+  const indexRef = db.collection('pushTokenIndex').doc(tokenHash);
 
-  await docRef.set({
-    tokenHash,
-    platform,
-    enabled: false,
-    lastSeenAt: FieldValue.serverTimestamp(),
-    invalidatedAt: FieldValue.serverTimestamp(),
-    invalidateReason: 'CLIENT_UNREGISTER',
-  }, {merge: true});
+  await db.runTransaction(async (tx) => {
+    const indexSnap = await tx.get(indexRef);
+    const owner = indexSnap.exists ? indexSnap.get('uid') : undefined;
+
+    tx.set(docRef, {
+      token: FieldValue.delete(),
+      tokenHash,
+      platform,
+      permissionGranted: false,
+      enabled: false,
+      lastSeenAt: FieldValue.serverTimestamp(),
+      invalidatedAt: FieldValue.serverTimestamp(),
+      invalidateReason: 'CLIENT_UNREGISTER',
+    }, {merge: true});
+
+    if (owner === uid) {
+      tx.delete(indexRef);
+    }
+  });
 
   logger.info('unregisterPushToken success', {uid, tokenHashPrefix: tokenHash.slice(0, 10), platform});
   return {ok: true};

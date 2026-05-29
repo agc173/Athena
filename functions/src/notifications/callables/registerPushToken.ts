@@ -46,8 +46,10 @@ export const registerPushToken = onCall({
   const locale = asOptionalNullableString(data.locale);
   const timezone = asOptionalNullableString(data.timezone);
 
+  const db = getFirestore();
   const tokenHash = sha256Token(token);
-  const docRef = getFirestore().collection('users').doc(uid).collection('pushTokens').doc(tokenHash);
+  const docRef = db.collection('users').doc(uid).collection('pushTokens').doc(tokenHash);
+  const indexRef = db.collection('pushTokenIndex').doc(tokenHash);
 
   const patch: Record<string, unknown> = {
     token,
@@ -64,8 +66,39 @@ export const registerPushToken = onCall({
   if (locale !== undefined) patch.locale = locale;
   if (timezone !== undefined) patch.timezone = timezone;
 
-  await docRef.set(patch, {merge: true});
+  let previousUid: string | undefined;
 
-  logger.info('registerPushToken success', {uid, tokenHashPrefix: tokenHash.slice(0, 10), platform});
+  await db.runTransaction(async (tx) => {
+    const indexSnap = await tx.get(indexRef);
+    const owner = indexSnap.exists ? indexSnap.get('uid') : undefined;
+    previousUid = typeof owner === 'string' && owner !== uid ? owner : undefined;
+
+    if (previousUid) {
+      const previousTokenRef = db.collection('users').doc(previousUid).collection('pushTokens').doc(tokenHash);
+      tx.set(previousTokenRef, {
+        enabled: false,
+        permissionGranted: false,
+        invalidatedAt: FieldValue.serverTimestamp(),
+        invalidateReason: 'TOKEN_REASSIGNED',
+        lastSeenAt: FieldValue.serverTimestamp(),
+      }, {merge: true});
+    }
+
+    tx.set(docRef, patch, {merge: true});
+    tx.set(indexRef, {
+      uid,
+      tokenHash,
+      platform,
+      updatedAt: FieldValue.serverTimestamp(),
+      lastSeenAt: FieldValue.serverTimestamp(),
+    }, {merge: true});
+  });
+
+  logger.info('registerPushToken success', {
+    uid,
+    tokenHashPrefix: tokenHash.slice(0, 10),
+    platform,
+    previousUidChanged: Boolean(previousUid),
+  });
   return {ok: true};
 });
