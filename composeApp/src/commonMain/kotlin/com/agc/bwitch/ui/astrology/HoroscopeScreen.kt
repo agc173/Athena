@@ -274,6 +274,7 @@ fun HoroscopeScreen(
     state.pendingConstellationReward?.let { reward ->
         ConstellationRewardDialog(
             reward = reward,
+            strings = strings,
             onDismiss = viewModel::onConstellationRewardShown,
         )
     }
@@ -294,6 +295,7 @@ fun HoroscopeScreen(
 @Composable
 private fun ConstellationRewardDialog(
     reward: ConstellationRewardUi,
+    strings: AppStrings,
     onDismiss: () -> Unit,
 ) {
     BasicAlertDialog(onDismissRequest = onDismiss) {
@@ -313,13 +315,13 @@ private fun ConstellationRewardDialog(
                 verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
                 Text(
-                    text = "Constelación despertada",
+                    text = strings.horoscope.constellationAwakenedTitle,
                     style = MaterialTheme.typography.titleLarge,
                     color = Color(0xFFFFE4A3),
                     textAlign = TextAlign.Center,
                 )
                 Text(
-                    text = "Has encendido una nueva estrella",
+                    text = strings.horoscope.constellationNewStarMessage,
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color(0xFFE5E9F7),
                     textAlign = TextAlign.Center,
@@ -329,12 +331,13 @@ private fun ConstellationRewardDialog(
                     ConstellationBadgeCard(
                         progressSteps = reward.progressInSign ?: 0,
                         template = template,
+                        signName = template.sign.localizedLabel(strings),
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
                     )
                 } else {
-                    val signName = reward.sign?.name?.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+                    val signName = reward.sign?.localizedLabel(strings)
                     Text(
-                        text = signName ?: "Constelación",
+                        text = signName ?: strings.horoscope.constellationFallbackName,
                         style = MaterialTheme.typography.titleMedium,
                         color = Color(0xFFF4DDA9),
                         textAlign = TextAlign.Center,
@@ -344,7 +347,7 @@ private fun ConstellationRewardDialog(
                     onClick = onDismiss,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Text("Continuar")
+                    Text(strings.horoscope.constellationContinueCta)
                 }
             }
         }
