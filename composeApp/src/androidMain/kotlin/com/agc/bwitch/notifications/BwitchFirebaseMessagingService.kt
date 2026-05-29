@@ -13,6 +13,7 @@ import com.agc.bwitch.R
 import com.agc.bwitch.MainActivity
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
+import org.koin.core.context.GlobalContext
 
 class BwitchFirebaseMessagingService : FirebaseMessagingService() {
     override fun onNewToken(token: String) {
@@ -20,6 +21,11 @@ class BwitchFirebaseMessagingService : FirebaseMessagingService() {
 
         val preview = token.take(6)
         Log.i(TAG, "onNewToken received (prefix=$preview..., length=${token.length})")
+        runCatching {
+            GlobalContext.get().get<AndroidPushTokenSynchronizer>().onNewToken(token)
+        }.onFailure { error ->
+            Log.w(TAG, "Unable to schedule FCM token sync", error)
+        }
     }
 
     override fun onMessageReceived(message: RemoteMessage) {

@@ -627,6 +627,23 @@ Notas:
 - Fuente authoritativa backend para decisión de envío.
 
 
+
+### /pushTokenIndex/{tokenHash}
+Índice global backend-owned para ownership de tokens push FCM.
+
+Campos:
+- uid: string
+- tokenHash: string
+- platform: string (`"android" | "ios"`)
+- updatedAt: timestamp
+- lastSeenAt: timestamp
+
+Notas:
+- `docId = sha256(token)`.
+- `registerPushToken` actualiza este índice dentro de una transacción.
+- Si el token estaba asociado a otro `uid`, el backend deshabilita `/users/{previousUid}/pushTokens/{tokenHash}` con `invalidateReason="TOKEN_REASSIGNED"` antes de asociarlo al nuevo usuario.
+- `unregisterPushToken` elimina el índice si el usuario autenticado es el owner actual y borra el campo `token` raw del documento del usuario.
+
 ### /users/{uid}/pushNotificationSends/{dateIso_daily_horoscope}
 Registro idempotente de envíos scheduler por usuario/campaña diaria.
 
@@ -666,8 +683,9 @@ Notas:
 - `docId = sha256(token)`.
 - El `token` raw se conserva para envíos backend (FCM/Admin SDK).
 - Cliente no debe leer `token` raw.
-- Logout futuro: unregister explícito del token.
+- Logout llama a `unregisterPushToken` antes de `signOut`; si falla, Android deja una operación pendiente por `uid` para reintentar cuando vuelva a existir la misma sesión autenticada.
 - Tokens inválidos se deshabilitan/limpian desde backend.
+- Ownership global se protege con `/pushTokenIndex/{tokenHash}` para evitar que el mismo token quede activo bajo varios usuarios.
 
 
 ---

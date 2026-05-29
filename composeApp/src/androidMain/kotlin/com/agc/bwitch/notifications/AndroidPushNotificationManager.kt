@@ -24,6 +24,16 @@ class AndroidPushNotificationManager(
         ) != PackageManager.PERMISSION_GRANTED
     }
 
+    fun hasNotificationPermission(): Boolean {
+        if (!areNotificationsEnabled()) return false
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return true
+
+        return ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.POST_NOTIFICATIONS,
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+
     fun createNotificationChannels() {
         AndroidNotificationChannels.create(context)
     }

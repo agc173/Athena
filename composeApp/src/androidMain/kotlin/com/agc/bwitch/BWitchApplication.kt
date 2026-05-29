@@ -7,10 +7,13 @@ import com.agc.bwitch.BuildConfig
 import com.agc.bwitch.di.init.initKoin
 import com.agc.bwitch.di.platformModule
 import com.agc.bwitch.notifications.AndroidNotificationChannels
+import com.agc.bwitch.notifications.AndroidPushTokenSynchronizer
 import com.google.android.gms.ads.MobileAds
 import com.google.firebase.FirebaseApp
 import com.google.firebase.appcheck.FirebaseAppCheck
 import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory
+import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
+import org.koin.core.context.GlobalContext
 
 class BWitchApplication : Application() {
     override fun onCreate() {
@@ -26,13 +29,17 @@ class BWitchApplication : Application() {
                 DebugAppCheckProviderFactory.getInstance()
             )
         } else {
-            // TODO: Integrar proveedor de App Check con Play Integrity para release.
+            // Requires Firebase Console App Check registration + Play Integrity API setup for the release app.
+            FirebaseAppCheck.getInstance().installAppCheckProviderFactory(
+                PlayIntegrityAppCheckProviderFactory.getInstance()
+            )
         }
 
         MobileAds.initialize(this)
         AndroidNotificationChannels.create(this)
 
         initKoin(additionalModules = listOf(platformModule(this)))
+        GlobalContext.get().get<AndroidPushTokenSynchronizer>().start()
     }
 
     private fun logAdMobAppId() {

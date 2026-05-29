@@ -15,6 +15,7 @@ import com.agc.bwitch.data.settings.billing.googleplay.GooglePlaySubscriptionBil
 import com.agc.bwitch.data.storage.SettingsFactory
 import com.agc.bwitch.domain.analytics.AnalyticsTracker
 import com.agc.bwitch.notifications.AndroidPushNotificationManager
+import com.agc.bwitch.notifications.AndroidPushTokenSynchronizer
 import com.agc.bwitch.presentation.auth.GoogleIdTokenProvider
 import com.agc.bwitch.presentation.auth.GoogleIdTokenProviderAndroid
 import com.agc.bwitch.presentation.ads.RewardedAdsService
@@ -39,6 +40,7 @@ fun platformModule(app: Application): Module = module {
     single<RewardedAdsService> { get<AndroidRewardedAdsService>() }
     single<TarotSoundPlayer> { AndroidTarotSoundPlayer(app) }
     single { AndroidPushNotificationManager(app) }
+    single { AndroidPushTokenSynchronizer(app, get(), get(), get()) }
     single<TarotHaptics> { AndroidTarotHaptics(app) }
 
     // Needs Activity context (passed from Compose via parametersOf(context))

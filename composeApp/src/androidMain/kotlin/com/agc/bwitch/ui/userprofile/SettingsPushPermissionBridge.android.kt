@@ -24,7 +24,7 @@ actual fun rememberHandlePushPermissionRequest(viewModel: SettingsViewModel): su
         if (!pendingAfterPermission) return@rememberLauncherForActivityResult
         pendingAfterPermission = false
         scope.launch {
-            val token = if (granted && pushManager.areNotificationsEnabled()) pushManager.getCurrentToken() else null
+            val token = if (granted && pushManager.hasNotificationPermission()) pushManager.getCurrentToken() else null
             val timezone = TimeZone.currentSystemDefault().id
             viewModel.onPushPermissionAndTokenResolved(permissionGranted = granted, token = token, timezone = timezone)
         }
@@ -34,7 +34,7 @@ actual fun rememberHandlePushPermissionRequest(viewModel: SettingsViewModel): su
         if (pushManager.shouldRequestRuntimePermission()) {
             pendingAfterPermission = true
             launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
-        } else if (!pushManager.areNotificationsEnabled()) {
+        } else if (!pushManager.hasNotificationPermission()) {
             viewModel.onPushPermissionAndTokenResolved(permissionGranted = false, token = null, timezone = TimeZone.currentSystemDefault().id)
         } else {
             val token = pushManager.getCurrentToken()

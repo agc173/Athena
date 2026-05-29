@@ -61,10 +61,10 @@ kotlin {
             // Firebase App Check (native Android SDK only) to fetch App Check tokens.
             // GitLive remains the source for Auth/Firestore/Functions integrations.
             implementation("com.google.firebase:firebase-appcheck-debug:18.0.0")
+            implementation("com.google.firebase:firebase-appcheck-playintegrity:18.0.0")
             implementation("com.google.firebase:firebase-messaging:24.1.2")
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.1")
             implementation("com.google.android.gms:play-services-ads:24.3.0")
-            // TODO(prod): implementation("com.google.firebase:firebase-appcheck-playintegrity:18.0.0")
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
