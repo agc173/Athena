@@ -315,6 +315,7 @@ data class BirthChartStrings(
     val saveCta: String,
     val shareValidationError: String,
     val shareCta: String,
+    // TODO(account-share-athena-polish): Remove sync copy in a future cleanup if these texts remain unused.
     val syncLoading: String,
     val syncCta: String,
     val sharePreviewTitle: String,
@@ -328,6 +329,7 @@ data class BirthChartStrings(
     val shareSerializeImageError: String,
     val shareNotAvailablePlatformError: String,
     val archetypeVisualContentDescriptionPrefix: String,
+    // TODO(account-share-athena-polish): Remove sync result copy in a future cleanup if these texts remain unused.
     val syncNoEssenceSummary: String,
     val syncRemoteLoadedSummary: String,
     val syncUpdatedSummary: String,

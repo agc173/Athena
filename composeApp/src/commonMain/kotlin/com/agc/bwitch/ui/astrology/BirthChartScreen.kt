@@ -232,14 +232,6 @@ fun BirthChartScreen(
             }
         }
 
-        BWitchPrimaryButton(
-            onClick = viewModel::refresh,
-            enabled = !state.isBusy,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(if (state.isRefreshing) birthChartStrings.syncLoading else birthChartStrings.syncCta)
-        }
-
         state.error?.takeUnless { it.isDailyLimitError() }?.let { error ->
             Text(error.toBirthChartUiText(birthChartStrings), color = MaterialTheme.colorScheme.error)
         }
