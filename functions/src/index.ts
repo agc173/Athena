@@ -158,6 +158,7 @@ export const generateHoroscopesWindow = onSchedule(
 
       let created = 0;
       let skipped = 0;
+      let repaired = 0;
       let failed = 0;
 
       // ✅ Hard cap stop flag (prevents log spam + pointless retries)
@@ -183,6 +184,7 @@ export const generateHoroscopesWindow = onSchedule(
               );
 
               if (result === 'created') created++;
+              else if (result === 'repaired') repaired++;
               else skipped++;
             } catch (e) {
               const msg = (e as any)?.message ?? String(e);
@@ -225,6 +227,7 @@ export const generateHoroscopesWindow = onSchedule(
                 );
 
                 if (result === 'created') created++;
+                else if (result === 'repaired') repaired++;
                 else skipped++;
               } catch (e) {
                 const msg = (e as any)?.message ?? String(e);
@@ -266,6 +269,7 @@ export const generateHoroscopesWindow = onSchedule(
         activeLangs: ENV.ACTIVE_LANGS,
         created,
         skipped,
+        repaired,
         failed,
         stoppedByCap,
         capError,
@@ -275,7 +279,7 @@ export const generateHoroscopesWindow = onSchedule(
 
 export const generateWeeklyHoroscopesWindow = onSchedule(
     {
-      schedule: '20 2 * * 1',
+      schedule: 'every day 02:20',
       timeZone: 'Europe/Madrid',
       region: 'europe-west1',
       retryCount: 0,
@@ -299,6 +303,7 @@ export const generateWeeklyHoroscopesWindow = onSchedule(
 
       let created = 0;
       let skipped = 0;
+      let repaired = 0;
       let failed = 0;
       let stoppedByCap = false;
       let capError: string | undefined;
@@ -322,6 +327,7 @@ export const generateWeeklyHoroscopesWindow = onSchedule(
               );
 
               if (result === 'created') created++;
+              else if (result === 'repaired') repaired++;
               else skipped++;
             } catch (e) {
               const msg = (e as Error)?.message ?? String(e);
@@ -371,6 +377,7 @@ export const generateWeeklyHoroscopesWindow = onSchedule(
                 );
 
                 if (result === 'created') created++;
+                else if (result === 'repaired') repaired++;
                 else skipped++;
               } catch (e) {
                 const msg = (e as Error)?.message ?? String(e);
@@ -408,6 +415,7 @@ export const generateWeeklyHoroscopesWindow = onSchedule(
         activeLangs: ENV.ACTIVE_LANGS,
         created,
         skipped,
+        repaired,
         failed,
         blockedByCanonicalFailure,
         stoppedByCap,
@@ -418,7 +426,7 @@ export const generateWeeklyHoroscopesWindow = onSchedule(
 
 export const generateMonthlyHoroscopesWindow = onSchedule(
     {
-      schedule: '5 3 1 * *',
+      schedule: 'every day 03:05',
       timeZone: 'Europe/Madrid',
       region: 'europe-west1',
       retryCount: 0,
@@ -442,6 +450,7 @@ export const generateMonthlyHoroscopesWindow = onSchedule(
 
       let created = 0;
       let skipped = 0;
+      let repaired = 0;
       let failed = 0;
       let stoppedByCap = false;
       let capError: string | undefined;
@@ -465,6 +474,7 @@ export const generateMonthlyHoroscopesWindow = onSchedule(
               );
 
               if (result === 'created') created++;
+              else if (result === 'repaired') repaired++;
               else skipped++;
             } catch (e) {
               const msg = (e as Error)?.message ?? String(e);
@@ -514,6 +524,7 @@ export const generateMonthlyHoroscopesWindow = onSchedule(
                 );
 
                 if (result === 'created') created++;
+                else if (result === 'repaired') repaired++;
                 else skipped++;
               } catch (e) {
                 const msg = (e as Error)?.message ?? String(e);
@@ -551,6 +562,7 @@ export const generateMonthlyHoroscopesWindow = onSchedule(
         activeLangs: ENV.ACTIVE_LANGS,
         created,
         skipped,
+        repaired,
         failed,
         blockedByCanonicalFailure,
         stoppedByCap,

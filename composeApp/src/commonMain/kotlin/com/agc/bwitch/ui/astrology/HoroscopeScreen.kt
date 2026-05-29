@@ -812,10 +812,9 @@ private fun HoroscopeOverlayBody(
                     HoroscopeMetaChip(label = strings.horoscope.luckyNumberLabel, value = horoscope?.luckyNumber?.toString() ?: "-")
                     HoroscopeMetaChip(label = strings.horoscope.luckyColorLabel, value = horoscope?.luckyColor ?: "-")
                 }
-                Text(
+                ParagraphText(
                     text = horoscope?.text ?: strings.horoscope.noContentYet,
                     style = MaterialTheme.typography.bodyLarge,
-                    lineHeight = MaterialTheme.typography.bodyLarge.lineHeight * 1.2f,
                 )
             }
             is HoroscopeOverlayUi.WeeklyOverlay -> {
@@ -861,12 +860,46 @@ private fun OverlaySection(
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.SemiBold,
         )
-        Text(
+        ParagraphText(
             text = content ?: "-",
             style = MaterialTheme.typography.bodyMedium,
+            paragraphSpacing = 8.dp,
         )
     }
 }
+
+@Composable
+private fun ParagraphText(
+    text: String,
+    style: androidx.compose.ui.text.TextStyle,
+    paragraphSpacing: androidx.compose.ui.unit.Dp = 10.dp,
+) {
+    val paragraphs = remember(text) { text.toReadableParagraphs() }
+    if (paragraphs.size <= 1) {
+        Text(
+            text = paragraphs.firstOrNull() ?: text,
+            style = style,
+            lineHeight = style.lineHeight * 1.2f,
+        )
+    } else {
+        Column(verticalArrangement = Arrangement.spacedBy(paragraphSpacing)) {
+            paragraphs.forEach { paragraph ->
+                Text(
+                    text = paragraph,
+                    style = style,
+                    lineHeight = style.lineHeight * 1.2f,
+                )
+            }
+        }
+    }
+}
+
+private fun String.toReadableParagraphs(): List<String> =
+    replace("\r\n", "\n")
+        .replace('\r', '\n')
+        .split(Regex("\n+"))
+        .map { it.trim() }
+        .filter { it.isNotEmpty() }
 
 @Composable
 private fun HoroscopeMetaChip(
