@@ -62,6 +62,7 @@ import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.platform.share.ShareResult
 import com.agc.bwitch.platform.share.ShareTextPayload
 import com.agc.bwitch.platform.share.rememberShareLauncher
+import com.agc.bwitch.ui.common.share.AthenaShareIconButton
 import com.agc.bwitch.ui.common.share.withAthenaShareSignature
 import com.agc.bwitch.presentation.tarot.TarotRevealPhase
 import com.agc.bwitch.presentation.tarot.TarotUiEffect
@@ -99,6 +100,22 @@ fun TarotScreen(
     val shareScope = rememberCoroutineScope()
     var shareErrorMessage by remember { mutableStateOf<String?>(null) }
     var rewardDialogRewards by remember { mutableStateOf<List<DeckCardUnlockReward>>(emptyList()) }
+    val onShareReading: (String) -> Unit = { shareText ->
+        if (shareText.isNotBlank()) {
+            shareErrorMessage = null
+            shareScope.launch {
+                val shareResult = shareLauncher.shareText(
+                    ShareTextPayload(
+                        text = shareText.withAthenaShareSignature(appName),
+                        title = shareTitle,
+                    ),
+                )
+                if (shareResult is ShareResult.Error) {
+                    shareErrorMessage = shareResult.message ?: shareErrorFallback
+                }
+            }
+        }
+    }
 
     LaunchedEffect(initialRequestType) {
         if (initialRequestType != null) {
@@ -271,7 +288,12 @@ fun TarotScreen(
                                 }
                             }
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Text(strings.readingTitle, style = MaterialTheme.typography.titleMedium)
+                                TarotReadingHeader(
+                                    title = strings.readingTitle,
+                                    shareContentDescription = shareTitle,
+                                    canShare = shareText.isNotBlank(),
+                                    onShare = { onShareReading(shareText) },
+                                )
                                 AnimatedVisibility(
                                     visible = sectionVisibility[0],
                                     enter = fadeIn(animationSpec = tween(400)),
@@ -295,25 +317,6 @@ fun TarotScreen(
                                     enter = fadeIn(animationSpec = tween(400)),
                                 ) {
                                     TarotReadingSection(title = strings.watchOutTitle, body = details.watchOut)
-                                }
-                                if (shareText.isNotBlank()) {
-                                    Button(
-                                        onClick = {
-                                            shareErrorMessage = null
-                                            shareScope.launch {
-                                                val shareResult = shareLauncher.shareText(
-                                                    ShareTextPayload(
-                                                        text = shareText.withAthenaShareSignature(appName),
-                                                        title = shareTitle,
-                                                    ),
-                                                )
-                                                if (shareResult is ShareResult.Error) {
-                                                    shareErrorMessage = shareResult.message ?: shareErrorFallback
-                                                }
-                                            }
-                                        },
-                                        modifier = Modifier.fillMaxWidth(),
-                                    ) { Text(shareTitle) }
                                 }
                             }
                         }
@@ -347,7 +350,12 @@ fun TarotScreen(
                             }
                             val cardsByPosition = details.cards.associateBy { it.position }
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Text(strings.readingTitle, style = MaterialTheme.typography.titleMedium)
+                                TarotReadingHeader(
+                                    title = strings.readingTitle,
+                                    shareContentDescription = shareTitle,
+                                    canShare = shareText.isNotBlank(),
+                                    onShare = { onShareReading(shareText) },
+                                )
                                 AnimatedVisibility(
                                     visible = sectionVisibility[0],
                                     enter = fadeIn(animationSpec = tween(400)),
@@ -386,25 +394,6 @@ fun TarotScreen(
                                     enter = fadeIn(animationSpec = tween(400)),
                                 ) {
                                     TarotReadingSection(title = strings.adviceTitle, body = details.advice)
-                                }
-                                if (shareText.isNotBlank()) {
-                                    Button(
-                                        onClick = {
-                                            shareErrorMessage = null
-                                            shareScope.launch {
-                                                val shareResult = shareLauncher.shareText(
-                                                    ShareTextPayload(
-                                                        text = shareText.withAthenaShareSignature(appName),
-                                                        title = shareTitle,
-                                                    ),
-                                                )
-                                                if (shareResult is ShareResult.Error) {
-                                                    shareErrorMessage = shareResult.message ?: shareErrorFallback
-                                                }
-                                            }
-                                        },
-                                        modifier = Modifier.fillMaxWidth(),
-                                    ) { Text(shareTitle) }
                                 }
                             }
                         }
@@ -772,6 +761,31 @@ private fun tarotOverlayTitleTextStyle(
     letterSpacing = 0.08.em,
     textAlign = TextAlign.Center,
 )
+
+@Composable
+private fun TarotReadingHeader(
+    title: String,
+    shareContentDescription: String,
+    canShare: Boolean,
+    onShare: () -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.weight(1f),
+        )
+        AthenaShareIconButton(
+            contentDescription = shareContentDescription,
+            enabled = canShare,
+            onClick = onShare,
+        )
+    }
+}
 
 @Composable
 private fun TarotReadingSection(

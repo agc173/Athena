@@ -64,6 +64,7 @@ import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.platform.share.ShareResult
 import com.agc.bwitch.platform.share.ShareTextPayload
 import com.agc.bwitch.platform.share.rememberShareLauncher
+import com.agc.bwitch.ui.common.share.AthenaShareIconButton
 import com.agc.bwitch.ui.common.share.withAthenaShareSignature
 import com.agc.bwitch.presentation.astrology.synastry.SynastryPersonForm
 import com.agc.bwitch.presentation.astrology.synastry.SynastryViewModel
@@ -389,14 +390,26 @@ private fun SynastryResultCard(
 ) {
     val structured = reading.structured
     val synastryStrings = strings.synastry
+    val shareText = buildSynastryShareText(reading = reading, strings = strings, languageCode = languageCode)
 
     BWitchCard {
-        Text(
-            text = synastryStrings.resultTitle,
-            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+        Row(
             modifier = Modifier.fillMaxWidth(),
-            textAlign = TextAlign.Center,
-        )
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = synastryStrings.resultTitle,
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                modifier = Modifier.weight(1f),
+                textAlign = TextAlign.Center,
+            )
+            AthenaShareIconButton(
+                contentDescription = strings.horoscope.shareCta,
+                enabled = shareText.isNotBlank(),
+                onClick = { onShare(shareText) },
+            )
+        }
         Text(
             text = structured.depthInfo.depth.toUiDepthLabel(strings),
             style = MaterialTheme.typography.bodyLarge,
@@ -454,15 +467,6 @@ private fun SynastryResultCard(
             text = reading.narrative,
             style = MaterialTheme.typography.bodyLarge,
         )
-
-        val shareText = buildSynastryShareText(reading = reading, strings = strings, languageCode = languageCode)
-        if (shareText.isNotBlank()) {
-            SectionSeparator()
-            OutlinedButton(
-                onClick = { onShare(shareText) },
-                modifier = Modifier.fillMaxWidth(),
-            ) { Text(strings.horoscope.shareCta) }
-        }
     }
 }
 
