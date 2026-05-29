@@ -32,6 +32,7 @@ export {
   synastryAuthorize,
   pendulumAuthorize,
   claimMoonPackPurchase,
+  recoverTimedOutEconomyRequestsScheduled,
 } from './economy';
 export {claimDailyConstellationProgress} from './economy/callables/claimDailyConstellationProgress';
 export {getConstellationProgress} from './economy/callables/getConstellationProgress';

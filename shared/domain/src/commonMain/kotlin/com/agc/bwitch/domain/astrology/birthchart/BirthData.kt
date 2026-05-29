@@ -9,6 +9,7 @@ data class BirthEssenceInput(
     val risingSign: ZodiacSign,
     val languageCode: String = "es",
     val archetypeHint: BirthEssenceArchetype? = null,
+    val requestId: String? = null,
 )
 
 data class BirthEssenceReading(
@@ -16,6 +17,8 @@ data class BirthEssenceReading(
     val languageCode: String = "es",
     val archetype: BirthEssenceArchetype? = null,
     val deckCardUnlockRewards: List<DeckCardUnlockReward> = emptyList(),
+    val requestId: String? = null,
+    val status: String = "COMPLETED_SUCCESS",
 )
 
 data class BirthEssenceDraft(

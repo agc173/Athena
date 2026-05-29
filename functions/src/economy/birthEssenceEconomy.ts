@@ -278,13 +278,27 @@ export async function completeBirthEssenceEconomyRequest(params: {
   const db = getFirestore();
   const requestRef = economyRequestRef(params.uid, params.requestId);
 
-  await requestRef.set({
-    status: 'COMPLETED_SUCCESS',
-    result: 'COMPLETED_SUCCESS',
-    responsePayload: params.responsePayload,
-    llmMeta: params.llmMeta,
-    updatedAt: FieldValue.serverTimestamp(),
-  }, {merge: true});
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(requestRef);
+    const requestData = snap.data() as EconomyRequestDoc | undefined;
+    if (requestData?.status && requestData.status !== 'PROCESSING' && requestData.status !== 'COMPLETED_SUCCESS') {
+      console.warn('ECONOMY_COMPLETE_SKIPPED_NON_PROCESSING', {
+        uidTag: params.uid.slice(0, 8),
+        requestId: params.requestId,
+        status: requestData.status,
+        result: requestData.result,
+      });
+      return;
+    }
+
+    tx.set(requestRef, {
+      status: 'COMPLETED_SUCCESS',
+      result: 'COMPLETED_SUCCESS',
+      responsePayload: params.responsePayload,
+      llmMeta: params.llmMeta,
+      updatedAt: FieldValue.serverTimestamp(),
+    }, {merge: true});
+  });
 
   await db.doc(`economyRequests/${params.uid}`).set({
     updatedAt: FieldValue.serverTimestamp(),
@@ -296,17 +310,18 @@ export async function refundBirthEssenceEconomyRequest(params: {
   requestId: string;
   dateIso: string;
   errorMessage: string;
+  recoveredResult?: 'FAILED_TIMEOUT' | 'REFUNDED';
 }) {
   const db = getFirestore();
 
-  await db.runTransaction(async (tx) => {
+  return db.runTransaction(async (tx) => {
     const requestRef = economyRequestRef(params.uid, params.requestId);
     const requestSnap = await tx.get(requestRef);
-    if (!requestSnap.exists) return;
+    if (!requestSnap.exists) return false;
 
     const requestData = requestSnap.data() as EconomyRequestDoc;
     if (requestData.status !== 'PROCESSING') {
-      return;
+      return false;
     }
 
     const now = Timestamp.now();
@@ -353,12 +368,14 @@ export async function refundBirthEssenceEconomyRequest(params: {
 
     tx.set(requestRef, {
       status: 'FAILED',
-      result: requestData.refundedAt ? 'FAILED' : 'REFUNDED',
+      result: requestData.refundedAt ? 'FAILED' : (params.recoveredResult ?? 'REFUNDED'),
       refundedAt: requestData.refundedAt ?? now,
       error: {
         message: params.errorMessage,
       },
       updatedAt: now,
     }, {merge: true});
+
+    return true;
   });
 }

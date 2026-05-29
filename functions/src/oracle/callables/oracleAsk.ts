@@ -113,6 +113,19 @@ async function updateProviderUsage(params: {
   }, {merge: true});
 }
 
+
+async function recordProviderUsageBestEffort(params: Parameters<typeof updateProviderUsage>[0]) {
+  try {
+    await updateProviderUsage(params);
+  } catch (error) {
+    console.warn('LLM_PROVIDER_USAGE_TRACKING_FAILED', {
+      provider: params.provider,
+      success: params.success,
+      error: safeErrorMessage(error),
+    });
+  }
+}
+
 export const oracleAsk = onCall(
     {
       region: 'europe-west1',
@@ -273,14 +286,22 @@ export const oracleAsk = onCall(
             llmMeta,
           });
 
-          await addLlmTokens(
-              'oracle',
-              usageDateIso,
-              generated.llmMeta.inputTokens,
-              generated.llmMeta.outputTokens
-          );
+          try {
+            await addLlmTokens(
+                'oracle',
+                usageDateIso,
+                generated.llmMeta.inputTokens,
+                generated.llmMeta.outputTokens
+            );
+          } catch (error) {
+            console.warn('LLM_TOKEN_TRACKING_FAILED', {
+              scope: 'oracle',
+              requestId,
+              error: safeErrorMessage(error),
+            });
+          }
 
-          await updateProviderUsage({
+          await recordProviderUsageBestEffort({
             dateIso: usageDateIso,
             provider: generated.llmMeta.provider,
             success: true,
@@ -301,7 +322,7 @@ export const oracleAsk = onCall(
             errorMessage,
           });
 
-          await updateProviderUsage({
+          await recordProviderUsageBestEffort({
             dateIso: usageDateIso,
             provider: router.name,
             success: false,

@@ -13,6 +13,8 @@ import com.agc.bwitch.domain.localization.ResolveCurrentLanguageUseCase
 import com.agc.bwitch.domain.model.DeckCardUnlockReward
 import com.agc.bwitch.domain.shared.ApiError
 import com.agc.bwitch.domain.shared.ApiResult
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -62,6 +64,8 @@ class BirthChartViewModel(
                             generatedMoonSign = null,
                             generatedRisingSign = null,
                             generatedLanguageCode = languageCode,
+                            requestId = null,
+                            inProgress = false,
                             error = null,
                         )
                     }
@@ -145,20 +149,58 @@ class BirthChartViewModel(
     }
 
     fun onSunSignChange(value: ZodiacSign) =
-        _uiState.update { it.copy(selectedSunSign = value, error = null, savedSummary = null) }
+        _uiState.update {
+            it.copy(
+                selectedSunSign = value,
+                requestId = null,
+                inProgress = false,
+                error = null,
+                savedSummary = null,
+            )
+        }
 
     fun onMoonSignChange(value: ZodiacSign) =
-        _uiState.update { it.copy(selectedMoonSign = value, error = null, savedSummary = null) }
+        _uiState.update {
+            it.copy(
+                selectedMoonSign = value,
+                requestId = null,
+                inProgress = false,
+                error = null,
+                savedSummary = null,
+            )
+        }
 
     fun onRisingSignChange(value: ZodiacSign) =
-        _uiState.update { it.copy(selectedRisingSign = value, error = null, savedSummary = null) }
+        _uiState.update {
+            it.copy(
+                selectedRisingSign = value,
+                requestId = null,
+                inProgress = false,
+                error = null,
+                savedSummary = null,
+            )
+        }
 
     fun discoverEssence() {
         val s = _uiState.value
         if (s.isBusy) return
 
+        val requestId = if (s.requestId != null && (s.error != null || s.inProgress)) {
+            s.requestId
+        } else {
+            generateRequestId()
+        }
+
         scope.launch {
-            _uiState.update { it.copy(isGenerating = true, error = null, savedSummary = null) }
+            _uiState.update {
+                it.copy(
+                    isGenerating = true,
+                    requestId = requestId,
+                    inProgress = false,
+                    error = null,
+                    savedSummary = null,
+                )
+            }
 
             when (
                 val result = generateBirthEssence(
@@ -167,27 +209,34 @@ class BirthChartViewModel(
                         moonSign = s.selectedMoonSign,
                         risingSign = s.selectedRisingSign,
                         languageCode = s.currentLanguageCode,
+                        requestId = requestId,
                     )
                 )
             ) {
                 is ApiResult.Ok -> {
-                    emitDeckUnlockRewardsIfNeeded(result.value.deckCardUnlockRewards)
-                    _uiState.update {
-                        it.copy(
-                            generatedInterpretation = result.value.interpretation.sanitizeInterpretation(),
-                            generatedLanguageCode = result.value.languageCode,
-                            generatedArchetype = result.value.archetype,
-                            generatedDeckCardUnlockRewards = result.value.deckCardUnlockRewards,
-                            generatedSunSign = s.selectedSunSign,
-                            generatedMoonSign = s.selectedMoonSign,
-                            generatedRisingSign = s.selectedRisingSign,
-                        )
+                    val reading = result.value
+                    if (reading.status == "IN_PROGRESS" || reading.status == "PROCESSING") {
+                        _uiState.update { it.copy(inProgress = true, error = null) }
+                    } else {
+                        emitDeckUnlockRewardsIfNeeded(reading.deckCardUnlockRewards)
+                        _uiState.update {
+                            it.copy(
+                                generatedInterpretation = reading.interpretation.sanitizeInterpretation(),
+                                generatedLanguageCode = reading.languageCode,
+                                generatedArchetype = reading.archetype,
+                                generatedDeckCardUnlockRewards = reading.deckCardUnlockRewards,
+                                generatedSunSign = s.selectedSunSign,
+                                generatedMoonSign = s.selectedMoonSign,
+                                generatedRisingSign = s.selectedRisingSign,
+                                inProgress = false,
+                            )
+                        }
                     }
                 }
 
                 is ApiResult.Err -> {
                     _uiState.update {
-                        it.copy(error = mapGenerateError(result.error))
+                        it.copy(inProgress = false, error = mapGenerateError(result.error))
                     }
                 }
             }
@@ -195,6 +244,9 @@ class BirthChartViewModel(
             _uiState.update { it.copy(isGenerating = false) }
         }
     }
+
+    @OptIn(ExperimentalUuidApi::class)
+    private fun generateRequestId(): String = Uuid.random().toString()
 
     private fun emitDeckUnlockRewardsIfNeeded(rewards: List<DeckCardUnlockReward>) {
         if (rewards.isEmpty()) return
