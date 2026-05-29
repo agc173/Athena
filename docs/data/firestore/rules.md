@@ -10,11 +10,11 @@ Archivo fuente de reglas: `firestore.rules`.
   - `/horoscopeWeekly/{weekKey}/signs/{sign}/langs/{lang}`
   - `/horoscopeMonthly/{monthKey}/signs/{sign}`
   - `/horoscopeMonthly/{monthKey}/signs/{sign}/langs/{lang}`
-- Permitir **read/write** solo al dueño autenticado (`request.auth.uid == uid`) en rutas de usuario usadas por cliente:
-  - `/users/{uid}/profile/current`
-  - `/users/{uid}/birthEssence/current`
-  - `/users/{uid}/dailyRitual/current`
-  - `/users/{uid}/habits/current`
+- Permitir **read** solo al dueño autenticado (`request.auth.uid == uid`) y **write** solo al dueño con schema validado en rutas de usuario usadas por cliente:
+  - `/users/{uid}/profile/current`: claves permitidas, strings acotados, email básico, `photoUrl` HTTPS, `zodiacSign` enum y timestamps epoch/timestamp válidos.
+  - `/users/{uid}/birthEssence/current`: claves permitidas, signos enum, idioma enum, arquetipo enum y texto de interpretación acotado.
+  - `/users/{uid}/dailyRitual/current`: claves permitidas, fechas ISO, tema enum, booleanos/contadores acotados.
+  - `/users/{uid}/habits/current`: claves permitidas, fecha ISO, arrays string acotados y contadores acotados.
 - `userAccountStatus/{uid}`:
   - Permitir **get** solo al dueño autenticado (`request.auth.uid == uid`) para que el bootstrap de sesión detecte eliminación pendiente.
   - Denegar **list/write** desde cliente; las escrituras son backend-owned vía callables `requestAccountDeletion`/`restoreAccount`.
@@ -30,10 +30,11 @@ Archivo fuente de reglas: `firestore.rules`.
 1. Levantar emuladores:
    - `firebase emulators:start --only auth,firestore,functions`
 2. Casos mínimos con usuario autenticado UID `A`:
-   - `A` puede leer/escribir `users/A/profile/current` ✅
-   - `A` puede leer/escribir `users/A/birthEssence/current` ✅
-   - `A` puede leer/escribir `users/A/dailyRitual/current` ✅
-   - `A` puede leer/escribir `users/A/habits/current` ✅
+   - `A` puede leer y escribir payload válido en `users/A/profile/current` ✅
+   - `A` puede leer y escribir payload válido en `users/A/birthEssence/current` ✅
+   - `A` puede leer y escribir payload válido en `users/A/dailyRitual/current` ✅
+   - `A` puede leer y escribir payload válido en `users/A/habits/current` ✅
+   - `A` no puede escribir campos arbitrarios ni tipos/longitudes fuera de contrato en esas rutas ❌
    - `A` **no** puede leer/escribir `users/B/profile/current` ❌
    - `A` puede leer `userAccountStatus/A` ✅
    - `A` no puede leer `userAccountStatus/B` ❌

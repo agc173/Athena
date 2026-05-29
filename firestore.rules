@@ -9,6 +9,148 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == uid;
     }
 
+    function isStringWithin(field, maxLength) {
+      return !(field in request.resource.data) ||
+        (request.resource.data[field] is string && request.resource.data[field].size() <= maxLength);
+    }
+
+    function isNullableStringWithin(field, maxLength) {
+      return !(field in request.resource.data) ||
+        request.resource.data[field] == null ||
+        (request.resource.data[field] is string && request.resource.data[field].size() <= maxLength);
+    }
+
+    function isNullableDateIso(field) {
+      return !(field in request.resource.data) ||
+        request.resource.data[field] == null ||
+        (request.resource.data[field] is string && request.resource.data[field].matches('^\\d{4}-\\d{2}-\\d{2}$'));
+    }
+
+    function isEpochMillisOrMissing(field) {
+      return !(field in request.resource.data) ||
+        (request.resource.data[field] is number &&
+          request.resource.data[field] >= 0 &&
+          request.resource.data[field] <= 4102444800000);
+    }
+
+    function isZodiacSignOrMissing(field) {
+      return !(field in request.resource.data) ||
+        request.resource.data[field] == null ||
+        request.resource.data[field] in [
+          'aries', 'taurus', 'gemini', 'cancer', 'leo', 'virgo',
+          'libra', 'scorpio', 'sagittarius', 'capricorn', 'aquarius', 'pisces'
+        ];
+    }
+
+    function isLanguageOrMissing(field) {
+      return !(field in request.resource.data) ||
+        request.resource.data[field] == null ||
+        request.resource.data[field] in ['es', 'en', 'pt', 'ru', 'fr', 'it', 'de'];
+    }
+
+    function isBirthEssenceArchetypeOrMissing(field) {
+      return !(field in request.resource.data) ||
+        request.resource.data[field] == null ||
+        request.resource.data[field] in ['MISTICA', 'GUERRERA', 'SANADORA', 'VIDENTE', 'ALQUIMISTA', 'GUARDIANA'];
+    }
+
+    function isDailyRitualThemeOrMissing(field) {
+      return !(field in request.resource.data) ||
+        request.resource.data[field] == null ||
+        request.resource.data[field] in ['Calm', 'Clarity', 'Release', 'Energy'];
+    }
+
+    function isSafeStringListOrMissing(field, maxItems, maxItemLength) {
+      return !(field in request.resource.data) ||
+        (request.resource.data[field] is list &&
+          request.resource.data[field].size() <= maxItems &&
+          (request.resource.data[field].size() < 1 || request.resource.data[field][0] is string && request.resource.data[field][0].size() <= maxItemLength) &&
+          (request.resource.data[field].size() < 2 || request.resource.data[field][1] is string && request.resource.data[field][1].size() <= maxItemLength) &&
+          (request.resource.data[field].size() < 3 || request.resource.data[field][2] is string && request.resource.data[field][2].size() <= maxItemLength) &&
+          (request.resource.data[field].size() < 4 || request.resource.data[field][3] is string && request.resource.data[field][3].size() <= maxItemLength) &&
+          (request.resource.data[field].size() < 5 || request.resource.data[field][4] is string && request.resource.data[field][4].size() <= maxItemLength) &&
+          (request.resource.data[field].size() < 6 || request.resource.data[field][5] is string && request.resource.data[field][5].size() <= maxItemLength) &&
+          (request.resource.data[field].size() < 7 || request.resource.data[field][6] is string && request.resource.data[field][6].size() <= maxItemLength) &&
+          (request.resource.data[field].size() < 8 || request.resource.data[field][7] is string && request.resource.data[field][7].size() <= maxItemLength) &&
+          (request.resource.data[field].size() < 9 || request.resource.data[field][8] is string && request.resource.data[field][8].size() <= maxItemLength) &&
+          (request.resource.data[field].size() < 10 || request.resource.data[field][9] is string && request.resource.data[field][9].size() <= maxItemLength) &&
+          (request.resource.data[field].size() < 11 || request.resource.data[field][10] is string && request.resource.data[field][10].size() <= maxItemLength) &&
+          (request.resource.data[field].size() < 12 || request.resource.data[field][11] is string && request.resource.data[field][11].size() <= maxItemLength));
+    }
+
+    function validProfileCurrentWrite() {
+      return request.resource.data.keys().hasOnly([
+          'displayName', 'photoUrl', 'email', 'username', 'birthDate', 'zodiacSign',
+          'description', 'birthEssenceSummary', 'updatedAtEpochMillis', 'updatedAt'
+        ]) &&
+        isNullableStringWithin('displayName', 60) &&
+        isNullableStringWithin('photoUrl', 2048) &&
+        (!( 'photoUrl' in request.resource.data) || request.resource.data.photoUrl == null ||
+          request.resource.data.photoUrl == '' ||
+          (request.resource.data.photoUrl is string && request.resource.data.photoUrl.size() <= 2048 &&
+            request.resource.data.photoUrl.matches('^https://.*'))) &&
+        isNullableStringWithin('email', 254) &&
+        (!( 'email' in request.resource.data) || request.resource.data.email == null ||
+          request.resource.data.email.matches('^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$')) &&
+        isNullableStringWithin('username', 30) &&
+        (!( 'username' in request.resource.data) || request.resource.data.username == null ||
+          request.resource.data.username.matches('^[a-z0-9._]{3,30}$')) &&
+        isNullableDateIso('birthDate') &&
+        isZodiacSignOrMissing('zodiacSign') &&
+        isNullableStringWithin('description', 160) &&
+        isNullableStringWithin('birthEssenceSummary', 120) &&
+        isEpochMillisOrMissing('updatedAtEpochMillis') &&
+        (!( 'updatedAt' in request.resource.data) || request.resource.data.updatedAt is timestamp);
+    }
+
+    function validBirthEssenceCurrentWrite() {
+      return request.resource.data.keys().hasOnly([
+          'sunSign', 'moonSign', 'risingSign', 'interpretation', 'languageCode',
+          'archetype', 'savedAtEpochMillis', 'updatedAtEpochMillis'
+        ]) &&
+        isZodiacSignOrMissing('sunSign') &&
+        isZodiacSignOrMissing('moonSign') &&
+        isZodiacSignOrMissing('risingSign') &&
+        isStringWithin('interpretation', 800) &&
+        isLanguageOrMissing('languageCode') &&
+        isBirthEssenceArchetypeOrMissing('archetype') &&
+        isEpochMillisOrMissing('savedAtEpochMillis') &&
+        isEpochMillisOrMissing('updatedAtEpochMillis');
+    }
+
+    function validDailyRitualCurrentWrite() {
+      return request.resource.data.keys().hasOnly([
+          'selectedDateIso', 'selectedTemplateId', 'selectedTheme', 'dailyCompletionDateIso',
+          'dailyCompleted', 'lastCompletedDateIso', 'streakCount', 'updatedAtEpochMillis'
+        ]) &&
+        isNullableDateIso('selectedDateIso') &&
+        isNullableStringWithin('selectedTemplateId', 80) &&
+        isDailyRitualThemeOrMissing('selectedTheme') &&
+        isNullableDateIso('dailyCompletionDateIso') &&
+        (!( 'dailyCompleted' in request.resource.data) || request.resource.data.dailyCompleted is bool) &&
+        isNullableDateIso('lastCompletedDateIso') &&
+        (!( 'streakCount' in request.resource.data) ||
+          (request.resource.data.streakCount is int && request.resource.data.streakCount >= 0 && request.resource.data.streakCount <= 3660)) &&
+        isEpochMillisOrMissing('updatedAtEpochMillis');
+    }
+
+    function validHabitsCurrentWrite() {
+      return request.resource.data.keys().hasOnly([
+          'todayDateIso', 'selectedIntentionIds', 'completedIntentionIds',
+          'progressPoints', 'completedCycles', 'updatedAtEpochMillis'
+        ]) &&
+        (!( 'todayDateIso' in request.resource.data) ||
+          (request.resource.data.todayDateIso is string && request.resource.data.todayDateIso.matches('^\\d{4}-\\d{2}-\\d{2}$'))) &&
+        isSafeStringListOrMissing('selectedIntentionIds', 12, 40) &&
+        isSafeStringListOrMissing('completedIntentionIds', 12, 40) &&
+        (!( 'progressPoints' in request.resource.data) ||
+          (request.resource.data.progressPoints is int && request.resource.data.progressPoints >= 0 && request.resource.data.progressPoints <= 60)) &&
+        (!( 'completedCycles' in request.resource.data) ||
+          (request.resource.data.completedCycles is int && request.resource.data.completedCycles >= 0 && request.resource.data.completedCycles <= 10000)) &&
+        isEpochMillisOrMissing('updatedAtEpochMillis');
+    }
+
+
     // Daily (se mantiene patrón existente: lectura autenticada).
     match /horoscopeDaily/{dateIso}/signs/{sign} {
       allow read: if isAuthenticated();
@@ -44,19 +186,23 @@ service cloud.firestore {
 
     // User-owned docs (scope limitado a rutas que la app usa desde cliente).
     match /users/{uid}/profile/current {
-      allow read, write: if isOwner(uid);
+      allow read: if isOwner(uid);
+      allow write: if isOwner(uid) && validProfileCurrentWrite();
     }
 
     match /users/{uid}/birthEssence/current {
-      allow read, write: if isOwner(uid);
+      allow read: if isOwner(uid);
+      allow write: if isOwner(uid) && validBirthEssenceCurrentWrite();
     }
 
     match /users/{uid}/dailyRitual/current {
-      allow read, write: if isOwner(uid);
+      allow read: if isOwner(uid);
+      allow write: if isOwner(uid) && validDailyRitualCurrentWrite();
     }
 
     match /users/{uid}/habits/current {
-      allow read, write: if isOwner(uid);
+      allow read: if isOwner(uid);
+      allow write: if isOwner(uid) && validHabitsCurrentWrite();
     }
 
     // Tarot deck progression es user-owned y de solo lectura desde cliente.

@@ -3,7 +3,7 @@ import {HttpsError, onCall} from 'firebase-functions/v2/https';
 import * as logger from 'firebase-functions/logger';
 import {ENV} from '../../config/env';
 import {normalizeUsername, validateNormalizedUsername} from '../username';
-import {BIRTH_ESSENCE_SUMMARY_MAX_LENGTH, normalizeSingleLineInput} from '../../utils/inputNormalization';
+import {BIRTH_ESSENCE_SUMMARY_MAX_LENGTH, normalizeSingleLineInput, removeUnsafeControlChars} from '../../utils/inputNormalization';
 
 type SaveUserProfileData = {
   displayName?: unknown;
@@ -31,6 +31,20 @@ type UserProfileDoc = {
   updatedAt?: Timestamp;
 };
 
+const DISPLAY_NAME_MAX_LENGTH = 60;
+const EMAIL_MAX_LENGTH = 254;
+const PHOTO_URL_MAX_LENGTH = 2048;
+const DESCRIPTION_MAX_LENGTH = 160;
+const UPDATED_AT_MAX_EPOCH_MILLIS = 4102444800000; // 2100-01-01T00:00:00.000Z
+
+const ZODIAC_SIGNS = new Set([
+  'aries', 'taurus', 'gemini', 'cancer', 'leo', 'virgo',
+  'libra', 'scorpio', 'sagittarius', 'capricorn', 'aquarius', 'pisces',
+]);
+
+const EMAIL_REGEX = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+const BIDI_AND_ZERO_WIDTH_REGEX = /[\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g;
+
 type UsernameIndexDoc = {
   uid: string;
   username: string;
@@ -57,10 +71,57 @@ type SanitizedProfileLog = {
   updatedAtEpochMillis: number;
 };
 
+function normalizeSafeSingleLine(value: string): string {
+  return normalizeSingleLineInput(
+      removeUnsafeControlChars(value)
+          .replace(BIDI_AND_ZERO_WIDTH_REGEX, '')
+  );
+}
+
 function asOptionalTrimmedString(value: unknown): string | null {
   if (typeof value !== 'string') return null;
-  const normalized = normalizeSingleLineInput(value);
+  const normalized = normalizeSafeSingleLine(value);
   return normalized.length > 0 ? normalized : null;
+}
+
+function asOptionalStringWithin(value: unknown, field: string, maxLength: number): string | null {
+  const text = asOptionalTrimmedString(value);
+  if (!text) return null;
+  if (text.length > maxLength) {
+    throw new HttpsError('invalid-argument', `${field} is too long`);
+  }
+  return text;
+}
+
+function asOptionalDisplayName(value: unknown): string | null {
+  return asOptionalStringWithin(value, 'displayName', DISPLAY_NAME_MAX_LENGTH);
+}
+
+function asOptionalEmail(value: unknown): string | null {
+  const email = asOptionalStringWithin(value, 'email', EMAIL_MAX_LENGTH);
+  if (!email) return null;
+  if (!EMAIL_REGEX.test(email)) {
+    throw new HttpsError('invalid-argument', 'email is invalid');
+  }
+  return email;
+}
+
+function asOptionalPhotoUrl(value: unknown): string | null {
+  const photoUrl = asOptionalStringWithin(value, 'photoUrl', PHOTO_URL_MAX_LENGTH);
+  if (!photoUrl) return null;
+  if (!photoUrl.startsWith('https://')) {
+    throw new HttpsError('invalid-argument', 'photoUrl must use https');
+  }
+  return photoUrl;
+}
+
+function asOptionalZodiacSign(value: unknown): string | null {
+  const sign = asOptionalTrimmedString(value)?.toLowerCase() ?? null;
+  if (!sign) return null;
+  if (!ZODIAC_SIGNS.has(sign)) {
+    throw new HttpsError('invalid-argument', 'zodiacSign is invalid');
+  }
+  return sign;
 }
 
 function asOptionalBirthDate(value: unknown): string | null {
@@ -85,19 +146,30 @@ function asOptionalLong(value: unknown): number | null {
   if (typeof value !== 'number' || !Number.isFinite(value)) return null;
   return Math.trunc(value);
 }
+
+function safeClientUpdatedAtEpochMillis(value: unknown, fallback: number): number {
+  const candidate = asOptionalLong(value);
+  if (candidate == null) return fallback;
+  if (candidate < 0 || candidate > UPDATED_AT_MAX_EPOCH_MILLIS) return fallback;
+  return candidate;
+}
 function asBoolean(value: unknown): boolean {
   return value === true;
 }
 
 function asDisplayNameOrFallback(displayNameRaw: unknown, normalizedUsername: string): string {
-  return asOptionalTrimmedString(displayNameRaw) ?? normalizedUsername;
+  return asOptionalDisplayName(displayNameRaw) ?? normalizedUsername;
 }
 
 export const __testables = {
   asOptionalTrimmedString,
   asOptionalBirthDate,
   asOptionalBirthEssenceSummary,
+  asOptionalEmail,
+  asOptionalPhotoUrl,
+  asOptionalZodiacSign,
   asOptionalLong,
+  safeClientUpdatedAtEpochMillis,
   asDisplayNameOrFallback,
   sanitizedProfileLog,
 };
@@ -175,14 +247,17 @@ export const saveUserProfile = onCall(
       }
 
       const displayName = asDisplayNameOrFallback(data.displayName, normalizedUsername);
-      const photoUrl = asOptionalTrimmedString(data.photoUrl);
-      const email = asOptionalTrimmedString(data.email);
+      const photoUrl = asOptionalPhotoUrl(data.photoUrl);
+      const authEmail = asOptionalEmail(request.auth?.token?.email);
+      const email = authEmail ?? asOptionalEmail(data.email);
       const birthDate = asOptionalBirthDate(data.birthDate);
-      const zodiacSign = asOptionalTrimmedString(data.zodiacSign);
+      const zodiacSign = asOptionalZodiacSign(data.zodiacSign);
       const description = asOptionalTrimmedString(data.description);
       const descriptionProvided = asBoolean(data.descriptionProvided);
       const birthEssenceSummary = asOptionalBirthEssenceSummary(data.birthEssenceSummary);
-      const updatedAtEpochMillis = asOptionalLong(data.updatedAtEpochMillis) ?? Date.now();
+      // Keep the existing epoch-millis field for sync compatibility, but do not trust
+      // arbitrary client values outside a conservative timestamp range.
+      const updatedAtEpochMillis = safeClientUpdatedAtEpochMillis(data.updatedAtEpochMillis, Date.now());
 
       logger.info('saveUserProfile normalized payload', sanitizedProfileLog({
         uid,
@@ -212,7 +287,7 @@ export const saveUserProfile = onCall(
       if (birthDate != null) profilePatch.birthDate = birthDate;
       if (zodiacSign != null) profilePatch.zodiacSign = zodiacSign;
       if (descriptionProvided) {
-        if (description != null) profilePatch.description = description.slice(0, 160);
+        if (description != null) profilePatch.description = description.slice(0, DESCRIPTION_MAX_LENGTH);
         else profilePatch.description = FieldValue.delete() as unknown as string;
       }
       if (birthEssenceSummary != null) profilePatch.birthEssenceSummary = birthEssenceSummary;
