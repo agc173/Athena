@@ -4,8 +4,10 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -19,6 +21,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -31,6 +34,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -335,28 +339,61 @@ private fun AnswerMarker(
     offsetX: Dp,
     offsetY: Dp,
 ) {
-    val mysticTextColor = Color(0xFFF4E5BC)
-    val selectedMysticTextColor = Color(0xFFFFF4D8)
+    val markerShape = RoundedCornerShape(percent = 50)
+    val markerBackground = if (isSelected) {
+        Brush.verticalGradient(
+            colors = listOf(
+                Color(0xFF6F5A86).copy(alpha = 0.88f),
+                Color(0xFF3D2D4D).copy(alpha = 0.82f),
+            ),
+        )
+    } else {
+        Brush.verticalGradient(
+            colors = listOf(
+                Color(0xFF4D3C61).copy(alpha = 0.78f),
+                Color(0xFF2C2038).copy(alpha = 0.72f),
+            ),
+        )
+    }
+    val markerBorderColor = if (isSelected) {
+        Color(0xFFF0DEFF).copy(alpha = 0.74f)
+    } else {
+        Color(0xFFD8C7FF).copy(alpha = 0.46f)
+    }
+    val markerTextColor = if (isSelected) Color(0xFFFFF7FF) else Color(0xFFF3EAFF)
+    val markerShadowColor = if (isSelected) {
+        Color(0xFFBBA2F2).copy(alpha = 0.30f)
+    } else {
+        Color(0xFF1B1027).copy(alpha = 0.42f)
+    }
 
     Box(
         modifier = Modifier
             .offset(x = offsetX, y = offsetY)
-            .size(width = 100.dp, height = 42.dp),
+            .size(width = 100.dp, height = 42.dp)
+            .shadow(
+                elevation = if (isSelected) 8.dp else 5.dp,
+                shape = markerShape,
+                ambientColor = markerShadowColor,
+                spotColor = markerShadowColor,
+            )
+            .background(brush = markerBackground, shape = markerShape)
+            .border(BorderStroke(1.dp, markerBorderColor), markerShape),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text = text,
             style = MaterialTheme.typography.titleSmall.copy(
                 shadow = Shadow(
-                    color = Color.Black.copy(alpha = if (isSelected) 0.85f else 0.72f),
-                    offset = Offset(0f, 1.8f),
-                    blurRadius = if (isSelected) 8f else 5.5f,
+                    color = Color(0xFF120A1B).copy(alpha = if (isSelected) 0.82f else 0.68f),
+                    offset = Offset(0f, 1.5f),
+                    blurRadius = if (isSelected) 7f else 5f,
                 ),
             ),
             fontFamily = FontFamily.Serif,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
             letterSpacing = if (isSelected) 1.6.sp else 1.1.sp,
-            color = if (isSelected) selectedMysticTextColor else mysticTextColor,
+            color = markerTextColor,
         )
     }
 }
