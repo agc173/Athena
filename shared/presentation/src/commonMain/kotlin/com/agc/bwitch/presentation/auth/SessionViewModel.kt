@@ -4,6 +4,7 @@ import com.agc.bwitch.domain.account.RestorePendingAccountDeletionUseCase
 import com.agc.bwitch.domain.auth.AuthRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -105,7 +106,7 @@ class SessionViewModel(
             .onFailure { e -> _uiState.update { it.copy(error = e.message) } }
     }
 
-    fun signOut() = scope.launch {
+    fun signOut(): Job = scope.launch {
         runCatching { authRepository.signOut() }
             .onFailure { e -> _uiState.update { it.copy(error = e.message) } }
     }

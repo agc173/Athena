@@ -15,6 +15,6 @@ actual fun rememberHandleSecureSignOut(
     sessionViewModel: SessionViewModel,
     clearLocalUserData: ClearLocalUserDataUseCase,
 ): suspend () -> Unit = {
-    sessionViewModel.signOut()
+    sessionViewModel.signOut().join()
     clearLocalUserData()
 }
