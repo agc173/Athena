@@ -54,6 +54,7 @@ import com.agc.bwitch.presentation.userprofile.SubscriptionPrimaryAction
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
 import com.agc.bwitch.ui.common.designsystem.BWitchScreen
 import com.agc.bwitch.ui.common.premium.PremiumCard
+import com.agc.bwitch.ui.common.premium.PremiumBenefitsList
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
@@ -247,6 +248,13 @@ fun SettingsScreen(contentPadding: PaddingValues) {
                     onCheckedChange = settingsVm::onHabitsEnabledChanged,
                 )
             }
+
+            PremiumBenefitsList(
+                title = appStrings.premiumBenefits.title,
+                subtitle = appStrings.premiumBenefits.subtitle,
+                bullets = appStrings.premiumBenefits.bullets,
+                disclaimer = appStrings.premiumBenefits.disclaimer,
+            )
 
             PremiumCard(
                 title = strings.sectionPurchasesSubscription,

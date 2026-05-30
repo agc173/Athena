@@ -420,7 +420,7 @@ fun TarotScreen(
                     module = state.selectedType.name,
                     placement = "tarot_daily_limit",
                     reason = "daily_limit",
-                    hasPremiumBenefit = state.selectedType == TarotRequestType.TAROT_3,
+                    hasPremiumBenefit = state.selectedType.hasPremiumBenefit(),
                     onPaywallShown = economyViewModel::onDailyLimitPaywallShown,
                     onPaywallActionClicked = economyViewModel::onDailyLimitPaywallActionClicked,
                 )
@@ -831,4 +831,9 @@ private fun TarotReadingSection(
             )
         }
     }
+}
+
+private fun TarotRequestType.hasPremiumBenefit(): Boolean = when (this) {
+    TarotRequestType.TAROT_1,
+    TarotRequestType.TAROT_3 -> true
 }

@@ -6,6 +6,7 @@ data class AppStrings(
     val auth: AuthStrings,
     val onboarding: OnboardingStrings,
     val settings: SettingsStrings,
+    val premiumBenefits: PremiumBenefitsStrings,
     val navigation: NavigationStrings,
     val common: CommonStrings,
     val guide: GuideStrings,
@@ -61,6 +62,13 @@ data class OnboardingStrings(
     val avatarUpdatedMessage: String,
     val avatarUploadError: String,
     val selectAvatarButton: String,
+)
+
+data class PremiumBenefitsStrings(
+    val title: String,
+    val subtitle: String,
+    val bullets: List<String>,
+    val disclaimer: String,
 )
 
 data class SettingsStrings(
@@ -700,6 +708,20 @@ val fallbackAppStrings: AppStrings = AppStrings(
         languageDialogTitle = "Selecciona idioma",
         close = "Cerrar",
     ),
+    premiumBenefits = PremiumBenefitsStrings(
+        title = "Premium",
+        subtitle = "Desbloquea más lecturas y límites ampliados en los módulos principales.",
+        bullets = listOf(
+            "Horóscopos futuro, semanal y mensual desbloqueados.",
+            "Tarot 1: 5 tiradas de una carta al día incluidas.",
+            "Tarot 3: 1 tirada de tres cartas al día incluida.",
+            "Oráculo: 3 consultas al día incluidas.",
+            "Esencia natal: 1 descubrimiento al mes incluido.",
+            "Sinastría: hasta 30 lecturas al día incluidas.",
+            "Péndulo: hasta 50 consultas al día incluidas.",
+        ),
+        disclaimer = "Premium amplía los límites, pero algunos módulos siguen teniendo límites diarios o mensuales.",
+    ),
     navigation = NavigationStrings(
         onboardingProfile = "Completa tu perfil",
         astrology = "Astrología",
@@ -1144,6 +1166,20 @@ val fallbackAppStrings: AppStrings = AppStrings(
 )
 
 private val englishAppStrings = fallbackAppStrings.copy(
+    premiumBenefits = PremiumBenefitsStrings(
+        title = "Premium",
+        subtitle = "Unlock more readings and expanded limits in the main modules.",
+        bullets = listOf(
+            "Future, weekly, and monthly horoscopes unlocked.",
+            "Tarot 1: 5 one-card draws per day included.",
+            "Tarot 3: 1 three-card draw per day included.",
+            "Oracle: 3 questions per day included.",
+            "Birth essence: 1 discovery per month included.",
+            "Synastry: up to 30 readings per day included.",
+            "Pendulum: up to 50 questions per day included.",
+        ),
+        disclaimer = "Premium expands limits, but some modules still have daily or monthly limits.",
+    ),
     auth = fallbackAppStrings.auth.copy(
         subtitle = "Sign in to continue your magical path",
         continueWithGoogle = "Continue with Google",
@@ -1695,6 +1731,20 @@ private val englishAppStrings = fallbackAppStrings.copy(
 )
 
 private val portugueseAppStrings = fallbackAppStrings.copy(
+    premiumBenefits = PremiumBenefitsStrings(
+        title = "Premium",
+        subtitle = "Desbloqueie mais leituras e limites ampliados nos módulos principais.",
+        bullets = listOf(
+            "Horóscopos futuro, semanal e mensal desbloqueados.",
+            "Tarot 1: 5 tiragens de uma carta por dia incluídas.",
+            "Tarot 3: 1 tiragem de três cartas por dia incluída.",
+            "Oráculo: 3 consultas por dia incluídas.",
+            "Essência natal: 1 descoberta por mês incluída.",
+            "Sinastria: até 30 leituras por dia incluídas.",
+            "Pêndulo: até 50 consultas por dia incluídas.",
+        ),
+        disclaimer = "Premium amplia os limites, mas alguns módulos ainda têm limites diários ou mensais.",
+    ),
     auth = fallbackAppStrings.auth.copy(
         subtitle = "Entre para continuar seu caminho mágico",
         continueWithGoogle = "Continuar com Google",
@@ -2216,6 +2266,20 @@ private val portugueseAppStrings = fallbackAppStrings.copy(
 )
 
 private val russianAppStrings = fallbackAppStrings.copy(
+    premiumBenefits = PremiumBenefitsStrings(
+        title = "Premium",
+        subtitle = "Откройте больше чтений и расширенные лимиты в основных модулях.",
+        bullets = listOf(
+            "Открыты будущие, недельные и месячные гороскопы.",
+            "Таро 1: включены 5 раскладов по одной карте в день.",
+            "Таро 3: включён 1 расклад из трёх карт в день.",
+            "Оракул: включены 3 вопроса в день.",
+            "Натальная сущность: включено 1 открытие в месяц.",
+            "Синастрия: до 30 чтений в день включено.",
+            "Маятник: до 50 вопросов в день включено.",
+        ),
+        disclaimer = "Premium расширяет лимиты, но в некоторых модулях всё равно действуют дневные или месячные ограничения.",
+    ),
     auth = fallbackAppStrings.auth.copy(
         subtitle = "Войдите, чтобы продолжить ваш магический путь",
         continueWithGoogle = "Продолжить с Google",
@@ -2752,6 +2816,20 @@ private val russianAppStrings = fallbackAppStrings.copy(
 )
 
 private val frenchAppStrings = fallbackAppStrings.copy(
+    premiumBenefits = PremiumBenefitsStrings(
+        title = "Premium",
+        subtitle = "Débloquez plus de lectures et des limites étendues dans les modules principaux.",
+        bullets = listOf(
+            "Horoscopes futur, hebdomadaire et mensuel débloqués.",
+            "Tarot 1 : 5 tirages d'une carte par jour inclus.",
+            "Tarot 3 : 1 tirage de trois cartes par jour inclus.",
+            "Oracle : 3 consultations par jour incluses.",
+            "Essence natale : 1 découverte par mois incluse.",
+            "Synastrie : jusqu'à 30 lectures par jour incluses.",
+            "Pendule : jusqu'à 50 consultations par jour incluses.",
+        ),
+        disclaimer = "Premium élargit les limites, mais certains modules conservent des limites quotidiennes ou mensuelles.",
+    ),
     auth = fallbackAppStrings.auth.copy(
         subtitle = "Connecte-toi pour poursuivre ton chemin magique",
         continueWithGoogle = "Continuer avec Google",
@@ -3277,6 +3355,20 @@ private val frenchAppStrings = fallbackAppStrings.copy(
 )
 
 private val italianAppStrings = fallbackAppStrings.copy(
+    premiumBenefits = PremiumBenefitsStrings(
+        title = "Premium",
+        subtitle = "Sblocca più letture e limiti ampliati nei moduli principali.",
+        bullets = listOf(
+            "Oroscopi futuro, settimanale e mensile sbloccati.",
+            "Tarocchi 1: 5 letture da una carta al giorno incluse.",
+            "Tarocchi 3: 1 lettura da tre carte al giorno inclusa.",
+            "Oracolo: 3 consulti al giorno inclusi.",
+            "Essenza natale: 1 scoperta al mese inclusa.",
+            "Sinastria: fino a 30 letture al giorno incluse.",
+            "Pendolo: fino a 50 consulti al giorno inclusi.",
+        ),
+        disclaimer = "Premium amplia i limiti, ma alcuni moduli mantengono limiti giornalieri o mensili.",
+    ),
     auth = fallbackAppStrings.auth.copy(
         subtitle = "Accedi per continuare il tuo percorso magico",
         continueWithGoogle = "Continua con Google",
@@ -3800,6 +3892,20 @@ private val italianAppStrings = fallbackAppStrings.copy(
 )
 
 private val germanAppStrings = fallbackAppStrings.copy(
+    premiumBenefits = PremiumBenefitsStrings(
+        title = "Premium",
+        subtitle = "Schalte mehr Deutungen und erweiterte Limits in den wichtigsten Modulen frei.",
+        bullets = listOf(
+            "Zukunfts-, Wochen- und Monatshoroskope freigeschaltet.",
+            "Tarot 1: 5 Ein-Karten-Ziehungen pro Tag inklusive.",
+            "Tarot 3: 1 Drei-Karten-Ziehung pro Tag inklusive.",
+            "Orakel: 3 Fragen pro Tag inklusive.",
+            "Geburtsessenz: 1 Entdeckung pro Monat inklusive.",
+            "Synastrie: bis zu 30 Deutungen pro Tag inklusive.",
+            "Pendel: bis zu 50 Fragen pro Tag inklusive.",
+        ),
+        disclaimer = "Premium erweitert die Limits, aber einige Module behalten tägliche oder monatliche Limits.",
+    ),
     auth = fallbackAppStrings.auth.copy(
         subtitle = "Melde dich an, um deinen magischen Weg fortzusetzen",
         continueWithGoogle = "Mit Google fortfahren",

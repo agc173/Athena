@@ -49,6 +49,7 @@ import com.agc.bwitch.presentation.userprofile.SubscriptionPrimaryAction
 import com.agc.bwitch.presentation.ads.RewardedAdResult
 import com.agc.bwitch.presentation.ads.RewardedAdsService
 import com.agc.bwitch.ui.common.premium.PremiumCard
+import com.agc.bwitch.ui.common.premium.PremiumBenefitsList
 import com.agc.bwitch.ui.userprofile.rememberSubscriptionManagementLauncher
 import com.agc.bwitch.ui.userprofile.rememberSubscriptionPurchaseLauncher
 import com.agc.bwitch.ui.store.rememberMoonPackPurchaseLauncher
@@ -330,7 +331,7 @@ fun MoonStoreScreen(
         )
         PremiumCard(
             title = strings.storeSubscriptionTitle,
-            subtitle = strings.storeSubscriptionPlaceholderDescription,
+            subtitle = appStrings.premiumBenefits.subtitle,
             statusLabel = premiumCardStatus.toLocalizedLabel(settingsStrings),
             primaryActionLabel = when (premiumCardStatus.toPrimaryAction()) {
                 SubscriptionPrimaryAction.Subscribe -> settingsStrings.subscriptionActionSubscribe
@@ -339,6 +340,10 @@ fun MoonStoreScreen(
             restoreActionLabel = settingsStrings.restorePurchases,
             onPrimaryActionClick = settingsViewModel::onSubscriptionPrimaryActionClicked,
             onRestoreActionClick = settingsViewModel::onRestorePurchasesClicked,
+        )
+        PremiumBenefitsList(
+            bullets = appStrings.premiumBenefits.bullets,
+            disclaimer = appStrings.premiumBenefits.disclaimer,
         )
 
         Text(
