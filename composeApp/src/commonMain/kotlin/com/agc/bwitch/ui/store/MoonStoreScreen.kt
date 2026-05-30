@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
@@ -337,31 +336,6 @@ fun MoonStoreScreen(
                         }
                     }
                 }
-            }
-
-            Text(
-                text = strings.storeFutureContentTitle,
-                style = MaterialTheme.typography.titleSmall,
-            )
-            BWitchCard(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
-                    contentColor = MaterialTheme.colorScheme.onSurface,
-                ),
-            ) {
-                Text(
-                    text = strings.storeTarotDecksTitle,
-                    style = MaterialTheme.typography.titleSmall,
-                )
-                Text(
-                    text = strings.storeTarotDecksPlaceholderDescription,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Text(
-                    text = strings.storeSoon,
-                    color = MaterialTheme.colorScheme.primary,
-                )
             }
 
         }
