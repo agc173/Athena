@@ -3,13 +3,15 @@ package com.agc.bwitch.ui.store
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
@@ -48,6 +50,7 @@ import com.agc.bwitch.presentation.userprofile.SettingsViewModel
 import com.agc.bwitch.presentation.userprofile.SubscriptionPrimaryAction
 import com.agc.bwitch.presentation.ads.RewardedAdResult
 import com.agc.bwitch.presentation.ads.RewardedAdsService
+import com.agc.bwitch.ui.common.designsystem.BWitchCard
 import com.agc.bwitch.ui.common.premium.PremiumCard
 import com.agc.bwitch.ui.common.premium.PremiumBenefitsDialog
 import com.agc.bwitch.ui.userprofile.rememberSubscriptionManagementLauncher
@@ -216,39 +219,32 @@ fun MoonStoreScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-        Card(modifier = Modifier.fillMaxWidth()) {
-            Column(
-                modifier = Modifier.padding(12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Text(
-                    text = strings.storeCurrentBalanceTitle,
-                    style = MaterialTheme.typography.titleSmall,
-                )
-                if (economyState.hasUsableSnapshot) {
-                    Text(
-                        text = strings.moonCreditsValueFormat.replaceFirst("%d", "${economyState.balance}"),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                    )
-                } else {
-                    Text(
-                        text = strings.storeSyncingBalance,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-        }
+            val premiumCardStatus = settingsState.subscriptionStatus.resolveStoreStatus(economyState)
+            println(
+                "BWITCH_PREMIUM_DEBUG premium_card_status_displayed=$premiumCardStatus " +
+                    "settings=${settingsState.subscriptionStatus} economyIsPremium=${economyState.isPremium} " +
+                    "economyHasSnapshot=${economyState.hasUsableSnapshot}"
+            )
+            PremiumCard(
+                title = appStrings.premiumBenefits.sectionTitle,
+                subtitle = appStrings.premiumBenefits.subtitle,
+                statusLabel = premiumCardStatus.toLocalizedLabel(settingsStrings),
+                primaryActionLabel = when (premiumCardStatus.toPrimaryAction()) {
+                    SubscriptionPrimaryAction.Subscribe -> settingsStrings.subscriptionActionSubscribe
+                    SubscriptionPrimaryAction.Manage -> settingsStrings.subscriptionActionManage
+                },
+                restoreActionLabel = settingsStrings.restorePurchases,
+                infoActionLabel = appStrings.premiumBenefits.infoActionLabel,
+                infoContentDescription = appStrings.premiumBenefits.infoContentDescription,
+                onInfoClick = { showPremiumBenefitsDialog = true },
+                onPrimaryActionClick = settingsViewModel::onSubscriptionPrimaryActionClicked,
+                onRestoreActionClick = settingsViewModel::onRestorePurchasesClicked,
+            )
 
-        Card(modifier = Modifier.fillMaxWidth()) {
-            Column(
-                modifier = Modifier.padding(12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
+            BWitchCard(modifier = Modifier.fillMaxWidth()) {
                 Text(
                     text = strings.storeFreeRewardsTodayTitle,
-                    style = MaterialTheme.typography.titleSmall,
+                    style = MaterialTheme.typography.titleMedium,
                 )
                 if (!economyState.dailyLoginClaimed) {
                     Button(
@@ -308,62 +304,51 @@ fun MoonStoreScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-        }
 
-        Text(
-            text = strings.storePurchasesMonetizationTitle,
-            style = MaterialTheme.typography.titleSmall,
-        )
-        state.packs.forEach { pack ->
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    Text(text = pack.localizedLabel(strings), style = MaterialTheme.typography.titleMedium)
-                    Text(text = strings.storeMoonPackMoonsFormat.replaceFirst("%d", "${pack.moonAmount}"))
-                    Text(text = pack.localizedPrice ?: "—", color = MaterialTheme.colorScheme.primary)
-                    val canShowBuy = pack.status == MoonPackProductStatus.Available
-                    Button(
-                        onClick = { viewModel.onBuyPackClicked(pack.productId) },
-                        enabled = canShowBuy && !state.isLoading && !state.isPurchaseInProgress,
+            Text(
+                text = strings.storePurchasesMonetizationTitle,
+                style = MaterialTheme.typography.titleSmall,
+            )
+            state.packs.forEach { pack ->
+                BWitchCard(modifier = Modifier.fillMaxWidth()) {
+                    Row(
                         modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Text(if (canShowBuy) strings.storeMoonPackBuy else strings.storeMoonPackUnavailable)
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
+                            Text(text = pack.localizedLabel(strings), style = MaterialTheme.typography.titleMedium)
+                            Text(
+                                text = strings.storeMoonPackMoonsFormat.replaceFirst("%d", "${pack.moonAmount}"),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Text(text = pack.localizedPrice ?: "—", color = MaterialTheme.colorScheme.primary)
+                        }
+                        val canShowBuy = pack.status == MoonPackProductStatus.Available
+                        Button(
+                            onClick = { viewModel.onBuyPackClicked(pack.productId) },
+                            enabled = canShowBuy && !state.isLoading && !state.isPurchaseInProgress,
+                            modifier = Modifier.widthIn(min = 96.dp),
+                        ) {
+                            Text(if (canShowBuy) strings.storeMoonPackBuy else strings.storeMoonPackUnavailable)
+                        }
                     }
                 }
             }
-        }
 
-        val premiumCardStatus = settingsState.subscriptionStatus.resolveStoreStatus(economyState)
-        println(
-            "BWITCH_PREMIUM_DEBUG premium_card_status_displayed=$premiumCardStatus " +
-                "settings=${settingsState.subscriptionStatus} economyIsPremium=${economyState.isPremium} " +
-                "economyHasSnapshot=${economyState.hasUsableSnapshot}"
-        )
-        PremiumCard(
-            title = appStrings.premiumBenefits.sectionTitle,
-            subtitle = appStrings.premiumBenefits.subtitle,
-            statusLabel = premiumCardStatus.toLocalizedLabel(settingsStrings),
-            primaryActionLabel = when (premiumCardStatus.toPrimaryAction()) {
-                SubscriptionPrimaryAction.Subscribe -> settingsStrings.subscriptionActionSubscribe
-                SubscriptionPrimaryAction.Manage -> settingsStrings.subscriptionActionManage
-            },
-            restoreActionLabel = settingsStrings.restorePurchases,
-            infoActionLabel = appStrings.premiumBenefits.infoActionLabel,
-            infoContentDescription = appStrings.premiumBenefits.infoContentDescription,
-            onInfoClick = { showPremiumBenefitsDialog = true },
-            onPrimaryActionClick = settingsViewModel::onSubscriptionPrimaryActionClicked,
-            onRestoreActionClick = settingsViewModel::onRestorePurchasesClicked,
-        )
-        Text(
-            text = strings.storeFutureContentTitle,
-            style = MaterialTheme.typography.titleSmall,
-        )
-        Card(modifier = Modifier.fillMaxWidth()) {
-            Column(
-                modifier = Modifier.padding(12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+            Text(
+                text = strings.storeFutureContentTitle,
+                style = MaterialTheme.typography.titleSmall,
+            )
+            BWitchCard(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                ),
             ) {
                 Text(
                     text = strings.storeTarotDecksTitle,
@@ -378,7 +363,6 @@ fun MoonStoreScreen(
                     color = MaterialTheme.colorScheme.primary,
                 )
             }
-        }
 
         }
 

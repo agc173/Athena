@@ -509,6 +509,7 @@ private fun Destination.requiresEconomyRefreshOnEnter(): Boolean {
 
 private fun Destination.showsTopBarMoonBalance(): Boolean {
     return when (this) {
+        Destination.MoonStore,
         is Destination.HoroscopeDaily,
         Destination.BirthChart,
         Destination.Synastry,
