@@ -49,7 +49,7 @@ import com.agc.bwitch.presentation.userprofile.SubscriptionPrimaryAction
 import com.agc.bwitch.presentation.ads.RewardedAdResult
 import com.agc.bwitch.presentation.ads.RewardedAdsService
 import com.agc.bwitch.ui.common.premium.PremiumCard
-import com.agc.bwitch.ui.common.premium.PremiumBenefitsList
+import com.agc.bwitch.ui.common.premium.PremiumBenefitsDialog
 import com.agc.bwitch.ui.userprofile.rememberSubscriptionManagementLauncher
 import com.agc.bwitch.ui.userprofile.rememberSubscriptionPurchaseLauncher
 import com.agc.bwitch.ui.store.rememberMoonPackPurchaseLauncher
@@ -80,6 +80,7 @@ fun MoonStoreScreen(
     val scope = rememberCoroutineScope()
     var isRewardedAdFlowRunning by rememberSaveable { mutableStateOf(false) }
     var rewardedAdFeedbackKey by rememberSaveable { mutableStateOf<String?>(null) }
+    var showPremiumBenefitsDialog by rememberSaveable { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
     // TODO(store): esta pantalla ya funciona como hub general de Store; renombrar archivo/composable en una pasada posterior.
 
@@ -194,6 +195,17 @@ fun MoonStoreScreen(
             snackbarHostState.showSnackbar(feedbackKey.toLocalizedFeedback(strings))
             rewardedAdFeedbackKey = null
         }
+    }
+
+    if (showPremiumBenefitsDialog) {
+        PremiumBenefitsDialog(
+            title = appStrings.premiumBenefits.infoTitle,
+            subtitle = appStrings.premiumBenefits.subtitle,
+            bullets = appStrings.premiumBenefits.bullets,
+            disclaimer = appStrings.premiumBenefits.disclaimer,
+            closeLabel = appStrings.premiumBenefits.closeActionLabel,
+            onDismiss = { showPremiumBenefitsDialog = false },
+        )
     }
 
     Box(modifier = Modifier.fillMaxWidth()) {
@@ -330,7 +342,7 @@ fun MoonStoreScreen(
                 "economyHasSnapshot=${economyState.hasUsableSnapshot}"
         )
         PremiumCard(
-            title = strings.storeSubscriptionTitle,
+            title = appStrings.premiumBenefits.sectionTitle,
             subtitle = appStrings.premiumBenefits.subtitle,
             statusLabel = premiumCardStatus.toLocalizedLabel(settingsStrings),
             primaryActionLabel = when (premiumCardStatus.toPrimaryAction()) {
@@ -338,14 +350,12 @@ fun MoonStoreScreen(
                 SubscriptionPrimaryAction.Manage -> settingsStrings.subscriptionActionManage
             },
             restoreActionLabel = settingsStrings.restorePurchases,
+            infoActionLabel = appStrings.premiumBenefits.infoActionLabel,
+            infoContentDescription = appStrings.premiumBenefits.infoContentDescription,
+            onInfoClick = { showPremiumBenefitsDialog = true },
             onPrimaryActionClick = settingsViewModel::onSubscriptionPrimaryActionClicked,
             onRestoreActionClick = settingsViewModel::onRestorePurchasesClicked,
         )
-        PremiumBenefitsList(
-            bullets = appStrings.premiumBenefits.bullets,
-            disclaimer = appStrings.premiumBenefits.disclaimer,
-        )
-
         Text(
             text = strings.storeFutureContentTitle,
             style = MaterialTheme.typography.titleSmall,
