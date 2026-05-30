@@ -8,9 +8,12 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
@@ -22,17 +25,37 @@ fun PremiumCard(
     primaryActionLabel: String,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
+    infoActionLabel: String? = null,
+    infoContentDescription: String? = null,
     restoreActionLabel: String? = null,
+    onInfoClick: (() -> Unit)? = null,
     onPrimaryActionClick: () -> Unit,
     onRestoreActionClick: (() -> Unit)? = null,
 ) {
     BWitchCard(modifier = modifier.fillMaxWidth()) {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.weight(1f),
+                )
+                if (infoActionLabel != null && onInfoClick != null) {
+                    TextButton(
+                        onClick = onInfoClick,
+                        modifier = infoContentDescription
+                            ?.let { Modifier.semantics { contentDescription = it } }
+                            ?: Modifier,
+                    ) {
+                        Text(infoActionLabel)
+                    }
+                }
+            }
             if (!subtitle.isNullOrBlank()) {
                 Text(
                     text = subtitle,

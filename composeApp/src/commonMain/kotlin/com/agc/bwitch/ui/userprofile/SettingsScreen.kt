@@ -54,7 +54,7 @@ import com.agc.bwitch.presentation.userprofile.SubscriptionPrimaryAction
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
 import com.agc.bwitch.ui.common.designsystem.BWitchScreen
 import com.agc.bwitch.ui.common.premium.PremiumCard
-import com.agc.bwitch.ui.common.premium.PremiumBenefitsList
+import com.agc.bwitch.ui.common.premium.PremiumBenefitsDialog
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
@@ -83,6 +83,7 @@ fun SettingsScreen(contentPadding: PaddingValues) {
 
     var showLanguageDialog by rememberSaveable { mutableStateOf(false) }
     var showSubscriptionPlanDialog by rememberSaveable { mutableStateOf(false) }
+    var showPremiumBenefitsDialog by rememberSaveable { mutableStateOf(false) }
 
     val username = settingsState.username?.takeUnless { it.isBlank() } ?: strings.notAvailable
     val email = settingsState.email?.takeUnless { it.isBlank() } ?: strings.notAvailable
@@ -115,10 +116,12 @@ fun SettingsScreen(contentPadding: PaddingValues) {
             SettingsFeedback.RestorePurchasesSuccess -> strings.subscriptionRestoreSuccess
             SettingsFeedback.RestorePurchasesNoPurchases -> strings.subscriptionRestoreNoPurchases
             SettingsFeedback.DeleteAccountRequested -> strings.deleteAccountRequestedFeedback
-            SettingsFeedback.NotificationsPermissionDenied -> strings.comingSoon
-            SettingsFeedback.NotificationsUnavailable -> strings.comingSoon
+            SettingsFeedback.NotificationsPermissionDenied,
+            SettingsFeedback.NotificationsUnavailable -> null
         }
-        snackbarHostState.showSnackbar(message)
+        if (message != null) {
+            snackbarHostState.showSnackbar(message)
+        }
         settingsVm.onFeedbackConsumed()
     }
 
@@ -167,6 +170,17 @@ fun SettingsScreen(contentPadding: PaddingValues) {
                 appLanguageVm.onLanguageSelected(language)
                 showLanguageDialog = false
             },
+        )
+    }
+
+    if (showPremiumBenefitsDialog) {
+        PremiumBenefitsDialog(
+            title = appStrings.premiumBenefits.infoTitle,
+            subtitle = appStrings.premiumBenefits.subtitle,
+            bullets = appStrings.premiumBenefits.bullets,
+            disclaimer = appStrings.premiumBenefits.disclaimer,
+            closeLabel = appStrings.premiumBenefits.closeActionLabel,
+            onDismiss = { showPremiumBenefitsDialog = false },
         )
     }
 
@@ -249,21 +263,18 @@ fun SettingsScreen(contentPadding: PaddingValues) {
                 )
             }
 
-            PremiumBenefitsList(
-                title = appStrings.premiumBenefits.title,
-                subtitle = appStrings.premiumBenefits.subtitle,
-                bullets = appStrings.premiumBenefits.bullets,
-                disclaimer = appStrings.premiumBenefits.disclaimer,
-            )
-
             PremiumCard(
-                title = strings.sectionPurchasesSubscription,
+                title = appStrings.premiumBenefits.sectionTitle,
+                subtitle = appStrings.premiumBenefits.subtitle,
                 statusLabel = settingsState.subscriptionStatus.toLocalizedLabel(strings),
                 primaryActionLabel = when (settingsState.subscriptionPrimaryAction) {
                     SubscriptionPrimaryAction.Subscribe -> strings.subscriptionActionSubscribe
                     SubscriptionPrimaryAction.Manage -> strings.subscriptionActionManage
                 },
                 restoreActionLabel = strings.restorePurchases,
+                infoActionLabel = appStrings.premiumBenefits.infoActionLabel,
+                infoContentDescription = appStrings.premiumBenefits.infoContentDescription,
+                onInfoClick = { showPremiumBenefitsDialog = true },
                 onPrimaryActionClick = {
                     if (settingsState.subscriptionPrimaryAction == SubscriptionPrimaryAction.Subscribe) {
                         showSubscriptionPlanDialog = true
