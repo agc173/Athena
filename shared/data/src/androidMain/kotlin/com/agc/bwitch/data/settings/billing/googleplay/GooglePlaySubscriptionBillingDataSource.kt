@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.util.Log
 import com.agc.bwitch.data.settings.billing.SubscriptionBillingDataSource
 import com.agc.bwitch.domain.settings.GooglePlayPurchase
 import com.agc.bwitch.domain.settings.GooglePlayPurchaseState
@@ -30,6 +31,10 @@ import kotlin.coroutines.resume
 class GooglePlaySubscriptionBillingDataSource(
     private val appContext: Context,
 ) : SubscriptionBillingDataSource {
+
+    private companion object {
+        const val TAG = "AthenaBillingSubs"
+    }
 
     override val isSupported: Boolean = true
 
@@ -144,7 +149,8 @@ class GooglePlaySubscriptionBillingDataSource(
                     responseCode = BillingClient.BillingResponseCode.ITEM_UNAVAILABLE,
                     debugMessage = "Configured product not returned by Play Billing",
                 )
-            val offerToken = productDetails.selectedMonthlyOffer()?.offerToken
+            val selectedOffer = productDetails.selectedMonthlyOffer()
+            val offerToken = selectedOffer?.offerToken
                 ?: throw GooglePlayBillingException(
                     phase = "queryProductDetailsMissingOffer",
                     responseCode = BillingClient.BillingResponseCode.ITEM_UNAVAILABLE,
@@ -162,9 +168,14 @@ class GooglePlaySubscriptionBillingDataSource(
             val purchaseDeferred = CompletableDeferred<Result<GooglePlayPurchase>>()
             purchaseFlowResult = purchaseDeferred
             purchaseDeferred.invokeOnCompletion { purchaseFlowResult = null }
+            Log.d(
+                TAG,
+                "launchBillingFlow package=${activity.packageName} productId=$productId type=${BillingClient.ProductType.SUBS} basePlanId=${selectedOffer?.basePlanId}",
+            )
             val launchResult = billingClient.launchBillingFlow(activity, flowParams)
             if (launchResult.responseCode != BillingClient.BillingResponseCode.OK) {
                 purchaseFlowResult = null
+                Log.w(TAG, "launchBillingFlow failed code=${launchResult.responseCode} message=${launchResult.debugMessage}")
                 throw GooglePlayBillingException(
                     phase = "launchBillingFlow",
                     responseCode = launchResult.responseCode,
@@ -290,6 +301,10 @@ class GooglePlaySubscriptionBillingDataSource(
                 }
 
                 val productDetailsList = queryResult.productDetailsList
+                Log.d(
+                    TAG,
+                    "queryProductDetails package=${appContext.packageName} type=${BillingClient.ProductType.SUBS} requested=${GooglePlayBillingSubscriptionProducts.queryOrder} returned=${productDetailsList.map { it.productId }} unfetched=${queryResult.unfetchedProductList.map { it.productId }}",
+                )
 
                 if (productDetailsList.isEmpty()) {
                     continuation.resumeWith(
@@ -386,11 +401,22 @@ private fun String.toSubscriptionPlanType(): SubscriptionPlanType = when {
 private fun com.android.billingclient.api.ProductDetails.selectedMonthlyOffer(): com.android.billingclient.api.ProductDetails.SubscriptionOfferDetails? {
     val offers = subscriptionOfferDetails.orEmpty()
     return offers.firstOrNull { offer ->
+        offer.basePlanId == KnownSubscriptionProducts.MONTHLY_BASE_PLAN_ID && offer.hasUsableMonthlyPrice()
+    } ?: offers.firstOrNull { offer ->
+        offer.hasUsableMonthlyPrice()
+    } ?: offers.firstOrNull { offer ->
         offer.basePlanId == KnownSubscriptionProducts.MONTHLY_BASE_PLAN_ID && offer.hasUsablePrice()
     } ?: offers.firstOrNull { offer ->
+        offer.hasUsablePrice()
+    } ?: offers.firstOrNull { offer ->
         offer.basePlanId == KnownSubscriptionProducts.MONTHLY_BASE_PLAN_ID
-    }
+    } ?: offers.firstOrNull()
 }
+
+private fun com.android.billingclient.api.ProductDetails.SubscriptionOfferDetails.hasUsableMonthlyPrice(): Boolean =
+    pricingPhases.pricingPhaseList.any { phase ->
+        phase.formattedPrice.isNotBlank() && phase.billingPeriod.contains("P1M", ignoreCase = true)
+    }
 
 private fun com.android.billingclient.api.ProductDetails.SubscriptionOfferDetails.hasUsablePrice(): Boolean =
     pricingPhases.pricingPhaseList.any { phase ->

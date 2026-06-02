@@ -266,6 +266,7 @@ fun SettingsScreen(contentPadding: PaddingValues) {
             PremiumCard(
                 title = appStrings.premiumBenefits.sectionTitle,
                 subtitle = appStrings.premiumBenefits.subtitle,
+                priceLabel = settingsState.subscriptionCatalog.firstOrNull { plan -> plan.formattedPrice.isNotBlank() }?.formattedPrice,
                 statusLabel = settingsState.subscriptionStatus.toLocalizedLabel(strings),
                 primaryActionLabel = when (settingsState.subscriptionPrimaryAction) {
                     SubscriptionPrimaryAction.Subscribe -> strings.subscriptionActionSubscribe

@@ -25,6 +25,7 @@ fun PremiumCard(
     primaryActionLabel: String,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
+    priceLabel: String? = null,
     infoActionLabel: String? = null,
     infoContentDescription: String? = null,
     restoreActionLabel: String? = null,
@@ -61,6 +62,14 @@ fun PremiumCard(
                     text = subtitle,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            if (!priceLabel.isNullOrBlank()) {
+                Text(
+                    text = priceLabel,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.primary,
                 )
             }
             Text(
