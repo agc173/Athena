@@ -1,7 +1,7 @@
 import {onSchedule} from 'firebase-functions/v2/scheduler';
 import {initializeApp} from 'firebase-admin/app';
 import {DateTime} from 'luxon';
-import type {ZodiacSign} from './firestore/paths';
+import {ALL_ZODIAC_SIGNS} from './firestore/zodiacSigns';
 import {logger} from './utils/logger';
 import {withRetry} from './utils/retry';
 export {oracleGetStatus, tarotDraw, oracleAsk} from './oracle';
@@ -39,10 +39,7 @@ export {getConstellationProgress} from './economy/callables/getConstellationProg
 
 initializeApp();
 
-const ZODIAC_SIGNS: ZodiacSign[] = [
-  'aries', 'taurus', 'gemini', 'cancer', 'leo', 'virgo',
-  'libra', 'scorpio', 'sagittarius', 'capricorn', 'aquarius', 'pisces',
-];
+const ZODIAC_SIGNS = ALL_ZODIAC_SIGNS;
 
 type SchedulerEnv = {
   DATE_OFFSET_DAYS: number;
@@ -319,7 +316,17 @@ export const generateWeeklyHoroscopesWindow = onSchedule(
 
         for (const sign of ZODIAC_SIGNS) {
           canonicalTasks.push(async () => {
-            if (stoppedByCap) return;
+            if (stoppedByCap) {
+              logger.warn('generateWeeklyHoroscopesWindow item blocked by daily cap', {
+                phase: 'canonical',
+                weekKey,
+                sign,
+                lang: 'es',
+                result: 'blocked_by_cap',
+                error: capError,
+              });
+              return;
+            }
 
             try {
               const {result} = await withRetry<SchedulerGenerateResult>(
@@ -358,7 +365,17 @@ export const generateWeeklyHoroscopesWindow = onSchedule(
         for (const sign of ZODIAC_SIGNS) {
           for (const lang of ENV.ACTIVE_LANGS.filter((item) => item !== 'es')) {
             translationTasks.push(async () => {
-              if (stoppedByCap) return;
+              if (stoppedByCap) {
+                logger.warn('generateWeeklyHoroscopesWindow item blocked by daily cap', {
+                  phase: 'translation',
+                  weekKey,
+                  sign,
+                  lang,
+                  result: 'blocked_by_cap',
+                  error: capError,
+                });
+                return;
+              }
               if (failedCanonicalPairs.has(`${weekKey}|${sign}`)) {
                 blockedByCanonicalFailure++;
                 logger.warn('generateWeeklyHoroscopesWindow translation blocked', {
@@ -466,7 +483,17 @@ export const generateMonthlyHoroscopesWindow = onSchedule(
 
         for (const sign of ZODIAC_SIGNS) {
           canonicalTasks.push(async () => {
-            if (stoppedByCap) return;
+            if (stoppedByCap) {
+              logger.warn('generateMonthlyHoroscopesWindow item blocked by daily cap', {
+                phase: 'canonical',
+                monthKey,
+                sign,
+                lang: 'es',
+                result: 'blocked_by_cap',
+                error: capError,
+              });
+              return;
+            }
 
             try {
               const {result} = await withRetry<SchedulerGenerateResult>(
@@ -505,7 +532,17 @@ export const generateMonthlyHoroscopesWindow = onSchedule(
         for (const sign of ZODIAC_SIGNS) {
           for (const lang of ENV.ACTIVE_LANGS.filter((item) => item !== 'es')) {
             translationTasks.push(async () => {
-              if (stoppedByCap) return;
+              if (stoppedByCap) {
+                logger.warn('generateMonthlyHoroscopesWindow item blocked by daily cap', {
+                  phase: 'translation',
+                  monthKey,
+                  sign,
+                  lang,
+                  result: 'blocked_by_cap',
+                  error: capError,
+                });
+                return;
+              }
               if (failedCanonicalPairs.has(`${monthKey}|${sign}`)) {
                 blockedByCanonicalFailure++;
                 logger.warn('generateMonthlyHoroscopesWindow translation blocked', {

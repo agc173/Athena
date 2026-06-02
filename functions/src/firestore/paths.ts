@@ -1,8 +1,6 @@
 import type {Lang} from '../config/env';
-
-export type ZodiacSign =
-  | 'aries' | 'taurus' | 'gemini' | 'cancer' | 'leo' | 'virgo'
-  | 'libra' | 'scorpio' | 'sagittarius' | 'capricorn' | 'aquarius' | 'pisces';
+import type {ZodiacSign} from './zodiacSigns';
+export type {ZodiacSign} from './zodiacSigns';
 
 export function horoscopeSignDocPath(dateIso: string, sign: ZodiacSign) {
   return `horoscopeDaily/${dateIso}/signs/${sign}`;

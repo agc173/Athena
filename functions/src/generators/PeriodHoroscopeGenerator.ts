@@ -8,6 +8,7 @@ import {
   horoscopeWeeklySignDocPath,
   type ZodiacSign,
 } from '../firestore/paths';
+import {normalizeZodiacSign} from '../firestore/zodiacSigns';
 import {createDocIfAbsent} from '../firestore/writeOnce';
 import type {LLMRouter} from '../llm/LLMRouter';
 import {
@@ -87,11 +88,25 @@ function asNonEmptyString(source: Record<string, unknown>, key: string) {
   return value;
 }
 
-function normalizeWeekly(doc: unknown): Omit<WeeklyHoroscopeDoc,
+function asZodiacSign(source: Record<string, unknown>, expectedSign?: ZodiacSign) {
+  const raw = asNonEmptyString(source, 'sign');
+  const normalized = normalizeZodiacSign(raw);
+  if (!normalized) throw new StructureValidationError(`Invalid: unknown sign ${raw}`);
+  if (raw !== normalized) {
+    logger.warn('period horoscope sign normalized', {
+      expectedSign,
+      rawSign: raw,
+      normalizedSign: normalized,
+    });
+  }
+  return normalized;
+}
+
+function normalizeWeekly(doc: unknown, expectedSign?: ZodiacSign): Omit<WeeklyHoroscopeDoc,
   'createdAtEpochMillis' | 'updatedAtEpochMillis' | 'generatorVersion' | 'llmProvider'> {
   const source = (doc ?? {}) as Record<string, unknown>;
   return {
-    sign: asNonEmptyString(source, 'sign') as ZodiacSign,
+    sign: asZodiacSign(source, expectedSign),
     weekKey: asNonEmptyString(source, 'weekKey'),
     languageCode: asNonEmptyString(source, 'languageCode') as Lang,
     title: asNonEmptyString(source, 'title'),
@@ -105,11 +120,11 @@ function normalizeWeekly(doc: unknown): Omit<WeeklyHoroscopeDoc,
   };
 }
 
-function normalizeMonthly(doc: unknown): Omit<MonthlyHoroscopeDoc,
+function normalizeMonthly(doc: unknown, expectedSign?: ZodiacSign): Omit<MonthlyHoroscopeDoc,
   'createdAtEpochMillis' | 'updatedAtEpochMillis' | 'generatorVersion' | 'llmProvider'> {
   const source = (doc ?? {}) as Record<string, unknown>;
   return {
-    sign: asNonEmptyString(source, 'sign') as ZodiacSign,
+    sign: asZodiacSign(source, expectedSign),
     monthKey: asNonEmptyString(source, 'monthKey'),
     languageCode: asNonEmptyString(source, 'languageCode') as Lang,
     title: asNonEmptyString(source, 'title'),
@@ -127,8 +142,10 @@ function hasNonEmptyStrings(data: DocumentData, keys: string[]): boolean {
   return keys.every((key) => String(data[key] ?? '').trim().length > 0);
 }
 
-function isCompleteWeeklyDoc(data: DocumentData | undefined): boolean {
-  return Boolean(data && hasNonEmptyStrings(data, [
+function isCompleteWeeklyDoc(data: DocumentData | undefined, expectedSign?: ZodiacSign): boolean {
+  return Boolean(data &&
+    (!expectedSign || data.sign === expectedSign) &&
+    hasNonEmptyStrings(data, [
     'sign',
     'weekKey',
     'languageCode',
@@ -143,8 +160,10 @@ function isCompleteWeeklyDoc(data: DocumentData | undefined): boolean {
   ]));
 }
 
-function isCompleteMonthlyDoc(data: DocumentData | undefined): boolean {
-  return Boolean(data && hasNonEmptyStrings(data, [
+function isCompleteMonthlyDoc(data: DocumentData | undefined, expectedSign?: ZodiacSign): boolean {
+  return Boolean(data &&
+    (!expectedSign || data.sign === expectedSign) &&
+    hasNonEmptyStrings(data, [
     'sign',
     'monthKey',
     'languageCode',
@@ -157,6 +176,21 @@ function isCompleteMonthlyDoc(data: DocumentData | undefined): boolean {
     'mantra',
     'shareText',
   ]));
+}
+
+
+function logPeriodGenerationResult(data: {
+  periodType: 'weekly' | 'monthly';
+  phase: 'canonical' | 'translation';
+  periodKey: string;
+  sign: ZodiacSign;
+  lang: Lang;
+  result: string;
+  path: string;
+  provider: string;
+  reason?: string;
+}) {
+  logger.info('period horoscope generation result', data);
 }
 
 function writeModeForExistingDoc(
@@ -249,8 +283,18 @@ export class PeriodHoroscopeGenerator {
   async generateWeeklyCanonical(weekKey: string, sign: ZodiacSign) {
     const path = horoscopeWeeklySignDocPath(weekKey, sign);
     const snap = await this.db.doc(path).get();
-    const writeMode = writeModeForExistingDoc(snap, isCompleteWeeklyDoc);
+    const writeMode = writeModeForExistingDoc(snap, (data) => isCompleteWeeklyDoc(data, sign));
     if (writeMode === 'skip') {
+      logPeriodGenerationResult({
+        periodType: 'weekly',
+        phase: 'canonical',
+        periodKey: weekKey,
+        sign,
+        lang: 'es',
+        result: 'skipped',
+        path,
+        provider: 'none',
+      });
       return {result: 'skipped', path, provider: 'none'};
     }
 
@@ -282,7 +326,7 @@ export class PeriodHoroscopeGenerator {
         maxTokens: Math.max(ENV.LLM_MAX_TOKENS, 900),
       });
 
-      const normalized = normalizeWeekly(safeParseJson(res.text));
+      const normalized = normalizeWeekly(safeParseJson(res.text), sign);
       if (normalized.sign !== sign) throw new StructureValidationError('Invalid: sign mismatch');
       if (normalized.weekKey !== weekKey) throw new StructureValidationError('Invalid: weekKey mismatch');
       normalized.languageCode = 'es';
@@ -301,6 +345,16 @@ export class PeriodHoroscopeGenerator {
     const result = writeMode === 'repair' ?
       await this.db.doc(path).set(doc).then(() => 'repaired') :
       await createDocIfAbsent(path, doc);
+    logPeriodGenerationResult({
+      periodType: 'weekly',
+      phase: 'canonical',
+      periodKey: weekKey,
+      sign,
+      lang: 'es',
+      result,
+      path,
+      provider: parsed.provider,
+    });
     return {result, path, provider: parsed.provider};
   }
 
@@ -311,18 +365,39 @@ export class PeriodHoroscopeGenerator {
 
     const path = horoscopeWeeklyLangDocPath(weekKey, sign, lang);
     const translationSnap = await this.db.doc(path).get();
-    const writeMode = writeModeForExistingDoc(translationSnap, isCompleteWeeklyDoc);
+    const writeMode = writeModeForExistingDoc(translationSnap, (data) => isCompleteWeeklyDoc(data, sign));
     if (writeMode === 'skip') {
+      logPeriodGenerationResult({
+        periodType: 'weekly',
+        phase: 'translation',
+        periodKey: weekKey,
+        sign,
+        lang,
+        result: 'skipped',
+        path,
+        provider: 'none',
+      });
       return {result: 'skipped', path, provider: 'none'};
     }
 
     const canonicalPath = horoscopeWeeklySignDocPath(weekKey, sign);
     const canonicalSnap = await this.db.doc(canonicalPath).get();
     if (!canonicalSnap.exists) {
+      logPeriodGenerationResult({
+        periodType: 'weekly',
+        phase: 'translation',
+        periodKey: weekKey,
+        sign,
+        lang,
+        result: 'skipped',
+        path,
+        provider: 'none',
+        reason: 'canonical_missing',
+      });
       return {result: 'skipped', path, provider: 'none'};
     }
 
-    const canonical = normalizeWeekly(canonicalSnap.data());
+    const canonical = normalizeWeekly(canonicalSnap.data(), sign);
     const canonicalPayloadJson = JSON.stringify(canonical);
 
     const now = Date.now();
@@ -337,7 +412,7 @@ export class PeriodHoroscopeGenerator {
         maxTokens: Math.max(ENV.LLM_MAX_TOKENS, 900),
       });
 
-      const normalized = normalizeWeekly(safeParseJson(res.text));
+      const normalized = normalizeWeekly(safeParseJson(res.text), sign);
       if (normalized.sign !== sign) throw new StructureValidationError('Invalid: sign mismatch');
       if (normalized.weekKey !== weekKey) throw new StructureValidationError('Invalid: weekKey mismatch');
       normalized.languageCode = lang;
@@ -356,14 +431,34 @@ export class PeriodHoroscopeGenerator {
     const result = writeMode === 'repair' ?
       await this.db.doc(path).set(doc).then(() => 'repaired') :
       await createDocIfAbsent(path, doc);
+    logPeriodGenerationResult({
+      periodType: 'weekly',
+      phase: 'translation',
+      periodKey: weekKey,
+      sign,
+      lang,
+      result,
+      path,
+      provider: parsed.provider,
+    });
     return {result, path, provider: parsed.provider};
   }
 
   async generateMonthlyCanonical(monthKey: string, sign: ZodiacSign) {
     const path = horoscopeMonthlySignDocPath(monthKey, sign);
     const snap = await this.db.doc(path).get();
-    const writeMode = writeModeForExistingDoc(snap, isCompleteMonthlyDoc);
+    const writeMode = writeModeForExistingDoc(snap, (data) => isCompleteMonthlyDoc(data, sign));
     if (writeMode === 'skip') {
+      logPeriodGenerationResult({
+        periodType: 'monthly',
+        phase: 'canonical',
+        periodKey: monthKey,
+        sign,
+        lang: 'es',
+        result: 'skipped',
+        path,
+        provider: 'none',
+      });
       return {result: 'skipped', path, provider: 'none'};
     }
 
@@ -395,7 +490,7 @@ export class PeriodHoroscopeGenerator {
         maxTokens: Math.max(ENV.LLM_MAX_TOKENS, 1100),
       });
 
-      const normalized = normalizeMonthly(safeParseJson(res.text));
+      const normalized = normalizeMonthly(safeParseJson(res.text), sign);
       if (normalized.sign !== sign) throw new StructureValidationError('Invalid: sign mismatch');
       if (normalized.monthKey !== monthKey) throw new StructureValidationError('Invalid: monthKey mismatch');
       normalized.languageCode = 'es';
@@ -414,6 +509,16 @@ export class PeriodHoroscopeGenerator {
     const result = writeMode === 'repair' ?
       await this.db.doc(path).set(doc).then(() => 'repaired') :
       await createDocIfAbsent(path, doc);
+    logPeriodGenerationResult({
+      periodType: 'monthly',
+      phase: 'canonical',
+      periodKey: monthKey,
+      sign,
+      lang: 'es',
+      result,
+      path,
+      provider: parsed.provider,
+    });
     return {result, path, provider: parsed.provider};
   }
 
@@ -424,18 +529,39 @@ export class PeriodHoroscopeGenerator {
 
     const path = horoscopeMonthlyLangDocPath(monthKey, sign, lang);
     const translationSnap = await this.db.doc(path).get();
-    const writeMode = writeModeForExistingDoc(translationSnap, isCompleteMonthlyDoc);
+    const writeMode = writeModeForExistingDoc(translationSnap, (data) => isCompleteMonthlyDoc(data, sign));
     if (writeMode === 'skip') {
+      logPeriodGenerationResult({
+        periodType: 'monthly',
+        phase: 'translation',
+        periodKey: monthKey,
+        sign,
+        lang,
+        result: 'skipped',
+        path,
+        provider: 'none',
+      });
       return {result: 'skipped', path, provider: 'none'};
     }
 
     const canonicalPath = horoscopeMonthlySignDocPath(monthKey, sign);
     const canonicalSnap = await this.db.doc(canonicalPath).get();
     if (!canonicalSnap.exists) {
+      logPeriodGenerationResult({
+        periodType: 'monthly',
+        phase: 'translation',
+        periodKey: monthKey,
+        sign,
+        lang,
+        result: 'skipped',
+        path,
+        provider: 'none',
+        reason: 'canonical_missing',
+      });
       return {result: 'skipped', path, provider: 'none'};
     }
 
-    const canonical = normalizeMonthly(canonicalSnap.data());
+    const canonical = normalizeMonthly(canonicalSnap.data(), sign);
     const canonicalPayloadJson = JSON.stringify(canonical);
 
     const now = Date.now();
@@ -450,7 +576,7 @@ export class PeriodHoroscopeGenerator {
         maxTokens: Math.max(ENV.LLM_MAX_TOKENS, 1100),
       });
 
-      const normalized = normalizeMonthly(safeParseJson(res.text));
+      const normalized = normalizeMonthly(safeParseJson(res.text), sign);
       if (normalized.sign !== sign) throw new StructureValidationError('Invalid: sign mismatch');
       if (normalized.monthKey !== monthKey) throw new StructureValidationError('Invalid: monthKey mismatch');
       normalized.languageCode = lang;
@@ -469,6 +595,16 @@ export class PeriodHoroscopeGenerator {
     const result = writeMode === 'repair' ?
       await this.db.doc(path).set(doc).then(() => 'repaired') :
       await createDocIfAbsent(path, doc);
+    logPeriodGenerationResult({
+      periodType: 'monthly',
+      phase: 'translation',
+      periodKey: monthKey,
+      sign,
+      lang,
+      result,
+      path,
+      provider: parsed.provider,
+    });
     return {result, path, provider: parsed.provider};
   }
 }
