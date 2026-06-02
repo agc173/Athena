@@ -224,9 +224,13 @@ fun MoonStoreScreen(
                     "settings=${settingsState.subscriptionStatus} economyIsPremium=${economyState.isPremium} " +
                     "economyHasSnapshot=${economyState.hasUsableSnapshot}"
             )
+            val premiumPriceLabel = settingsState.subscriptionCatalog
+                .firstOrNull { plan -> plan.formattedPrice.isNotBlank() }
+                ?.formattedPrice
             PremiumCard(
                 title = appStrings.premiumBenefits.sectionTitle,
                 subtitle = appStrings.premiumBenefits.subtitle,
+                priceLabel = premiumPriceLabel,
                 statusLabel = premiumCardStatus.toLocalizedLabel(settingsStrings),
                 primaryActionLabel = when (premiumCardStatus.toPrimaryAction()) {
                     SubscriptionPrimaryAction.Subscribe -> settingsStrings.subscriptionActionSubscribe
