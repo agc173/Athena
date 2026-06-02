@@ -11,12 +11,13 @@ import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
-class SettingsUserProfileRepository(
-    settingsFactory: SettingsFactory
+class SettingsUserProfileRepository private constructor(
+    private val settings: Settings
 ) {
 
-    private val settings: Settings =
+    constructor(settingsFactory: SettingsFactory) : this(
         settingsFactory.create("bwitch_user_profile")
+    )
 
     private val json = Json { ignoreUnknownKeys = true }
 
@@ -54,6 +55,7 @@ class SettingsUserProfileRepository(
             username = profile.username,
             birthDate = profile.birthDate,
             zodiacSign = profile.zodiacSign,
+            description = profile.description,
             birthEssenceSummary = profile.birthEssenceSummary,
             updatedAtEpochMillis = updatedAtEpochMillis
         )
@@ -95,9 +97,15 @@ class SettingsUserProfileRepository(
                 username = dto.username,
                 birthDate = dto.birthDate,
                 zodiacSign = dto.zodiacSign,
+                description = dto.description,
                 birthEssenceSummary = dto.birthEssenceSummary
             )
         }.getOrNull()
+    }
+
+    internal companion object {
+        fun fromSettings(settings: Settings): SettingsUserProfileRepository =
+            SettingsUserProfileRepository(settings)
     }
 
     @Serializable
@@ -108,6 +116,7 @@ class SettingsUserProfileRepository(
         val username: String? = null,
         val birthDate: LocalDate? = null,
         val zodiacSign: ZodiacSign? = null,
+        val description: String? = null,
         val birthEssenceSummary: String? = null,
         val updatedAtEpochMillis: Long
     )
