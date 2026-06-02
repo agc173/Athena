@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -95,9 +96,10 @@ fun TarotDeckDetailScreen(contentPadding: PaddingValues, deckRawId: String) {
     val isSelectedDeck = state.selectedDeckId == deck
     LaunchedEffect(deckRawId) { vm.load(); vm.onDeckDetailOpened(deckRawId) }
     Column(Modifier.padding(contentPadding).padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(deckDefinition?.displayNameLocalized() ?: deck.value, style = MaterialTheme.typography.titleLarge)
-        Text("${unlocked.size} / ${cards.size}")
-        Text(strings.arcanaUnlockedCardsLabel + ": ${unlocked.size}")
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(deckDefinition?.displayNameLocalized() ?: deck.value, style = MaterialTheme.typography.titleLarge)
+            Text("${unlocked.size}/${cards.size}", style = MaterialTheme.typography.titleLarge)
+        }
         Text(strings.arcanaDeckRevealCopy)
         Button(onClick = { vm.selectDeck(deck, isFullyUnlocked) }, enabled = canUseDeck) {
             Text(if (isSelectedDeck) appStrings.tarot.deckInUse else appStrings.tarot.useThisDeck)
