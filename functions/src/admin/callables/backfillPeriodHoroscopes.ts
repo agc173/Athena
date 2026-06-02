@@ -2,6 +2,7 @@ import {DateTime} from 'luxon';
 import {HttpsError, onCall} from 'firebase-functions/v2/https';
 import type {Lang} from '../../config/env';
 import type {ZodiacSign} from '../../firestore/paths';
+import {ALL_ZODIAC_SIGNS, normalizeZodiacSign} from '../../firestore/zodiacSigns';
 
 type BackfillPeriodType = 'weekly' | 'monthly';
 type BackfillInput = {
@@ -12,10 +13,7 @@ type BackfillInput = {
   langs?: Lang[];
 };
 
-const ALL_SIGNS: ZodiacSign[] = [
-  'aries', 'taurus', 'gemini', 'cancer', 'leo', 'virgo',
-  'libra', 'scorpio', 'sagittarius', 'capricorn', 'aquarius', 'pisces',
-];
+const ALL_SIGNS = ALL_ZODIAC_SIGNS;
 
 const MAX_WEEKLY_PERIODS = 8;
 const MAX_MONTHLY_PERIODS = 6;
@@ -90,9 +88,16 @@ function buildPeriodKeys(input: BackfillInput): string[] {
 
 function sanitizeSigns(raw: unknown): ZodiacSign[] {
   if (!Array.isArray(raw) || raw.length === 0) return ALL_SIGNS;
-  const selected = raw.filter((value): value is ZodiacSign => ALL_SIGNS.includes(value as ZodiacSign));
+  const selected = raw
+      .map((value) => normalizeZodiacSign(value))
+      .filter((value): value is ZodiacSign => Boolean(value));
   if (!selected.length) throw new HttpsError('invalid-argument', 'No valid zodiac signs provided');
   return [...new Set(selected)];
+}
+
+function normalizeLang(raw: unknown, activeLangs: Lang[]): Lang | undefined {
+  const normalized = String(raw ?? '').trim().toLowerCase();
+  return activeLangs.includes(normalized as Lang) ? normalized as Lang : undefined;
 }
 
 function sanitizeLangs(raw: unknown, activeLangs: Lang[]): Lang[] {
@@ -100,7 +105,8 @@ function sanitizeLangs(raw: unknown, activeLangs: Lang[]): Lang[] {
     return activeLangs.filter((lang) => lang !== 'es');
   }
   const selected = raw
-      .filter((value): value is Lang => activeLangs.includes(value as Lang))
+      .map((value) => normalizeLang(value, activeLangs))
+      .filter((value): value is Lang => Boolean(value))
       .filter((lang) => lang !== 'es');
   return [...new Set(selected)];
 }
@@ -158,6 +164,15 @@ export const backfillPeriodHoroscopes = onCall(
             if (result.result === 'created') canonical.created++;
             else if (result.result === 'repaired') canonical.repaired++;
             else canonical.skipped++;
+            logger.info('backfillPeriodHoroscopes canonical result', {
+              periodType: input.periodType,
+              periodKey,
+              sign,
+              lang: 'es',
+              result: result.result,
+              path: result.path,
+              provider: result.provider,
+            });
           } catch (error) {
             canonical.failed++;
             failedCanonicalPairs.add(pairKey);
@@ -177,6 +192,13 @@ export const backfillPeriodHoroscopes = onCall(
           for (const lang of langs) {
             if (failedCanonicalPairs.has(pairKey)) {
               translation.blockedByCanonicalFailure++;
+              logger.warn('backfillPeriodHoroscopes translation blocked', {
+                periodType: input.periodType,
+                periodKey,
+                sign,
+                lang,
+                reason: 'canonical_failed',
+              });
               continue;
             }
             try {
@@ -189,6 +211,15 @@ export const backfillPeriodHoroscopes = onCall(
               if (result.result === 'created') translation.created++;
               else if (result.result === 'repaired') translation.repaired++;
               else translation.skipped++;
+              logger.info('backfillPeriodHoroscopes translation result', {
+                periodType: input.periodType,
+                periodKey,
+                sign,
+                lang,
+                result: result.result,
+                path: result.path,
+                provider: result.provider,
+              });
             } catch (error) {
               translation.failed++;
               logger.error('backfillPeriodHoroscopes translation failed', {
