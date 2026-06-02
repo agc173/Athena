@@ -2,6 +2,7 @@ package com.agc.bwitch.data.moons.billing.googleplay
 
 import android.app.Activity
 import android.content.Context
+import android.util.Log
 import com.agc.bwitch.data.moons.MoonPackBillingDataSource
 import com.agc.bwitch.data.moons.MoonPackProduct
 import com.agc.bwitch.domain.settings.GooglePlayPurchase
@@ -22,6 +23,9 @@ import kotlinx.coroutines.sync.withLock
 import kotlin.coroutines.resume
 
 class GooglePlayMoonPackBillingDataSource(private val appContext: Context) : MoonPackBillingDataSource {
+    private companion object {
+        const val TAG = "AthenaBillingMoons"
+    }
     override val isSupported: Boolean = true
     private val mutex = Mutex()
     private var pendingPurchase: CompletableDeferred<Result<GooglePlayPurchase>>? = null
@@ -66,8 +70,16 @@ class GooglePlayMoonPackBillingDataSource(private val appContext: Context) : Moo
             val purchaseDeferred = CompletableDeferred<Result<GooglePlayPurchase>>()
             pendingPurchase = purchaseDeferred
             purchaseDeferred.invokeOnCompletion { pendingPurchase = null }
+            Log.d(
+                TAG,
+                "launchBillingFlow package=${activity.packageName} productId=$productId type=${BillingClient.ProductType.INAPP}",
+            )
             val launch = billingClient.launchBillingFlow(activity, flow)
-            if (launch.responseCode != BillingClient.BillingResponseCode.OK) throw IllegalStateException("launch failed")
+            if (launch.responseCode != BillingClient.BillingResponseCode.OK) {
+                pendingPurchase = null
+                Log.w(TAG, "launchBillingFlow failed code=${launch.responseCode} message=${launch.debugMessage}")
+                throw IllegalStateException("launch failed ${launch.responseCode}: ${launch.debugMessage}")
+            }
             purchaseDeferred
         }
         deferred.await()
@@ -108,8 +120,12 @@ class GooglePlayMoonPackBillingDataSource(private val appContext: Context) : Moo
                 .setProductList(products)
                 .build()
             billingClient.queryProductDetailsAsync(queryParams) { result, q ->
+                Log.d(
+                    TAG,
+                    "queryProductDetails package=${appContext.packageName} type=${BillingClient.ProductType.INAPP} requested=${GooglePlayMoonPackProducts.queryOrder} returned=${q.productDetailsList.map { it.productId }} unfetched=${q.unfetchedProductList.map { it.productId }}",
+                )
                 if (result.responseCode != BillingClient.BillingResponseCode.OK) {
-                    cont.resumeWith(Result.failure(IllegalStateException("query details failed ${result.responseCode}")))
+                    cont.resumeWith(Result.failure(IllegalStateException("query details failed ${result.responseCode}: ${result.debugMessage}")))
                 } else {
                     cont.resume(q.productDetailsList)
                 }
