@@ -17,6 +17,8 @@ test('runtime config parser falls back to safe defaults when document does not e
     tarotEconomyV2Enabled: false,
     oracleEconomyV2Enabled: false,
     birthEssenceEconomyV2Enabled: false,
+    synastryEconomyV2Enabled: false,
+    pendulumEconomyV2Enabled: false,
   });
 });
 
@@ -25,11 +27,15 @@ test('runtime config parser falls back to safe defaults for invalid field types'
     tarotEconomyV2Enabled: 'yes',
     oracleEconomyV2Enabled: 1,
     birthEssenceEconomyV2Enabled: null,
+    synastryEconomyV2Enabled: 'false',
+    pendulumEconomyV2Enabled: 0,
   });
 
   assert.deepEqual(config, {
     tarotEconomyV2Enabled: false,
     oracleEconomyV2Enabled: false,
     birthEssenceEconomyV2Enabled: false,
+    synastryEconomyV2Enabled: false,
+    pendulumEconomyV2Enabled: false,
   });
 });

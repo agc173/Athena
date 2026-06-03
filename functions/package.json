@@ -3,6 +3,8 @@
   "scripts": {
     "lint": "eslint .",
     "build": "tsc",
+    "test:selftests": "tsx --test \"src/**/*.selftest.ts\"",
+    "coverage:selftests": "tsx --test --experimental-test-coverage \"src/**/*.selftest.ts\"",
     "predeploy": "npm run lint && npm run build",
     "build:watch": "tsc --watch",
     "serve": "npm run build && firebase emulators:start --only functions",
