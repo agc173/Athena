@@ -8,23 +8,41 @@ Scope: auditoría documental previa a Google Play Closed Testing. No se añadier
 
 ---
 
+## Actualización — 2026-06-03 — `feature/functions-selftests-fix`
+
+Se corrigieron los 3 selftests rojos de Functions detectados durante esta auditoría sin tocar lógica productiva de economía:
+
+- `functions/src/economy/economyResolvers.selftest.ts`: la expectativa de límite diario de `TAROT_1` estaba obsoleta; el catálogo vigente permite `moonExtraDailyMax: 3`, por lo que el caso rojo usaba `tarot1MoonUsed: 2` y aún debía resolver `MOON`. El test ahora valida rechazo con `tarot1MoonUsed: 3`.
+- `functions/src/economy/runtimeConfig.selftest.ts`: las expectativas no incluían los flags ya existentes `synastryEconomyV2Enabled` y `pendulumEconomyV2Enabled`, ambos con fallback seguro `false`.
+- `functions/package.json`: se añadieron scripts estables `test:selftests` y `coverage:selftests` para ejecutar los selftests y coverage diagnóstico de Functions.
+
+Validación posterior:
+
+- `npm run lint`: pass.
+- `npm run build`: pass.
+- `npm run test:selftests`: pass, 72/72 tests.
+
+La nota histórica de la auditoría original se conserva debajo para trazabilidad del hallazgo inicial.
+
+---
+
 ## 1. Resumen ejecutivo
 
 - **No hay coverage real y fiable del proyecto completo hoy**: no existe Kover/Jacoco configurado en Gradle, no hay pipeline CI versionado y las tareas Gradle no llegan a configurarse en este entorno porque no se resuelve `com.android.application:8.7.3` desde los repositorios configurados.
-- **Sí existe un coverage diagnóstico parcial para Functions** usando `node --test` vía `tsx --test --experimental-test-coverage`: reportó **62.82% line coverage / 82.23% branch / 70.17% funcs** sobre los ficheros TypeScript cargados por los selftests, pero **no debe considerarse coverage oficial** porque el comando no está versionado como script npm y terminó con **3 tests fallidos**.
+- **Sí existe un coverage diagnóstico parcial para Functions** usando `node --test` vía `tsx --test --experimental-test-coverage`: reportó **62.82% line coverage / 82.23% branch / 70.17% funcs** sobre los ficheros TypeScript cargados por los selftests, pero en la auditoría original **no debía considerarse coverage oficial** porque el comando no estaba versionado como script npm y terminó con **3 tests fallidos**; la actualización `feature/functions-selftests-fix` añadió scripts y dejó los selftests en verde.
 - **Estimación cualitativa de coverage total repo**: baja/media, aproximadamente **20–30% efectivo** si se pondera todo el código Kotlin + Functions por riesgo y superficie. La cobertura es buena en lógica pura de `shared/presentation` para Tarot/Horoscope/Economy/Premium analytics y en algunos servicios Functions, pero es casi nula en UI Compose, navegación real, Android/iOS platform code, Firebase Rules, Storage, emuladores y flujos end-to-end.
 - **Módulos con tests Kotlin**: `composeApp` (solo test placeholder), `shared/domain`, `shared/data`, `shared/presentation`.
 - **Módulos sin tests Kotlin efectivos**: `shared/di`, `androidUnitTest`, `androidInstrumentedTest`, `iosTest`; no se encontraron tests UI ni E2E versionados.
-- **Functions tiene selftests significativos**, pero están repartidos en `*.selftest.ts`, `*SelfTest.ts` y herramientas manuales; solo `lint` y `build` están como scripts npm estándar. No hay `npm test` ni `npm run coverage`.
-- **Riesgo más importante antes de Closed Testing**: no es la ausencia de un porcentaje perfecto de coverage, sino la falta de ejecución confiable/automatizada de tests Gradle y el estado rojo de selftests de Functions en economía/runtime config.
+- **Functions tiene selftests significativos**, pero están repartidos en `*.selftest.ts`, `*SelfTest.ts` y herramientas manuales; `lint`, `build`, `test:selftests` y `coverage:selftests` están como scripts npm estándar tras la actualización `feature/functions-selftests-fix`.
+- **Riesgo más importante antes de Closed Testing**: no es la ausencia de un porcentaje perfecto de coverage, sino la falta de ejecución confiable/automatizada de tests Gradle y mantener versionada la ejecución de selftests de Functions y evitar regresiones en economía/runtime config.
 
 ### Recomendación clara para Closed Testing
 
 Antes de ampliar testers cerrados, hacer como mínimo:
 
 1. **Desbloquear ejecución local/CI de Gradle tests** en un entorno donde AGP 8.7.3 resuelva correctamente.
-2. **Corregir o aceptar explícitamente** los 3 selftests fallidos de Functions antes de usar economía premium/synastry/pendulum con testers reales.
-3. **Añadir un script npm `test:selftests`** que ejecute los selftests existentes de Functions de forma reproducible.
+2. **Mantener verdes** los selftests de Functions ya corregidos antes de usar economía premium/synastry/pendulum con testers reales.
+3. **Ejecutar `npm run test:selftests`** para correr los selftests existentes de Functions de forma reproducible.
 4. **Validar manualmente en dispositivo** login, compra/restauración, consumo de lunas, avatar Storage, push y navegación principal.
 5. **No bloquear Closed Testing por no tener Kover/Jacoco aún**, siempre que el build real, selftests críticos y QA manual pasen; sí bloquear producción pública si no hay coverage/CI mínimo.
 
@@ -41,7 +59,7 @@ Antes de ampliar testers cerrados, hacer como mínimo:
 | `shared/data` | 9 ficheros | Unit + integración ligera con fakes/settings | Gradle, hoy bloqueado por AGP | No emulador; usa fakes/settings in-memory | Buenas pruebas de repositorios concretos, sin Firebase real. |
 | `shared/presentation` | 10 ficheros | Unit de ViewModels con fakes | Gradle, hoy bloqueado por AGP | No | Cobertura fuerte en ViewModels críticos, sin UI Compose. |
 | `shared/di` | 0 | N/A | N/A | N/A | Sin tests de composición Koin. |
-| `functions` | 16 ficheros detectados | selftests unitarios + herramienta local integración | `npm run lint`, `npm run build`, `npx tsx --test`; sin `npm test` versionado | La herramienta `oracleLocalTest.ts` requiere emuladores Auth/Firestore/Functions | Selftests útiles pero algunos fallan. |
+| `functions` | 16 ficheros detectados | selftests unitarios + herramienta local integración | `npm run lint`, `npm run build`, `npm run test:selftests`; coverage diagnóstico con `npm run coverage:selftests` | La herramienta `oracleLocalTest.ts` requiere emuladores Auth/Firestore/Functions | Selftests útiles; 72/72 pasan tras `feature/functions-selftests-fix`. |
 | Firebase Rules | 0 tests | N/A | N/A | Requerirían Emulator Suite | No hay tests automatizados de `firestore.rules` ni `storage.rules`. |
 | Android instrumented/UI | 0 | N/A | N/A | Emulador/dispositivo | Riesgo alto para login, billing, push, picker avatar. |
 | iOS tests | 0 | N/A | N/A | Mac/Xcode | Riesgo fuera del alcance Google Play, pero relevante para TestFlight. |
@@ -88,8 +106,8 @@ Antes de ampliar testers cerrados, hacer como mínimo:
 | `functions/src/account/service.selftest.ts` | `node:test` selftest | Patches de borrado/restauración de cuenta | Manual con `npx tsx --test`; no script npm | No | Unit puro |
 | `functions/src/birthessence/promptHardening.selftest.ts` | `node:test` selftest | Delimitación de prompt y reglas anti prompt injection | Manual | No | Unit puro |
 | `functions/src/economy/deckProgress.selftest.ts` | `node:test` selftest | Progreso de decks por gasto de lunas e idempotencia | Manual | No | Unit puro crítico economía |
-| `functions/src/economy/economyResolvers.selftest.ts` | `node:test` selftest | Resolución FREE/PREMIUM/MOON/REJECT para Tarot/Oracle/Birth/Synastry/Horoscope | Manual; **1 fallo actual** | No | Unit puro crítico economía |
-| `functions/src/economy/runtimeConfig.selftest.ts` | `node:test` selftest | Path/config de flags runtime de economía | Manual; **2 fallos actuales** | No | Unit puro crítico config |
+| `functions/src/economy/economyResolvers.selftest.ts` | `node:test` selftest | Resolución FREE/PREMIUM/MOON/REJECT para Tarot/Oracle/Birth/Synastry/Horoscope | `npm run test:selftests`; verde tras actualizar expectativa obsoleta de `TAROT_1` | No | Unit puro crítico economía |
+| `functions/src/economy/runtimeConfig.selftest.ts` | `node:test` selftest | Path/config de flags runtime de economía | `npm run test:selftests`; verde tras incluir flags Synastry/Pendulum | No | Unit puro crítico config |
 | `functions/src/firestore/zodiacSigns.selftest.ts` | selftest ejecutable | Normalización/signos zodiacales | Manual | No | Unit puro |
 | `functions/src/llm/providers/DeepSeekProvider.selftest.ts` | selftest ejecutable async | Parsing JSON/respuesta proveedor DeepSeek con fake fetch | Manual | No red real | Unit puro LLM |
 | `functions/src/oracle/callables/payloadBuilders.selftest.ts` | `node:test` selftest | Limpieza de `undefined` y payloads economy | Manual | No | Unit puro |
@@ -114,14 +132,14 @@ Antes de ampliar testers cerrados, hacer como mínimo:
 | Kover | No encontrado | No hay plugin `org.jetbrains.kotlinx.kover`; sin cobertura KMP oficial. |
 | Gradle coverage reports | No encontrado | `./gradlew tasks` ni siquiera configura por AGP; no hay tareas `kover*`/`jacoco*`. |
 | npm coverage | No encontrado como script | `functions/package.json` tiene `lint`, `build`, deploy/admin scripts; no `test` ni `coverage`. |
-| `node:test` coverage | Posible de forma ad-hoc | `npx --prefix functions tsx --test --experimental-test-coverage ...` genera reporte diagnóstico, pero no está en scripts y falla por tests rojos. |
+| `node:test` coverage | Posible de forma ad-hoc | `npx --prefix functions tsx --test --experimental-test-coverage ...` genera reporte diagnóstico, versionado como `coverage:selftests`; la auditoría original fallaba por tests rojos ya corregidos. |
 | Firebase Rules tests | No encontrados | No hay `@firebase/rules-unit-testing`, Jest/Vitest ni tests de Emulator Suite para `firestore.rules`/`storage.rules`. |
 | CI config | No encontrado | No hay `.github/workflows`, `.gitlab-ci.yml`, `azure-pipelines.yml` o equivalente versionado. |
 
 ### 3.2 ¿Se puede obtener coverage real hoy?
 
 - **Proyecto KMP completo**: **no**. Falta Kover/Jacoco y la configuración Gradle falla antes de ejecutar tests en este entorno por resolución de AGP.
-- **Functions**: **parcial/diagnóstico sí**, no oficial. El comando ad-hoc reportó **62.82% line coverage** pero con **3 tests fallidos**, por lo que no debe usarse como métrica de release hasta estabilizar los selftests y versionar el script.
+- **Functions**: **parcial/diagnóstico sí**, no oficial. El comando ad-hoc reportó **62.82% line coverage** pero con **3 tests fallidos**. Tras `feature/functions-selftests-fix`, los selftests están estabilizados y el script quedó versionado; sigue siendo métrica diagnóstica hasta definir coverage oficial.
 
 ### 3.3 Comandos exactos para generar coverage cuando se habilite tooling
 
@@ -170,8 +188,8 @@ npm --prefix functions run coverage:selftests
 | `npm --prefix functions run build` | Pass | TypeScript `tsc` OK; solo warning npm `Unknown env config "http-proxy"`. |
 | `npx --prefix functions tsx functions/src/oracle/tarot/tarotSelfTest.ts` | Pass | Selftest Tarot individual OK. |
 | `npx --prefix functions tsx functions/src/oracle/oracle/oracleSelfTest.ts` | Pass | Selftest Oracle individual OK. |
-| `npx --prefix functions tsx --test $(rg --files functions/src -g '!functions/lib/**' | rg '\.selftest\.ts$')` | Fail por tests rojos | 72 tests: 69 pass, 3 fail. Fallan `economyResolvers.selftest.ts` y `runtimeConfig.selftest.ts`. |
-| `NODE_V8_COVERAGE=functions/.coverage/tmp npx --prefix functions tsx --test --experimental-test-coverage $(rg --files functions/src -g '!functions/lib/**' | rg '\.selftest\.ts$')` | Fail por tests rojos, genera métrica diagnóstica | 72 tests: 69 pass, 3 fail. Reporte diagnóstico: all files **62.82% line / 82.23% branch / 70.17% funcs**. Se borró `functions/.coverage`. |
+| `npx --prefix functions tsx --test $(rg --files functions/src -g '!functions/lib/**' | rg '\.selftest\.ts$')` | Fail histórico por tests rojos | 72 tests: 69 pass, 3 fail. Fallaban `economyResolvers.selftest.ts` y `runtimeConfig.selftest.ts`; corregido después con `npm run test:selftests` en `feature/functions-selftests-fix`. |
+| `NODE_V8_COVERAGE=functions/.coverage/tmp npx --prefix functions tsx --test --experimental-test-coverage $(rg --files functions/src -g '!functions/lib/**' | rg '\.selftest\.ts$')` | Fail histórico por tests rojos, generó métrica diagnóstica | 72 tests: 69 pass, 3 fail. Reporte diagnóstico: all files **62.82% line / 82.23% branch / 70.17% funcs**. Se borró `functions/.coverage`; repetir con `npm run coverage:selftests` si se necesita nueva métrica diagnóstica. |
 
 ---
 
@@ -185,9 +203,9 @@ npm --prefix functions run coverage:selftests
 | Tarot | Media/alta en ViewModel + selftests prompt/draw; baja en callable/emulador real | `TarotViewModelTest`, `tarotSelfTest.ts`, prompt hardening | Alto si consume lunas/LLM; faltan pruebas callable con emulador. |
 | Oracle | Media en ViewModel/data/prompt/input; baja en callable/emulador real | `OracleAskViewModelTest`, `OracleRepositoryImplTest`, oracle prompt/input selftests | Alto por LLM/economía/retries; falta E2E local reproducible. |
 | Birth Essence | Media en domain/data/prompt; baja en UI/backend real | `GenerateBirthEssenceUseCaseTest`, `BirthEssenceRemoteDtoTest`, prompt hardening | Medio/alto por coste LLM/economía. |
-| Synastry | Media en domain/presentation/economy resolver; selftests economía con fallo | `SynastryViewModelTest`, `SynastryReadingGeneratorTest`, economy selftests | Alto: área monetizada; un selftest de economía falla. |
+| Synastry | Media en domain/presentation/economy resolver; selftests economía verdes tras corrección | `SynastryViewModelTest`, `SynastryReadingGeneratorTest`, economy selftests | Alto: área monetizada; mantener selftests de economía verdes. |
 | Pendulum | Baja | Solo aparece en resolvers/runtime config; sin ViewModel/data/UI tests dedicados detectados | Medio/alto si monetizado; falta smoke manual. |
-| Economy | Media en ViewModels/repos/resolvers, pero rojo en selftests Functions | `EconomyViewModelTest`, `BackendFirstMoonRepositoryTest`, `economyResolvers.selftest.ts` | Muy alto: bugs cuestan dinero/lunas y pueden romper límites. |
+| Economy | Media en ViewModels/repos/resolvers; selftests Functions verdes tras corrección | `EconomyViewModelTest`, `BackendFirstMoonRepositoryTest`, `economyResolvers.selftest.ts` | Muy alto: bugs cuestan dinero/lunas y pueden romper límites. |
 | Premium billing | Media en fakes; baja contra Google Play real | `BillingBackedSubscriptionRepositoryTest`, `SettingsViewModelAnalyticsTest`, `premium/service.selftest.ts` | Muy alto: compras/restores bloquean monetización. |
 | Push notifications | Baja/nula | No se detectan tests para `AndroidPush*`/FCM | Medio para Closed Testing; alto antes de producción pública si push es core. |
 | Storage/avatar | Baja | Sin rules tests ni instrumented picker/upload; solo ViewModel evita save sin username | Alto por privacidad y UX; validar manualmente y añadir rules tests. |
@@ -208,7 +226,7 @@ npm --prefix functions run coverage:selftests
 - **Firebase Rules**: cero tests automatizados para Firestore/Storage; riesgo de acceso cross-user o bloqueo accidental.
 - **Storage/avatar end-to-end**: picker, crop/upload, MIME/size/rules solo se puede validar manualmente hoy.
 - **Navigation/AppRoot**: sin smoke tests; una regresión puede bloquear acceso a features aunque ViewModels pasen.
-- **Functions economía/runtime config**: selftests existentes fallan; esto debe tratarse como señal roja.
+- **Functions economía/runtime config**: los selftests existentes fallaban en la auditoría original; quedaron verdes en `feature/functions-selftests-fix` y deben mantenerse en CI/local antes de Closed Testing.
 
 ### 6.2 Áreas donde un bug puede costar dinero o saldo
 
@@ -252,8 +270,8 @@ npm --prefix functions run coverage:selftests
 1. Resolver entorno AGP/Gradle y ejecutar:
    - `./gradlew :shared:domain:allTests :shared:data:allTests :shared:presentation:allTests :composeApp:allTests --continue`
    - si existen tareas Android unit: `./gradlew testDebugUnitTest`
-2. Corregir los 3 selftests rojos de Functions o documentar explícitamente que las expectativas quedaron obsoletas por diseño.
-3. Añadir script npm liviano para selftests existentes, sin framework pesado.
+2. Mantener verdes los selftests rojos de Functions ya corregidos y documentar cualquier expectativa que cambie por diseño.
+3. Usar el script npm liviano `test:selftests` para selftests existentes, sin framework pesado.
 4. QA manual obligatoria en Android:
    - Login/logout.
    - Onboarding/profile/avatar.
@@ -303,5 +321,5 @@ BWitch/ATHENA tiene una base de tests unitarios útil en dominio, data y sobre t
 
 **Go/No-Go recomendado para Closed Testing**:
 
-- **Go condicionado** si Gradle tests se ejecutan en un entorno correcto, Functions lint/build pasan, los selftests críticos se dejan verdes o justificados, y QA manual de journeys críticos pasa.
+- **Go condicionado** si Gradle tests se ejecutan en un entorno correcto, Functions lint/build pasan, los selftests críticos se mantienen verdes, y QA manual de journeys críticos pasa.
 - **No-Go** para producción pública hasta tener CI mínimo, rules tests automatizados y coverage KMP/Functions oficial.

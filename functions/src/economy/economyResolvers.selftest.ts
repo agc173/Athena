@@ -68,7 +68,7 @@ test('resolver rejects when over limit or insufficient balance', () => {
     requestType: RequestType.TAROT_1,
     isPremium: false,
     balance: 10,
-    dailyUsage: {tarot1FreeUsed: 1, tarot1MoonUsed: 2},
+    dailyUsage: {tarot1FreeUsed: 1, tarot1MoonUsed: 3},
     weeklyUsage: {},
   });
   assert.equal(dailyLimitReached.source, 'REJECT');
