@@ -19,6 +19,8 @@ import platform.UIKit.UIModalPresentationFullScreen
 import platform.UIKit.UIViewController
 import platform.darwin.NSObject
 
+private const val MaxAvatarBytes = 5L * 1024L * 1024L
+
 @Composable
 actual fun AvatarPickerButton(
     enabled: Boolean,
@@ -33,7 +35,7 @@ actual fun AvatarPickerButton(
 
             val picker = UIImagePickerController().apply {
                 sourceType = platform.UIKit.UIImagePickerControllerSourceType.UIImagePickerControllerSourceTypePhotoLibrary
-                allowsEditing = false
+                allowsEditing = true
                 modalPresentationStyle = UIModalPresentationFullScreen
                 this.delegate = delegate
             }
@@ -56,7 +58,8 @@ private class ImagePickerDelegate(
         picker: UIImagePickerController,
         didFinishPickingMediaWithInfo: Map<Any?, *>
     ) {
-        val image = didFinishPickingMediaWithInfo[platform.UIKit.UIImagePickerControllerOriginalImage] as? UIImage
+        val image = (didFinishPickingMediaWithInfo[platform.UIKit.UIImagePickerControllerEditedImage] as? UIImage)
+            ?: didFinishPickingMediaWithInfo[platform.UIKit.UIImagePickerControllerOriginalImage] as? UIImage
         if (image != null) {
             val fileUrl = saveImageToTempJpeg(image)
             if (fileUrl != null) {
@@ -73,6 +76,7 @@ private class ImagePickerDelegate(
     private fun saveImageToTempJpeg(image: UIImage): NSURL? {
         val data: NSData? = UIImageJPEGRepresentation(image, 0.9)
         if (data == null) return null
+        if (data.length > MaxAvatarBytes.toULong()) return null
 
         val filename = "avatar_${NSUUID().UUIDString}.jpg"
         val dir = NSTemporaryDirectory().trimEnd('/')
