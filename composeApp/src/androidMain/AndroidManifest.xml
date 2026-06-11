@@ -14,9 +14,7 @@
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713" />
-        <!-- TODO: Temporal solo para desbloquear desarrollo/debug.
-             Revertir a configuración externalizada para release. -->
+            android:value="${ADMOB_APP_ID}" />
 
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"

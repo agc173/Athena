@@ -126,7 +126,12 @@ android {
             buildConfigField("String", "ADMOB_REWARDED_AD_UNIT_ID", "\"\"")
         }
         getByName("release") {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
             manifestPlaceholders["ADMOB_APP_ID"] = releaseAdmobAppIdProvider.get()
             buildConfigField("String", "ADMOB_REWARDED_AD_UNIT_ID", "\"\"")
         }
