@@ -1,3 +1,4 @@
+import org.gradle.api.GradleException
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
@@ -97,10 +98,41 @@ kotlin {
 
 android {
     val admobTestAppId = "ca-app-pub-3940256099942544~3347511713"
-    val releaseAdmobAppIdProvider = providers.gradleProperty("ADMOB_APP_ID")
-        .orElse(providers.environmentVariable("ADMOB_APP_ID"))
-        // Fallback seguro para evitar crash por App ID ausente.
-        .orElse(admobTestAppId)
+    // Guard release-capable entry points. `contains("release")` covers variant-specific tasks
+    // such as `:composeApp:assembleRelease`, `:composeApp:bundleRelease`, and publishRelease*;
+    // aggregate assemble/build/bundle/publish tasks can also produce release artifacts.
+    val releaseBuildRequested = gradle.startParameter.taskNames.any { taskName ->
+        val normalized = taskName.lowercase()
+        normalized.contains("release") ||
+            normalized == "assemble" ||
+            normalized.endsWith(":assemble") ||
+            normalized == "build" ||
+            normalized.endsWith(":build") ||
+            normalized.startsWith("bundle") ||
+            normalized.endsWith(":bundle") ||
+            normalized == "publish" ||
+            normalized.endsWith(":publish")
+    }
+
+    fun requiredReleaseAdMobValue(name: String): String {
+        val value = providers.gradleProperty(name)
+            .orElse(providers.environmentVariable(name))
+            .orNull
+            ?.trim()
+            .orEmpty()
+
+        if (releaseBuildRequested && value.isBlank()) {
+            throw GradleException(
+                "$name is required for release builds. " +
+                    "Define it as a Gradle property or environment variable."
+            )
+        }
+
+        return value
+    }
+
+    val releaseAdmobAppId = requiredReleaseAdMobValue("ADMOB_APP_ID")
+    val releaseRewardedAdUnitId = requiredReleaseAdMobValue("ADMOB_REWARDED_AD_UNIT_ID")
 
     namespace = "com.agc.bwitch"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
@@ -132,8 +164,8 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
-            manifestPlaceholders["ADMOB_APP_ID"] = releaseAdmobAppIdProvider.get()
-            buildConfigField("String", "ADMOB_REWARDED_AD_UNIT_ID", "\"\"")
+            manifestPlaceholders["ADMOB_APP_ID"] = releaseAdmobAppId
+            buildConfigField("String", "ADMOB_REWARDED_AD_UNIT_ID", "\"$releaseRewardedAdUnitId\"")
         }
     }
     compileOptions {
