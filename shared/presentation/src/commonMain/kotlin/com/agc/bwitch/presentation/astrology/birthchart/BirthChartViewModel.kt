@@ -186,7 +186,7 @@ class BirthChartViewModel(
             val s = _uiState.value
             if (s.isBusy) return@launch
 
-            val requestId = if (s.requestId != null && (s.error != null || s.inProgress)) {
+            val requestId = if (s.requestId != null && s.inProgress) {
                 s.requestId
             } else {
                 generateRequestId()
