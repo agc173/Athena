@@ -19,6 +19,12 @@ object InputPolicy {
         return withoutControlChars.take(maxLength)
     }
 
+    fun normalizeFreeTextInput(input: String, maxLength: Int): String {
+        val normalizedLineEndings = input.replace("\r\n", "\n").replace('\r', '\n')
+        val withoutControlChars = removeUnsafeControlChars(normalizedLineEndings, allowNewLines = true)
+        return withoutControlChars.take(maxLength)
+    }
+
     fun isEmailLengthValid(email: String): Boolean = email.length <= EMAIL_MAX_LENGTH
 
     fun isNonBlankWithinLimit(text: String, maxLength: Int): Boolean =

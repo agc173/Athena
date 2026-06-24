@@ -53,7 +53,7 @@ class DailyRitualViewModel(
     }
 
     fun onTextAnswerChange(value: String) {
-        val normalized = InputPolicy.normalizeMultilineInput(value, InputPolicy.DAILY_RITUAL_TEXT_MAX_LENGTH)
+        val normalized = InputPolicy.normalizeFreeTextInput(value, InputPolicy.DAILY_RITUAL_TEXT_MAX_LENGTH)
         _uiState.update { it.copy(textAnswer = normalized, error = null) }
     }
 

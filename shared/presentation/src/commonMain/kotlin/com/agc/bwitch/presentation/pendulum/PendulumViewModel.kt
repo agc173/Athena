@@ -31,7 +31,7 @@ class PendulumViewModel(
     val uiEffects: SharedFlow<PendulumUiEffect> = _uiEffects.asSharedFlow()
 
     fun onQuestionChange(value: String) {
-        val limitedQuestion = InputPolicy.normalizeMultilineInput(value, InputPolicy.ORACLE_QUESTION_MAX_LENGTH)
+        val limitedQuestion = InputPolicy.normalizeFreeTextInput(value, InputPolicy.ORACLE_QUESTION_MAX_LENGTH)
         _uiState.update { it.copy(question = limitedQuestion, error = null) }
     }
 
