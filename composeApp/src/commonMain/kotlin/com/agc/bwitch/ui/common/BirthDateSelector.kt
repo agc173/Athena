@@ -1,11 +1,18 @@
 package com.agc.bwitch.ui.common
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -22,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.agc.bwitch.localization.appStrings
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -50,7 +58,7 @@ fun BirthDateSelector(
             modifier = Modifier.fillMaxWidth(),
         ) {
             Text(
-                text = selectedDate?.toFriendlyBirthDate() ?: "DD/MM/YYYY",
+                text = selectedDate?.toFriendlyBirthDate() ?: appStrings.onboarding.birthDatePlaceholder,
                 color = when {
                     isError -> MaterialTheme.colorScheme.error
                     selectedDate == null -> MaterialTheme.colorScheme.onSurfaceVariant
@@ -100,6 +108,7 @@ private fun BirthDatePickerDialog(
         selectedDay = safeDay
     }
 
+    val strings = appStrings.common
     val confirmedDate = LocalDate(selectedYear, selectedMonth, selectedDay)
 
     Dialog(onDismissRequest = onDismiss) {
@@ -116,7 +125,7 @@ private fun BirthDatePickerDialog(
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
-                        text = "Selecciona tu fecha de nacimiento",
+                        text = strings.birthDatePickerTitle,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                     )
@@ -127,37 +136,42 @@ private fun BirthDatePickerDialog(
                     )
                 }
 
-                DateStepperRow(
-                    label = "Día",
-                    value = selectedDay.toString().padStart(2, '0'),
-                    onDecrease = { updateSelection(day = selectedDay - 1) },
-                    onIncrease = { updateSelection(day = selectedDay + 1) },
-                    decreaseEnabled = selectedDay > 1,
-                    increaseEnabled = selectedDay < maxDayForSelection(selectedYear, selectedMonth, today),
-                )
-                DateStepperRow(
-                    label = "Mes",
-                    value = selectedMonth.toString().padStart(2, '0'),
-                    onDecrease = { updateSelection(month = selectedMonth - 1) },
-                    onIncrease = { updateSelection(month = selectedMonth + 1) },
-                    decreaseEnabled = selectedMonth > 1,
-                    increaseEnabled = selectedMonth < maxMonthForYear(selectedYear, today),
-                )
-                DateStepperRow(
-                    label = "Año",
-                    value = selectedYear.toString(),
-                    onDecrease = { updateSelection(year = selectedYear - 1) },
-                    onIncrease = { updateSelection(year = selectedYear + 1) },
-                    decreaseEnabled = selectedYear > MinimumBirthYear,
-                    increaseEnabled = selectedYear < today.year,
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    WheelSelector(
+                        label = strings.dayLabel,
+                        options = (1..maxDayForSelection(selectedYear, selectedMonth, today)).toList(),
+                        selected = selectedDay,
+                        displayValue = { it.toString().padStart(2, '0') },
+                        onSelected = { updateSelection(day = it) },
+                        modifier = Modifier.weight(1f),
+                    )
+                    WheelSelector(
+                        label = strings.monthLabel,
+                        options = (1..maxMonthForYear(selectedYear, today)).toList(),
+                        selected = selectedMonth,
+                        displayValue = { it.toString().padStart(2, '0') },
+                        onSelected = { updateSelection(month = it) },
+                        modifier = Modifier.weight(1f),
+                    )
+                    WheelSelector(
+                        label = strings.yearLabel,
+                        options = (MinimumBirthYear..today.year).toList(),
+                        selected = selectedYear,
+                        displayValue = { it.toString() },
+                        onSelected = { updateSelection(year = it) },
+                        modifier = Modifier.weight(1f),
+                    )
+                }
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End,
                 ) {
-                    TextButton(onClick = onDismiss) { Text("Cancelar") }
-                    Button(onClick = { onConfirm(confirmedDate) }) { Text("Aceptar") }
+                    TextButton(onClick = onDismiss) { Text(strings.cancelLabel) }
+                    Button(onClick = { onConfirm(confirmedDate) }) { Text(strings.acceptLabel) }
                 }
             }
         }
@@ -165,37 +179,69 @@ private fun BirthDatePickerDialog(
 }
 
 @Composable
-private fun DateStepperRow(
+private fun WheelSelector(
     label: String,
-    value: String,
-    onDecrease: () -> Unit,
-    onIncrease: () -> Unit,
-    decreaseEnabled: Boolean,
-    increaseEnabled: Boolean,
+    options: List<Int>,
+    selected: Int,
+    displayValue: (Int) -> String,
+    onSelected: (Int) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
+    val selectedIndex = options.indexOf(selected).coerceAtLeast(0)
+    val listState = rememberLazyListState(initialFirstVisibleItemIndex = selectedIndex)
+
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Text(
             text = label,
-            modifier = Modifier.weight(1f),
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.Medium,
         )
-        OutlinedButton(onClick = onDecrease, enabled = decreaseEnabled) { Text("−") }
-        Text(
-            text = value,
-            modifier = Modifier.weight(1f),
-            style = MaterialTheme.typography.titleMedium,
-        )
-        OutlinedButton(onClick = onIncrease, enabled = increaseEnabled) { Text("+") }
+        LazyColumn(
+            state = listState,
+            modifier = Modifier
+                .height(132.dp)
+                .fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            items(options) { option ->
+                val isSelected = option == selected
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            color = if (isSelected) {
+                                MaterialTheme.colorScheme.primaryContainer
+                            } else {
+                                MaterialTheme.colorScheme.surface
+                            },
+                            shape = MaterialTheme.shapes.medium,
+                        )
+                        .clickable { onSelected(option) }
+                        .padding(vertical = 8.dp, horizontal = 4.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = displayValue(option),
+                        style = if (isSelected) MaterialTheme.typography.titleMedium else MaterialTheme.typography.bodyMedium,
+                        color = if (isSelected) {
+                            MaterialTheme.colorScheme.onPrimaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                    )
+                }
+            }
+        }
     }
 }
 
-fun LocalDate.toFriendlyBirthDate(): String =
-    "${dayOfMonth.toString().padStart(2, '0')}/${monthNumber.toString().padStart(2, '0')}/$year"
+fun LocalDate.toFriendlyBirthDate(): String = toString()
 
 @Composable
 private fun rememberToday(): LocalDate = remember { currentSystemLocalDate() }
