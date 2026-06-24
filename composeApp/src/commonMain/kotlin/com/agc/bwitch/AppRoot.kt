@@ -270,7 +270,9 @@ fun AppRoot() {
                     selectedTab = currentMainTab,
                     navigationStrings = navigationStrings,
                     onTabSelected = { selected ->
-                        if (selected == currentMainTab) {
+                        if (selected.rootDestination == Destination.UserProfile && dest != Destination.UserProfile) {
+                            navigator.resetToRoot(Destination.UserProfile)
+                        } else if (selected == currentMainTab) {
                             if (!navigator.isAtRootOf(selected.rootDestination)) {
                                 navigator.popToRoot()
                             }
