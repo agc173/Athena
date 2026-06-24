@@ -29,6 +29,7 @@ import androidx.compose.foundation.border
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -49,7 +50,10 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -86,6 +90,8 @@ fun ProfileScreen(
     onOpenHabits: () -> Unit,
     onOpenStore: (() -> Unit)? = null,
     onOpenArcanaCollection: (() -> Unit)? = null,
+    onOpenTarot: (() -> Unit)? = null,
+    onOpenHoroscope: (() -> Unit)? = null,
 ) {
     val strings = appStrings
     val profileStrings = strings.profile
@@ -237,10 +243,13 @@ fun ProfileScreen(
             onClick = { onOpenArcanaCollection?.invoke() },
             enabled = onOpenArcanaCollection != null,
         ) {
-            Column(modifier = Modifier.fillMaxWidth().padding(horizontal = dimens.spacingMd, vertical = dimens.spacingMd)) {
-                Text(text = profileStrings.arcanaCollectionTitle, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                Text(text = profileStrings.arcanaCollectionSubtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
+            ProgressCtaCardContent(
+                title = profileStrings.arcanaCollectionTitle,
+                subtitle = profileStrings.arcanaCollectionSubtitle,
+                iconText = "▣",
+                iconContentDescription = profileStrings.arcanaCollectionTarotCtaContentDescription,
+                onIconClick = onOpenTarot,
+            )
         }
 
         Surface(
@@ -312,23 +321,13 @@ fun ProfileScreen(
             tonalElevation = 0.dp,
             onClick = { showConstellationsDialog = true },
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = dimens.spacingMd, vertical = dimens.spacingMd),
-                verticalArrangement = Arrangement.spacedBy(dimens.spacingXs),
-            ) {
-                Text(
-                    text = profileStrings.constellationsTitle,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Text(
-                    text = profileStrings.constellationsSubtitle,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+            ProgressCtaCardContent(
+                title = profileStrings.constellationsTitle,
+                subtitle = profileStrings.constellationsSubtitle,
+                iconText = "✦",
+                iconContentDescription = profileStrings.constellationsHoroscopeCtaContentDescription,
+                onIconClick = onOpenHoroscope,
+            )
         }
     }
     if (showEditDialog) {
@@ -722,6 +721,63 @@ private fun BirthEssenceDialog(
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Text(profileStrings.birthEssenceDialogClose)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProgressCtaCardContent(
+    title: String,
+    subtitle: String,
+    iconText: String,
+    iconContentDescription: String,
+    onIconClick: (() -> Unit)?,
+) {
+    val dimens = BWitchThemeTokens.dimens
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = dimens.spacingMd, vertical = dimens.spacingMd),
+        horizontalArrangement = Arrangement.spacedBy(dimens.spacingSm),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(dimens.spacingXs),
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+
+        IconButton(
+            onClick = { onIconClick?.invoke() },
+            enabled = onIconClick != null,
+            modifier = Modifier
+                .size(44.dp)
+                .clearAndSetSemantics { contentDescription = iconContentDescription },
+        ) {
+            Surface(
+                modifier = Modifier.size(32.dp),
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(
+                        text = iconText,
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = if (onIconClick != null) 0.72f else 0.32f),
+                        style = MaterialTheme.typography.titleSmall,
+                        textAlign = TextAlign.Center,
+                    )
                 }
             }
         }
