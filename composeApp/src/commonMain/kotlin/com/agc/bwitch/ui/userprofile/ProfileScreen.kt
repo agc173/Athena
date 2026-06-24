@@ -65,6 +65,7 @@ import com.agc.bwitch.presentation.userprofile.UserProfileViewModel
 import com.agc.bwitch.presentation.userprofile.PROFILE_BIRTH_DATE_IN_FUTURE_ERROR_KEY
 import com.agc.bwitch.presentation.userprofile.PROFILE_BIRTH_DATE_INVALID_ERROR_KEY
 import com.agc.bwitch.presentation.userprofile.PROFILE_DESCRIPTION_TOO_LONG_ERROR_KEY
+import com.agc.bwitch.ui.common.BirthDateSelector
 import com.agc.bwitch.ui.common.ConstellationBadgeCard
 import com.agc.bwitch.ui.common.ZodiacStylizedTemplates
 import com.agc.bwitch.ui.common.toVisualResource
@@ -75,6 +76,7 @@ import io.kamel.image.asyncPainterResource
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 import kotlinx.coroutines.launch
+import kotlinx.datetime.LocalDate
 
 @Composable
 fun ProfileScreen(
@@ -331,7 +333,7 @@ fun ProfileScreen(
     }
     if (showEditDialog) {
         var descriptionDraft by remember(profile?.description) { mutableStateOf(profile?.description.orEmpty()) }
-        var birthDateDraft by remember(profile?.birthDate) { mutableStateOf(profile?.birthDate?.toString().orEmpty()) }
+        var birthDateDraft by remember(profile?.birthDate) { mutableStateOf<LocalDate?>(profile?.birthDate) }
         Dialog(onDismissRequest = { showEditDialog = false }) {
             Surface(shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.surface) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -360,7 +362,13 @@ fun ProfileScreen(
                         label = { Text(profileStrings.editProfileDescriptionLabel) },
                         supportingText = { Text("${descriptionDraft.length}/160") }
                     )
-                    OutlinedTextField(value = birthDateDraft, onValueChange = { birthDateDraft = it }, label = { Text(profileStrings.editProfileBirthDateLabel) })
+                    BirthDateSelector(
+                        selectedDate = birthDateDraft,
+                        onDateSelected = { birthDateDraft = it },
+                        label = profileStrings.editProfileBirthDateLabel,
+                        enabled = !state.isBusy,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
                     state.error?.let {
                         Text(
                             text = it.toProfileUiText(strings),
@@ -372,7 +380,7 @@ fun ProfileScreen(
                         TextButton(onClick = { showEditDialog = false }) { Text(profileStrings.editProfileCancel) }
                         Button(onClick = {
                             scope.launch {
-                                val ok = vm.saveEditableProfile(descriptionDraft, birthDateDraft)
+                                val ok = vm.saveEditableProfile(descriptionDraft, birthDateDraft?.toString())
                                 if (ok) showEditDialog = false
                             }
                         }, enabled = !state.isBusy) { Text(profileStrings.editProfileSave) }

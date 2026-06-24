@@ -41,6 +41,7 @@ import com.agc.bwitch.presentation.userprofile.ONBOARDING_PROFILE_SAVE_ERROR_KEY
 import com.agc.bwitch.presentation.userprofile.ONBOARDING_USERNAME_INVALID_ERROR_KEY
 import com.agc.bwitch.presentation.userprofile.ONBOARDING_USERNAME_REQUIRED_ERROR_KEY
 import com.agc.bwitch.presentation.userprofile.OnboardingProfileViewModel
+import com.agc.bwitch.ui.common.BirthDateSelector
 import com.agc.bwitch.ui.localization.LanguageSelectorSection
 import com.agc.bwitch.ui.userprofile.AvatarPickerButton
 import io.kamel.image.KamelImage
@@ -58,7 +59,7 @@ fun OnboardingProfileScreen(contentPadding: PaddingValues) {
 
     val snackbarHostState = remember { SnackbarHostState() }
     var username by remember { mutableStateOf("") }
-    var birthDate by remember { mutableStateOf("") }
+    var birthDate by remember { mutableStateOf<LocalDate?>(null) }
     var touched by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
@@ -70,14 +71,13 @@ fun OnboardingProfileScreen(contentPadding: PaddingValues) {
     LaunchedEffect(state.profile) {
         if (!touched) {
             username = state.profile?.username.orEmpty()
-            birthDate = state.profile?.birthDate?.toString().orEmpty()
+            birthDate = state.profile?.birthDate
         }
     }
 
     val normalizedUsername = UsernameRules.normalize(username).orEmpty()
     val usernameValid = normalizedUsername.isNotBlank() && UsernameRules.isValid(normalizedUsername)
-    val birthDateParsed = runCatching { LocalDate.parse(birthDate.trim()) }.getOrNull()
-    val birthDateValid = birthDateParsed != null
+    val birthDateValid = birthDate != null
 
     val canContinue = !state.isBusy && !state.isInitialLoading && usernameValid && birthDateValid
     val photoUrl = state.profile?.photoUrl
@@ -141,22 +141,17 @@ fun OnboardingProfileScreen(contentPadding: PaddingValues) {
             }
         )
 
-        OutlinedTextField(
-            value = birthDate,
-            onValueChange = {
+        BirthDateSelector(
+            selectedDate = birthDate,
+            onDateSelected = {
                 touched = true
                 birthDate = it
             },
+            label = strings.birthDateLabel,
             enabled = !state.isBusy,
             modifier = Modifier.fillMaxWidth(),
-            label = { Text(strings.birthDateLabel) },
-            placeholder = { Text(strings.birthDatePlaceholder) },
             isError = touched && !birthDateValid,
-            supportingText = {
-                if (touched && !birthDateValid) {
-                    Text(strings.birthDateFormatError)
-                }
-            }
+            supportingText = if (touched && !birthDateValid) strings.birthDateFormatError else null,
         )
 
         AvatarPickerButton(
@@ -169,7 +164,7 @@ fun OnboardingProfileScreen(contentPadding: PaddingValues) {
         Button(
             onClick = {
                 touched = true
-                vm.completeOnboarding(usernameText = normalizedUsername, birthDateText = birthDate.trim())
+                vm.completeOnboarding(usernameText = normalizedUsername, birthDateText = birthDate?.toString().orEmpty())
             },
             enabled = canContinue,
             modifier = Modifier.fillMaxWidth()
