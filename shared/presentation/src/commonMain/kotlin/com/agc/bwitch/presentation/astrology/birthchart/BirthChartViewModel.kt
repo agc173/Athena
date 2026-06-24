@@ -236,7 +236,11 @@ class BirthChartViewModel(
 
                 is ApiResult.Err -> {
                     _uiState.update {
-                        it.copy(inProgress = false, error = mapGenerateError(result.error))
+                        it.copy(
+                            requestId = null,
+                            inProgress = false,
+                            error = mapGenerateError(result.error),
+                        )
                     }
                 }
             }
