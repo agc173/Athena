@@ -182,16 +182,16 @@ class BirthChartViewModel(
         }
 
     fun discoverEssence() {
-        val s = _uiState.value
-        if (s.isBusy) return
-
-        val requestId = if (s.requestId != null && (s.error != null || s.inProgress)) {
-            s.requestId
-        } else {
-            generateRequestId()
-        }
-
         scope.launch {
+            val s = _uiState.value
+            if (s.isBusy) return@launch
+
+            val requestId = if (s.requestId != null && (s.error != null || s.inProgress)) {
+                s.requestId
+            } else {
+                generateRequestId()
+            }
+
             _uiState.update {
                 it.copy(
                     isGenerating = true,
@@ -216,7 +216,7 @@ class BirthChartViewModel(
                 is ApiResult.Ok -> {
                     val reading = result.value
                     if (reading.status == "IN_PROGRESS" || reading.status == "PROCESSING") {
-                        _uiState.update { it.copy(inProgress = true, error = null) }
+                        _uiState.update { it.copy(requestId = requestId, inProgress = true, error = null) }
                     } else {
                         emitDeckUnlockRewardsIfNeeded(reading.deckCardUnlockRewards)
                         _uiState.update {
