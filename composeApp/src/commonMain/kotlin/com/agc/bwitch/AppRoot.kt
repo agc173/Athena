@@ -322,6 +322,8 @@ fun AppRoot() {
                 onOpenHabits = { navigator.navigate(Destination.Habits) },
                 onOpenStore = { navigator.navigate(Destination.MoonStore) },
                 onOpenArcanaCollection = { navigator.navigate(Destination.TarotCollection) },
+                onOpenTarot = { navigator.navigate(Destination.TarotHome) },
+                onOpenHoroscope = { navigator.navigate(Destination.HoroscopeDaily()) },
             )
 
             Destination.MoonStore -> MoonStoreScreen(contentPadding = padding)
