@@ -109,9 +109,11 @@ private fun BirthDateDropdown(
 fun LocalDate.toFriendlyBirthDate(): String =
     "${dayOfMonth.toString().padStart(2, '0')}/${monthNumber.toString().padStart(2, '0')}/$year"
 
-private fun rememberToday(): LocalDate = remember {
+@Composable
+private fun rememberToday(): LocalDate = remember { currentSystemLocalDate() }
+
+private fun currentSystemLocalDate(): LocalDate =
     Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
-}
 
 private fun availableMonths(year: Int, today: LocalDate): List<Int> =
     if (year == today.year) (1..today.monthNumber).toList() else (1..12).toList()
