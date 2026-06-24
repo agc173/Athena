@@ -258,58 +258,54 @@ fun ProfileScreen(
             color = extras.surfaceElevated,
             tonalElevation = 0.dp,
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = dimens.spacingMd, vertical = dimens.spacingMd),
-                verticalArrangement = Arrangement.spacedBy(dimens.spacingSm),
+            ProgressCtaCardContent(
+                iconText = "✓",
+                iconContentDescription = profileStrings.openHabits,
+                onIconClick = onOpenHabits,
             ) {
-                Text(
-                    text = profileStrings.progressTitle,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Text(
-                    text = profileStrings.progressSubtitle,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-
-                if (habitsProgress.hasStarted) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(dimens.spacingSm),
+                ) {
                     Text(
-                        text = "${habitsProgress.completedCycles} ${profileStrings.completedCyclesSuffix}",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.primary,
+                        text = profileStrings.progressTitle,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
                     )
-
-                    if (completedBadges.isNotEmpty()) {
-                        LazyRow(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            items(completedBadges) { badgeType ->
-                                Image(
-                                    painter = painterResource(habitBadgeResourceFor(badgeType)),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(44.dp),
-                                    alpha = 1f,
-                                )
-                            }
-                        }
-                    }
-                } else {
                     Text(
-                        text = profileStrings.progressNotStarted,
+                        text = profileStrings.progressSubtitle,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                }
 
-                Button(
-                    onClick = onOpenHabits,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(profileStrings.openHabits)
+                    if (habitsProgress.hasStarted) {
+                        Text(
+                            text = "${habitsProgress.completedCycles} ${profileStrings.completedCyclesSuffix}",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+
+                        if (completedBadges.isNotEmpty()) {
+                            LazyRow(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                items(completedBadges) { badgeType ->
+                                    Image(
+                                        painter = painterResource(habitBadgeResourceFor(badgeType)),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(44.dp),
+                                        alpha = 1f,
+                                    )
+                                }
+                            }
+                        }
+                    } else {
+                        Text(
+                            text = profileStrings.progressNotStarted,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
             }
         }
@@ -735,17 +731,13 @@ private fun ProgressCtaCardContent(
     iconContentDescription: String,
     onIconClick: (() -> Unit)?,
 ) {
-    val dimens = BWitchThemeTokens.dimens
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = dimens.spacingMd, vertical = dimens.spacingMd),
-        horizontalArrangement = Arrangement.spacedBy(dimens.spacingSm),
-        verticalAlignment = Alignment.CenterVertically,
+    ProgressCtaCardContent(
+        iconText = iconText,
+        iconContentDescription = iconContentDescription,
+        onIconClick = onIconClick,
     ) {
         Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(dimens.spacingXs),
+            verticalArrangement = Arrangement.spacedBy(BWitchThemeTokens.dimens.spacingXs),
         ) {
             Text(
                 text = title,
@@ -757,6 +749,29 @@ private fun ProgressCtaCardContent(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+        }
+    }
+}
+
+@Composable
+private fun ProgressCtaCardContent(
+    iconText: String,
+    iconContentDescription: String,
+    onIconClick: (() -> Unit)?,
+    content: @Composable () -> Unit,
+) {
+    val dimens = BWitchThemeTokens.dimens
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = dimens.spacingMd, vertical = dimens.spacingMd),
+        horizontalArrangement = Arrangement.spacedBy(dimens.spacingSm),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(
+            modifier = Modifier.weight(1f),
+        ) {
+            content()
         }
 
         IconButton(
