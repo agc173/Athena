@@ -48,10 +48,15 @@ class BirthChartViewModelTest {
                 ),
             )
             val viewModel = birthChartViewModel(repository)
+            advanceUntilIdle()
 
             viewModel.discoverEssence()
             advanceUntilIdle()
             val firstRequestId = repository.requests[0].requestId
+            assertEquals(firstRequestId, viewModel.uiState.value.requestId)
+            assertEquals(true, viewModel.uiState.value.inProgress)
+            assertNull(viewModel.uiState.value.error)
+            assertNull(viewModel.uiState.value.generatedInterpretation)
 
             viewModel.discoverEssence()
             advanceUntilIdle()
@@ -76,13 +81,16 @@ class BirthChartViewModelTest {
                 ),
             )
             val viewModel = birthChartViewModel(repository)
+            advanceUntilIdle()
 
             viewModel.discoverEssence()
             advanceUntilIdle()
             val failedRequestId = repository.requests[0].requestId
 
             assertNull(viewModel.uiState.value.requestId)
+            assertEquals(false, viewModel.uiState.value.inProgress)
             assertEquals(BIRTH_CHART_GENERATE_TEMPORARY_ATHENA_KEY, viewModel.uiState.value.error)
+            assertNull(viewModel.uiState.value.generatedInterpretation)
 
             viewModel.discoverEssence()
             advanceUntilIdle()
@@ -123,6 +131,7 @@ private class FakeBirthChartRepository(
     override suspend fun generateBirthEssence(input: BirthEssenceInput): ApiResult<BirthEssenceReading> {
         requests += input
         assertTrue(!input.requestId.isNullOrBlank())
+        assertTrue(results.isNotEmpty(), "FakeBirthChartRepository scripted results exhausted")
         return results.removeFirst()
     }
 }
