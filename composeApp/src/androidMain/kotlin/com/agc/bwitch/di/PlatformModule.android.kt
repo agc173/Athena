@@ -8,6 +8,8 @@ import com.agc.bwitch.audio.AndroidTarotHaptics
 import com.agc.bwitch.audio.AndroidTarotSoundPlayer
 import com.agc.bwitch.audio.TarotHaptics
 import com.agc.bwitch.audio.TarotSoundPlayer
+import com.agc.bwitch.data.connectivity.AndroidConnectivityChecker
+import com.agc.bwitch.data.connectivity.ConnectivityChecker
 import com.agc.bwitch.data.moons.MoonPackBillingDataSource
 import com.agc.bwitch.data.moons.billing.googleplay.GooglePlayMoonPackBillingDataSource
 import com.agc.bwitch.data.settings.billing.SubscriptionBillingDataSource
@@ -30,6 +32,7 @@ fun platformModule(app: Application): Module = module {
     single<CoroutineDispatcher> { Dispatchers.IO }
     single { OkHttp.create() }
     single { SettingsFactory(app) }
+    single<ConnectivityChecker> { AndroidConnectivityChecker(app) }
     single<Settings> { get<SettingsFactory>().create("bwitch") }
     single { GooglePlaySubscriptionBillingDataSource(app) }
     single<SubscriptionBillingDataSource> { get<GooglePlaySubscriptionBillingDataSource>() }

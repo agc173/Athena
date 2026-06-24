@@ -5,6 +5,8 @@ import com.agc.bwitch.data.astrology.birthchart.SettingsBirthChartRepository
 import com.agc.bwitch.data.astrology.birthchart.SyncBirthChartRepository
 import com.agc.bwitch.data.auth.FirebaseAuthRepository
 import com.agc.bwitch.data.economy.EconomyRepositoryImpl
+import com.agc.bwitch.data.connectivity.AlwaysOnlineConnectivityChecker
+import com.agc.bwitch.data.connectivity.ConnectivityChecker
 import com.agc.bwitch.data.functions.FunctionsClient
 import com.agc.bwitch.data.functions.GitLiveFunctionsClient
 import com.agc.bwitch.data.oracle.OracleRepositoryImpl
@@ -160,7 +162,8 @@ val dataKoinModule: Module = module {
     /**
      * Cloud Functions
      */
-    single<FunctionsClient> { GitLiveFunctionsClient() }
+    single<ConnectivityChecker> { AlwaysOnlineConnectivityChecker }
+    single<FunctionsClient> { GitLiveFunctionsClient(connectivityChecker = get()) }
     single { EconomyRemoteDataSource(get()) }
     single<EconomyRepository> { EconomyRepositoryImpl(get()) }
     single<OracleRepository> { OracleRepositoryImpl(get()) }
