@@ -42,6 +42,22 @@ class InputPolicyTest {
     }
 
     @Test
+    fun normalizeFreeText_preservesTypingSpacesUnicodeAndPunctuation() {
+        val input = "  ¿mañana, sí o no? ñandú ✨  "
+
+        val normalized = InputPolicy.normalizeFreeTextInput(input, 100)
+
+        assertEquals("  ¿mañana, sí o no? ñandú ✨  ", normalized)
+    }
+
+    @Test
+    fun normalizeFreeText_removesUnsafeControlCharsAndAppliesMaxLength() {
+        val normalized = InputPolicy.normalizeFreeTextInput("ab\u0000cdef", 4)
+
+        assertEquals("abcd", normalized)
+    }
+
+    @Test
     fun emailLengthValidation_worksAtBoundary() {
         assertTrue(InputPolicy.isEmailLengthValid("a".repeat(InputPolicy.EMAIL_MAX_LENGTH)))
         assertFalse(InputPolicy.isEmailLengthValid("a".repeat(InputPolicy.EMAIL_MAX_LENGTH + 1)))
