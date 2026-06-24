@@ -12,5 +12,6 @@ sealed class ApiError(open val message: String?) {
     data class FailedPrecondition(override val message: String? = null) : ApiError(message)
     data class InvalidArgument(override val message: String? = null) : ApiError(message)
     data class Internal(override val message: String? = null) : ApiError(message)
+    data class Network(override val message: String? = null) : ApiError(message)
     data class Unknown(override val message: String? = null) : ApiError(message)
 }

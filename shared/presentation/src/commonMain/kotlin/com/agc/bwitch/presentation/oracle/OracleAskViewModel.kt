@@ -304,6 +304,9 @@ class OracleAskViewModel(
                     message = OracleAskMessage(id = OracleAskMessageId.InternalGeneric),
                 )
             }
+            is ApiError.Network -> OracleAskMappedError(
+                message = OracleAskMessage(id = OracleAskMessageId.UnknownFallback),
+            )
             is ApiError.Unknown -> when {
                 backendMessage.isEconomyRestrictionHint() -> OracleAskMappedError(
                     message = OracleAskMessage(id = OracleAskMessageId.InsufficientMoons),
