@@ -36,8 +36,13 @@ import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.presentation.astrology.birthchart.BirthChartUiState
 import com.agc.bwitch.presentation.astrology.birthchart.BirthChartViewModel
 import com.agc.bwitch.presentation.astrology.birthchart.BirthChartUiEffect
+import com.agc.bwitch.presentation.astrology.birthchart.BIRTH_CHART_GENERATE_CONNECTION_KEY
+import com.agc.bwitch.presentation.astrology.birthchart.BIRTH_CHART_GENERATE_DAILY_LIMIT_KEY
 import com.agc.bwitch.presentation.astrology.birthchart.BIRTH_CHART_GENERATE_ERROR_FALLBACK_KEY
 import com.agc.bwitch.presentation.astrology.birthchart.BIRTH_CHART_GENERATE_FIRST_ERROR_KEY
+import com.agc.bwitch.presentation.astrology.birthchart.BIRTH_CHART_GENERATE_INSUFFICIENT_MOONS_KEY
+import com.agc.bwitch.presentation.astrology.birthchart.BIRTH_CHART_GENERATE_SESSION_EXPIRED_KEY
+import com.agc.bwitch.presentation.astrology.birthchart.BIRTH_CHART_GENERATE_TEMPORARY_ATHENA_KEY
 import com.agc.bwitch.presentation.astrology.birthchart.BIRTH_CHART_GENERATE_UNAVAILABLE_KEY
 import com.agc.bwitch.presentation.astrology.birthchart.BIRTH_CHART_REFRESH_ERROR_KEY
 import com.agc.bwitch.presentation.astrology.birthchart.BIRTH_CHART_SAVE_ERROR_KEY
@@ -274,7 +279,8 @@ private fun String?.isBirthEssenceEconomyError(): Boolean {
 
 private fun String?.isDailyLimitError(): Boolean {
     val normalized = this?.trim()?.lowercase().orEmpty()
-    return normalized.contains("daily_limit") ||
+    return normalized == BIRTH_CHART_GENERATE_DAILY_LIMIT_KEY ||
+        normalized.contains("daily_limit") ||
         normalized.contains("limit_reached") ||
         normalized.contains("resource_exhausted")
 }
@@ -290,6 +296,11 @@ private fun String.toBirthChartUiText(strings: com.agc.bwitch.localization.Birth
         BIRTH_CHART_SAVE_SUCCESS_SUMMARY_KEY -> strings.saveSuccessSummary
         BIRTH_CHART_SAVE_ERROR_KEY -> strings.saveErrorMessage
         BIRTH_CHART_GENERATE_UNAVAILABLE_KEY -> strings.generateUnavailableError
+        BIRTH_CHART_GENERATE_INSUFFICIENT_MOONS_KEY -> strings.generateInsufficientMoonsError
+        BIRTH_CHART_GENERATE_DAILY_LIMIT_KEY -> strings.generateDailyLimitError
+        BIRTH_CHART_GENERATE_CONNECTION_KEY -> strings.generateConnectionError
+        BIRTH_CHART_GENERATE_TEMPORARY_ATHENA_KEY -> strings.generateTemporaryAthenaError
+        BIRTH_CHART_GENERATE_SESSION_EXPIRED_KEY -> strings.generateSessionExpiredError
         BIRTH_CHART_GENERATE_ERROR_FALLBACK_KEY -> strings.generateErrorFallback
         else -> strings.generateErrorFallback
     }

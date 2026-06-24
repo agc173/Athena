@@ -294,18 +294,65 @@ class BirthChartViewModel(
 
     private fun mapGenerateError(error: ApiError): String {
         val rawMessage = error.message.orEmpty()
-        if (rawMessage.contains("not_found", ignoreCase = true)) {
+        val normalizedMessage = rawMessage.lowercase()
+
+        if (normalizedMessage.contains("not_found")) {
             return BIRTH_CHART_GENERATE_UNAVAILABLE_KEY
         }
-        if (
-            rawMessage.contains("insufficient_moons", ignoreCase = true) ||
-            rawMessage.contains("INSUFFICIENT_MOON_BALANCE", ignoreCase = true)
-        ) {
-            return "insufficient_moons"
-        }
 
-        return rawMessage.ifBlank { BIRTH_CHART_GENERATE_ERROR_FALLBACK_KEY }
+        return when (error) {
+            is ApiError.Unauthenticated -> BIRTH_CHART_GENERATE_SESSION_EXPIRED_KEY
+            is ApiError.PermissionDenied -> BIRTH_CHART_GENERATE_SESSION_EXPIRED_KEY
+            is ApiError.ResourceExhausted -> when {
+                normalizedMessage.hasInsufficientMoonsHint() -> BIRTH_CHART_GENERATE_INSUFFICIENT_MOONS_KEY
+                else -> BIRTH_CHART_GENERATE_DAILY_LIMIT_KEY
+            }
+            is ApiError.FailedPrecondition -> when {
+                normalizedMessage.hasInsufficientMoonsHint() -> BIRTH_CHART_GENERATE_INSUFFICIENT_MOONS_KEY
+                normalizedMessage.hasDailyLimitHint() -> BIRTH_CHART_GENERATE_DAILY_LIMIT_KEY
+                else -> BIRTH_CHART_GENERATE_TEMPORARY_ATHENA_KEY
+            }
+            is ApiError.InvalidArgument -> when {
+                normalizedMessage.hasInsufficientMoonsHint() -> BIRTH_CHART_GENERATE_INSUFFICIENT_MOONS_KEY
+                normalizedMessage.hasDailyLimitHint() -> BIRTH_CHART_GENERATE_DAILY_LIMIT_KEY
+                else -> BIRTH_CHART_GENERATE_TEMPORARY_ATHENA_KEY
+            }
+            is ApiError.Internal -> when {
+                normalizedMessage.hasInsufficientMoonsHint() -> BIRTH_CHART_GENERATE_INSUFFICIENT_MOONS_KEY
+                normalizedMessage.hasDailyLimitHint() -> BIRTH_CHART_GENERATE_DAILY_LIMIT_KEY
+                else -> BIRTH_CHART_GENERATE_TEMPORARY_ATHENA_KEY
+            }
+            is ApiError.Network -> BIRTH_CHART_GENERATE_CONNECTION_KEY
+            is ApiError.Unknown -> when {
+                normalizedMessage.hasNetworkHint() -> BIRTH_CHART_GENERATE_CONNECTION_KEY
+                normalizedMessage.hasInsufficientMoonsHint() -> BIRTH_CHART_GENERATE_INSUFFICIENT_MOONS_KEY
+                normalizedMessage.hasDailyLimitHint() -> BIRTH_CHART_GENERATE_DAILY_LIMIT_KEY
+                rawMessage.isBlank() -> BIRTH_CHART_GENERATE_ERROR_FALLBACK_KEY
+                else -> BIRTH_CHART_GENERATE_TEMPORARY_ATHENA_KEY
+            }
+        }
     }
+
+    private fun String.hasInsufficientMoonsHint(): Boolean =
+        contains("insufficient_moons") ||
+            contains("insufficient moon") ||
+            contains("insufficient_moon_balance") ||
+            contains("moon_balance")
+
+    private fun String.hasDailyLimitHint(): Boolean =
+        contains("daily_limit") ||
+            contains("daily limit") ||
+            contains("limit_reached") ||
+            contains("resource_exhausted") ||
+            contains("quota")
+
+    private fun String.hasNetworkHint(): Boolean =
+        contains("network") ||
+            contains("timeout") ||
+            contains("timed out") ||
+            contains("offline") ||
+            contains("connection") ||
+            contains("internet")
 
     private fun String.sanitizeInterpretation(): String {
         val interpretationPrefixRegex =
@@ -359,4 +406,9 @@ const val BIRTH_CHART_GENERATE_FIRST_ERROR_KEY = "birth_chart.error.generate_fir
 const val BIRTH_CHART_SAVE_SUCCESS_SUMMARY_KEY = "birth_chart.save.success"
 const val BIRTH_CHART_SAVE_ERROR_KEY = "birth_chart.error.save"
 const val BIRTH_CHART_GENERATE_UNAVAILABLE_KEY = "birth_chart.error.generate_unavailable"
+const val BIRTH_CHART_GENERATE_INSUFFICIENT_MOONS_KEY = "birth_chart.error.insufficient_moons"
+const val BIRTH_CHART_GENERATE_DAILY_LIMIT_KEY = "birth_chart.error.daily_limit"
+const val BIRTH_CHART_GENERATE_CONNECTION_KEY = "birth_chart.error.connection"
+const val BIRTH_CHART_GENERATE_TEMPORARY_ATHENA_KEY = "birth_chart.error.temporary_athena"
+const val BIRTH_CHART_GENERATE_SESSION_EXPIRED_KEY = "birth_chart.error.session_expired"
 const val BIRTH_CHART_GENERATE_ERROR_FALLBACK_KEY = "birth_chart.error.generate_fallback"

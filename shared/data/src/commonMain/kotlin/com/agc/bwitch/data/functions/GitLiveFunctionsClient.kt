@@ -36,7 +36,7 @@ class GitLiveFunctionsClient(
             ApiResult.Err(mapped)
         } catch (e: Throwable) {
             println("[GitLiveFunctionsClient] callable=$name Throwable=$e message=${e.message}")
-            ApiResult.Err(ApiError.Unknown(e.message))
+            ApiResult.Err(e.toNetworkAwareApiError())
         }
     }
 
@@ -54,9 +54,37 @@ class GitLiveFunctionsClient(
             "failed-precondition" in haystack || "failed precondition" in haystack -> ApiError.FailedPrecondition(message)
             "invalid-argument" in haystack || "invalid argument" in haystack -> ApiError.InvalidArgument(message)
             "internal" in haystack -> ApiError.Internal(message)
+            haystack.hasNetworkFailureHint() -> ApiError.Network(message)
             else -> ApiError.Unknown(message)
         }
     }
+
+    private fun Throwable.toNetworkAwareApiError(): ApiError {
+        val haystack = buildString {
+            append(message ?: "")
+            append(' ')
+            append(toString())
+        }.lowercase()
+
+        return if (haystack.hasNetworkFailureHint()) {
+            ApiError.Network(message)
+        } else {
+            ApiError.Unknown(message)
+        }
+    }
+
+    private fun String.hasNetworkFailureHint(): Boolean =
+        contains("network") ||
+            contains("timeout") ||
+            contains("timed out") ||
+            contains("unavailable") ||
+            contains("offline") ||
+            contains("unable to resolve host") ||
+            contains("failed to connect") ||
+            contains("connection") ||
+            contains("socket") ||
+            contains("dns") ||
+            contains("internet")
 
     private companion object {
         const val DEFAULT_REGION = "europe-west1"
