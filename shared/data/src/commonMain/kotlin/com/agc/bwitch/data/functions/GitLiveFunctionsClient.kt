@@ -1,5 +1,6 @@
 package com.agc.bwitch.data.functions
 
+import com.agc.bwitch.data.connectivity.ConnectivityChecker
 import com.agc.bwitch.domain.shared.ApiError
 import com.agc.bwitch.domain.shared.ApiResult
 import dev.gitlive.firebase.Firebase
@@ -11,6 +12,7 @@ import dev.gitlive.firebase.functions.functions
 import kotlinx.serialization.KSerializer
 
 class GitLiveFunctionsClient(
+    private val connectivityChecker: ConnectivityChecker,
     region: String = DEFAULT_REGION
 ) : FunctionsClient {
 
@@ -22,6 +24,11 @@ class GitLiveFunctionsClient(
         requestSerializer: KSerializer<Req>,
         responseSerializer: KSerializer<Res>,
     ): ApiResult<Res> {
+        if (!connectivityChecker.hasUsableConnection()) {
+            println("[GitLiveFunctionsClient] callable=$name skipped=no_usable_connection")
+            return ApiResult.Err(ApiError.Network())
+        }
+
         return try {
             val result = functions
                 .httpsCallable(name)

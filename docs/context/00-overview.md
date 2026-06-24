@@ -8,6 +8,7 @@ Este repo está preparado con arquitectura limpia para escalar features sin acop
 - Compartir lógica y UI en KMP
 - Mantener domain puro y testeable
 - Networking uniforme (BaseApi + ApiResult)
+- Firebase Functions usa una prevalidación de conectividad (`ConnectivityChecker`) en `shared/data` para devolver `ApiError.Network` antes de ejecutar callables cuando la plataforma detecta que no hay conexión usable.
 - DI limpia por capa (Koin)
 
 ## Módulos
