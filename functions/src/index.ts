@@ -14,6 +14,7 @@ export {
   registerPushToken,
   unregisterPushToken,
   updateNotificationPreferences,
+  getNotificationPreferences,
   sendTestNotification,
   sendDailyHoroscopeNotifications,
 } from './notifications';

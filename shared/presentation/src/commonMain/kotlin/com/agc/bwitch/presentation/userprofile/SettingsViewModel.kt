@@ -6,6 +6,7 @@ import com.agc.bwitch.domain.analytics.AnalyticsTracker
 import com.agc.bwitch.domain.analytics.NoOpAnalyticsTracker
 import com.agc.bwitch.domain.localization.AppLanguage
 import com.agc.bwitch.domain.localization.ObserveCurrentLanguageUseCase
+import com.agc.bwitch.domain.notifications.GetPushNotificationPreferencesUseCase
 import com.agc.bwitch.domain.notifications.PushNotificationPreferences
 import com.agc.bwitch.domain.notifications.PushPlatform
 import com.agc.bwitch.domain.notifications.PushTokenRegistration
@@ -146,6 +147,7 @@ class SettingsViewModel(
     private val restorePurchases: RestorePurchasesUseCase,
     private val refreshPremiumEntitlement: RefreshPremiumEntitlementUseCase,
     private val validateGooglePlayPurchase: ValidateGooglePlayPurchaseUseCase,
+    private val getPushNotificationPreferences: GetPushNotificationPreferencesUseCase,
     private val registerPushToken: RegisterPushTokenUseCase,
     private val updatePushNotificationPreferences: UpdatePushNotificationPreferencesUseCase,
     private val requestAccountDeletion: RequestAccountDeletionUseCase,
@@ -208,6 +210,7 @@ class SettingsViewModel(
                     } else if (uid != lastRefreshedUserId) {
                         lastRefreshedUserId = uid
                         refreshBackendEntitlement()
+                        reconcileRemoteNotificationPreferences()
                     }
                 }
         }
@@ -297,24 +300,23 @@ class SettingsViewModel(
 
     fun onNotificationsEnabledChanged(enabled: Boolean) {
         if (enabled) {
-            updateLocalNotificationSettings { it.copy(globalEnabled = true) }
             scope.launch { _uiEffects.emit(SettingsUiEffect.RequestPushPermissionAndToken) }
             return
         }
 
-        updateLocalAndRemoteNotificationSettings { it.copy(globalEnabled = false) }
+        updateRemoteAndLocalNotificationSettings { it.copy(globalEnabled = false) }
     }
 
     fun onDailyHoroscopeEnabledChanged(enabled: Boolean) {
-        updateLocalAndRemoteNotificationSettings { it.copy(dailyHoroscopeEnabled = enabled) }
+        updateRemoteAndLocalNotificationSettings { it.copy(dailyHoroscopeEnabled = enabled) }
     }
 
     fun onRitualOfDayEnabledChanged(enabled: Boolean) {
-        updateLocalAndRemoteNotificationSettings { it.copy(ritualOfDayEnabled = enabled) }
+        updateRemoteAndLocalNotificationSettings { it.copy(ritualOfDayEnabled = enabled) }
     }
 
     fun onHabitsEnabledChanged(enabled: Boolean) {
-        updateLocalAndRemoteNotificationSettings { it.copy(habitsEnabled = enabled) }
+        updateRemoteAndLocalNotificationSettings { it.copy(habitsEnabled = enabled) }
     }
 
 
@@ -325,7 +327,7 @@ class SettingsViewModel(
             ritualOfDayEnabled = _uiState.value.ritualOfDayEnabled,
             habitsEnabled = _uiState.value.habitsEnabled,
         )
-        updateLocalAndRemoteNotificationSettings(nextSettings)
+        updateRemoteAndLocalNotificationSettings(nextSettings)
 
         if (!permissionGranted) {
             _uiState.update { it.copy(feedback = SettingsFeedback.NotificationsPermissionDenied) }
@@ -622,7 +624,18 @@ class SettingsViewModel(
         scope.cancel()
     }
 
-    private fun updateLocalNotificationSettings(update: (NotificationSettings) -> NotificationSettings) {
+    private fun reconcileRemoteNotificationPreferences() {
+        scope.launch {
+            runCatching { getPushNotificationPreferences() }
+                .onSuccess { remotePreferences ->
+                    val remoteSettings = remotePreferences?.toNotificationSettings() ?: return@onSuccess
+                    runCatching { updateNotificationSettings(remoteSettings) }
+                        .onFailure { error -> _uiState.update { it.copy(error = error.message) } }
+                }
+        }
+    }
+
+    private fun updateRemoteAndLocalNotificationSettings(update: (NotificationSettings) -> NotificationSettings) {
         scope.launch {
             val current = NotificationSettings(
                 globalEnabled = _uiState.value.notificationsEnabled,
@@ -630,33 +643,17 @@ class SettingsViewModel(
                 ritualOfDayEnabled = _uiState.value.ritualOfDayEnabled,
                 habitsEnabled = _uiState.value.habitsEnabled,
             )
-            runCatching {
-                updateNotificationSettings(update(current))
-            }.onFailure { error ->
-                _uiState.update { it.copy(error = error.message) }
-            }
+            updateRemoteAndLocalNotificationSettings(update(current))
         }
     }
 
-    private fun updateLocalAndRemoteNotificationSettings(update: (NotificationSettings) -> NotificationSettings) {
+    private fun updateRemoteAndLocalNotificationSettings(next: NotificationSettings) {
         scope.launch {
-            val current = NotificationSettings(
-                globalEnabled = _uiState.value.notificationsEnabled,
-                dailyHoroscopeEnabled = _uiState.value.dailyHoroscopeEnabled,
-                ritualOfDayEnabled = _uiState.value.ritualOfDayEnabled,
-                habitsEnabled = _uiState.value.habitsEnabled,
-            )
-            val next = update(current)
-            updateLocalAndRemoteNotificationSettings(next)
-        }
-    }
-
-    private fun updateLocalAndRemoteNotificationSettings(next: NotificationSettings) {
-        scope.launch {
-            runCatching { updateNotificationSettings(next) }
-                .onFailure { error -> _uiState.update { it.copy(error = error.message) } }
-
             runCatching { updatePushNotificationPreferences(next.toPushNotificationPreferences()) }
+                .onSuccess {
+                    runCatching { updateNotificationSettings(next) }
+                        .onFailure { error -> _uiState.update { it.copy(error = error.message) } }
+                }
                 .onFailure { _uiState.update { it.copy(feedback = SettingsFeedback.NotificationsUnavailable) } }
         }
     }
@@ -668,6 +665,13 @@ private fun NotificationSettings.toPushNotificationPreferences(): PushNotificati
     dailyRewardEnabled = false,
     tarotOracleReminderEnabled = false,
     ritualsEnabled = ritualOfDayEnabled,
+    habitsEnabled = habitsEnabled,
+)
+
+private fun PushNotificationPreferences.toNotificationSettings(): NotificationSettings = NotificationSettings(
+    globalEnabled = globalEnabled,
+    dailyHoroscopeEnabled = dailyHoroscopeEnabled,
+    ritualOfDayEnabled = ritualsEnabled,
     habitsEnabled = habitsEnabled,
 )
 

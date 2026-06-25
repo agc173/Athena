@@ -14,6 +14,28 @@ class FunctionsPushRegistrationRepository(
     private val functionsClient: FunctionsClient,
 ) : PushRegistrationRepository {
 
+    override suspend fun getPreferences(): PushNotificationPreferences? {
+        val response = callBackend(
+            name = GET_NOTIFICATION_PREFERENCES_CALLABLE,
+            data = EmptyRequestDto(),
+            requestSerializer = EmptyRequestDto.serializer(),
+            responseSerializer = GetNotificationPreferencesResponseDto.serializer(),
+        )
+
+        return if (response.exists) {
+            PushNotificationPreferences(
+                globalEnabled = response.globalEnabled,
+                dailyHoroscopeEnabled = response.dailyHoroscopeEnabled,
+                dailyRewardEnabled = response.dailyRewardEnabled,
+                tarotOracleReminderEnabled = response.tarotOracleReminderEnabled,
+                ritualsEnabled = response.ritualsEnabled,
+                habitsEnabled = response.habitsEnabled,
+            )
+        } else {
+            null
+        }
+    }
+
     override suspend fun registerToken(payload: PushTokenRegistration) {
         callBackend(
             name = REGISTER_PUSH_TOKEN_CALLABLE,
@@ -77,11 +99,28 @@ class FunctionsPushRegistrationRepository(
     }
 
     private companion object {
+        const val GET_NOTIFICATION_PREFERENCES_CALLABLE = "getNotificationPreferences"
         const val REGISTER_PUSH_TOKEN_CALLABLE = "registerPushToken"
         const val UNREGISTER_PUSH_TOKEN_CALLABLE = "unregisterPushToken"
         const val UPDATE_NOTIFICATION_PREFERENCES_CALLABLE = "updateNotificationPreferences"
     }
 }
+
+@Serializable
+private data class EmptyRequestDto(
+    val unused: Boolean = false,
+)
+
+@Serializable
+private data class GetNotificationPreferencesResponseDto(
+    val exists: Boolean,
+    val globalEnabled: Boolean = false,
+    val dailyHoroscopeEnabled: Boolean = false,
+    val dailyRewardEnabled: Boolean = false,
+    val tarotOracleReminderEnabled: Boolean = false,
+    val ritualsEnabled: Boolean = false,
+    val habitsEnabled: Boolean = false,
+)
 
 @Serializable
 private data class RegisterPushTokenRequestDto(

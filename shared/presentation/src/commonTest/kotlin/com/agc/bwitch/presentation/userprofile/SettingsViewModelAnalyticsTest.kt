@@ -9,6 +9,7 @@ import com.agc.bwitch.domain.auth.AuthUser
 import com.agc.bwitch.domain.localization.AppLanguage
 import com.agc.bwitch.domain.localization.AppLanguageRepository
 import com.agc.bwitch.domain.localization.ObserveCurrentLanguageUseCase
+import com.agc.bwitch.domain.notifications.GetPushNotificationPreferencesUseCase
 import com.agc.bwitch.domain.notifications.PushNotificationPreferences
 import com.agc.bwitch.domain.notifications.PushPlatform
 import com.agc.bwitch.domain.notifications.PushRegistrationRepository
@@ -446,15 +447,97 @@ class SettingsViewModelAnalyticsTest {
         assertEquals(setOf("bwitch_premium_monthly"), KnownSubscriptionProducts.all)
     }
 
+    @Test
+    fun `remote notification preferences override stale local cache`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val notificationRepo = FakeNotificationSettingsRepository(
+                initial = NotificationSettings(globalEnabled = true, dailyHoroscopeEnabled = true),
+            )
+            val pushRepo = FakePushRegistrationRepository(
+                remotePreferences = PushNotificationPreferences(
+                    globalEnabled = false,
+                    dailyHoroscopeEnabled = true,
+                    dailyRewardEnabled = false,
+                    tarotOracleReminderEnabled = false,
+                    ritualsEnabled = false,
+                    habitsEnabled = false,
+                ),
+            )
+            val viewModel = viewModel(
+                notificationRepo = notificationRepo,
+                pushRepo = pushRepo,
+                authUser = AuthUser(uid = "uid-1", email = "user@example.com", isAnonymous = false),
+            )
+
+            advanceUntilIdle()
+
+            assertFalse(viewModel.uiState.value.notificationsEnabled)
+            assertTrue(viewModel.uiState.value.dailyHoroscopeEnabled)
+            assertEquals(false, notificationRepo.get().globalEnabled)
+            viewModel.clear()
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun `successful push permission resolution writes remote and local enabled`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val notificationRepo = FakeNotificationSettingsRepository()
+            val pushRepo = FakePushRegistrationRepository()
+            val viewModel = viewModel(notificationRepo = notificationRepo, pushRepo = pushRepo)
+
+            advanceUntilIdle()
+            viewModel.onPushPermissionAndTokenResolved(permissionGranted = true, token = "token-1", timezone = "Europe/Madrid")
+            advanceUntilIdle()
+
+            assertTrue(viewModel.uiState.value.notificationsEnabled)
+            assertTrue(notificationRepo.get().globalEnabled)
+            assertEquals(true, pushRepo.lastPreferences?.globalEnabled)
+            assertEquals(true, pushRepo.lastRegisteredToken?.notificationsPermissionGranted)
+            viewModel.clear()
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    @Test
+    fun `failed remote notification preference write does not leave local switch enabled`() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            val notificationRepo = FakeNotificationSettingsRepository(
+                initial = NotificationSettings(globalEnabled = false),
+            )
+            val pushRepo = FakePushRegistrationRepository(failPreferenceUpdates = true)
+            val viewModel = viewModel(notificationRepo = notificationRepo, pushRepo = pushRepo)
+
+            advanceUntilIdle()
+            viewModel.onPushPermissionAndTokenResolved(permissionGranted = true, token = "token-1", timezone = "Europe/Madrid")
+            advanceUntilIdle()
+
+            assertFalse(viewModel.uiState.value.notificationsEnabled)
+            assertFalse(notificationRepo.get().globalEnabled)
+            assertEquals(SettingsFeedback.NotificationsUnavailable, viewModel.uiState.value.feedback)
+            viewModel.clear()
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
     private fun viewModel(
         analytics: FakeAnalyticsTracker = FakeAnalyticsTracker(),
         entitlements: FakePremiumEntitlementRepository = FakePremiumEntitlementRepository(),
         subscriptionRepo: FakeSubscriptionRepository = FakeSubscriptionRepository(),
         authUser: AuthUser? = null,
+        notificationRepo: FakeNotificationSettingsRepository = FakeNotificationSettingsRepository(),
+        pushRepo: FakePushRegistrationRepository = FakePushRegistrationRepository(),
     ): SettingsViewModel {
-        val notificationRepo = FakeNotificationSettingsRepository()
         val profileRepo = FakeUserProfileRepository()
-        val pushRepo = FakePushRegistrationRepository()
         return SettingsViewModel(
             observeUserProfile = ObserveUserProfileUseCase(profileRepo),
             getUserProfile = GetUserProfileUseCase(profileRepo),
@@ -469,6 +552,7 @@ class SettingsViewModelAnalyticsTest {
             restorePurchases = RestorePurchasesUseCase(subscriptionRepo),
             refreshPremiumEntitlement = RefreshPremiumEntitlementUseCase(entitlements),
             validateGooglePlayPurchase = ValidateGooglePlayPurchaseUseCase(entitlements),
+            getPushNotificationPreferences = GetPushNotificationPreferencesUseCase(pushRepo),
             registerPushToken = RegisterPushTokenUseCase(pushRepo),
             updatePushNotificationPreferences = UpdatePushNotificationPreferencesUseCase(pushRepo),
             requestAccountDeletion = RequestAccountDeletionUseCase(FakeAccountDeletionRepository()),
@@ -528,8 +612,10 @@ class SettingsViewModelAnalyticsTest {
         }
     }
 
-    private class FakeNotificationSettingsRepository : NotificationSettingsRepository {
-        private val state = MutableStateFlow(NotificationSettings())
+    private class FakeNotificationSettingsRepository(
+        initial: NotificationSettings = NotificationSettings(),
+    ) : NotificationSettingsRepository {
+        private val state = MutableStateFlow(initial)
         override suspend fun get(): NotificationSettings = state.value
         override fun observe(): Flow<NotificationSettings> = state
         override suspend fun update(settings: NotificationSettings) {
@@ -538,10 +624,25 @@ class SettingsViewModelAnalyticsTest {
     }
 
 
-    private class FakePushRegistrationRepository : PushRegistrationRepository {
-        override suspend fun registerToken(payload: PushTokenRegistration) = Unit
+    private class FakePushRegistrationRepository(
+        private val remotePreferences: PushNotificationPreferences? = null,
+        private val failPreferenceUpdates: Boolean = false,
+    ) : PushRegistrationRepository {
+        var lastPreferences: PushNotificationPreferences? = null
+        var lastRegisteredToken: PushTokenRegistration? = null
+
+        override suspend fun getPreferences(): PushNotificationPreferences? = remotePreferences
+
+        override suspend fun registerToken(payload: PushTokenRegistration) {
+            lastRegisteredToken = payload
+        }
+
         override suspend fun unregisterToken(token: String, platform: PushPlatform) = Unit
-        override suspend fun updatePreferences(preferences: PushNotificationPreferences) = Unit
+
+        override suspend fun updatePreferences(preferences: PushNotificationPreferences) {
+            if (failPreferenceUpdates) throw IllegalStateException("remote unavailable")
+            lastPreferences = preferences
+        }
     }
 
     private class FakeUserProfileRepository : UserProfileRepository {

@@ -628,8 +628,9 @@ Campos:
 
 Notas:
 - Cambios de cliente se realizan por callable autenticada + App Check.
+- `getNotificationPreferences` lee este documento para reconciliar cache local/UI; si el documento no existe, el cliente conserva sus defaults/cache local hasta una escritura explícita.
 - `globalEnabled=false` representa toggle global OFF sin eliminar token.
-- Fuente authoritativa backend para decisión de envío.
+- Fuente authoritativa backend para decisión de envío y para reconciliación de preferencias en Settings.
 
 
 

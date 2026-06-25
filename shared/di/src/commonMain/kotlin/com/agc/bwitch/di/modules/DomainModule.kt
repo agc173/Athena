@@ -32,6 +32,7 @@ import com.agc.bwitch.domain.moons.GetMoonPacksUseCase
 import com.agc.bwitch.domain.moons.HasEnoughMoonsUseCase
 import com.agc.bwitch.domain.moons.ObserveMoonBalanceUseCase
 import com.agc.bwitch.domain.moons.SpendMoonsUseCase
+import com.agc.bwitch.domain.notifications.GetPushNotificationPreferencesUseCase
 import com.agc.bwitch.domain.notifications.RegisterPushTokenUseCase
 import com.agc.bwitch.domain.notifications.UnregisterPushTokenUseCase
 import com.agc.bwitch.domain.notifications.UpdatePushNotificationPreferencesUseCase
@@ -111,6 +112,7 @@ val domainModule: Module = module {
     factory { ValidateGooglePlayPurchaseUseCase(get()) }
 
     // Push notifications
+    factory { GetPushNotificationPreferencesUseCase(get()) }
     factory { RegisterPushTokenUseCase(get()) }
     factory { UnregisterPushTokenUseCase(get()) }
     factory { UpdatePushNotificationPreferencesUseCase(get()) }
