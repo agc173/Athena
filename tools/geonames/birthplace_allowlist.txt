@@ -1,0 +1,3 @@
+# Manual birthplace preset allowlist.
+# Each non-empty line can be a GeoName ID or "City|CountryCode".
+Málaga|ES
