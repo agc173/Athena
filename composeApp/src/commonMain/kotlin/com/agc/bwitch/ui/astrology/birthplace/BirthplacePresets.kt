@@ -2,7 +2,8 @@ package com.agc.bwitch.ui.astrology.birthplace
 
 import com.agc.bwitch.domain.astrology.natal.BirthplacePreset
 
-val BirthplacePresets: List<BirthplacePreset> = GeneratedBirthplacePresets.ifEmpty { HandWrittenBirthplacePresets }
+val BirthplacePresets: List<BirthplacePreset>
+    get() = GeneratedBirthplacePresets.ifEmpty { HandWrittenBirthplacePresets }
 
 private val HandWrittenBirthplacePresets: List<BirthplacePreset> = listOf(
     BirthplacePreset("madrid-spain", "Madrid", "Spain", 40.4166667, -3.7000000, "Europe/Madrid"),
