@@ -30,7 +30,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.agc.bwitch.localization.appStrings
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
+import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -247,7 +248,7 @@ fun LocalDate.toFriendlyBirthDate(): String = toString()
 private fun rememberToday(): LocalDate = remember { currentSystemLocalDate() }
 
 private fun currentSystemLocalDate(): LocalDate {
-    val now = Clock.System.now()
+    val now = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds())
     return now.toLocalDateTime(TimeZone.currentSystemDefault()).date
 }
 
