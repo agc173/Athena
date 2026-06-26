@@ -246,8 +246,10 @@ fun LocalDate.toFriendlyBirthDate(): String = toString()
 @Composable
 private fun rememberToday(): LocalDate = remember { currentSystemLocalDate() }
 
-private fun currentSystemLocalDate(): LocalDate =
-    Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+private fun currentSystemLocalDate(): LocalDate {
+    val now = Clock.System.now()
+    return now.toLocalDateTime(TimeZone.currentSystemDefault()).date
+}
 
 private fun defaultBirthDate(today: LocalDate): LocalDate =
     LocalDate((today.year - 18).coerceAtLeast(MinimumBirthYear), today.monthNumber, today.dayOfMonth)
