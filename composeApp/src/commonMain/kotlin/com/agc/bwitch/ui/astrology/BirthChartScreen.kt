@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -25,6 +27,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -297,6 +300,8 @@ private fun BasicNatalChartSection(strings: BirthChartStrings, appStrings: AppSt
     var birthMinute by remember { mutableStateOf(0) }
     var birthplaceQuery by remember { mutableStateOf("") }
     var selectedBirthplace by remember { mutableStateOf<BirthplacePreset?>(null) }
+    var isBirthplaceSearchFocused by remember { mutableStateOf(false) }
+    var isBirthplaceMenuExpanded by remember { mutableStateOf(false) }
     var result by remember { mutableStateOf<NatalChartResult?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
 
@@ -353,28 +358,41 @@ private fun BasicNatalChartSection(strings: BirthChartStrings, appStrings: AppSt
 
         Column(verticalArrangement = Arrangement.spacedBy(dimens.spacingSm)) {
             Text(strings.basicNatalBirthplaceLabel, style = MaterialTheme.typography.labelLarge)
-            BasicNatalChartInput(
-                label = strings.basicNatalBirthplaceSearchLabel,
-                value = birthplaceQuery,
-                modifier = Modifier.fillMaxWidth(),
-                supportingText = selectedBirthplace?.let { strings.basicNatalSelectedBirthplaceFormat.formatBirthplace(it) }
-                    ?: strings.basicNatalBirthplaceSearchSupportingText,
-                onValueChange = { query ->
-                    birthplaceQuery = query
-                    if (selectedBirthplace != null && !selectedBirthplace!!.matchesBirthplaceQuery(query)) {
-                        selectedBirthplace = null
-                    }
-                },
-            )
-            matchingBirthplaces.forEach { preset ->
-                OutlinedButton(
-                    onClick = {
-                        selectedBirthplace = preset
-                        birthplaceQuery = preset.displayName()
+            Box(modifier = Modifier.fillMaxWidth()) {
+                BasicNatalChartInput(
+                    label = strings.basicNatalBirthplaceSearchLabel,
+                    value = birthplaceQuery,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .onFocusChanged { focusState ->
+                            isBirthplaceSearchFocused = focusState.isFocused
+                            isBirthplaceMenuExpanded = focusState.isFocused && birthplaceQuery.isNotBlank()
+                        },
+                    supportingText = selectedBirthplace?.let { strings.basicNatalSelectedBirthplaceFormat.formatBirthplace(it) }
+                        ?: strings.basicNatalBirthplaceSearchSupportingText,
+                    onValueChange = { query ->
+                        birthplaceQuery = query
+                        isBirthplaceMenuExpanded = isBirthplaceSearchFocused && query.isNotBlank()
+                        if (selectedBirthplace != null && !selectedBirthplace!!.matchesBirthplaceQuery(query)) {
+                            selectedBirthplace = null
+                        }
                     },
+                )
+                DropdownMenu(
+                    expanded = isBirthplaceMenuExpanded && matchingBirthplaces.isNotEmpty(),
+                    onDismissRequest = { isBirthplaceMenuExpanded = false },
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Text(preset.displayNameWithTimeZone())
+                    matchingBirthplaces.forEach { preset ->
+                        DropdownMenuItem(
+                            text = { Text(preset.displayName()) },
+                            onClick = {
+                                selectedBirthplace = preset
+                                birthplaceQuery = preset.displayName()
+                                isBirthplaceMenuExpanded = false
+                            },
+                        )
+                    }
                 }
             }
         }
@@ -516,8 +534,6 @@ private fun BirthplacePreset.matchesBirthplaceQuery(query: String): Boolean {
 }
 
 private fun BirthplacePreset.displayName(): String = "$cityName, $countryName"
-
-private fun BirthplacePreset.displayNameWithTimeZone(): String = "${displayName()} · $timezoneId"
 
 private fun String.formatBirthplace(preset: BirthplacePreset): String =
     replace("%1${'$'}s", preset.displayName())
