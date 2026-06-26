@@ -35,6 +35,7 @@ import com.agc.bwitch.domain.astrology.birthchart.BirthEssenceArchetype
 import com.agc.bwitch.domain.astrology.birthchart.BirthEssenceProfile
 import com.agc.bwitch.domain.astrology.natal.BirthDateTimeLocal
 import com.agc.bwitch.domain.astrology.natal.BirthLocation
+import com.agc.bwitch.domain.astrology.natal.BirthplacePreset
 import com.agc.bwitch.domain.astrology.natal.NatalChartResult
 import com.agc.bwitch.domain.astrology.natal.ZodiacSign as NatalZodiacSign
 import com.agc.bwitch.domain.astrology.natal.toUtc
@@ -68,6 +69,7 @@ import com.agc.bwitch.ui.common.BirthTimeSelector
 import com.agc.bwitch.ui.common.toVisualResource
 import com.agc.bwitch.ui.common.economy.DailyLimitPaywallCard
 import com.agc.bwitch.ui.common.economy.EconomyGateInfoRow
+import com.agc.bwitch.ui.astrology.birthplace.BirthplacePresets
 import com.agc.bwitch.ui.common.economy.isDailyLimitRejected
 import com.agc.bwitch.ui.common.economy.hasPremiumBenefit
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
@@ -293,13 +295,17 @@ private fun BasicNatalChartSection(strings: BirthChartStrings, appStrings: AppSt
     var birthDate by remember { mutableStateOf(LocalDate(1990, 1, 1)) }
     var birthHour by remember { mutableStateOf(12) }
     var birthMinute by remember { mutableStateOf(0) }
-    var timezoneOffsetMinutes by remember { mutableStateOf("0") }
-    var latitude by remember { mutableStateOf("") }
-    var longitude by remember { mutableStateOf("") }
+    var birthplaceQuery by remember { mutableStateOf("") }
+    var selectedBirthplace by remember { mutableStateOf<BirthplacePreset?>(null) }
     var result by remember { mutableStateOf<NatalChartResult?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
 
-    val validationMessage = remember(strings, birthDate, birthHour, birthMinute, timezoneOffsetMinutes, latitude, longitude) {
+    val matchingBirthplaces = remember(birthplaceQuery) {
+        BirthplacePresets
+            .filter { preset -> preset.matchesBirthplaceQuery(birthplaceQuery) }
+            .take(8)
+    }
+    val validationMessage = remember(strings, birthDate, birthHour, birthMinute, selectedBirthplace) {
         validateBasicNatalChartInput(
             strings = strings,
             year = birthDate.year.toString(),
@@ -307,9 +313,7 @@ private fun BasicNatalChartSection(strings: BirthChartStrings, appStrings: AppSt
             day = birthDate.dayOfMonth.toString(),
             hour = birthHour.toString(),
             minute = birthMinute.toString(),
-            timezoneOffsetMinutes = timezoneOffsetMinutes,
-            latitude = latitude,
-            longitude = longitude,
+            selectedBirthplace = selectedBirthplace,
         )
     }
     val canCalculate = validationMessage == null
@@ -348,32 +352,31 @@ private fun BasicNatalChartSection(strings: BirthChartStrings, appStrings: AppSt
         )
 
         Column(verticalArrangement = Arrangement.spacedBy(dimens.spacingSm)) {
-            Text(strings.basicNatalUtcOffsetLabel, style = MaterialTheme.typography.labelLarge)
-            BasicNatalChartInput(
-                label = strings.basicNatalOffsetMinutesLabel,
-                value = timezoneOffsetMinutes,
-                modifier = Modifier.fillMaxWidth(),
-                supportingText = strings.basicNatalOffsetMinutesSupportingText,
-                onValueChange = { timezoneOffsetMinutes = it },
-            )
-        }
-
-        Column(verticalArrangement = Arrangement.spacedBy(dimens.spacingSm)) {
             Text(strings.basicNatalBirthplaceLabel, style = MaterialTheme.typography.labelLarge)
             BasicNatalChartInput(
-                label = strings.basicNatalLatitudeLabel,
-                value = latitude,
+                label = strings.basicNatalBirthplaceSearchLabel,
+                value = birthplaceQuery,
                 modifier = Modifier.fillMaxWidth(),
-                supportingText = strings.basicNatalLatitudeSupportingText,
-                onValueChange = { latitude = it },
+                supportingText = selectedBirthplace?.let { strings.basicNatalSelectedBirthplaceFormat.formatBirthplace(it) }
+                    ?: strings.basicNatalBirthplaceSearchSupportingText,
+                onValueChange = { query ->
+                    birthplaceQuery = query
+                    if (selectedBirthplace != null && !selectedBirthplace!!.matchesBirthplaceQuery(query)) {
+                        selectedBirthplace = null
+                    }
+                },
             )
-            BasicNatalChartInput(
-                label = strings.basicNatalLongitudeLabel,
-                value = longitude,
-                modifier = Modifier.fillMaxWidth(),
-                supportingText = strings.basicNatalLongitudeSupportingText,
-                onValueChange = { longitude = it },
-            )
+            matchingBirthplaces.forEach { preset ->
+                OutlinedButton(
+                    onClick = {
+                        selectedBirthplace = preset
+                        birthplaceQuery = preset.displayName()
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(preset.displayNameWithTimeZone())
+                }
+            }
         }
 
         validationMessage?.let { message ->
@@ -384,6 +387,11 @@ private fun BasicNatalChartSection(strings: BirthChartStrings, appStrings: AppSt
             onClick = {
                 result = null
                 error = null
+                val birthplace = selectedBirthplace
+                if (birthplace == null) {
+                    error = strings.basicNatalBirthplaceRequiredError
+                    return@BWitchPrimaryButton
+                }
                 runCatching {
                     BirthDateTimeLocal(
                         year = birthDate.year,
@@ -391,18 +399,15 @@ private fun BasicNatalChartSection(strings: BirthChartStrings, appStrings: AppSt
                         day = birthDate.dayOfMonth,
                         hour = birthHour,
                         minute = birthMinute,
-                        timezoneOffsetMinutes = timezoneOffsetMinutes.toInt(),
-                    ).toUtc()
+                    ).toUtc(birthplace.timezoneId)
                 }.mapCatching { utc ->
-                    val birthLocation = if (latitude.isBlank() && longitude.isBlank()) {
-                        null
-                    } else {
-                        BirthLocation(
-                            latitudeDegrees = latitude.trim().toDouble(),
-                            longitudeDegrees = longitude.trim().toDouble(),
-                        )
-                    }
-                    BasicNatalChartUiCalculator.calculate(utc, birthLocation)
+                    BasicNatalChartUiCalculator.calculate(
+                        birthDateTimeUtc = utc,
+                        birthLocation = BirthLocation(
+                            latitudeDegrees = birthplace.latitudeDegrees,
+                            longitudeDegrees = birthplace.longitudeDegrees,
+                        ),
+                    )
                 }.onSuccess { chart ->
                     result = chart
                 }.onFailure {
@@ -484,36 +489,39 @@ private fun validateBasicNatalChartInput(
     day: String,
     hour: String,
     minute: String,
-    timezoneOffsetMinutes: String,
-    latitude: String,
-    longitude: String,
+    selectedBirthplace: BirthplacePreset?,
 ): String? {
     val parsedYear = year.toIntOrNull() ?: return strings.basicNatalInvalidYearError
     val parsedMonth = month.toIntOrNull() ?: return strings.basicNatalInvalidMonthError
     val parsedDay = day.toIntOrNull() ?: return strings.basicNatalInvalidDayError
     val parsedHour = hour.toIntOrNull() ?: return strings.basicNatalInvalidHourError
     val parsedMinute = minute.toIntOrNull() ?: return strings.basicNatalInvalidMinuteError
-    val parsedOffset = timezoneOffsetMinutes.toIntOrNull() ?: return strings.basicNatalInvalidUtcOffsetError
-    val hasLatitude = latitude.isNotBlank()
-    val hasLongitude = longitude.isNotBlank()
-    val parsedLatitude = latitude.trim().toDoubleOrNull()
-    val parsedLongitude = longitude.trim().toDoubleOrNull()
-
-    if (hasLatitude != hasLongitude) return strings.basicNatalCoordinatesPairError
-    if (hasLatitude && parsedLatitude == null) return strings.basicNatalInvalidLatitudeError
-    if (hasLongitude && parsedLongitude == null) return strings.basicNatalInvalidLongitudeError
 
     if (parsedYear !in 1..9999) return strings.basicNatalYearRangeError
     if (parsedMonth !in 1..12) return strings.basicNatalMonthRangeError
     if (parsedDay !in 1..daysInMonth(parsedYear, parsedMonth)) return strings.basicNatalDayForMonthError
     if (parsedHour !in 0..23) return strings.basicNatalHourRangeError
     if (parsedMinute !in 0..59) return strings.basicNatalMinuteRangeError
-    if (parsedOffset !in -18 * 60..18 * 60) return strings.basicNatalUtcOffsetRangeError
-    if (parsedLatitude != null && parsedLatitude !in -90.0..90.0) return strings.basicNatalLatitudeRangeError
-    if (parsedLongitude != null && parsedLongitude !in -180.0..180.0) return strings.basicNatalLongitudeRangeError
+    if (selectedBirthplace == null) return strings.basicNatalBirthplaceRequiredError
 
     return null
 }
+
+private fun BirthplacePreset.matchesBirthplaceQuery(query: String): Boolean {
+    val normalizedQuery = query.trim().lowercase()
+    if (normalizedQuery.isBlank()) return true
+    return cityName.lowercase().contains(normalizedQuery) ||
+        countryName.lowercase().contains(normalizedQuery) ||
+        timezoneId.lowercase().contains(normalizedQuery)
+}
+
+private fun BirthplacePreset.displayName(): String = "$cityName, $countryName"
+
+private fun BirthplacePreset.displayNameWithTimeZone(): String = "${displayName()} · $timezoneId"
+
+private fun String.formatBirthplace(preset: BirthplacePreset): String =
+    replace("%1$s", preset.displayName())
+        .replace("%2$s", preset.timezoneId)
 
 private fun daysInMonth(year: Int, month: Int): Int = when (month) {
     2 -> if (isLeapYear(year)) 29 else 28
