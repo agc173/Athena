@@ -27,6 +27,7 @@ kotlin {
     sourceSets {
         androidMain.dependencies {
             implementation(libs.google.play.billing)
+            implementation("com.github.cosinekitty:astronomy:v2.1.17")
         }
 
         commonMain.dependencies {
