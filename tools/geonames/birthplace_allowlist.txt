@@ -1,3 +1,52 @@
 # Manual birthplace preset allowlist.
 # Each non-empty line can be a GeoName ID or "City|CountryCode".
+Madrid|ES
+Barcelona|ES
+Valencia|ES
+Sevilla|ES
 Málaga|ES
+Bilbao|ES
+Zaragoza|ES
+Palma|ES
+Ibiza|ES
+Las Palmas de Gran Canaria|ES
+Santa Cruz de Tenerife|ES
+Buenos Aires|AR
+Córdoba|AR
+Rosario|AR
+Bogotá|CO
+Medellín|CO
+Lima|PE
+Santiago|CL
+Ciudad de México|MX
+Guadalajara|MX
+Monterrey|MX
+São Paulo|BR
+Rio de Janeiro|BR
+Lisboa|PT
+Porto|PT
+New York|US
+Los Angeles|US
+Chicago|US
+Miami|US
+San Francisco|US
+Washington|US
+Toronto|CA
+Vancouver|CA
+Montreal|CA
+London|GB
+Manchester|GB
+Sydney|AU
+Melbourne|AU
+Moscow|RU
+Saint Petersburg|RU
+Tokyo|JP
+Osaka|JP
+Beijing|CN
+Shanghai|CN
+Hong Kong|CN
+Seoul|KR
+Singapore|SG
+Dubai|AE
+Cairo|EG
+Johannesburg|ZA

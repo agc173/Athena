@@ -1,0 +1,17 @@
+# Compact reference birthplace catalogue exclusions.
+# These are valid birthplaces, but are intentionally omitted as independent
+# reference cities so users can pick a nearby major reference city instead.
+# Prefix an entry with ! to force exclusion even if the city is allowlisted.
+Getafe|ES
+Leganés|ES
+Móstoles|ES
+Fuenlabrada|ES
+Parla|ES
+Alcalá de Henares|ES
+L'Hospitalet de Llobregat|ES
+Badalona|ES
+Cornellà de Llobregat|ES
+Barakaldo|ES
+Portugalete|ES
+Sestao|ES
+Santurtzi|ES
