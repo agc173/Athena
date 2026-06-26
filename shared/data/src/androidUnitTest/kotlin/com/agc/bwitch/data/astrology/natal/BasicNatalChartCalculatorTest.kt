@@ -1,6 +1,6 @@
 package com.agc.bwitch.data.astrology.natal
 
-import com.agc.bwitch.domain.astrology.natal.BirthData
+import com.agc.bwitch.domain.astrology.natal.BirthDateTimeUtc
 import com.agc.bwitch.domain.astrology.natal.ZodiacSign
 import kotlin.math.abs
 import kotlin.test.Test
@@ -11,7 +11,7 @@ class BasicNatalChartCalculatorTest {
     @Test
     fun calculatesSunAndMoonSignsForSpikeValidationDate() {
         val result = BasicNatalChartCalculator().calculate(
-            BirthData(
+            BirthDateTimeUtc(
                 year = 1990,
                 month = 7,
                 day = 15,
