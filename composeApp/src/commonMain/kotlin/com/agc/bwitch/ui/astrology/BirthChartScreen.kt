@@ -36,6 +36,7 @@ import com.agc.bwitch.domain.astrology.birthchart.BirthEssenceProfile
 import com.agc.bwitch.domain.astrology.natal.BirthDateTimeLocal
 import com.agc.bwitch.domain.astrology.natal.BirthLocation
 import com.agc.bwitch.domain.astrology.natal.NatalChartResult
+import com.agc.bwitch.domain.astrology.natal.ZodiacSign as NatalZodiacSign
 import com.agc.bwitch.domain.astrology.natal.toUtc
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
 import com.agc.bwitch.domain.model.DeckCardUnlockReward
@@ -426,11 +427,11 @@ private fun BasicNatalChartResultCards(chart: NatalChartResult, strings: BirthCh
     Column(verticalArrangement = Arrangement.spacedBy(dimens.spacingSm)) {
         Text(strings.basicNatalPreviewTitle, style = MaterialTheme.typography.titleSmall)
         Row(horizontalArrangement = Arrangement.spacedBy(dimens.spacingSm)) {
-            BasicNatalChartResultCard("☀", strings.basicNatalSunLabel, chart.sunSign.toDisplayName(appStrings), Modifier.weight(1f))
-            BasicNatalChartResultCard("🌙", strings.basicNatalMoonLabel, chart.moonSign.toDisplayName(appStrings), Modifier.weight(1f))
+            BasicNatalChartResultCard("☀", strings.basicNatalSunLabel, chart.sunSign.toNatalDisplayName(appStrings), Modifier.weight(1f))
+            BasicNatalChartResultCard("🌙", strings.basicNatalMoonLabel, chart.moonSign.toNatalDisplayName(appStrings), Modifier.weight(1f))
         }
         chart.ascendantSign?.let { ascendantSign ->
-            BasicNatalChartResultCard("↗", strings.basicNatalAscendantLabel, ascendantSign.toDisplayName(appStrings), Modifier.fillMaxWidth())
+            BasicNatalChartResultCard("↗", strings.basicNatalAscendantLabel, ascendantSign.toNatalDisplayName(appStrings), Modifier.fillMaxWidth())
         }
     }
 }
@@ -673,6 +674,21 @@ private fun ZodiacSign.toDisplayName(strings: AppStrings): String = when (this) 
     ZodiacSign.capricorn -> strings.zodiac.capricorn
     ZodiacSign.aquarius -> strings.zodiac.aquarius
     ZodiacSign.pisces -> strings.zodiac.pisces
+}
+
+private fun NatalZodiacSign.toNatalDisplayName(strings: AppStrings): String = when (this) {
+    NatalZodiacSign.aries -> strings.zodiac.aries
+    NatalZodiacSign.taurus -> strings.zodiac.taurus
+    NatalZodiacSign.gemini -> strings.zodiac.gemini
+    NatalZodiacSign.cancer -> strings.zodiac.cancer
+    NatalZodiacSign.leo -> strings.zodiac.leo
+    NatalZodiacSign.virgo -> strings.zodiac.virgo
+    NatalZodiacSign.libra -> strings.zodiac.libra
+    NatalZodiacSign.scorpio -> strings.zodiac.scorpio
+    NatalZodiacSign.sagittarius -> strings.zodiac.sagittarius
+    NatalZodiacSign.capricorn -> strings.zodiac.capricorn
+    NatalZodiacSign.aquarius -> strings.zodiac.aquarius
+    NatalZodiacSign.pisces -> strings.zodiac.pisces
 }
 
 @Composable
