@@ -520,8 +520,8 @@ private fun BirthplacePreset.displayName(): String = "$cityName, $countryName"
 private fun BirthplacePreset.displayNameWithTimeZone(): String = "${displayName()} · $timezoneId"
 
 private fun String.formatBirthplace(preset: BirthplacePreset): String =
-    replace("%1$s", preset.displayName())
-        .replace("%2$s", preset.timezoneId)
+    replace("%1${'$'}s", preset.displayName())
+        .replace("%2${'$'}s", preset.timezoneId)
 
 private fun daysInMonth(year: Int, month: Int): Int = when (month) {
     2 -> if (isLeapYear(year)) 29 else 28
