@@ -5,8 +5,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -28,6 +31,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.unit.dp
 import com.agc.bwitch.domain.astrology.birthchart.BirthEssenceArchetype
 import com.agc.bwitch.domain.astrology.birthchart.BirthEssenceProfile
 import com.agc.bwitch.domain.astrology.natal.BirthDateTimeLocal
@@ -290,21 +294,60 @@ private fun BasicNatalChartSection() {
     var result by remember { mutableStateOf<NatalChartResult?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
 
-    BWitchCard {
-        Text("Basic natal chart", style = MaterialTheme.typography.titleMedium)
-        Text(
-            "Enter local birth date and time with a manual UTC offset in minutes.",
-            style = MaterialTheme.typography.bodySmall,
-            color = extras.textSecondary,
+    val validationMessage = remember(year, month, day, hour, minute, timezoneOffsetMinutes) {
+        validateBasicNatalChartInput(
+            year = year,
+            month = month,
+            day = day,
+            hour = hour,
+            minute = minute,
+            timezoneOffsetMinutes = timezoneOffsetMinutes,
         )
+    }
+    val canCalculate = validationMessage == null
+
+    BWitchCard(contentVerticalArrangement = Arrangement.spacedBy(dimens.spacingMd)) {
         Column(verticalArrangement = Arrangement.spacedBy(dimens.spacingXs)) {
-            BasicNatalChartInput("Year", year) { year = it }
-            BasicNatalChartInput("Month", month) { month = it }
-            BasicNatalChartInput("Day", day) { day = it }
-            BasicNatalChartInput("Hour", hour) { hour = it }
-            BasicNatalChartInput("Minute", minute) { minute = it }
-            BasicNatalChartInput("Timezone offset minutes", timezoneOffsetMinutes) { timezoneOffsetMinutes = it }
+            Text("Basic Natal Chart", style = MaterialTheme.typography.titleLarge)
+            Text(
+                "Start with your Sun and Moon signs using your local birth details.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = extras.textSecondary,
+            )
         }
+
+        Column(verticalArrangement = Arrangement.spacedBy(dimens.spacingSm)) {
+            Text("Birth date", style = MaterialTheme.typography.labelLarge)
+            Row(horizontalArrangement = Arrangement.spacedBy(dimens.spacingXs)) {
+                BasicNatalChartInput("Year", year, Modifier.weight(1.2f)) { year = it }
+                BasicNatalChartInput("Month", month, Modifier.weight(1f)) { month = it }
+                BasicNatalChartInput("Day", day, Modifier.weight(1f)) { day = it }
+            }
+        }
+
+        Column(verticalArrangement = Arrangement.spacedBy(dimens.spacingSm)) {
+            Text("Birth time", style = MaterialTheme.typography.labelLarge)
+            Row(horizontalArrangement = Arrangement.spacedBy(dimens.spacingXs)) {
+                BasicNatalChartInput("Hour", hour, Modifier.weight(1f)) { hour = it }
+                BasicNatalChartInput("Minute", minute, Modifier.weight(1f)) { minute = it }
+            }
+        }
+
+        Column(verticalArrangement = Arrangement.spacedBy(dimens.spacingSm)) {
+            Text("UTC offset", style = MaterialTheme.typography.labelLarge)
+            BasicNatalChartInput(
+                label = "Offset in minutes",
+                value = timezoneOffsetMinutes,
+                modifier = Modifier.fillMaxWidth(),
+                supportingText = "Example: -300 for UTC-05:00, 60 for UTC+01:00.",
+                onValueChange = { timezoneOffsetMinutes = it },
+            )
+        }
+
+        validationMessage?.let { message ->
+            Text(message, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+        }
+
         BWitchPrimaryButton(
             onClick = {
                 result = null
@@ -322,21 +365,22 @@ private fun BasicNatalChartSection() {
                     BasicNatalChartUiCalculator.calculate(utc)
                 }.onSuccess { chart ->
                     result = chart
-                }.onFailure { throwable ->
-                    error = throwable.message ?: "Could not calculate the basic natal chart."
+                }.onFailure {
+                    error = "We couldn't calculate this chart. Please check the date, time, and UTC offset."
                 }
             },
+            enabled = canCalculate,
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Text("Calculate")
+            Text("Calculate chart")
         }
+
         result?.let { chart ->
-            Text("Sun sign: ${chart.sunSign.label}", style = MaterialTheme.typography.bodyMedium)
-            Text("Moon sign: ${chart.moonSign.label}", style = MaterialTheme.typography.bodyMedium)
+            BasicNatalChartResultCards(chart)
         }
         error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         Text(
-            "Basic calculation. Ascendant requires exact birth time and location and is not included yet.",
+            "This is a basic natal chart.\n\nSun and Moon signs are calculated locally on your device.\n\nAscendant will be available in a future version because it requires the exact birth time and birthplace.",
             style = MaterialTheme.typography.bodySmall,
             color = extras.textSecondary,
         )
@@ -344,19 +388,85 @@ private fun BasicNatalChartSection() {
 }
 
 @Composable
+private fun BasicNatalChartResultCards(chart: NatalChartResult) {
+    val dimens = BWitchThemeTokens.dimens
+
+    Column(verticalArrangement = Arrangement.spacedBy(dimens.spacingSm)) {
+        Text("Your chart preview", style = MaterialTheme.typography.titleSmall)
+        Row(horizontalArrangement = Arrangement.spacedBy(dimens.spacingSm)) {
+            BasicNatalChartResultCard("☀", "Sun", chart.sunSign.label, Modifier.weight(1f))
+            BasicNatalChartResultCard("🌙", "Moon", chart.moonSign.label, Modifier.weight(1f))
+        }
+    }
+}
+
+@Composable
+private fun BasicNatalChartResultCard(
+    symbol: String,
+    title: String,
+    sign: String,
+    modifier: Modifier = Modifier,
+) {
+    BWitchCard(
+        modifier = modifier,
+        contentVerticalArrangement = Arrangement.spacedBy(BWitchThemeTokens.dimens.spacingXs),
+    ) {
+        Text("$symbol $title", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(sign, style = MaterialTheme.typography.titleMedium)
+    }
+}
+
+@Composable
 private fun BasicNatalChartInput(
     label: String,
     value: String,
+    modifier: Modifier = Modifier,
+    supportingText: String? = null,
     onValueChange: (String) -> Unit,
 ) {
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
         label = { Text(label) },
+        supportingText = supportingText?.let { text -> ({ Text(text) }) },
         singleLine = true,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.defaultMinSize(minWidth = 0.dp),
     )
 }
+
+private fun validateBasicNatalChartInput(
+    year: String,
+    month: String,
+    day: String,
+    hour: String,
+    minute: String,
+    timezoneOffsetMinutes: String,
+): String? {
+    val parsedYear = year.toIntOrNull() ?: return "Enter a valid birth year."
+    val parsedMonth = month.toIntOrNull() ?: return "Enter a valid birth month."
+    val parsedDay = day.toIntOrNull() ?: return "Enter a valid birth day."
+    val parsedHour = hour.toIntOrNull() ?: return "Enter a valid birth hour."
+    val parsedMinute = minute.toIntOrNull() ?: return "Enter valid birth minutes."
+    val parsedOffset = timezoneOffsetMinutes.toIntOrNull() ?: return "Enter a valid UTC offset in minutes."
+
+    if (parsedYear !in 1..9999) return "Birth year must be between 1 and 9999."
+    if (parsedMonth !in 1..12) return "Birth month must be between 1 and 12."
+    if (parsedDay !in 1..daysInMonth(parsedYear, parsedMonth)) return "Enter a valid day for this month."
+    if (parsedHour !in 0..23) return "Birth hour must be between 0 and 23."
+    if (parsedMinute !in 0..59) return "Birth minutes must be between 0 and 59."
+    if (parsedOffset !in -18 * 60..18 * 60) return "UTC offset must be between -1080 and 1080 minutes."
+
+    return null
+}
+
+private fun daysInMonth(year: Int, month: Int): Int = when (month) {
+    2 -> if (isLeapYear(year)) 29 else 28
+    4, 6, 9, 11 -> 30
+    else -> 31
+}
+
+private fun isLeapYear(year: Int): Boolean =
+    year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)
 
 private fun String?.isBirthEssenceEconomyError(): Boolean {
     val normalized = this?.trim()?.lowercase().orEmpty()
