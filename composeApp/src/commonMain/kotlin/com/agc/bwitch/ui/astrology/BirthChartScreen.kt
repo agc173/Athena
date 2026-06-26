@@ -40,6 +40,7 @@ import com.agc.bwitch.domain.astrology.natal.toUtc
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
 import com.agc.bwitch.domain.model.DeckCardUnlockReward
 import com.agc.bwitch.localization.AppStrings
+import com.agc.bwitch.localization.BirthChartStrings
 import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.presentation.astrology.birthchart.BirthChartUiState
 import com.agc.bwitch.presentation.astrology.birthchart.BirthChartViewModel
@@ -160,7 +161,7 @@ fun BirthChartScreen(
             onSelect = viewModel::onRisingSignChange,
         )
 
-        BasicNatalChartSection()
+        BasicNatalChartSection(strings = birthChartStrings, appStrings = strings)
 
         EconomyGateInfoRow(
             preview = birthEssencePreview,
@@ -282,7 +283,7 @@ fun BirthChartScreen(
 }
 
 @Composable
-private fun BasicNatalChartSection() {
+private fun BasicNatalChartSection(strings: BirthChartStrings, appStrings: AppStrings) {
     val dimens = BWitchThemeTokens.dimens
     val extras = BWitchThemeTokens.extras
     var year by remember { mutableStateOf("1990") }
@@ -296,8 +297,9 @@ private fun BasicNatalChartSection() {
     var result by remember { mutableStateOf<NatalChartResult?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
 
-    val validationMessage = remember(year, month, day, hour, minute, timezoneOffsetMinutes, latitude, longitude) {
+    val validationMessage = remember(strings, year, month, day, hour, minute, timezoneOffsetMinutes, latitude, longitude) {
         validateBasicNatalChartInput(
+            strings = strings,
             year = year,
             month = month,
             day = day,
@@ -312,56 +314,56 @@ private fun BasicNatalChartSection() {
 
     BWitchCard(contentVerticalArrangement = Arrangement.spacedBy(dimens.spacingMd)) {
         Column(verticalArrangement = Arrangement.spacedBy(dimens.spacingXs)) {
-            Text("Basic Natal Chart", style = MaterialTheme.typography.titleLarge)
+            Text(strings.basicNatalTitle, style = MaterialTheme.typography.titleLarge)
             Text(
-                "Start with your Sun and Moon signs using your local birth details.",
+                strings.basicNatalSubtitle,
                 style = MaterialTheme.typography.bodyMedium,
                 color = extras.textSecondary,
             )
         }
 
         Column(verticalArrangement = Arrangement.spacedBy(dimens.spacingSm)) {
-            Text("Birth date", style = MaterialTheme.typography.labelLarge)
+            Text(strings.basicNatalBirthDateLabel, style = MaterialTheme.typography.labelLarge)
             Row(horizontalArrangement = Arrangement.spacedBy(dimens.spacingXs)) {
-                BasicNatalChartInput("Year", year, Modifier.weight(1.2f)) { year = it }
-                BasicNatalChartInput("Month", month, Modifier.weight(1f)) { month = it }
-                BasicNatalChartInput("Day", day, Modifier.weight(1f)) { day = it }
+                BasicNatalChartInput(strings.basicNatalYearLabel, year, Modifier.weight(1.2f)) { year = it }
+                BasicNatalChartInput(strings.basicNatalMonthLabel, month, Modifier.weight(1f)) { month = it }
+                BasicNatalChartInput(strings.basicNatalDayLabel, day, Modifier.weight(1f)) { day = it }
             }
         }
 
         Column(verticalArrangement = Arrangement.spacedBy(dimens.spacingSm)) {
-            Text("Birth time", style = MaterialTheme.typography.labelLarge)
+            Text(strings.basicNatalBirthTimeLabel, style = MaterialTheme.typography.labelLarge)
             Row(horizontalArrangement = Arrangement.spacedBy(dimens.spacingXs)) {
-                BasicNatalChartInput("Hour", hour, Modifier.weight(1f)) { hour = it }
-                BasicNatalChartInput("Minute", minute, Modifier.weight(1f)) { minute = it }
+                BasicNatalChartInput(strings.basicNatalHourLabel, hour, Modifier.weight(1f)) { hour = it }
+                BasicNatalChartInput(strings.basicNatalMinuteLabel, minute, Modifier.weight(1f)) { minute = it }
             }
         }
 
         Column(verticalArrangement = Arrangement.spacedBy(dimens.spacingSm)) {
-            Text("UTC offset", style = MaterialTheme.typography.labelLarge)
+            Text(strings.basicNatalUtcOffsetLabel, style = MaterialTheme.typography.labelLarge)
             BasicNatalChartInput(
-                label = "Offset in minutes",
+                label = strings.basicNatalOffsetMinutesLabel,
                 value = timezoneOffsetMinutes,
                 modifier = Modifier.fillMaxWidth(),
-                supportingText = "Use your birth time offset from UTC. Spain in winter is 60; Spain in summer is 120.",
+                supportingText = strings.basicNatalOffsetMinutesSupportingText,
                 onValueChange = { timezoneOffsetMinutes = it },
             )
         }
 
         Column(verticalArrangement = Arrangement.spacedBy(dimens.spacingSm)) {
-            Text("Birthplace", style = MaterialTheme.typography.labelLarge)
+            Text(strings.basicNatalBirthplaceLabel, style = MaterialTheme.typography.labelLarge)
             BasicNatalChartInput(
-                label = "Birth latitude",
+                label = strings.basicNatalLatitudeLabel,
                 value = latitude,
                 modifier = Modifier.fillMaxWidth(),
-                supportingText = "Positive north, negative south. Example: 40.4167",
+                supportingText = strings.basicNatalLatitudeSupportingText,
                 onValueChange = { latitude = it },
             )
             BasicNatalChartInput(
-                label = "Birth longitude",
+                label = strings.basicNatalLongitudeLabel,
                 value = longitude,
                 modifier = Modifier.fillMaxWidth(),
-                supportingText = "Positive east, negative west. Example: -3.7000",
+                supportingText = strings.basicNatalLongitudeSupportingText,
                 onValueChange = { longitude = it },
             )
         }
@@ -396,21 +398,21 @@ private fun BasicNatalChartSection() {
                 }.onSuccess { chart ->
                     result = chart
                 }.onFailure {
-                    error = "We couldn't calculate this chart. Please check the date, time, UTC offset, and birthplace."
+                    error = strings.basicNatalCalculateError
                 }
             },
             enabled = canCalculate,
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Text("Calculate chart")
+            Text(strings.basicNatalCalculateCta)
         }
 
         result?.let { chart ->
-            BasicNatalChartResultCards(chart)
+            BasicNatalChartResultCards(chart = chart, strings = strings, appStrings = appStrings)
         }
         error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         Text(
-            "This is a basic natal chart.\n\nSun, Moon, and optional Ascendant are calculated locally on your device.\n\nEnter both birthplace coordinates to include Ascendant, or leave both blank for Sun and Moon only.",
+            strings.basicNatalInfoText,
             style = MaterialTheme.typography.bodySmall,
             color = extras.textSecondary,
         )
@@ -418,17 +420,17 @@ private fun BasicNatalChartSection() {
 }
 
 @Composable
-private fun BasicNatalChartResultCards(chart: NatalChartResult) {
+private fun BasicNatalChartResultCards(chart: NatalChartResult, strings: BirthChartStrings, appStrings: AppStrings) {
     val dimens = BWitchThemeTokens.dimens
 
     Column(verticalArrangement = Arrangement.spacedBy(dimens.spacingSm)) {
-        Text("Your chart preview", style = MaterialTheme.typography.titleSmall)
+        Text(strings.basicNatalPreviewTitle, style = MaterialTheme.typography.titleSmall)
         Row(horizontalArrangement = Arrangement.spacedBy(dimens.spacingSm)) {
-            BasicNatalChartResultCard("☀", "Sun", chart.sunSign.label, Modifier.weight(1f))
-            BasicNatalChartResultCard("🌙", "Moon", chart.moonSign.label, Modifier.weight(1f))
+            BasicNatalChartResultCard("☀", strings.basicNatalSunLabel, chart.sunSign.toDisplayName(appStrings), Modifier.weight(1f))
+            BasicNatalChartResultCard("🌙", strings.basicNatalMoonLabel, chart.moonSign.toDisplayName(appStrings), Modifier.weight(1f))
         }
         chart.ascendantSign?.let { ascendantSign ->
-            BasicNatalChartResultCard("↗", "Ascendant", ascendantSign.label, Modifier.fillMaxWidth())
+            BasicNatalChartResultCard("↗", strings.basicNatalAscendantLabel, ascendantSign.toDisplayName(appStrings), Modifier.fillMaxWidth())
         }
     }
 }
@@ -468,6 +470,7 @@ private fun BasicNatalChartInput(
 }
 
 private fun validateBasicNatalChartInput(
+    strings: BirthChartStrings,
     year: String,
     month: String,
     day: String,
@@ -477,29 +480,29 @@ private fun validateBasicNatalChartInput(
     latitude: String,
     longitude: String,
 ): String? {
-    val parsedYear = year.toIntOrNull() ?: return "Enter a valid birth year."
-    val parsedMonth = month.toIntOrNull() ?: return "Enter a valid birth month."
-    val parsedDay = day.toIntOrNull() ?: return "Enter a valid birth day."
-    val parsedHour = hour.toIntOrNull() ?: return "Enter a valid birth hour."
-    val parsedMinute = minute.toIntOrNull() ?: return "Enter valid birth minutes."
-    val parsedOffset = timezoneOffsetMinutes.toIntOrNull() ?: return "Enter a valid UTC offset in minutes."
+    val parsedYear = year.toIntOrNull() ?: return strings.basicNatalInvalidYearError
+    val parsedMonth = month.toIntOrNull() ?: return strings.basicNatalInvalidMonthError
+    val parsedDay = day.toIntOrNull() ?: return strings.basicNatalInvalidDayError
+    val parsedHour = hour.toIntOrNull() ?: return strings.basicNatalInvalidHourError
+    val parsedMinute = minute.toIntOrNull() ?: return strings.basicNatalInvalidMinuteError
+    val parsedOffset = timezoneOffsetMinutes.toIntOrNull() ?: return strings.basicNatalInvalidUtcOffsetError
     val hasLatitude = latitude.isNotBlank()
     val hasLongitude = longitude.isNotBlank()
     val parsedLatitude = latitude.trim().toDoubleOrNull()
     val parsedLongitude = longitude.trim().toDoubleOrNull()
 
-    if (hasLatitude != hasLongitude) return "Enter both birth latitude and birth longitude, or leave both blank."
-    if (hasLatitude && parsedLatitude == null) return "Enter a valid birth latitude."
-    if (hasLongitude && parsedLongitude == null) return "Enter a valid birth longitude."
+    if (hasLatitude != hasLongitude) return strings.basicNatalCoordinatesPairError
+    if (hasLatitude && parsedLatitude == null) return strings.basicNatalInvalidLatitudeError
+    if (hasLongitude && parsedLongitude == null) return strings.basicNatalInvalidLongitudeError
 
-    if (parsedYear !in 1..9999) return "Birth year must be between 1 and 9999."
-    if (parsedMonth !in 1..12) return "Birth month must be between 1 and 12."
-    if (parsedDay !in 1..daysInMonth(parsedYear, parsedMonth)) return "Enter a valid day for this month."
-    if (parsedHour !in 0..23) return "Birth hour must be between 0 and 23."
-    if (parsedMinute !in 0..59) return "Birth minutes must be between 0 and 59."
-    if (parsedOffset !in -18 * 60..18 * 60) return "UTC offset must be between -1080 and 1080 minutes."
-    if (parsedLatitude != null && parsedLatitude !in -90.0..90.0) return "Birth latitude must be between -90 and 90."
-    if (parsedLongitude != null && parsedLongitude !in -180.0..180.0) return "Birth longitude must be between -180 and 180."
+    if (parsedYear !in 1..9999) return strings.basicNatalYearRangeError
+    if (parsedMonth !in 1..12) return strings.basicNatalMonthRangeError
+    if (parsedDay !in 1..daysInMonth(parsedYear, parsedMonth)) return strings.basicNatalDayForMonthError
+    if (parsedHour !in 0..23) return strings.basicNatalHourRangeError
+    if (parsedMinute !in 0..59) return strings.basicNatalMinuteRangeError
+    if (parsedOffset !in -18 * 60..18 * 60) return strings.basicNatalUtcOffsetRangeError
+    if (parsedLatitude != null && parsedLatitude !in -90.0..90.0) return strings.basicNatalLatitudeRangeError
+    if (parsedLongitude != null && parsedLongitude !in -180.0..180.0) return strings.basicNatalLongitudeRangeError
 
     return null
 }
