@@ -63,6 +63,8 @@ import com.agc.bwitch.presentation.astrology.birthchart.BIRTH_CHART_SYNC_UPDATED
 import com.agc.bwitch.presentation.astrology.birthchart.BIRTH_CHART_SYNC_UP_TO_DATE_KEY
 import com.agc.bwitch.presentation.economy.EconomyViewModel
 import com.agc.bwitch.presentation.economy.runWithEconomyGate
+import com.agc.bwitch.ui.common.BirthDateSelector
+import com.agc.bwitch.ui.common.BirthTimeSelector
 import com.agc.bwitch.ui.common.toVisualResource
 import com.agc.bwitch.ui.common.economy.DailyLimitPaywallCard
 import com.agc.bwitch.ui.common.economy.EconomyGateInfoRow
@@ -72,6 +74,7 @@ import com.agc.bwitch.ui.common.designsystem.BWitchCard
 import com.agc.bwitch.ui.common.designsystem.BWitchPrimaryButton
 import com.agc.bwitch.ui.theme.BWitchThemeTokens
 import com.agc.bwitch.ui.tarot.DeckCardUnlockRewardDialog
+import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 
@@ -287,25 +290,23 @@ fun BirthChartScreen(
 private fun BasicNatalChartSection(strings: BirthChartStrings, appStrings: AppStrings) {
     val dimens = BWitchThemeTokens.dimens
     val extras = BWitchThemeTokens.extras
-    var year by remember { mutableStateOf("1990") }
-    var month by remember { mutableStateOf("1") }
-    var day by remember { mutableStateOf("1") }
-    var hour by remember { mutableStateOf("12") }
-    var minute by remember { mutableStateOf("0") }
+    var birthDate by remember { mutableStateOf(LocalDate(1990, 1, 1)) }
+    var birthHour by remember { mutableStateOf(12) }
+    var birthMinute by remember { mutableStateOf(0) }
     var timezoneOffsetMinutes by remember { mutableStateOf("0") }
     var latitude by remember { mutableStateOf("") }
     var longitude by remember { mutableStateOf("") }
     var result by remember { mutableStateOf<NatalChartResult?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
 
-    val validationMessage = remember(strings, year, month, day, hour, minute, timezoneOffsetMinutes, latitude, longitude) {
+    val validationMessage = remember(strings, birthDate, birthHour, birthMinute, timezoneOffsetMinutes, latitude, longitude) {
         validateBasicNatalChartInput(
             strings = strings,
-            year = year,
-            month = month,
-            day = day,
-            hour = hour,
-            minute = minute,
+            year = birthDate.year.toString(),
+            month = birthDate.monthNumber.toString(),
+            day = birthDate.dayOfMonth.toString(),
+            hour = birthHour.toString(),
+            minute = birthMinute.toString(),
             timezoneOffsetMinutes = timezoneOffsetMinutes,
             latitude = latitude,
             longitude = longitude,
@@ -323,22 +324,28 @@ private fun BasicNatalChartSection(strings: BirthChartStrings, appStrings: AppSt
             )
         }
 
-        Column(verticalArrangement = Arrangement.spacedBy(dimens.spacingSm)) {
-            Text(strings.basicNatalBirthDateLabel, style = MaterialTheme.typography.labelLarge)
-            Row(horizontalArrangement = Arrangement.spacedBy(dimens.spacingXs)) {
-                BasicNatalChartInput(strings.basicNatalYearLabel, year, Modifier.weight(1.2f)) { year = it }
-                BasicNatalChartInput(strings.basicNatalMonthLabel, month, Modifier.weight(1f)) { month = it }
-                BasicNatalChartInput(strings.basicNatalDayLabel, day, Modifier.weight(1f)) { day = it }
-            }
-        }
+        BirthDateSelector(
+            selectedDate = birthDate,
+            onDateSelected = { birthDate = it },
+            label = strings.basicNatalBirthDateLabel,
+            enabled = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
 
-        Column(verticalArrangement = Arrangement.spacedBy(dimens.spacingSm)) {
-            Text(strings.basicNatalBirthTimeLabel, style = MaterialTheme.typography.labelLarge)
-            Row(horizontalArrangement = Arrangement.spacedBy(dimens.spacingXs)) {
-                BasicNatalChartInput(strings.basicNatalHourLabel, hour, Modifier.weight(1f)) { hour = it }
-                BasicNatalChartInput(strings.basicNatalMinuteLabel, minute, Modifier.weight(1f)) { minute = it }
-            }
-        }
+        BirthTimeSelector(
+            selectedHour = birthHour,
+            selectedMinute = birthMinute,
+            onTimeSelected = { hour, minute ->
+                birthHour = hour
+                birthMinute = minute
+            },
+            label = strings.basicNatalBirthTimeLabel,
+            hourLabel = strings.basicNatalHourLabel,
+            minuteLabel = strings.basicNatalMinuteLabel,
+            pickerTitle = strings.basicNatalBirthTimeLabel,
+            enabled = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
 
         Column(verticalArrangement = Arrangement.spacedBy(dimens.spacingSm)) {
             Text(strings.basicNatalUtcOffsetLabel, style = MaterialTheme.typography.labelLarge)
@@ -379,11 +386,11 @@ private fun BasicNatalChartSection(strings: BirthChartStrings, appStrings: AppSt
                 error = null
                 runCatching {
                     BirthDateTimeLocal(
-                        year = year.toInt(),
-                        month = month.toInt(),
-                        day = day.toInt(),
-                        hour = hour.toInt(),
-                        minute = minute.toInt(),
+                        year = birthDate.year,
+                        month = birthDate.monthNumber,
+                        day = birthDate.dayOfMonth,
+                        hour = birthHour,
+                        minute = birthMinute,
                         timezoneOffsetMinutes = timezoneOffsetMinutes.toInt(),
                     ).toUtc()
                 }.mapCatching { utc ->
