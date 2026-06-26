@@ -10,4 +10,5 @@ data class BirthplacePreset(
     val latitudeDegrees: Double,
     val longitudeDegrees: Double,
     val timezoneId: String,
+    val countryCode: String? = null,
 )
