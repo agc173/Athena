@@ -180,7 +180,7 @@ private fun BirthDatePickerDialog(
 }
 
 @Composable
-private fun WheelSelector(
+internal fun WheelSelector(
     label: String,
     options: List<Int>,
     selected: Int,
