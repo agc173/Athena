@@ -8,4 +8,6 @@ data class NatalChartResult(
     val sunSign: ZodiacSign,
     val moonLongitudeDegrees: Double,
     val moonSign: ZodiacSign,
+    val ascendantLongitudeDegrees: Double? = null,
+    val ascendantSign: ZodiacSign? = null,
 )
