@@ -5,38 +5,14 @@ import kotlin.test.assertEquals
 
 class BirthDateTimeLocalTest {
     @Test
-    fun convertsMadridSummerOffsetToUtc() {
-        val utc = BirthDateTimeLocal(
-            year = 1990,
-            month = 7,
-            day = 15,
-            hour = 12,
-            minute = 30,
-            timezoneOffsetMinutes = 120,
-        ).toUtc()
-
-        assertEquals(
-            BirthDateTimeUtc(
-                year = 1990,
-                month = 7,
-                day = 15,
-                hour = 10,
-                minute = 30,
-            ),
-            utc,
-        )
-    }
-
-    @Test
-    fun convertsMadridWinterOffsetToUtc() {
+    fun convertsMadridWinterTimezoneToUtc() {
         val utc = BirthDateTimeLocal(
             year = 1990,
             month = 1,
             day = 15,
             hour = 12,
             minute = 30,
-            timezoneOffsetMinutes = 60,
-        ).toUtc()
+        ).toUtc("Europe/Madrid")
 
         assertEquals(
             BirthDateTimeUtc(
@@ -51,15 +27,80 @@ class BirthDateTimeLocalTest {
     }
 
     @Test
-    fun rollsDateBackwardWhenPositiveOffsetCrossesUtcMidnight() {
+    fun convertsMadridSummerTimezoneToUtc() {
+        val utc = BirthDateTimeLocal(
+            year = 1990,
+            month = 7,
+            day = 15,
+            hour = 12,
+            minute = 30,
+        ).toUtc("Europe/Madrid")
+
+        assertEquals(
+            BirthDateTimeUtc(
+                year = 1990,
+                month = 7,
+                day = 15,
+                hour = 10,
+                minute = 30,
+            ),
+            utc,
+        )
+    }
+
+    @Test
+    fun convertsNewYorkSummerTimezoneToUtc() {
+        val utc = BirthDateTimeLocal(
+            year = 1990,
+            month = 7,
+            day = 15,
+            hour = 12,
+            minute = 30,
+        ).toUtc("America/New_York")
+
+        assertEquals(
+            BirthDateTimeUtc(
+                year = 1990,
+                month = 7,
+                day = 15,
+                hour = 16,
+                minute = 30,
+            ),
+            utc,
+        )
+    }
+
+    @Test
+    fun convertsNewYorkWinterTimezoneToUtc() {
+        val utc = BirthDateTimeLocal(
+            year = 1990,
+            month = 1,
+            day = 15,
+            hour = 12,
+            minute = 30,
+        ).toUtc("America/New_York")
+
+        assertEquals(
+            BirthDateTimeUtc(
+                year = 1990,
+                month = 1,
+                day = 15,
+                hour = 17,
+                minute = 30,
+            ),
+            utc,
+        )
+    }
+
+    @Test
+    fun rollsDateBackwardWhenTimezoneCrossesUtcMidnight() {
         val utc = BirthDateTimeLocal(
             year = 1990,
             month = 7,
             day = 15,
             hour = 0,
             minute = 30,
-            timezoneOffsetMinutes = 120,
-        ).toUtc()
+        ).toUtc("Europe/Madrid")
 
         assertEquals(
             BirthDateTimeUtc(
@@ -74,22 +115,21 @@ class BirthDateTimeLocalTest {
     }
 
     @Test
-    fun rollsDateForwardWhenNegativeOffsetCrossesUtcMidnight() {
+    fun rollsDateForwardWhenTimezoneCrossesUtcMidnight() {
         val utc = BirthDateTimeLocal(
             year = 1990,
             month = 7,
             day = 15,
             hour = 23,
             minute = 30,
-            timezoneOffsetMinutes = -180,
-        ).toUtc()
+        ).toUtc("America/New_York")
 
         assertEquals(
             BirthDateTimeUtc(
                 year = 1990,
                 month = 7,
                 day = 16,
-                hour = 2,
+                hour = 3,
                 minute = 30,
             ),
             utc,
