@@ -107,6 +107,13 @@ def kt_string(value: str) -> str:
     return '"' + value.replace("\\", "\\\\").replace('"', '\\"') + '"'
 
 
+def kt_double_literal(value: str) -> str:
+    stripped = value.strip()
+    if not stripped:
+        raise ValueError("Kotlin Double literal cannot be empty")
+    return stripped if any(marker in stripped.lower() for marker in (".", "e")) else f"{stripped}.0"
+
+
 def limit_by_population(cities: list[City], limit: int | None) -> list[City]:
     if limit is None:
         return cities
@@ -148,8 +155,8 @@ def render(cities: list[City]) -> str:
             f"id = {kt_string(preset_id)}, "
             f"cityName = {kt_string(city.name)}, "
             f"countryName = {kt_string(city.country_name)}, "
-            f"latitudeDegrees = {city.latitude}, "
-            f"longitudeDegrees = {city.longitude}, "
+            f"latitudeDegrees = {kt_double_literal(city.latitude)}, "
+            f"longitudeDegrees = {kt_double_literal(city.longitude)}, "
             f"timezoneId = {kt_string(city.timezone_id)}, "
             f"countryCode = {kt_string(city.country_code)}"
             "),"
