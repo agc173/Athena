@@ -18,10 +18,20 @@ python3 tools/generate_birthplace_presets.py /path/to/cities15000.txt --country-
 
 If `--country-info` is omitted, the generated `countryName` falls back to the ISO country code from `cities15000.txt`. The committed hand-written list remains the runtime fallback whenever the generated list is empty.
 
-Example with a local GeoNames folder, population floor, and generated-list cap:
+ATHENA recommended command for weighted coverage of supported languages and key markets:
 
 ```bash
-python3 tools/generate_birthplace_presets.py tools/geonames/cities15000.txt --country-info tools/geonames/countryInfo.txt --min-population 50000 --limit 5000
+python tools/generate_birthplace_presets.py tools/geonames/cities15000.txt --country-info tools/geonames/countryInfo.txt --priority-country ES,PT,BR,IT,FR,DE,AT,CH,GB,IE,US,CA,AU,MX,AR,CL,CO,PE --per-priority-country-limit 120 --per-country-limit 10 --global-limit 3000 --allowlist-file tools/geonames/birthplace_allowlist.txt
 ```
 
-`--min-population` filters out GeoNames rows below the provided population value. `--limit` keeps the top N remaining cities by population before the final deterministic country/name/id sort.
+Weighted selection parses every city that passes `--min-population` (when provided), includes the largest cities per priority country, includes a smaller per-country baseline for other countries, then fills any remaining slots with the largest global cities until `--global-limit` is reached. Cities are deduplicated by GeoName ID and the Kotlin output is finally sorted by country name, city name, and GeoName ID for deterministic diffs.
+
+`--allowlist-file` keeps important manual entries in the candidate set. Each non-empty line can be either a GeoName ID or `City|CountryCode`; `tools/geonames/birthplace_allowlist.txt` includes Málaga (`Málaga|ES`) as the initial example.
+
+Legacy global-only cap example:
+
+```bash
+python3 tools/generate_birthplace_presets.py tools/geonames/cities15000.txt --country-info tools/geonames/countryInfo.txt --min-population 50000 --global-limit 5000
+```
+
+`--min-population` filters out GeoNames rows below the provided population value. `--limit` remains available as a deprecated alias for `--global-limit` when `--global-limit` is omitted.

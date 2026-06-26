@@ -36,6 +36,7 @@ composeApp/release/
 public/
 .firebase/
 # Local GeoNames raw data for offline tooling
-tools/geonames/
+tools/geonames/*
+!tools/geonames/
+!tools/geonames/birthplace_allowlist.txt
 tools/geonames/*.zip
-tools/geonames/*.txt
