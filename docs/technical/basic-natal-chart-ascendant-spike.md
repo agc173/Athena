@@ -2,106 +2,97 @@
 
 ## Decision
 
-ATHENA can calculate a **local experimental Ascendant** without Swiss Ephemeris, backend APIs, Firestore, Functions, or LLM calls. The recommended next step is to validate a direct formula against independent astrology calculators before promoting the field into `NatalChartResult`.
+This document records an isolated technical spike for `spike/ascendant-validation`. It does **not** promote Ascendant to production, does **not** change `NatalChartResult`, does **not** change `BasicNatalChartCalculator` production behavior, and does **not** modify UI.
+
+## Spike goal
+
+Validate whether the current experimental direct Ascendant formula measures the opposite ecliptic/horizon intersection (the Descendant), and whether a test-only correction:
+
+```text
+corrected = normalizeDegrees(raw + 180.0)
+```
+
+matches modern Astro-Seek reference charts consistently.
+
+The `+180°` correction is intentionally limited to the Android unit test spike. It is not production code and must not be treated as an accepted implementation until the feature is explicitly productized.
 
 ## Definition
 
 The Ascendant is the ecliptic longitude of the point where the ecliptic intersects the observer's **local eastern horizon** at the birth moment. It is not a body position; it is a horizon/ecliptic intersection. It therefore depends on the birth instant and birthplace, not only on UTC date/time.
 
-## Required inputs
+## Formula under test
 
-- UTC birth date/time, represented in the current MVP by `BirthDateTimeUtc`.
-- Geographic latitude in decimal degrees, positive north.
-- Geographic longitude in decimal degrees, positive east. Western longitudes are negative.
-- An obliquity value for the ecliptic/equator angle.
-
-## Astronomy Engine APIs actually available/relevant
-
-The installed project dependency is declared only for Android data code as `com.github.cosinekitty:astronomy:v2.1.17` in `shared/data`.
-
-The currently used Android production calculator already imports and compiles against these Kotlin/JVM names:
-
-- `io.github.cosinekitty.astronomy.Time`
-- `io.github.cosinekitty.astronomy.sunPosition`
-- `io.github.cosinekitty.astronomy.eclipticGeoMoon`
-
-The upstream Kotlin documentation for the same package exposes the local-coordinate APIs needed for an implementation path:
-
-- `siderealTime(time: Time): Double`, returning Greenwich Apparent Sidereal Time in sidereal hours.
-- `Observer(latitude, longitude, height)`.
-- `rotationEqdHor(time, observer)` and `rotationHorEqd(time, observer)`.
-- `rotationEqdEct(time)` / `rotationEctEqd(time)` for equator-of-date and true-ecliptic-of-date conversions.
-- `rotationHorEcl(time, observer)` / `rotationEclHor(time, observer)` for horizontal and J2000 ecliptic conversions.
-- `Vector`, `Spherical`, `vectorFromSphere`, `sphereFromVector`, and `rotateVector` for coordinate-system experiments.
-
-Gradle could not resolve the repository's Kotlin serialization plugin version in this environment, so local class inspection through Gradle dependency resolution was blocked. The function names above are taken from the project's existing source imports plus the Astronomy Engine Kotlin package documentation, not invented names.
-
-## Chosen approach for the spike
-
-Use approach **A: direct mathematical formula**, with Astronomy Engine supplying sidereal time.
+The spike keeps using approach **A: direct mathematical formula**, with Astronomy Engine supplying sidereal time.
 
 1. Convert `BirthDateTimeUtc` to `Time`.
 2. Read Greenwich Apparent Sidereal Time:
    `gastHours = siderealTime(time)`.
 3. Convert to Local Sidereal Time, using east-positive longitude:
    `lstDegrees = normalizeDegrees((gastHours + longitudeDegrees / 15.0) * 15.0)`.
-4. Use latitude `φ`, sidereal angle `θ`, and obliquity `ε`:
+4. Use latitude `φ`, sidereal angle `θ`, and fixed mean obliquity `ε = 23.4392911°`:
 
 ```text
-ascendantLongitude = atan2(
+raw = atan2(
     -cos(θ),
     sin(θ) * cos(ε) + tan(φ) * sin(ε)
 )
 ```
 
-5. Normalize the result into `[0, 360)` and map it with `longitudeToZodiacSign()`.
+5. Normalize `raw` into `[0, 360)` and map it with `longitudeToZodiacSign()`.
+6. For this spike only, also measure `corrected = normalizeDegrees(raw + 180.0)`.
 
-This is intentionally independent of the Sun/Moon code path and does not change `NatalChartResult`.
+This remains independent of the Sun/Moon production code path and does not change `NatalChartResult`.
 
-## Why not use rotation APIs first?
+## Reference cases
 
-A coordinate-system implementation is attractive because Astronomy Engine can rotate between horizon, equatorial, and ecliptic frames. However, the direct formula is smaller, easier to audit, and uses only one Astronomy Engine value (`siderealTime`) plus explicit geometry. Rotation APIs are still useful as a later cross-check:
+The spike uses three independent modern Astro-Seek reference charts supplied for validation:
 
-- Build a unit horizontal vector for due east on the horizon.
-- Rotate HOR → EQD → ECT.
-- Convert the resulting vector to spherical ecliptic longitude.
-- Compare against the formula within a small tolerance.
+| Case | Local civil time | UTC time | Latitude | Longitude | Astro-Seek Sun | Astro-Seek Moon | Astro-Seek Ascendant |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Madrid | 1994-12-29 09:00 CET | 1994-12-29 08:00 UTC | 40.4166667 | -3.7000000 | 277°22′ Capricorn | 233°59′ Scorpio | 281°43′ Capricorn |
+| New York | 1980-06-01 15:10 EDT | 1980-06-01 19:10 UTC | 40.7166667 | -74.0000000 | 71°24′ Gemini | 286°26′ Capricorn | 191°02′ Libra |
+| Beijing | 2007-10-16 14:54 CST | 2007-10-16 06:54 UTC | 39.9000000 | 116.4000000 | 202°32′ Libra | 257°51′ Sagittarius | 318°45′ Aquarius |
 
-That cross-check should happen before production promotion if we want stronger confidence.
+## Measurements
 
-## Known limitations
+Gradle could not execute the Android unit test in this environment because of the known Kotlin serialization plugin resolution problem, so the test output is not recorded here from a successful Gradle run. The raw/corrected Ascendant measurements below are the direct-formula values for the same reference inputs and are the values the spike test is designed to print once Gradle resolves.
 
-- The spike uses a fixed mean obliquity constant (`23.4392911°`) instead of deriving true obliquity/nutation from Astronomy Engine. This should be replaced or cross-checked with the rotation API path for production.
-- Ascendant is very sensitive to birth time and longitude. A few minutes of clock or timezone error can change the degree noticeably.
-- Near polar latitudes, the ecliptic/horizon geometry can be degenerate or unintuitive; validation should include guardrails for extreme latitudes.
-- Online astrology calculators may use house systems, refraction assumptions, topocentric details, or ephemerides that are not identical to this minimal astronomical formula.
-- This spike validates signs/degrees only as a local regression harness; it is not yet a full acceptance suite.
+| Case | Current/raw formula | Raw sign | Raw Δ vs Astro-Seek ASC | Corrected (+180°) | Corrected sign | Corrected Δ vs Astro-Seek ASC |
+|---|---:|---|---:|---:|---|---:|
+| Madrid | 101.7194° | Cancer | 179.9973° | 281.7194° | Capricorn | 0.0027° |
+| New York | 11.0406° | Aries | 179.9927° | 191.0406° | Libra | 0.0073° |
+| Beijing | 138.7547° | Leo | 179.9953° | 318.7547° | Aquarius | 0.0047° |
 
-## Reference/regression cases
+## Spike-only Android unit test
 
-These cases are defined for deterministic regression of the formula. They still need manual comparison against 2-3 independent trusted astrology calculators before productizing.
+`shared/data/src/androidUnitTest/kotlin/com/agc/bwitch/data/astrology/natal/AscendantSpikeTest.kt` contains a spike-only test that:
 
-| Case | UTC birth date/time | Latitude | Longitude | Spike expected longitude | Expected sign |
-|---|---:|---:|---:|---:|---|
-| Greenwich J2000 noon | 2000-01-01 12:00:00 UTC | 51.4769 | 0.0000 | ~204.3° | Libra |
-| New York sample | 1990-06-15 18:30:00 UTC | 40.7128 | -74.0060 | ~13.7° | Aries |
-| Sydney equinox sample | 2024-03-20 03:06:00 UTC | -33.8688 | 151.2093 | ~269.0° | Sagittarius |
+- calculates Sun and Moon through the existing `BasicNatalChartCalculator`;
+- calculates the current/raw Ascendant using the existing direct formula copied into test scope;
+- calculates `corrected = normalizeDegrees(raw + 180.0)` in test scope only;
+- prints actual/expected/delta/sign details for Sun, Moon, raw Ascendant, and corrected Ascendant for all three Astro-Seek references;
+- asserts Sun delta `<= 0.25°`;
+- asserts Moon delta `<= 0.25°`;
+- asserts corrected Ascendant delta `<= 0.25°`;
+- asserts corrected Ascendant sign matches Astro-Seek;
+- does **not** assert the raw Ascendant.
 
-Manual validation to do before production:
+## Hypothesis assessment
 
-1. Enter each UTC time directly in an online calculator that supports UTC/timezone override.
-2. Use the exact decimal coordinates above, not city defaults, if the tool allows it.
-3. Record the calculator name, URL, date accessed, house system/settings, and returned Ascendant degree/sign.
-4. Accept production only if independent references agree within an MVP tolerance to be defined, likely ≤1° for ordinary latitudes.
+All three references support the same hypothesis: the current direct formula is consistently returning the opposite horizon point from the Astro-Seek Ascendant reference. Adding `+180°` in the spike test aligns the measured longitude and sign with Astro-Seek for Madrid, New York, and Beijing within `0.01°` in the measured formula values above.
 
-## ATHENA v1 acceptability
+This is still a research spike. The result is strong enough to justify a later production design task, but production code remains unchanged in this branch.
 
-This is acceptable as an **ATHENA v1 candidate** if validation confirms agreement within the chosen tolerance for ordinary latitudes and modern dates. It is not yet acceptable to expose in UI or persist because:
+## Production status
 
-- independent external validation has not been recorded;
-- the fixed obliquity should be replaced or cross-checked;
-- no guardrails exist yet for invalid/extreme birthplace coordinates.
+No production code changed in this spike:
+
+- no UI changes;
+- no `NatalChartResult` changes;
+- no `BasicNatalChartCalculator` production behavior changes;
+- no production Ascendant API/model is added;
+- no Gradle/dependency changes are made.
 
 ## Recommended next implementation step
 
-Promote only after validation by adding a production `AscendantCalculator` in `shared/data/src/androidMain`, with tests in `androidUnitTest`, then extend the domain model in a separate feature commit if the API and UI copy are ready.
+If the feature is productized later, create a production `AscendantCalculator` in `shared/data/src/androidMain`, add non-spike tests in `androidUnitTest`, consider replacing fixed mean obliquity with an Astronomy Engine-derived value or rotation API cross-check, and only then extend domain/API/UI in a separate feature change.
