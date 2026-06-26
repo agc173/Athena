@@ -66,6 +66,7 @@ kotlin {
             implementation("com.google.firebase:firebase-messaging:24.1.2")
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.1")
             implementation("com.google.android.gms:play-services-ads:24.3.0")
+            implementation("com.github.cosinekitty:astronomy:v2.1.17")
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
@@ -141,8 +142,8 @@ android {
         applicationId = "com.agc.bwitch"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 17
-        versionName = "1.1.6"
+        versionCode = 18
+        versionName = "1.1.7"
     }
     buildFeatures {
         buildConfig = true
