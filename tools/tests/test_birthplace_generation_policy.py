@@ -47,6 +47,74 @@ class BirthplaceGenerationPolicyTest(unittest.TestCase):
     def test_pplx_feature_code_is_excluded_even_without_name_term(self):
         self.assertFalse(is_birthplace_catalog_eligible(city("Example", "US", feature_code="PPLX")))
 
+    def test_default_mode_selects_all_eligible_cities(self):
+        madrid = city("Madrid", "ES", population=3_000_000, geoname_id="1")
+        amsterdam = city("Amsterdam", "NL", population=900_000, geoname_id="2")
+        tiny = city("Small Eligible City", "ZZ", population=15_000, geoname_id="3")
+        district = city("Example District", "US", feature_code="PPL", population=200_000, geoname_id="4")
+
+        selected, stats = select_tiered_cities(
+            [district, tiny, amsterdam, madrid],
+            min_population=None,
+            tier_a_countries=[],
+            tier_b_countries=[],
+            tier_a_limit=None,
+            tier_b_limit=None,
+            tier_c_limit=None,
+            global_limit=None,
+            allowlist=EMPTY_MATCH_LIST,
+            exclude_list=EMPTY_MATCH_LIST,
+        )
+
+        self.assertEqual([madrid, amsterdam, tiny], selected)
+        self.assertEqual(1, stats["policy_excluded"])
+
+    def test_default_mode_keeps_multiple_countries_without_per_country_limit(self):
+        cities = [
+            city("Spain One", "ES", population=100_000, geoname_id="1"),
+            city("Spain Two", "ES", population=90_000, geoname_id="2"),
+            city("Us One", "US", population=80_000, geoname_id="3"),
+            city("Us Two", "US", population=70_000, geoname_id="4"),
+            city("Netherlands One", "NL", population=60_000, geoname_id="5"),
+        ]
+
+        selected, _ = select_tiered_cities(
+            cities,
+            min_population=None,
+            tier_a_countries=[],
+            tier_b_countries=[],
+            tier_a_limit=None,
+            tier_b_limit=None,
+            tier_c_limit=None,
+            global_limit=None,
+            allowlist=EMPTY_MATCH_LIST,
+            exclude_list=EMPTY_MATCH_LIST,
+        )
+
+        self.assertEqual([cities[0], cities[1], cities[4], cities[2], cities[3]], selected)
+
+    def test_legacy_global_limit_still_compacts_when_explicit(self):
+        cities = [
+            city("Largest", "US", population=3_000_000, geoname_id="1"),
+            city("Middle", "ES", population=2_000_000, geoname_id="2"),
+            city("Smallest", "NL", population=1_000_000, geoname_id="3"),
+        ]
+
+        selected, _ = select_tiered_cities(
+            cities,
+            min_population=None,
+            tier_a_countries=[],
+            tier_b_countries=[],
+            tier_a_limit=None,
+            tier_b_limit=None,
+            tier_c_limit=None,
+            global_limit=2,
+            allowlist=EMPTY_MATCH_LIST,
+            exclude_list=EMPTY_MATCH_LIST,
+        )
+
+        self.assertEqual([cities[1], cities[0]], selected)
+
     def test_allowlist_does_not_override_urban_subdivision_policy(self):
         madrid = city("Madrid", "ES", "PPLC", population=3_000_000, geoname_id="1")
         paris = city("Paris", "FR", "PPLC", population=2_000_000, geoname_id="2")

@@ -14,53 +14,48 @@ Manual GeoNames download steps:
 
 ### Reference birthplace catalogue philosophy
 
-ATHENA keeps a compact reference catalogue rather than every municipality. The catalogue should provide meaningful birthplaces that are recognizable reference points for natal chart users while keeping the runtime catalogue in CSV instead of generated Kotlin.
+ATHENA now recommends a broad city-level catalogue generated directly from GeoNames `cities15000.txt`. The CSV resource is small enough that we should optimize for coverage and user recognition rather than for Kotlin source size or a hand-balanced compact list.
 
-This means the generator intentionally favors:
+The recommended default mode:
 
-- supported-language markets and countries with likely ATHENA users;
-- globally important countries and large metropolitan anchors;
-- provincial/state capitals and clear identity or tourism exceptions;
-- deterministic, curated output that can be reviewed in code.
+- uses every policy-eligible `cities15000` row;
+- excludes only clearly unwanted urban subdivisions;
+- does **not** apply country tiers by default;
+- does **not** apply `--global-limit` by default;
+- does **not** apply per-country limits by default;
+- keeps allowlist/exclude files as manual overrides for exceptional cases, not as the base coverage strategy.
 
-The catalogue is not a statement that omitted municipalities are invalid birthplaces. For compactness, satellite towns and less useful municipalities can be excluded from the selectable reference list, and users can manually choose a nearby major reference city.
+This catalogue is still not a statement that omitted municipalities are invalid birthplaces: GeoNames `cities15000` itself is the coverage boundary, and users can choose the nearest city-level reference when their exact locality is below that source threshold.
 
-### Tier strategy
+### Default selection policy
 
-The recommended generator mode uses configurable country tiers:
-
-- **Tier A**: supported-language markets and priority countries. These receive the broadest per-country coverage.
-- **Tier B**: globally important or large countries that should receive stronger coverage than the default baseline.
-- **Tier C**: all remaining countries. These receive a small baseline so the catalogue remains global without becoming a full municipality database.
-
-Selection order:
+Selection order for the recommended broad mode:
 
 1. Parse all local GeoNames cities.
-2. Apply the generator-only urban subdivision eligibility policy before tier selection and before allowlist selection. By default, rows with GeoNames `featureCode=PPLX` (section of populated place) are omitted, as are names that clearly describe neighbourhood/district-level entities: `administrative district`, `arrondissement`, `barrio`, `borough`, `district`, `quarter`, or `ward`. The word `centro` is narrower: it is excluded only for audited big-city-centre patterns currently covered by `Centro Habana` / `Centro Havana` and `Madrid Centro`, so real cities named Centro are not dropped by accident.
-3. Apply `--min-population` to normal candidates when provided. Allowlisted, policy-eligible cities are still eligible below the minimum.
-4. Include policy-eligible allowlist entries first. Allowlist entries cannot re-add `PPLX` or barrio/district-like rows.
-5. Add up to `--tier-a-limit` largest cities for each Tier A country.
-6. Add up to `--tier-b-limit` largest cities for each Tier B country.
-7. Add up to `--tier-c-limit` largest cities for each remaining country.
-8. Fill remaining slots with the largest global cities until `--global-limit` is reached.
-9. Apply the exclude file after candidate selection. Allowlisted cities are not excluded unless the exclude entry is prefixed with `!`.
-10. Deduplicate by GeoName ID.
-11. Sort the final CSV output by country name, city name, and GeoName ID for deterministic diffs.
-12. Write `birthplaces.csv` by default. Kotlin is written only when `--kotlin-output` (or deprecated `--output`) is passed, and only if the selected city count stays under `--kotlin-max-presets` (default `200`).
+2. Apply the generator-only urban subdivision eligibility policy before allowlist selection. By default, rows with GeoNames `featureCode=PPLX` (section of populated place) are omitted, as are names that clearly describe neighbourhood/district-level entities: `administrative district`, `arrondissement`, `barrio`, `borough`, `district`, `quarter`, or `ward`. The word `centro` is narrower: it is excluded only for audited big-city-centre patterns currently covered by `Centro Habana` / `Centro Havana` and `Madrid Centro`, so real cities named Centro are not dropped by accident.
+3. Apply `--min-population` only when explicitly provided. In the recommended command it is omitted, so all policy-eligible `cities15000` entries remain candidates.
+4. Include policy-eligible allowlist entries if an allowlist is explicitly provided. Allowlist entries cannot re-add `PPLX` or barrio/district-like rows.
+5. If legacy compact tier/limit flags are omitted, include all eligible candidates.
+6. Apply an exclude file only when explicitly provided. Allowlisted cities are not excluded unless the exclude entry is prefixed with `!`.
+7. Deduplicate by GeoName ID.
+8. Sort the final CSV output by country name, city name, and GeoName ID for deterministic diffs.
+9. Write `birthplaces.csv` by default. Kotlin is written only when `--kotlin-output` (or deprecated `--output`) is passed, and only if the selected city count stays under `--kotlin-max-presets` (default `200`).
+
+Legacy tier and global-limit flags remain available for intentionally compact catalogues, but they are no longer the recommended ATHENA regeneration strategy.
 
 ### Allowlist and exclude list
 
-`--allowlist-file` keeps must-have, policy-eligible real cities in the candidate set. It does not override the urban subdivision policy: `PPLX`, barrio/district-like, arrondissement, ward, quarter, and audited `centro` subdivision rows remain excluded even if listed. Each non-empty line can be a GeoName ID or `City|CountryCode`. `tools/geonames/birthplace_allowlist.txt` contains globally important birthplaces that should not be missed, such as Madrid, Tokyo, New York, Sydney, Beijing, Shanghai, São Paulo, Buenos Aires, Bogotá, and others.
+`--allowlist-file` is an optional manual override for must-have, policy-eligible real cities. It does not override the urban subdivision policy: `PPLX`, barrio/district-like, arrondissement, ward, quarter, and audited `centro` subdivision rows remain excluded even if listed. Each non-empty line can be a GeoName ID or `City|CountryCode`. The recommended broad command does not need an allowlist as the base coverage mechanism.
 
-`--exclude-file` removes compact-catalogue false positives after candidate selection. Each non-empty line can be a GeoName ID or `City|CountryCode`. Prefix an entry with `!` to force exclusion even when it also appears in the allowlist. `tools/geonames/birthplace_exclude.txt` starts with Spanish satellite municipalities such as Getafe, Leganés, Barakaldo, and nearby examples that should not appear as independent reference birthplaces in the compact catalogue.
+`--exclude-file` is an optional manual override for false positives after candidate selection. Each non-empty line can be a GeoName ID or `City|CountryCode`. Prefix an entry with `!` to force exclusion even when it also appears in the allowlist. The recommended broad command relies first on the built-in urban-subdivision policy; use explicit excludes only for audited exceptions.
 
 ### Recommended ATHENA command
 
 ```bash
-python tools/generate_birthplace_presets.py tools/geonames/cities15000.txt --country-info tools/geonames/countryInfo.txt --tier-a-country ES,MX,AR,CO,CL,PE,UY,PY,BO,EC,VE,GT,CR,PA,DO,CU,US,CA,GB,IE,AU,NZ,ZA,PT,BR,FR,BE,CH,LU,DE,AT,IT --tier-b-country RU,CN,JP,KR,IN,ID,TR,UA,PL,RO,NL,SE,NO,FI,DK,GR,CZ,HU,IL,AE,SA,EG,MA,NG,KE --tier-a-limit 80 --tier-b-limit 40 --tier-c-limit 5 --global-limit 2200 --allowlist-file tools/geonames/birthplace_allowlist.txt --exclude-file tools/geonames/birthplace_exclude.txt
+python tools/generate_birthplace_presets.py tools/geonames/cities15000.txt --country-info tools/geonames/countryInfo.txt
 ```
 
-The generator prints a summary with total selected presets, allowlist requested/matched/missing counts, exclude requested/matched counts, top country counts, and CSV file size. The recommended flow regenerates only `birthplaces.csv`; `BirthplacePresets.generated.kt` remains a small fallback/legacy source.
+The generator prints a summary with total selected presets, allowlist requested/matched/missing counts, exclude requested/matched counts, top country counts, and CSV file size. With no tier, per-country, population, or global-limit flags, the default mode selects all eligible `cities15000` rows after urban-subdivision filtering. The recommended flow regenerates only `birthplaces.csv`; `BirthplacePresets.generated.kt` remains a small fallback/legacy source.
 
 ### Optional Kotlin fallback output
 
@@ -102,7 +97,7 @@ The suspicious-entry section is read-only: it reports rows that the current gene
 
 ### Legacy options
 
-Legacy weighted flags remain available for compatibility:
+Legacy compact flags remain available for compatibility when a deliberately small catalogue is needed:
 
 ```bash
 python3 tools/generate_birthplace_presets.py tools/geonames/cities15000.txt --country-info tools/geonames/countryInfo.txt --min-population 50000 --global-limit 5000
