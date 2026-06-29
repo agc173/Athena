@@ -71,6 +71,34 @@ python tools/generate_birthplace_presets.py tools/geonames/cities15000.txt --cou
 
 Kotlin output has a guardrail: if the selected city count exceeds `--kotlin-max-presets` (default `200`), generation fails and explains that large catalogues must live in CSV. `--output` remains available as a deprecated alias for `--kotlin-output`, but it is disabled unless explicitly passed.
 
+
+## Birthplace catalogue audit
+
+`audit_birthplace_catalog.py` is a read-only diagnostic tool for the runtime CSV catalogue. It does not modify `birthplaces.csv`, app runtime code, ranking, loaders, repositories, or astronomical calculation.
+
+Run it from the repository root with standard Python:
+
+```bash
+python tools/audit_birthplace_catalog.py
+```
+
+The console report measures:
+
+- raw CSV bytes, approximate gzip size, and total rows;
+- `countryCode` coverage and the top 30 countries by entry count;
+- repeated city names / homonyms, including the top 30 repeated `cityName` values;
+- suspicious entries that look like neighbourhoods, districts, boroughs, wards, barrios, quarters, arrondissements, municipios, comunas, or other urban subdivisions, using broad report-only heuristics;
+- presence of the minimum key-city checklist;
+- top 10 approximate search results for diagnostic queries using Python logic aligned with the current birthplace normalizer/ranking rules.
+
+Optionally write the same report as Markdown:
+
+```bash
+python tools/audit_birthplace_catalog.py --markdown-output docs/reports/birthplace_catalog_audit.md
+```
+
+The suspicious-entry section is intentionally diagnostic only; it must not be interpreted as an automatic exclusion policy.
+
 ### Legacy options
 
 Legacy weighted flags remain available for compatibility:
