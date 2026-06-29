@@ -37,6 +37,15 @@ URBAN_SUBDIVISION_NAME_TERMS = (
 )
 URBAN_CENTER_PARENT_TERMS = ("habana", "havana", "madrid")
 
+SEARCH_ALIASES = {
+    "roma": ["rome"],
+    "moscu": ["moscow"],
+    "pekin": ["beijing"],
+    "londres": ["london"],
+    "nueva york": ["new york", "new york city"],
+    "new york": ["new york city"],
+}
+
 COUNTRY_PRIORITIES = {
     "madrid": ["ES"],
     "tokyo": ["JP"],
@@ -52,6 +61,7 @@ COUNTRY_PRIORITIES = {
     "paris": ["FR"],
     "berlin": ["DE"],
     "rome": ["IT"],
+    "beijing": ["CN"],
     "sao paulo": ["BR"],
     "rio de janeiro": ["BR"],
 }
@@ -88,8 +98,11 @@ TEST_QUERIES = [
     "new york",
     "roma",
     "moscu",
+    "moscú",
     "pekin",
+    "pekín",
     "londres",
+    "nueva york",
 ]
 
 SUSPICIOUS_TERMS = [
@@ -190,11 +203,21 @@ def country_priority_for(normalized_city: str, country_code: str) -> int:
         return DEFAULT_COUNTRY_PRIORITY
 
 
+def equivalent_search_queries(normalized_query: str) -> list[tuple[str, int]]:
+    queries = [(normalized_query, 0)]
+    for alias in SEARCH_ALIASES.get(normalized_query, []):
+        normalized_alias = normalize_search_text(alias)
+        if normalized_alias and all(query != normalized_alias for query, _ in queries):
+            queries.append((normalized_alias, 1))
+    return queries
+
+
 def ranking_score(
     row: BirthplaceRow,
     normalized_query: str,
     original_index: int,
-) -> tuple[int, int, int, int, int] | None:
+    alias_penalty: int = 0,
+) -> tuple[int, int, int, int, int, int] | None:
     normalized_city = normalize_search_text(row.city_name)
     normalized_country = normalize_search_text(row.country_name)
     if normalized_city == normalized_query:
@@ -209,6 +232,7 @@ def ranking_score(
         return None
 
     return (
+        match_tier + alias_penalty,
         match_tier,
         country_priority_for(normalized_city, row.country_code),
         len(normalized_city),
@@ -318,7 +342,20 @@ def build_report(csv_path: Path, rows: Sequence[BirthplaceRow]) -> str:
     for query in TEST_QUERIES:
         normalized_query = normalize_search_text(query)
         ranked = sorted(
-            ((ranking_score(row, normalized_query, index), row) for index, row in enumerate(rows)),
+            (
+                (
+                    min(
+                        (
+                            score
+                            for equivalent_query, alias_penalty in equivalent_search_queries(normalized_query)
+                            if (score := ranking_score(row, equivalent_query, index, alias_penalty)) is not None
+                        ),
+                        default=None,
+                    ),
+                    row,
+                )
+                for index, row in enumerate(rows)
+            ),
             key=lambda item: item[0] if item[0] is not None else (sys.maxsize,),
         )
         matches = [row for score, row in ranked if score is not None][:QUERY_LIMIT]
