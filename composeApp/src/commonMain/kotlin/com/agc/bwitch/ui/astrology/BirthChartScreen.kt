@@ -73,7 +73,8 @@ import com.agc.bwitch.ui.common.economy.DailyLimitPaywallCard
 import com.agc.bwitch.ui.common.economy.EconomyGateInfoRow
 import com.agc.bwitch.ui.astrology.birthplace.BirthplacePresets
 import com.agc.bwitch.ui.astrology.birthplace.DefaultBirthplaceCatalogRepository
-import com.agc.bwitch.ui.astrology.birthplace.normalizeBirthplaceSearchText
+import com.agc.bwitch.ui.astrology.birthplace.matchesBirthplaceQuery
+import com.agc.bwitch.ui.astrology.birthplace.rankBirthplaceMatches
 import com.agc.bwitch.ui.common.economy.isDailyLimitRejected
 import com.agc.bwitch.ui.common.economy.hasPremiumBenefit
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
@@ -309,9 +310,7 @@ private fun BasicNatalChartSection(strings: BirthChartStrings, appStrings: AppSt
         value = DefaultBirthplaceCatalogRepository.getBirthplaces()
     }
     val matchingBirthplaces = remember(birthplaceQuery, birthplacePresets) {
-        birthplacePresets
-            .filter { preset -> preset.matchesBirthplaceQuery(birthplaceQuery) }
-            .take(20)
+        rankBirthplaceMatches(birthplaceQuery, birthplacePresets)
     }
     val validationMessage = remember(strings, birthDate, birthHour, birthMinute, selectedBirthplace) {
         validateBasicNatalChartInput(
@@ -570,14 +569,6 @@ private fun validateBasicNatalChartInput(
     if (selectedBirthplace == null) return strings.basicNatalBirthplaceRequiredError
 
     return null
-}
-
-private fun BirthplacePreset.matchesBirthplaceQuery(query: String): Boolean {
-    val normalizedQuery = normalizeBirthplaceSearchText(query)
-    if (normalizedQuery.isBlank()) return true
-    return normalizeBirthplaceSearchText(cityName).contains(normalizedQuery) ||
-        normalizeBirthplaceSearchText(countryName).contains(normalizedQuery) ||
-        normalizeBirthplaceSearchText(timezoneId).contains(normalizedQuery)
 }
 
 private fun BirthplacePreset.displayName(): String = "$cityName, $countryName"
