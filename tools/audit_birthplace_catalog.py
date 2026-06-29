@@ -71,7 +71,7 @@ KEY_CITIES = [
     [("Barcelona", "ES")],
     [("Valencia", "ES")],
     [("Seville", "ES"), ("Sevilla", "ES")],
-    [("New York", "US")],
+    [("New York", "US"), ("New York City", "US")],
     [("Los Angeles", "US")],
     [("Mexico City", "MX")],
     [("Buenos Aires", "AR")],
