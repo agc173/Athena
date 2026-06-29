@@ -5,7 +5,7 @@ import com.agc.bwitch.domain.astrology.natal.BirthplacePreset
 val BirthplacePresets: List<BirthplacePreset>
     get() = GeneratedBirthplacePresets.ifEmpty { HandWrittenBirthplacePresets }
 
-private val HandWrittenBirthplacePresets: List<BirthplacePreset> = listOf(
+internal val HandWrittenBirthplacePresets: List<BirthplacePreset> = listOf(
     BirthplacePreset("madrid-spain", "Madrid", "Spain", 40.4166667, -3.7000000, "Europe/Madrid"),
     BirthplacePreset("new-york-united-states", "New York", "United States", 40.7166667, -74.0000000, "America/New_York"),
     BirthplacePreset("beijing-china", "Beijing", "China", 39.9000000, 116.4000000, "Asia/Shanghai"),

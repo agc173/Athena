@@ -23,6 +23,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -71,6 +72,7 @@ import com.agc.bwitch.ui.common.toVisualResource
 import com.agc.bwitch.ui.common.economy.DailyLimitPaywallCard
 import com.agc.bwitch.ui.common.economy.EconomyGateInfoRow
 import com.agc.bwitch.ui.astrology.birthplace.BirthplacePresets
+import com.agc.bwitch.ui.astrology.birthplace.DefaultBirthplaceCatalogRepository
 import com.agc.bwitch.ui.astrology.birthplace.normalizeBirthplaceSearchText
 import com.agc.bwitch.ui.common.economy.isDailyLimitRejected
 import com.agc.bwitch.ui.common.economy.hasPremiumBenefit
@@ -303,8 +305,11 @@ private fun BasicNatalChartSection(strings: BirthChartStrings, appStrings: AppSt
     var result by remember { mutableStateOf<NatalChartResult?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
 
-    val matchingBirthplaces = remember(birthplaceQuery) {
-        BirthplacePresets
+    val birthplacePresets by produceState(initialValue = BirthplacePresets) {
+        value = DefaultBirthplaceCatalogRepository.getBirthplaces()
+    }
+    val matchingBirthplaces = remember(birthplaceQuery, birthplacePresets) {
+        birthplacePresets
             .filter { preset -> preset.matchesBirthplaceQuery(birthplaceQuery) }
             .take(20)
     }
