@@ -2,7 +2,7 @@
 
 ## Offline birthplace preset generation
 
-`generate_birthplace_presets.py` generates `BirthplacePresets.generated.kt` and the offline `birthplaces.csv` resource from local GeoNames data. The script does not download files, and the app does not add network calls or runtime API dependencies for birthplace lookup.
+`generate_birthplace_presets.py` generates the offline `birthplaces.csv` resource from local GeoNames data by default. Kotlin generation is explicit and limited to small fallback/legacy catalogues. The script does not download files, and the app does not add network calls or runtime API dependencies for birthplace lookup.
 
 Manual GeoNames download steps:
 
@@ -14,7 +14,7 @@ Manual GeoNames download steps:
 
 ### Reference birthplace catalogue philosophy
 
-ATHENA keeps a compact reference catalogue rather than every municipality. The catalogue should provide meaningful birthplaces that are recognizable reference points for natal chart users while keeping generated Kotlin small enough to compile comfortably.
+ATHENA keeps a compact reference catalogue rather than every municipality. The catalogue should provide meaningful birthplaces that are recognizable reference points for natal chart users while keeping the runtime catalogue in CSV instead of generated Kotlin.
 
 This means the generator intentionally favors:
 
@@ -44,8 +44,8 @@ Selection order:
 7. Fill remaining slots with the largest global cities until `--global-limit` is reached.
 8. Apply the exclude file after candidate selection. Allowlisted cities are not excluded unless the exclude entry is prefixed with `!`.
 9. Deduplicate by GeoName ID.
-10. Sort the final Kotlin and CSV outputs by country name, city name, and GeoName ID for deterministic diffs.
-11. Write both outputs from the same in-memory city list and fail generation if the CSV data row count differs from the Kotlin preset count.
+10. Sort the final CSV output by country name, city name, and GeoName ID for deterministic diffs.
+11. Write `birthplaces.csv` by default. Kotlin is written only when `--kotlin-output` (or deprecated `--output`) is passed, and only if the selected city count stays under `--kotlin-max-presets` (default `200`).
 
 ### Allowlist and exclude list
 
@@ -56,10 +56,20 @@ Selection order:
 ### Recommended ATHENA command
 
 ```bash
-python tools/generate_birthplace_presets.py tools/geonames/cities15000.txt --country-info tools/geonames/countryInfo.txt --tier-a-country ES,MX,AR,CO,CL,PE,UY,PY,BO,EC,VE,GT,CR,PA,DO,CU,US,CA,GB,IE,AU,NZ,ZA,PT,BR,FR,BE,CH,LU,DE,AT,IT --tier-b-country RU,CN,JP,KR,IN,ID,TR,UA,PL,RO,NL,SE,NO,FI,DK,GR,CZ,HU,IL,AE,SA,EG,MA,NG,KE --tier-a-limit 80 --tier-b-limit 40 --tier-c-limit 5 --global-limit 2200 --allowlist-file tools/geonames/birthplace_allowlist.txt --exclude-file tools/geonames/birthplace_exclude.txt --output composeApp/src/commonMain/kotlin/com/agc/bwitch/ui/astrology/birthplace/BirthplacePresets.generated.kt --csv-output composeApp/src/commonMain/composeResources/files/birthplaces.csv
+python tools/generate_birthplace_presets.py tools/geonames/cities15000.txt --country-info tools/geonames/countryInfo.txt --tier-a-country ES,MX,AR,CO,CL,PE,UY,PY,BO,EC,VE,GT,CR,PA,DO,CU,US,CA,GB,IE,AU,NZ,ZA,PT,BR,FR,BE,CH,LU,DE,AT,IT --tier-b-country RU,CN,JP,KR,IN,ID,TR,UA,PL,RO,NL,SE,NO,FI,DK,GR,CZ,HU,IL,AE,SA,EG,MA,NG,KE --tier-a-limit 80 --tier-b-limit 40 --tier-c-limit 5 --global-limit 2200 --allowlist-file tools/geonames/birthplace_allowlist.txt --exclude-file tools/geonames/birthplace_exclude.txt
 ```
 
-The generator prints a summary with total generated presets, allowlist requested/matched/missing counts, exclude requested/matched counts, top country counts, Kotlin file size, and CSV file size. The recommended flow is to regenerate `BirthplacePresets.generated.kt` and `birthplaces.csv` together in one command so both files represent exactly the same catalogue.
+The generator prints a summary with total selected presets, allowlist requested/matched/missing counts, exclude requested/matched counts, top country counts, and CSV file size. The recommended flow regenerates only `birthplaces.csv`; `BirthplacePresets.generated.kt` remains a small fallback/legacy source.
+
+### Optional Kotlin fallback output
+
+Use `--kotlin-output <path>` only for a small fallback/legacy catalogue, normally with a small `--global-limit` such as `100`:
+
+```bash
+python tools/generate_birthplace_presets.py tools/geonames/cities15000.txt --country-info tools/geonames/countryInfo.txt --tier-a-country ES,MX,AR,CO,CL,PE,UY,PY,BO,EC,VE,GT,CR,PA,DO,CU,US,CA,GB,IE,AU,NZ,ZA,PT,BR,FR,BE,CH,LU,DE,AT,IT --tier-b-country RU,CN,JP,KR,IN,ID,TR,UA,PL,RO,NL,SE,NO,FI,DK,GR,CZ,HU,IL,AE,SA,EG,MA,NG,KE --tier-a-limit 20 --tier-b-limit 10 --tier-c-limit 1 --global-limit 100 --allowlist-file tools/geonames/birthplace_allowlist.txt --exclude-file tools/geonames/birthplace_exclude.txt --kotlin-output composeApp/src/commonMain/kotlin/com/agc/bwitch/ui/astrology/birthplace/BirthplacePresets.generated.kt
+```
+
+Kotlin output has a guardrail: if the selected city count exceeds `--kotlin-max-presets` (default `200`), generation fails and explains that large catalogues must live in CSV. `--output` remains available as a deprecated alias for `--kotlin-output`, but it is disabled unless explicitly passed.
 
 ### Legacy options
 
