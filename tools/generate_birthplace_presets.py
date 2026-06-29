@@ -405,7 +405,7 @@ def main() -> None:
     parser.add_argument("cities15000", type=Path, help="Path to a local GeoNames cities15000.txt file")
     parser.add_argument("--country-info", type=Path, default=None, help="Optional local GeoNames countryInfo.txt for country names")
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT, help=f"Output Kotlin file (default: {DEFAULT_OUTPUT})")
-    parser.add_argument("--csv-output", type=Path, default=None, help=f"Optional output CSV resource file (recommended: {DEFAULT_CSV_OUTPUT})")
+    parser.add_argument("--csv-output", type=Path, default=DEFAULT_CSV_OUTPUT, help=f"Output CSV resource file (default: {DEFAULT_CSV_OUTPUT})")
     parser.add_argument("--min-population", type=positive_int, default=None, help="Only include non-allowlisted cities with at least this GeoNames population value")
     parser.add_argument("--limit", type=positive_int, default=None, help="Deprecated alias for --global-limit when --global-limit is omitted")
     parser.add_argument("--priority-country", type=parse_country_codes, default=[], help="Deprecated alias for --tier-a-country")
@@ -442,7 +442,13 @@ def main() -> None:
     args.output.write_text(render(cities), encoding="utf-8")
     if args.csv_output is not None:
         args.csv_output.parent.mkdir(parents=True, exist_ok=True)
-        args.csv_output.write_text(render_csv(cities), encoding="utf-8")
+        csv_content = render_csv(cities)
+        csv_row_count = max(0, csv_content.count("\n") - 1)
+        if csv_row_count != len(cities):
+            raise RuntimeError(
+                f"Generated CSV row count ({csv_row_count}) does not match Kotlin preset count ({len(cities)})"
+            )
+        args.csv_output.write_text(csv_content, encoding="utf-8")
     print_summary(cities, args.output, stats, args.csv_output)
 
 
