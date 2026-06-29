@@ -15,9 +15,6 @@ from collections import Counter, defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 
-DEFAULT_OUTPUT = Path(
-    "composeApp/src/commonMain/kotlin/com/agc/bwitch/ui/astrology/birthplace/BirthplacePresets.generated.kt"
-)
 DEFAULT_CSV_OUTPUT = Path("composeApp/src/commonMain/composeResources/files/birthplaces.csv")
 CSV_HEADER = (
     "geonameId",
@@ -31,6 +28,7 @@ CSV_HEADER = (
     "featureCode",
 )
 PACKAGE_NAME = "com.agc.bwitch.ui.astrology.birthplace"
+DEFAULT_KOTLIN_MAX_PRESETS = 200
 
 
 @dataclass(frozen=True)
@@ -382,8 +380,12 @@ def render_csv(cities: list[City]) -> str:
     return buffer.getvalue()
 
 
-def print_summary(cities: list[City], output: Path, stats: dict[str, int], csv_output: Path | None) -> None:
-    print(f"Generated {len(cities)} birthplace presets at {output}")
+def print_summary(cities: list[City], kotlin_output: Path | None, stats: dict[str, int], csv_output: Path | None) -> None:
+    print(f"Selected {len(cities)} birthplace presets")
+    if csv_output is not None:
+        print(f"Generated CSV birthplace catalog at {csv_output}")
+    if kotlin_output is not None:
+        print(f"Generated Kotlin fallback presets at {kotlin_output}")
     print(
         "Allowlist requested/matched/missing: "
         f"{stats['allowlist_requested']}/{stats['allowlist_matched']}/{stats['allowlist_missing']}"
@@ -392,8 +394,8 @@ def print_summary(cities: list[City], output: Path, stats: dict[str, int], csv_o
     print("Top country counts:")
     for country_code, count in Counter(city.country_code for city in cities).most_common(20):
         print(f"  {country_code}: {count}")
-    if output.exists():
-        print(f"Generated Kotlin file size: {output.stat().st_size} bytes")
+    if kotlin_output is not None and kotlin_output.exists():
+        print(f"Generated Kotlin file size: {kotlin_output.stat().st_size} bytes")
     if csv_output is not None and csv_output.exists():
         print(f"Generated CSV file size: {csv_output.stat().st_size} bytes")
 
@@ -404,8 +406,10 @@ def main() -> None:
     )
     parser.add_argument("cities15000", type=Path, help="Path to a local GeoNames cities15000.txt file")
     parser.add_argument("--country-info", type=Path, default=None, help="Optional local GeoNames countryInfo.txt for country names")
-    parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT, help=f"Output Kotlin file (default: {DEFAULT_OUTPUT})")
     parser.add_argument("--csv-output", type=Path, default=DEFAULT_CSV_OUTPUT, help=f"Output CSV resource file (default: {DEFAULT_CSV_OUTPUT})")
+    parser.add_argument("--kotlin-output", type=Path, default=None, help="Optional Kotlin fallback/legacy output file. Disabled by default; use only for small fallback catalogues.")
+    parser.add_argument("--output", dest="legacy_output", type=Path, default=None, help="Deprecated alias for --kotlin-output. Disabled by default.")
+    parser.add_argument("--kotlin-max-presets", type=positive_int, default=DEFAULT_KOTLIN_MAX_PRESETS, help=f"Maximum number of selected cities allowed when writing Kotlin fallback output (default: {DEFAULT_KOTLIN_MAX_PRESETS})")
     parser.add_argument("--min-population", type=positive_int, default=None, help="Only include non-allowlisted cities with at least this GeoNames population value")
     parser.add_argument("--limit", type=positive_int, default=None, help="Deprecated alias for --global-limit when --global-limit is omitted")
     parser.add_argument("--priority-country", type=parse_country_codes, default=[], help="Deprecated alias for --tier-a-country")
@@ -438,18 +442,27 @@ def main() -> None:
         parse_match_file(args.allowlist_file, allow_forced=False),
         parse_match_file(args.exclude_file, allow_forced=True),
     )
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(render(cities), encoding="utf-8")
+    kotlin_output = args.kotlin_output or args.legacy_output
+    if kotlin_output is not None and len(cities) > args.kotlin_max_presets:
+        raise RuntimeError(
+            f"Refusing to generate Kotlin fallback with {len(cities)} cities; "
+            f"the safe limit is {args.kotlin_max_presets}. Large birthplace catalogues must live in "
+            "the CSV resource. Re-run without --kotlin-output/--output for the runtime CSV, "
+            "or lower the selection limits for a small legacy fallback."
+        )
     if args.csv_output is not None:
         args.csv_output.parent.mkdir(parents=True, exist_ok=True)
         csv_content = render_csv(cities)
         csv_row_count = max(0, csv_content.count("\n") - 1)
         if csv_row_count != len(cities):
             raise RuntimeError(
-                f"Generated CSV row count ({csv_row_count}) does not match Kotlin preset count ({len(cities)})"
+                f"Generated CSV row count ({csv_row_count}) does not match selected city count ({len(cities)})"
             )
         args.csv_output.write_text(csv_content, encoding="utf-8")
-    print_summary(cities, args.output, stats, args.csv_output)
+    if kotlin_output is not None:
+        kotlin_output.parent.mkdir(parents=True, exist_ok=True)
+        kotlin_output.write_text(render(cities), encoding="utf-8")
+    print_summary(cities, kotlin_output, stats, args.csv_output)
 
 
 if __name__ == "__main__":
