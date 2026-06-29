@@ -5,6 +5,15 @@ import com.agc.bwitch.domain.astrology.natal.BirthplacePreset
 private const val MaxBirthplaceSearchResults = 20
 private const val DefaultCountryPriority = Int.MAX_VALUE
 
+private val BirthplaceSearchAliases = mapOf(
+    "roma" to listOf("rome"),
+    "moscu" to listOf("moscow"),
+    "pekin" to listOf("beijing"),
+    "londres" to listOf("london"),
+    "nueva york" to listOf("new york", "new york city"),
+    "new york" to listOf("new york city"),
+)
+
 private val BirthplaceCountryPriorities = mapOf(
     "madrid" to listOf("ES"),
     "tokyo" to listOf("JP"),
@@ -20,6 +29,7 @@ private val BirthplaceCountryPriorities = mapOf(
     "paris" to listOf("FR"),
     "berlin" to listOf("DE"),
     "rome" to listOf("IT"),
+    "beijing" to listOf("CN"),
     "sao paulo" to listOf("BR"),
     "rio de janeiro" to listOf("BR"),
 )
@@ -32,14 +42,25 @@ internal fun rankBirthplaceMatches(
     val normalizedQuery = normalizeBirthplaceSearchText(query)
     if (normalizedQuery.isBlank()) return presets.take(limit)
 
+    val equivalentQueries = equivalentBirthplaceQueries(normalizedQuery)
+
     return presets
         .asSequence()
         .mapIndexedNotNull { index, preset ->
-            val score = preset.birthplaceSearchScore(normalizedQuery) ?: return@mapIndexedNotNull null
+            val score = equivalentQueries
+                .mapNotNull { equivalentQuery ->
+                    preset.birthplaceSearchScore(
+                        normalizedQuery = equivalentQuery.query,
+                        aliasPenalty = equivalentQuery.aliasPenalty,
+                    )
+                }
+                .minWithOrNull(BirthplaceSearchScoreComparator)
+                ?: return@mapIndexedNotNull null
             RankedBirthplace(preset = preset, score = score, originalIndex = index)
         }
         .sortedWith(
-            compareBy<RankedBirthplace> { it.score.matchTier }
+            compareBy<RankedBirthplace> { it.score.effectiveMatchTier }
+                .thenBy { it.score.matchTier }
                 .thenBy { it.score.countryPriority }
                 .thenBy { it.score.cityNameLength }
                 .thenBy { it.score.countryNameLength }
@@ -53,10 +74,29 @@ internal fun rankBirthplaceMatches(
 internal fun BirthplacePreset.matchesBirthplaceQuery(query: String): Boolean {
     val normalizedQuery = normalizeBirthplaceSearchText(query)
     if (normalizedQuery.isBlank()) return true
-    return birthplaceSearchScore(normalizedQuery) != null
+    return equivalentBirthplaceQueries(normalizedQuery).any { equivalentQuery ->
+        birthplaceSearchScore(
+            normalizedQuery = equivalentQuery.query,
+            aliasPenalty = equivalentQuery.aliasPenalty,
+        ) != null
+    }
 }
 
-private fun BirthplacePreset.birthplaceSearchScore(normalizedQuery: String): BirthplaceSearchScore? {
+private fun equivalentBirthplaceQueries(normalizedQuery: String): List<EquivalentBirthplaceQuery> {
+    val queries = mutableListOf(EquivalentBirthplaceQuery(query = normalizedQuery, aliasPenalty = 0))
+    BirthplaceSearchAliases[normalizedQuery].orEmpty().forEach { alias ->
+        val normalizedAlias = normalizeBirthplaceSearchText(alias)
+        if (normalizedAlias.isNotBlank() && queries.none { it.query == normalizedAlias }) {
+            queries += EquivalentBirthplaceQuery(query = normalizedAlias, aliasPenalty = 1)
+        }
+    }
+    return queries
+}
+
+private fun BirthplacePreset.birthplaceSearchScore(
+    normalizedQuery: String,
+    aliasPenalty: Int,
+): BirthplaceSearchScore? {
     val normalizedCity = normalizeBirthplaceSearchText(cityName)
     val normalizedCountry = normalizeBirthplaceSearchText(countryName)
     val matchTier = when {
@@ -68,12 +108,18 @@ private fun BirthplacePreset.birthplaceSearchScore(normalizedQuery: String): Bir
     }
 
     return BirthplaceSearchScore(
+        effectiveMatchTier = matchTier + aliasPenalty,
         matchTier = matchTier,
         cityNameLength = normalizedCity.length,
         countryPriority = countryPriorityFor(normalizedCity, countryCode),
         countryNameLength = normalizedCountry.length,
     )
 }
+
+private data class EquivalentBirthplaceQuery(
+    val query: String,
+    val aliasPenalty: Int,
+)
 
 private data class RankedBirthplace(
     val preset: BirthplacePreset,
@@ -88,7 +134,14 @@ private fun countryPriorityFor(normalizedCity: String, countryCode: String?): In
     return if (priority >= 0) priority else DefaultCountryPriority
 }
 
+private val BirthplaceSearchScoreComparator = compareBy<BirthplaceSearchScore> { it.effectiveMatchTier }
+    .thenBy { it.matchTier }
+    .thenBy { it.countryPriority }
+    .thenBy { it.cityNameLength }
+    .thenBy { it.countryNameLength }
+
 private data class BirthplaceSearchScore(
+    val effectiveMatchTier: Int,
     val matchTier: Int,
     val countryPriority: Int,
     val cityNameLength: Int,

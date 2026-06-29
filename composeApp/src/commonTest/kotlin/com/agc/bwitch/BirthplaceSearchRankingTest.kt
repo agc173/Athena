@@ -100,6 +100,29 @@ class BirthplaceSearchRankingTest {
     }
 
     @Test
+    fun ranksManualSpanishAliasesAtTop() {
+        val presets = listOf(
+            birthplace("la-romana-do", "La Romana", "Dominican Republic", "DO", "America/Santo_Domingo"),
+            birthplace("rome-it", "Rome", "Italy", "IT", "Europe/Rome"),
+            birthplace("moscow-us", "Moscow", "United States", "US", "America/New_York"),
+            birthplace("moscow-ru", "Moscow", "Russia", "RU", "Europe/Moscow"),
+            birthplace("beijing-cn", "Beijing", "China", "CN", "Asia/Shanghai"),
+            birthplace("london-ca", "London", "Canada", "CA", "America/Toronto"),
+            birthplace("london-gb", "London", "United Kingdom", "GB", "Europe/London"),
+            birthplace("new-york-city-us", "New York City", "United States", "US", "America/New_York"),
+        )
+
+        assertEquals("rome-it", rankBirthplaceMatches("roma", presets).first().id)
+        assertEquals("moscow-ru", rankBirthplaceMatches("moscu", presets).first().id)
+        assertEquals("moscow-ru", rankBirthplaceMatches("moscú", presets).first().id)
+        assertEquals("beijing-cn", rankBirthplaceMatches("pekin", presets).first().id)
+        assertEquals("beijing-cn", rankBirthplaceMatches("pekín", presets).first().id)
+        assertEquals("london-gb", rankBirthplaceMatches("londres", presets).first().id)
+        assertEquals("new-york-city-us", rankBirthplaceMatches("nueva york", presets).first().id)
+        assertEquals("new-york-city-us", rankBirthplaceMatches("new york", presets).first().id)
+    }
+
+    @Test
     fun emptyQueryKeepsOriginalOrderAndLimit() {
         val presets = (1..25).map { index ->
             birthplace("city-$index", "City $index", "Country", "CO", "Etc/UTC")
