@@ -15,6 +15,19 @@ python tools/generate_birthplace_presets.py tools/geonames/cities15000.txt --cou
 
 By default the generator writes `composeApp/src/commonMain/composeResources/files/birthplaces.csv` and does **not** write `BirthplacePresets.generated.kt`. This keeps the real runtime catalogue in a resource file and avoids creating a huge Kotlin source that can break compilation.
 
+## Generator-only urban subdivision policy
+
+The generator excludes overly granular urban subdivisions before tier selection, so the runtime loader, repository, ranking, UI, aliases/exonyms, and astronomical calculation remain unchanged. The policy is intentionally conservative:
+
+- exclude GeoNames rows with `featureCode=PPLX` (`section of populated place`), which covers neighbourhood-like entities in the audited dump;
+- exclude names containing clear subdivision terms: `administrative district`, `arrondissement`, `barrio`, `borough`, `district`, `quarter`, or `ward`;
+- treat `centro` specially to avoid dropping real cities named Centro: only audited big-city-centre patterns currently covered by `Madrid Centro`, `Centro Habana`, and `Centro Havana` are excluded by name;
+- apply this urban subdivision policy before allowlist selection, so allowlist cannot re-add `PPLX` or barrio/district-like rows;
+- use allowlist only to keep policy-eligible real cities in the catalogue, including below population thresholds;
+- keep `!` entries in the exclude file as forced exclusions that still win over the allowlist.
+
+This means users searching from neighbourhoods such as Carabanchel, Madrid Centro, Paris arrondissements, or Tuggeranong Administrative District should select the nearest city-level reference birthplace instead (for example Madrid, Paris, or Canberra). The policy affects generation only; it is not a runtime filter.
+
 The CSV schema is stable:
 
 ```csv

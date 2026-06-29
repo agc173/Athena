@@ -25,6 +25,18 @@ TOP_LIMIT = 30
 QUERY_LIMIT = 10
 DEFAULT_COUNTRY_PRIORITY = sys.maxsize
 
+URBAN_SUBDIVISION_FEATURE_CODES = {"PPLX"}
+URBAN_SUBDIVISION_NAME_TERMS = (
+    "administrative district",
+    "arrondissement",
+    "barrio",
+    "borough",
+    "district",
+    "quarter",
+    "ward",
+)
+URBAN_CENTER_PARENT_TERMS = ("habana", "havana", "madrid")
+
 COUNTRY_PRIORITIES = {
     "madrid": ["ES"],
     "tokyo": ["JP"],
@@ -124,6 +136,36 @@ class BirthplaceRow:
         )
 
 
+def normalize_policy_text(text: str) -> str:
+    normalized = unicodedata.normalize("NFKD", text.strip().casefold())
+    without_marks = "".join(char for char in normalized if not unicodedata.combining(char))
+    return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9]+", " ", without_marks)).strip()
+
+
+def is_urban_subdivision_name(name: str) -> bool:
+    normalized = normalize_policy_text(name)
+    if not normalized:
+        return False
+    tokens = set(normalized.split())
+    if any(
+        re.search(rf"\b{re.escape(term)}\b", normalized)
+        for term in URBAN_SUBDIVISION_NAME_TERMS
+    ):
+        return True
+    if "centro" in tokens:
+        without_centro = " ".join(token for token in normalized.split() if token != "centro")
+        if without_centro in URBAN_CENTER_PARENT_TERMS:
+            return True
+    return False
+
+
+def matches_generation_exclusion_policy(row: BirthplaceRow) -> bool:
+    return (
+        row.feature_code.upper() in URBAN_SUBDIVISION_FEATURE_CODES
+        or is_urban_subdivision_name(row.city_name)
+    )
+
+
 def parse_int(value: str) -> int:
     try:
         return int(value)
@@ -216,7 +258,7 @@ def build_report(csv_path: Path, rows: Sequence[BirthplaceRow]) -> str:
     repeated_across_countries = {
         city: countries for city, countries in city_countries.items() if len(countries) > 1
     }
-    suspicious_rows = [row for row in rows if SUSPICIOUS_RE.search(normalize_search_text(row.city_name))]
+    suspicious_rows = [row for row in rows if matches_generation_exclusion_policy(row)]
 
     lines: list[str] = []
     lines.append("# Birthplace catalog audit")
@@ -245,11 +287,18 @@ def build_report(csv_path: Path, rows: Sequence[BirthplaceRow]) -> str:
     lines.append("")
 
     lines.append("## 4. Suspicious entries")
-    lines.append("- Heuristic only; no rows are excluded or changed.")
+    lines.append(
+        "- Mirrors the generator-only urban subdivision exclusion policy; "
+        "this audit remains read-only and changes no runtime data."
+    )
     lines.append(f"- Suspicious rows matched: {len(suspicious_rows):,}")
     for row in suspicious_rows[:TOP_LIMIT]:
-        terms = sorted(set(SUSPICIOUS_RE.findall(normalize_search_text(row.city_name))))
-        lines.append(f"  - {format_row(row)} — terms: {', '.join(terms)}")
+        reasons = []
+        if row.feature_code.upper() in URBAN_SUBDIVISION_FEATURE_CODES:
+            reasons.append(f"featureCode={row.feature_code}")
+        if is_urban_subdivision_name(row.city_name):
+            reasons.append("name-policy")
+        lines.append(f"  - {format_row(row)} — reasons: {', '.join(reasons)}")
     if len(suspicious_rows) > TOP_LIMIT:
         lines.append(f"  - … {len(suspicious_rows) - TOP_LIMIT:,} more")
     lines.append("")
