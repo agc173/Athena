@@ -1,2 +1,2194 @@
 geonameId,cityName,countryName,countryCode,latitudeDegrees,longitudeDegrees,timezoneId,population,featureCode
-3117735,Madrid,Spain,ES,40.4165,-3.7026,Europe/Madrid,3255944,PPLC
+3865086,Bahía Blanca,Argentina,AR,-38.7176,-62.26545,America/Argentina/Buenos_Aires,299101,PPLA2
+6693228,Balvanera,Argentina,AR,-34.61032,-58.39766,America/Argentina/Buenos_Aires,152198,PPLX
+3436134,Barracas,Argentina,AR,-34.64966,-58.38341,America/Argentina/Buenos_Aires,77474,PPLX
+3436077,Belgrano,Argentina,AR,-34.5627,-58.45829,America/Argentina/Buenos_Aires,138942,PPLX
+3436061,Bella Vista,Argentina,AR,-34.5651,-58.69034,America/Argentina/Buenos_Aires,79737,PPL
+3436043,Berazategui,Argentina,AR,-34.76531,-58.21278,America/Argentina/Buenos_Aires,180523,PPL
+3435910,Buenos Aires,Argentina,AR,-34.61315,-58.37723,America/Argentina/Buenos_Aires,2891082,PPLC
+3435810,Campana,Argentina,AR,-34.16327,-58.95919,America/Argentina/Buenos_Aires,86860,PPLA2
+3435607,Castelar,Argentina,AR,-34.65142,-58.64074,America/Argentina/Buenos_Aires,107786,PPL
+3837702,Catamarca,Argentina,AR,-28.46957,-65.78524,America/Argentina/Catamarca,159139,PPLA
+3861416,Chimbas,Argentina,AR,-31.49313,-68.53263,America/Argentina/San_Juan,73829,PPLA2
+3861056,Cipolletti,Argentina,AR,-38.93392,-67.99032,America/Argentina/Salta,75078,PPL
+3860443,Comodoro Rivadavia,Argentina,AR,-45.86256,-67.494,America/Argentina/Catamarca,140850,PPLA2
+3435264,Concepción del Uruguay,Argentina,AR,-32.48463,-58.23217,America/Argentina/Cordoba,67895,PPLA2
+3435261,Concordia,Argentina,AR,-31.39195,-58.01706,America/Argentina/Cordoba,145210,PPLA2
+3435217,Corrientes,Argentina,AR,-27.46784,-58.8344,America/Argentina/Cordoba,346334,PPLA
+3860259,Córdoba,Argentina,AR,-31.40648,-64.18853,America/Argentina/Cordoba,2106734,PPLA
+3435010,Don Torcuato,Argentina,AR,-34.49459,-58.62729,America/Argentina/Buenos_Aires,71356,PPL
+3434509,El Palomar,Argentina,AR,-34.61771,-58.60153,America/Argentina/Buenos_Aires,59031,PPL
+3433975,Ezeiza,Argentina,AR,-34.8544,-58.52474,America/Argentina/Buenos_Aires,115021,PPLA2
+3433899,Formosa,Argentina,AR,-26.18489,-58.17313,America/Argentina/Cordoba,222226,PPLA
+3855065,General Roca,Argentina,AR,-39.03333,-67.58333,America/Argentina/Salta,73212,PPL
+3854985,Gobernador Gálvez,Argentina,AR,-33.03016,-60.64045,America/Argentina/Cordoba,74650,PPL
+3433715,Goya,Argentina,AR,-29.13995,-59.26343,America/Argentina/Cordoba,70245,PPLA2
+3433658,Gualeguaychú,Argentina,AR,-33.00777,-58.51836,America/Argentina/Cordoba,78676,PPLA2
+3433522,Hurlingham,Argentina,AR,-34.5904,-58.62904,America/Argentina/Buenos_Aires,60000,PPLA2
+3433360,Ituzaingó,Argentina,AR,-27.58504,-56.68707,America/Argentina/Cordoba,168419,PPLA2
+12076997,José C. Paz,Argentina,AR,-34.51541,-58.76813,America/Argentina/Buenos_Aires,230208,PPLA2
+3853354,Junín,Argentina,AR,-34.59391,-60.94644,America/Argentina/Buenos_Aires,87509,PPLA2
+3432043,La Plata,Argentina,AR,-34.92126,-57.95442,America/Argentina/Buenos_Aires,195443,PPLA
+3848950,La Rioja,Argentina,AR,-29.41328,-66.85637,America/Argentina/La_Rioja,178872,PPLA
+3431271,Lomas de Zamora,Argentina,AR,-34.7574,-58.40279,America/Argentina/Buenos_Aires,111897,PPLA2
+3430988,Luján,Argentina,AR,-34.5664,-59.11478,America/Argentina/Buenos_Aires,97363,PPLA2
+3430863,Mar del Plata,Argentina,AR,-38.00042,-57.5562,America/Argentina/Buenos_Aires,593337,PPLA2
+3844421,Mendoza,Argentina,AR,-32.88946,-68.84582,America/Argentina/Mendoza,114893,PPLA
+3430708,Mercedes,Argentina,AR,-34.65072,-59.43143,America/Argentina/Buenos_Aires,63284,PPLA2
+3430697,Merlo,Argentina,AR,-34.66536,-58.72744,America/Argentina/Buenos_Aires,268961,PPLA2
+3430545,Morón,Argentina,AR,-34.65118,-58.62205,America/Argentina/Buenos_Aires,99066,PPLA2
+3430443,Necochea,Argentina,AR,-38.5545,-58.73961,America/Argentina/Buenos_Aires,73557,PPLA2
+3843123,Neuquén,Argentina,AR,-38.95078,-68.0592,America/Argentina/Salta,231198,PPLA
+3842670,Olavarría,Argentina,AR,-36.89384,-60.32319,America/Argentina/Buenos_Aires,89721,PPLA2
+3841956,Paraná,Argentina,AR,-31.73271,-60.52897,America/Argentina/Cordoba,247139,PPLA
+3841490,Pergamino,Argentina,AR,-33.89101,-60.57462,America/Argentina/Buenos_Aires,91399,PPLA2
+3429980,Pilar,Argentina,AR,-34.45867,-58.91398,America/Argentina/Buenos_Aires,81120,PPLA2
+3429886,Posadas,Argentina,AR,-27.39184,-55.92379,America/Argentina/Cordoba,305874,PPLA
+3840300,Presidencia Roque Sáenz Peña,Argentina,AR,-26.79095,-60.44132,America/Argentina/Cordoba,81879,PPLA2
+3840092,Puerto Madryn,Argentina,AR,-42.76848,-65.03827,America/Argentina/Catamarca,64555,PPLA2
+3429652,Quilmes,Argentina,AR,-34.72065,-58.25454,America/Argentina/Buenos_Aires,262379,PPLA2
+3839479,Rafaela,Argentina,AR,-31.25285,-61.49078,America/Argentina/Cordoba,88713,PPLA2
+3429594,Reconquista,Argentina,AR,-29.15,-59.65,America/Argentina/Cordoba,90184,PPLA2
+3429577,Resistencia,Argentina,AR,-27.46363,-58.98665,America/Argentina/Cordoba,290793,PPLA
+3838583,Rosario,Argentina,AR,-32.94682,-60.63932,America/Argentina/Cordoba,948312,PPLA2
+3838874,Río Cuarto,Argentina,AR,-33.13044,-64.35272,America/Argentina/Cordoba,157010,PPLA2
+3838859,Río Gallegos,Argentina,AR,-51.6253,-69.25229,America/Argentina/Rio_Gallegos,95796,PPLA
+3838233,Salta,Argentina,AR,-24.80645,-65.41999,America/Argentina/Salta,520683,PPLA
+7647007,San Carlos de Bariloche,Argentina,AR,-41.14557,-71.30822,America/Argentina/Salta,95394,PPLA3
+3837675,San Francisco,Argentina,AR,-31.42497,-62.08404,America/Argentina/Cordoba,59062,PPLA2
+3837213,San Juan,Argentina,AR,-31.53726,-68.52568,America/Argentina/San_Juan,109123,PPLA
+3428775,San Justo,Argentina,AR,-34.68107,-58.56379,America/Argentina/Buenos_Aires,105274,PPLA2
+3837056,San Luis,Argentina,AR,-33.2914,-66.32467,America/Argentina/San_Luis,169947,PPLA
+3836992,San Martín,Argentina,AR,-33.08338,-68.47312,America/Argentina/Mendoza,82549,PPLA2
+7645166,San Miguel,Argentina,AR,-34.54335,-58.71229,America/Argentina/Buenos_Aires,168762,PPL
+3836873,San Miguel de Tucumán,Argentina,AR,-26.81601,-65.21051,America/Argentina/Tucuman,548866,PPLA
+3836846,San Nicolás de los Arroyos,Argentina,AR,-33.33425,-60.2108,America/Argentina/Buenos_Aires,134217,PPLA2
+3836669,San Rafael,Argentina,AR,-34.61531,-68.33238,America/Argentina/Mendoza,118009,PPLA2
+3836620,San Ramón de la Nueva Orán,Argentina,AR,-23.13705,-64.32426,America/Argentina/Salta,74059,PPL
+3836564,San Salvador de Jujuy,Argentina,AR,-24.1928,-65.29342,America/Argentina/Jujuy,257970,PPLA
+3836277,Santa Fe,Argentina,AR,-31.64881,-60.70868,America/Argentina/Cordoba,391164,PPLA
+3835994,Santa Rosa,Argentina,AR,-36.61617,-64.28991,America/Argentina/Salta,102860,PPLA
+3835869,Santiago del Estero,Argentina,AR,-27.80047,-64.26285,America/Argentina/Cordoba,252192,PPLA
+3835793,Santo Tomé,Argentina,AR,-31.66274,-60.7653,America/Argentina/Cordoba,59072,PPL
+3427833,Tandil,Argentina,AR,-37.3287,-59.1369,America/Argentina/Buenos_Aires,115877,PPLA2
+3834601,Tartagal,Argentina,AR,-22.51682,-63.8056,America/Argentina/Salta,60819,PPLA2
+3833883,Trelew,Argentina,AR,-43.24895,-65.30505,America/Argentina/Catamarca,97915,PPL
+3833062,Venado Tuerto,Argentina,AR,-33.74585,-61.96711,America/Argentina/Cordoba,72340,PPL
+3832791,Villa Carlos Paz,Argentina,AR,-31.4183,-64.49008,America/Argentina/Cordoba,69451,PPL
+3427408,Villa Lugano,Argentina,AR,-34.67907,-58.47263,America/Argentina/Buenos_Aires,114000,PPLX
+3832694,Villa María,Argentina,AR,-32.40751,-63.24016,America/Argentina/Cordoba,92453,PPLA2
+7116866,Villa Mercedes,Argentina,AR,-33.67571,-65.45783,America/Argentina/San_Luis,96781,PPL
+3427213,Zárate,Argentina,AR,-34.09584,-59.02423,America/Argentina/Buenos_Aires,99061,PPLA2
+2078025,Adelaide,Australia,AU,-34.92866,138.59863,Australia/Adelaide,1469163,PPLA
+7302628,Adelaide Hills,Australia,AU,-34.91119,138.70735,Australia/Adelaide,72260,PPL
+2077963,Albany,Australia,AU,-35.02692,117.88369,Australia/Perth,35053,PPLA2
+2177513,Auburn,Australia,AU,-33.85,151.03333,Australia/Sydney,37245,PPLX
+8349017,Baldivis,Australia,AU,-32.32889,115.83047,Australia/Perth,37697,PPLX
+2177091,Ballarat,Australia,AU,-37.56622,143.84957,Australia/Melbourne,111973,PPL
+2176947,Bankstown,Australia,AU,-33.91667,151.03333,Australia/Sydney,34933,PPLX
+2176632,Bathurst,Australia,AU,-33.41665,149.5806,Australia/Sydney,36230,PPLA2
+2176592,Baulkham Hills,Australia,AU,-33.75881,150.99292,Australia/Sydney,36792,PPLX
+2176187,Bendigo,Australia,AU,-36.75818,144.28024,Australia/Melbourne,103034,PPLA2
+2176031,Berwick,Australia,AU,-38.03333,145.35,Australia/Melbourne,50298,PPLX
+2175411,Blacktown,Australia,AU,-33.76667,150.91667,Australia/Sydney,46942,PPLX
+6615604,Blue Mountains,Australia,AU,-33.71331,150.33065,Australia/Sydney,78121,PPLX
+2174003,Brisbane,Australia,AU,-27.46794,153.02809,Australia/Brisbane,5638830,PPLA
+2075432,Bunbury,Australia,AU,-33.32711,115.64137,Australia/Perth,76452,PPLA2
+2173323,Bundaberg,Australia,AU,-24.86621,152.3479,Australia/Brisbane,73747,PPL
+2172797,Cairns,Australia,AU,-16.92366,145.76613,Australia/Brisbane,153075,PPL
+2172710,Caloundra,Australia,AU,-26.80346,153.12195,Australia/Brisbane,96305,PPL
+2172517,Canberra,Australia,AU,-35.28346,149.12807,Australia/Sydney,367752,PPLC
+7302631,Canning Vale,Australia,AU,-32.05799,115.91814,Australia/Perth,34504,PPLX
+2172111,Castle Hill,Australia,AU,-33.73333,151,Australia/Sydney,39284,PPLX
+8310663,Central Coast,Australia,AU,-33.42979,151.37144,Australia/Sydney,346596,PPL
+10300648,City of Port Phillip,Australia,AU,-37.83382,144.93834,Australia/Melbourne,112669,PPLX
+2171085,Coffs Harbour,Australia,AU,-30.29626,153.11351,Australia/Sydney,78759,PPL
+2170089,Craigieburn,Australia,AU,-37.6,144.95,Australia/Melbourne,65178,PPLX
+2073124,Darwin,Australia,AU,-12.46113,130.84185,Australia/Darwin,139902,PPLA
+2168605,Doncaster East,Australia,AU,-37.78761,145.14888,Australia/Melbourne,30926,PPLX
+2168305,Dubbo,Australia,AU,-32.24295,148.60484,Australia/Sydney,43516,PPL
+2167279,Epping,Australia,AU,-37.65,145.03333,Australia/Melbourne,33489,PPLX
+2166144,Frankston,Australia,AU,-38.14458,145.12291,Australia/Melbourne,37331,PPLX
+2166143,Frankston East,Australia,AU,-38.13333,145.13333,Australia/Melbourne,34457,PPL
+2165798,Geelong,Australia,AU,-38.14711,144.36069,Australia/Melbourne,282809,PPL
+2070998,Geraldton,Australia,AU,-28.77897,114.61459,Australia/Perth,38595,PPLA2
+2165478,Gladstone,Australia,AU,-23.84852,151.25775,Australia/Brisbane,45185,PPLA2
+2165171,Glen Waverley,Australia,AU,-37.87811,145.16476,Australia/Melbourne,42642,PPLX
+2165087,Gold Coast,Australia,AU,-28.00029,153.43088,Australia/Brisbane,640778,PPL
+6354957,Hervey Bay,Australia,AU,-25.28762,152.76936,Australia/Brisbane,52230,PPL
+2163355,Hobart,Australia,AU,-42.87936,147.32941,Australia/Hobart,254930,PPLA
+7281807,Hoppers Crossing,Australia,AU,-37.88264,144.7003,Australia/Melbourne,37216,PPLX
+2160517,Launceston,Australia,AU,-41.43876,147.13467,Australia/Hobart,90953,PPLA2
+2159851,Liverpool,Australia,AU,-33.91938,150.92588,Australia/Sydney,31078,PPLA2
+7281838,Logan City,Australia,AU,-27.63917,153.10944,Australia/Brisbane,345098,PPL
+2159220,Mackay,Australia,AU,-21.15345,149.16554,Australia/Brisbane,84333,PPLA2
+2159045,Maitland,Australia,AU,-32.73308,151.5574,Australia/Sydney,89597,PPLA2
+2067119,Mandurah,Australia,AU,-32.5269,115.7217,Australia/Perth,107643,PPLA2
+2158177,Melbourne,Australia,AU,-37.814,144.96332,Australia/Melbourne,5435590,PPLA
+11523810,Melbourne City Centre,Australia,AU,-37.81501,144.96657,Australia/Melbourne,60057,PPLX
+2157698,Mildura,Australia,AU,-34.18551,142.16251,Australia/Melbourne,34565,PPL
+2156492,Mount Waverley,Australia,AU,-37.87709,145.12939,Australia/Melbourne,35340,PPLX
+2155472,Newcastle,Australia,AU,-32.92953,151.7801,Australia/Sydney,508437,PPLA2
+2155204,Noble Park,Australia,AU,-37.96667,145.16667,Australia/Melbourne,30921,PPLX
+2154219,Orange,Australia,AU,-33.28397,149.10018,Australia/Sydney,41920,PPL
+2153953,Pakenham,Australia,AU,-38.07018,145.47411,Australia/Melbourne,54118,PPLX
+6301965,Palmerston,Australia,AU,-12.48602,130.9833,Australia/Darwin,33695,PPL
+2063523,Perth,Australia,AU,-31.95224,115.8614,Australia/Perth,2384371,PPLA
+6949382,Pittwater,Australia,AU,-33.66623,151.30171,Australia/Sydney,63482,PPLH
+2152819,Point Cook,Australia,AU,-37.91482,144.75088,Australia/Melbourne,66781,PPLX
+2152659,Port Macquarie,Australia,AU,-31.43084,152.90894,Australia/Sydney,51965,PPL
+2152558,Preston,Australia,AU,-37.75,145.01667,Australia/Melbourne,33790,PPLX
+2151716,Reservoir,Australia,AU,-37.71667,145,Australia/Melbourne,51096,PPLX
+2151437,Rockhampton,Australia,AU,-23.38032,150.50595,Australia/Brisbane,81021,PPL
+2150894,Rowville,Australia,AU,-37.93333,145.23333,Australia/Melbourne,33571,PPLX
+2150717,Saint Albans,Australia,AU,-37.73333,144.8,Australia/Melbourne,35091,PPLX
+2149645,Shepparton,Australia,AU,-36.38047,145.39867,Australia/Melbourne,32067,PPL
+2148928,Southport,Australia,AU,-27.96724,153.39796,Australia/Brisbane,32965,PPLX
+8015209,St Albans,Australia,AU,-37.74496,144.80049,Australia/Melbourne,37629,PPL
+2147914,Sunbury,Australia,AU,-37.57742,144.72607,Australia/Melbourne,38851,PPLX
+10630449,Sunshine Coast,Australia,AU,-26.65682,153.07955,Australia/Brisbane,398840,PPLA2
+2147849,Surfers Paradise,Australia,AU,-28.00274,153.42999,Australia/Brisbane,31073,PPLX
+2147714,Sydney,Australia,AU,-33.86785,151.20732,Australia/Sydney,5638830,PPLA
+2147497,Tamworth,Australia,AU,-31.09048,150.92905,Australia/Sydney,43874,PPLA2
+2147357,Tarneit,Australia,AU,-37.83634,144.65952,Australia/Melbourne,56370,PPLX
+2146268,Toowoomba,Australia,AU,-27.56056,151.95386,Australia/Brisbane,142163,PPL
+2146142,Townsville,Australia,AU,-19.26639,146.80569,Australia/Brisbane,201313,PPL
+2145990,Truganina,Australia,AU,-37.81667,144.75,Australia/Melbourne,36305,PPLX
+2145936,Tuggeranong Administrative District,Australia,AU,-35.41647,149.06954,Australia/Sydney,89461,PPLL
+2144528,Warrnambool,Australia,AU,-38.38176,142.48799,Australia/Melbourne,32894,PPL
+2144095,Werribee,Australia,AU,-37.9,144.66667,Australia/Melbourne,50027,PPLX
+2143285,Wodonga,Australia,AU,-36.12179,146.88809,Australia/Melbourne,38949,PPL
+2171507,Wollongong,Australia,AU,-34.424,150.89345,Australia/Sydney,280153,PPLA2
+12214080,Alsergrund,Austria,AT,48.22321,16.35506,Europe/Vienna,41645,PPLX
+2782555,Amstetten,Austria,AT,48.1229,14.87206,Europe/Vienna,15559,PPLA3
+11903641,Andritz,Austria,AT,47.11387,15.42348,Europe/Vienna,19020,PPLX
+2782480,Ansfelden,Austria,AT,48.20969,14.29004,Europe/Vienna,18251,PPL
+2782315,Aspern,Austria,AT,48.21806,16.48306,Europe/Vienna,50687,PPLX
+2782067,Baden,Austria,AT,48.00543,16.23264,Europe/Vienna,26286,PPLA3
+2781680,Bludenz,Austria,AT,47.15476,9.82255,Europe/Vienna,15102,PPLA2
+2781503,Bregenz,Austria,AT,47.50311,9.7471,Europe/Vienna,29806,PPLA
+12214081,Brigittenau,Austria,AT,48.24275,16.37551,Europe/Vienna,86967,PPLX
+11903636,Donaustadt,Austria,AT,48.2333,16.46002,Europe/Vienna,187007,PPLX
+2780741,Dornbirn,Austria,AT,47.41427,9.74195,Europe/Vienna,49278,PPLA3
+2600996,Döbling,Austria,AT,48.25,16.33333,Europe/Vienna,75418,PPLX
+2780361,Eggenberg,Austria,AT,47.07,15.39871,Europe/Vienna,20511,PPLX
+2779912,Essling,Austria,AT,48.21289,16.52442,Europe/Vienna,21200,PPLX
+8063098,Favoriten,Austria,AT,48.16116,16.38233,Europe/Vienna,201882,PPLX
+2779674,Feldkirch,Austria,AT,47.23645,9.59734,Europe/Vienna,33420,PPLA2
+2779469,Floridsdorf,Austria,AT,48.25,16.4,Europe/Vienna,162779,PPLX
+2779139,Fünfhaus,Austria,AT,48.19596,16.3183,Europe/Vienna,76396,PPLX
+11903639,Geidorf,Austria,AT,47.08393,15.444,Europe/Vienna,24767,PPLX
+2778067,Graz,Austria,AT,47.06733,15.44197,Europe/Vienna,303270,PPLA
+11903642,Gries,Austria,AT,47.06236,15.42421,Europe/Vienna,29363,PPLX
+2776488,Hernals,Austria,AT,48.22544,16.30871,Europe/Vienna,57546,PPLX
+2776421,Hietzing,Austria,AT,48.18623,16.2965,Europe/Vienna,54265,PPLX
+2775742,Hohenems,Austria,AT,47.36121,9.68694,Europe/Vienna,16317,PPLA3
+2775479,Hötting,Austria,AT,47.26815,11.36868,Europe/Vienna,35043,PPLX
+2775260,Innere Stadt,Austria,AT,48.20906,16.37135,Europe/Vienna,16450,PPLX
+2775220,Innsbruck,Austria,AT,47.26266,11.39454,Europe/Vienna,132493,PPLA
+11903637,Jakomini,Austria,AT,47.05441,15.44984,Europe/Vienna,32912,PPLX
+12214073,Josefstadt,Austria,AT,48.21243,16.34549,Europe/Vienna,24499,PPLX
+2774326,Klagenfurt am Wörthersee,Austria,AT,46.62472,14.30528,Europe/Vienna,100316,PPLA
+2773913,Klosterneuburg,Austria,AT,48.30521,16.32522,Europe/Vienna,15614,PPLA3
+12214069,Landstraße,Austria,AT,48.2019,16.38792,Europe/Vienna,98389,PPLX
+11903638,Lend,Austria,AT,47.08256,15.41589,Europe/Vienna,31147,PPLX
+2772400,Linz,Austria,AT,48.30639,14.28611,Europe/Vienna,204846,PPLA
+2772173,Lustenau,Austria,AT,47.42642,9.65851,Europe/Vienna,22821,PPLA3
+12214070,Margareten,Austria,AT,48.1855,16.35373,Europe/Vienna,54412,PPLX
+12214071,Mariahilf,Austria,AT,48.19571,16.35215,Europe/Vienna,31381,PPLX
+2771706,Meidling,Austria,AT,48.16667,16.33333,Europe/Vienna,97624,PPLX
+2771335,Mödling,Austria,AT,48.08605,16.28921,Europe/Vienna,20555,PPLA3
+12214072,Neubau,Austria,AT,48.20172,16.34715,Europe/Vienna,31521,PPLX
+2769359,Ottakring,Austria,AT,48.21667,16.3,Europe/Vienna,104627,PPLX
+2775371,Penzing,Austria,AT,48.2,16.26667,Europe/Vienna,98176,PPLX
+2769110,Perchtoldsdorf,Austria,AT,48.11935,16.26607,Europe/Vienna,15047,PPLA3
+2768442,Pradl,Austria,AT,47.26539,11.4152,Europe/Vienna,32588,PPLX
+2766922,Saalfelden am Steinernen Meer,Austria,AT,47.42681,12.848,Europe/Vienna,16790,PPLA3
+2766824,Salzburg,Austria,AT,47.79941,13.04399,Europe/Vienna,157245,PPLA
+11903640,Sankt Leonhard,Austria,AT,47.06924,15.45784,Europe/Vienna,15853,PPLX
+2766522,Sankt Martin,Austria,AT,46.61667,14.28333,Europe/Vienna,20000,PPLX
+2766446,Sankt Peter,Austria,AT,47.05,15.46667,Europe/Vienna,15187,PPLX
+2766447,Sankt Peter,Austria,AT,46.62978,14.34016,Europe/Vienna,20320,PPLX
+2766429,Sankt Pölten,Austria,AT,48.20762,15.63725,Europe/Vienna,21911,PPLA
+2765028,Simmering,Austria,AT,48.18333,16.43333,Europe/Vienna,101420,PPLX
+2764359,Steyr,Austria,AT,48.04274,14.42127,Europe/Vienna,38331,PPLA3
+2764279,Stockerau,Austria,AT,48.38333,16.21667,Europe/Vienna,16292,PPLA3
+2764178,Straßgang,Austria,AT,47.03333,15.4,Europe/Vienna,16268,PPLX
+2763810,Telfs,Austria,AT,47.30707,11.06817,Europe/Vienna,15229,PPLA3
+2763423,Traun,Austria,AT,48.22086,14.23833,Europe/Vienna,25345,PPL
+2761369,Vienna,Austria,AT,48.20849,16.37208,Europe/Vienna,1691468,PPLC
+2762372,Villach,Austria,AT,46.61028,13.85583,Europe/Vienna,58882,PPLA2
+2761524,Wels,Austria,AT,48.16667,14.03333,Europe/Vienna,16857,PPLA2
+2761436,Wetzelsdorf,Austria,AT,47.05293,15.39923,Europe/Vienna,15687,PPLX
+2761353,Wiener Neustadt,Austria,AT,47.80485,16.23196,Europe/Vienna,44820,PPLA3
+2761164,Wilten,Austria,AT,47.25829,11.38808,Europe/Vienna,18142,PPLX
+2760910,Wolfsberg,Austria,AT,46.84056,14.84417,Europe/Vienna,25035,PPLA3
+12196319,Währing,Austria,AT,48.22611,16.34484,Europe/Vienna,51402,PPLX
+2803448,Aalst,Belgium,BE,50.93604,4.0355,Europe/Brussels,77534,PPL
+2803201,Anderlecht,Belgium,BE,50.83619,4.31454,Europe/Brussels,160553,PPLA4
+2803138,Antwerp,Belgium,BE,51.22047,4.40026,Europe/Brussels,529247,PPL
+2802960,Auderghem,Belgium,BE,50.81667,4.43333,Europe/Brussels,33984,PPL
+2802249,Berchem,Belgium,BE,51.19021,4.43264,Europe/Brussels,43511,PPL
+2802170,Beringen,Belgium,BE,51.04954,5.22606,Europe/Brussels,40930,PPL
+2802031,Beveren,Belgium,BE,51.21187,4.25633,Europe/Brussels,45179,PPL
+2801922,Binche,Belgium,BE,50.41155,4.16469,Europe/Brussels,32030,PPL
+2801824,Blauwput,Belgium,BE,50.88587,4.72415,Europe/Brussels,30215,PPL
+2801471,Borgerhout,Belgium,BE,51.20957,4.43539,Europe/Brussels,46087,PPL
+2801154,Braine-l'Alleud,Belgium,BE,50.68363,4.36784,Europe/Brussels,37512,PPL
+2801117,Brasschaat,Belgium,BE,51.2912,4.49182,Europe/Brussels,37040,PPL
+2800931,Brugge,Belgium,BE,51.20892,3.22424,Europe/Brussels,118509,PPL
+2800866,Brussels,Belgium,BE,50.85045,4.34878,Europe/Brussels,1019022,PPLC
+2800481,Charleroi,Belgium,BE,50.41136,4.44448,Europe/Brussels,200132,PPL
+2800448,Châtelet,Belgium,BE,50.40338,4.52826,Europe/Brussels,35238,PPL
+2799645,Dendermonde,Belgium,BE,51.02869,4.10106,Europe/Brussels,45673,PPLA3
+2799478,Deurne,Belgium,BE,51.22134,4.46595,Europe/Brussels,78747,PPL
+2799365,Dilbeek,Belgium,BE,50.84799,4.25972,Europe/Brussels,39482,PPL
+2798578,Etterbeek,Belgium,BE,50.83272,4.38835,Europe/Brussels,48344,PPL
+2798554,Evere,Belgium,BE,50.87441,4.39905,Europe/Brussels,41667,PPL
+2798551,Evergem,Belgium,BE,51.11306,3.70976,Europe/Brussels,31615,PPL
+2798139,Forest,Belgium,BE,50.81678,4.32775,Europe/Brussels,56254,PPL
+2797779,Geel,Belgium,BE,51.16557,4.98917,Europe/Brussels,34697,PPL
+2797670,Genk,Belgium,BE,50.965,5.50082,Europe/Brussels,63666,PPL
+2797656,Gent,Belgium,BE,51.05,3.71667,Europe/Brussels,265086,PPL
+2797638,Geraardsbergen,Belgium,BE,50.77343,3.88223,Europe/Brussels,30807,PPL
+2797114,Grimbergen,Belgium,BE,50.93409,4.37213,Europe/Brussels,37000,PPLA4
+2796696,Halle,Belgium,BE,50.73385,4.23454,Europe/Brussels,34479,PPL
+2796491,Hasselt,Belgium,BE,50.93106,5.33781,Europe/Brussels,77651,PPL
+2796153,Heist-op-den-Berg,Belgium,BE,51.07537,4.72827,Europe/Brussels,37873,PPLA4
+2796132,Helchteren,Belgium,BE,51.05591,5.38244,Europe/Brussels,30050,PPL
+2795930,Herstal,Belgium,BE,50.66415,5.62346,Europe/Brussels,36503,PPL
+2795800,Heusden,Belgium,BE,51.03664,5.28013,Europe/Brussels,31017,PPL
+2795730,Hoboken,Belgium,BE,51.17611,4.34844,Europe/Brussels,34443,PPL
+2795261,Houthalen,Belgium,BE,51.03427,5.37429,Europe/Brussels,30050,PPL
+2795100,Ieper,Belgium,BE,50.85114,2.88569,Europe/Brussels,35089,PPLA3
+2795011,Ixelles,Belgium,BE,50.83333,4.36667,Europe/Brussels,86671,PPL
+2794914,Jette,Belgium,BE,50.87309,4.33419,Europe/Brussels,52490,PPL
+2794507,Kessel-Lo,Belgium,BE,50.88549,4.73717,Europe/Brussels,30215,PPL
+2794210,Knokke-Heist,Belgium,BE,51.35,3.26667,Europe/Brussels,33781,PPL
+2794055,Kortrijk,Belgium,BE,50.82803,3.26487,Europe/Brussels,73879,PPL
+2793508,La Louvière,Belgium,BE,50.48657,4.18785,Europe/Brussels,76668,PPL
+2792482,Leuven,Belgium,BE,50.87959,4.70093,Europe/Brussels,101032,PPL
+2792397,Lier,Belgium,BE,51.13128,4.57041,Europe/Brussels,33272,PPL
+2792413,Liège,Belgium,BE,50.63373,5.56749,Europe/Brussels,195278,PPL
+2792196,Lokeren,Belgium,BE,51.10364,3.99339,Europe/Brussels,41438,PPL
+2792179,Lommel,Belgium,BE,51.23074,5.31349,Europe/Brussels,31993,PPL
+2791961,Maasmechelen,Belgium,BE,50.96545,5.69452,Europe/Brussels,36251,PPL
+2791537,Mechelen,Belgium,BE,51.02574,4.47762,Europe/Brussels,77530,PPL
+2791343,Menen,Belgium,BE,50.79722,3.12245,Europe/Brussels,31916,PPL
+2791301,Merksem,Belgium,BE,51.24623,4.44903,Europe/Brussels,44435,PPL
+2791067,Mol,Belgium,BE,51.19188,5.11662,Europe/Brussels,32659,PPL
+2791018,Molenbeek-Saint-Jean,Belgium,BE,50.8499,4.31248,Europe/Brussels,97037,PPL
+2790869,Mons,Belgium,BE,50.45413,3.95229,Europe/Brussels,95299,PPL
+2790595,Mouscron,Belgium,BE,50.74497,3.20639,Europe/Brussels,52069,PPLA3
+2790471,Namur,Belgium,BE,50.4669,4.86746,Europe/Brussels,110939,PPLA
+2790114,Ninove,Belgium,BE,50.82776,4.02657,Europe/Brussels,34795,PPL
+2789786,Ostend,Belgium,BE,51.21551,2.927,Europe/Brussels,69011,PPLA3
+2789529,Oudenaarde,Belgium,BE,50.85168,3.60891,Europe/Brussels,31866,PPLA3
+2787889,Roeselare,Belgium,BE,50.94653,3.12269,Europe/Brussels,56016,PPL
+2787413,Saint-Gilles,Belgium,BE,50.82763,4.34389,Europe/Brussels,50221,PPL
+2787149,Schaerbeek,Belgium,BE,50.86935,4.37737,Europe/Brussels,132761,PPL
+2786963,Schoten,Belgium,BE,51.25251,4.50268,Europe/Brussels,33622,PPL
+2786824,Seraing,Belgium,BE,50.58362,5.50115,Europe/Brussels,60737,PPL
+2786743,Sint-Amandsberg,Belgium,BE,51.05947,3.74943,Europe/Brussels,32115,PPL
+2786578,Sint-Niklaas,Belgium,BE,51.16509,4.1437,Europe/Brussels,69010,PPLA3
+2786559,Sint-Pieters-Leeuw,Belgium,BE,50.77926,4.24355,Europe/Brussels,30446,PPL
+2786545,Sint-Truiden,Belgium,BE,50.81679,5.18647,Europe/Brussels,37859,PPL
+2785470,Tienen,Belgium,BE,50.80745,4.9378,Europe/Brussels,31743,PPL
+2785341,Tournai,Belgium,BE,50.60715,3.38932,Europe/Brussels,69554,PPLA3
+2785141,Turnhout,Belgium,BE,51.32254,4.94471,Europe/Brussels,44000,PPLA3
+2785123,Uccle,Belgium,BE,50.80225,4.33943,Europe/Brussels,82929,PPL
+2784821,Verviers,Belgium,BE,50.58907,5.86241,Europe/Brussels,52824,PPL
+2784604,Vilvoorde,Belgium,BE,50.92814,4.42938,Europe/Brussels,36955,PPL
+2784068,Waregem,Belgium,BE,50.88898,3.42756,Europe/Brussels,35896,PPL
+2783941,Wavre,Belgium,BE,50.71717,4.60138,Europe/Brussels,34305,PPL
+2783759,Wevelgem,Belgium,BE,50.8,3.16667,Europe/Brussels,30954,PPL
+2783615,Wilrijk,Belgium,BE,51.16734,4.39513,Europe/Brussels,41403,PPL
+2783476,Woluwe-Saint-Lambert,Belgium,BE,50.84389,4.42912,Europe/Brussels,56584,PPL
+3924569,Achocalla,Bolivia,BO,-16.57386,-68.15112,America/La_Paz,19583,PPL
+9129422,Ascención de Guarayos,Bolivia,BO,-15.89299,-63.18855,America/La_Paz,18816,PPLL
+3923154,Bermejo,Bolivia,BO,-22.73206,-64.33724,America/La_Paz,35411,PPL
+3922414,Camiri,Bolivia,BO,-20.04063,-63.52396,America/La_Paz,27961,PPL
+3922037,Caranavi,Bolivia,BO,-15.83403,-67.56586,America/La_Paz,45747,PPLA2
+3919998,Cobija,Bolivia,BO,-11.02671,-68.76918,America/La_Paz,26585,PPLA
+3919968,Cochabamba,Bolivia,BO,-17.38195,-66.15995,America/La_Paz,841276,PPLA
+3919902,Colcapirhua,Bolivia,BO,-17.3857,-66.23814,America/La_Paz,52732,PPL
+3918937,Cotoca,Bolivia,BO,-17.81667,-63.05,America/La_Paz,18347,PPL
+3904666,El Torno,Bolivia,BO,-18.00014,-63.38712,America/La_Paz,15543,PPL
+3915350,Guayaramerín,Bolivia,BO,-10.8258,-65.3581,America/La_Paz,36008,PPL
+3914839,Huanuni,Bolivia,BO,-18.289,-66.83583,America/La_Paz,15492,PPL
+3911925,La Paz,Bolivia,BO,-16.5,-68.15,America/La_Paz,2004652,PPLG
+3912103,Laja,Bolivia,BO,-16.53333,-68.38333,America/La_Paz,18023,PPLA3
+3911409,Llallagua,Bolivia,BO,-18.42494,-66.57778,America/La_Paz,28069,PPL
+3910291,Mizque,Bolivia,BO,-17.94101,-65.34016,America/La_Paz,30481,PPL
+3910027,Montero,Bolivia,BO,-17.33874,-63.25093,America/La_Paz,88616,PPL
+3909234,Oruro,Bolivia,BO,-17.97153,-67.0932,America/La_Paz,208684,PPLA
+3907584,Potosí,Bolivia,BO,-19.58361,-65.75306,America/La_Paz,141251,PPLA
+3907080,Punata,Bolivia,BO,-17.54234,-65.83472,America/La_Paz,15194,PPL
+3906791,Quillacollo,Bolivia,BO,-17.39228,-66.27838,America/La_Paz,172405,PPL
+3906466,Riberalta,Bolivia,BO,-11.01026,-66.05257,America/La_Paz,99070,PPL
+3906194,Sacaba,Bolivia,BO,-17.39799,-66.03825,America/La_Paz,180726,PPL
+11467676,San Borja,Bolivia,BO,-14.85195,-66.74954,America/La_Paz,24610,PPL
+3905658,San Ignacio de Velasco,Bolivia,BO,-16.37767,-60.96472,America/La_Paz,23569,PPL
+3904906,Santa Cruz de la Sierra,Bolivia,BO,-17.78629,-63.18117,America/La_Paz,1831434,PPLA
+3904221,Sipe Sipe,Bolivia,BO,-17.45419,-66.35737,America/La_Paz,47000,PPL
+3903987,Sucre,Bolivia,BO,-19.03332,-65.26274,America/La_Paz,224838,PPLC
+3903320,Tarija,Bolivia,BO,-21.53549,-64.72956,America/La_Paz,159269,PPLA
+3902949,Tiquipaya,Bolivia,BO,-17.33801,-66.21579,America/La_Paz,62675,PPL
+3902377,Trinidad,Bolivia,BO,-14.83223,-64.90335,America/La_Paz,84259,PPLA
+3902202,Tupiza,Bolivia,BO,-21.44345,-65.71875,America/La_Paz,22233,PPL
+3901742,Viacha,Bolivia,BO,-16.65,-68.3,America/La_Paz,86218,PPLA2
+3901504,Villa Yapacaní,Bolivia,BO,-17.4,-63.83333,America/La_Paz,18187,PPL
+3901547,Villamontes,Bolivia,BO,-21.26235,-63.46903,America/La_Paz,39800,PPL
+3901501,Villazón,Bolivia,BO,-22.08659,-65.59422,America/La_Paz,30253,PPL
+3901435,Vinto,Bolivia,BO,-17.39141,-66.31681,America/La_Paz,58739,PPL
+3901301,Warnes,Bolivia,BO,-17.5163,-63.16778,America/La_Paz,22036,PPL
+3901178,Yacuiba,Bolivia,BO,-22.01643,-63.67753,America/La_Paz,82803,PPLA2
+3407669,Ananindeua,Brazil,BR,-1.36556,-48.37222,America/Belem,433956,PPL
+6316406,Aparecida de Goiânia,Brazil,BR,-16.82333,-49.24389,America/Sao_Paulo,510770,PPL
+3471872,Aracaju,Brazil,BR,-10.91111,-37.07167,America/Maceio,664908,PPLA
+3470279,Bauru,Brazil,BR,-22.31472,-49.06056,America/Sao_Paulo,379297,PPLA2
+3470142,Belford Roxo,Brazil,BR,-22.76417,-43.39944,America/Sao_Paulo,466096,PPL
+3470127,Belo Horizonte,Brazil,BR,-19.92083,-43.93778,America/Sao_Paulo,2721564,PPLA
+3405870,Belém,Brazil,BR,-1.45583,-48.50444,America/Belem,1499641,PPLA
+3470044,Betim,Brazil,BR,-19.96778,-44.19833,America/Sao_Paulo,384000,PPL
+3469968,Blumenau,Brazil,BR,-26.91944,-49.06611,America/Sao_Paulo,361855,PPLA2
+3664980,Boa Vista,Brazil,BR,2.81972,-60.67333,America/Boa_Vista,419652,PPLA
+3469058,Brasília,Brazil,BR,-15.77972,-47.92972,America/Sao_Paulo,2207718,PPLC
+3403642,Campina Grande,Brazil,BR,-7.23056,-35.88111,America/Fortaleza,348936,PPL
+3467865,Campinas,Brazil,BR,-22.90556,-47.06083,America/Sao_Paulo,1031554,PPL
+3467747,Campo Grande,Brazil,BR,-20.44278,-54.64639,America/Campo_Grande,906092,PPLA
+3467693,Campos dos Goytacazes,Brazil,BR,-21.75227,-41.33044,America/Sao_Paulo,511168,PPLA2
+3467467,Canoas,Brazil,BR,-29.91778,-51.18361,America/Sao_Paulo,328291,PPL
+3466998,Carapicuíba,Brazil,BR,-23.52272,-46.835,America/Sao_Paulo,386984,PPLA2
+3466954,Cariacica,Brazil,BR,-20.26389,-40.42,America/Sao_Paulo,353491,PPL
+3402655,Caruaru,Brazil,BR,-8.28333,-35.97611,America/Recife,402290,PPLA2
+3402429,Caucaia,Brazil,BR,-3.73611,-38.65306,America/Fortaleza,355679,PPL
+3466537,Caxias do Sul,Brazil,BR,-29.16806,-51.17944,America/Sao_Paulo,381270,PPL
+3465624,Contagem,Brazil,BR,-19.93167,-44.05361,America/Sao_Paulo,627123,PPL
+3465038,Cuiabá,Brazil,BR,-15.59611,-56.09667,America/Cuiaba,618124,PPLA
+3464975,Curitiba,Brazil,BR,-25.42778,-49.27306,America/Sao_Paulo,1948626,PPLA
+3464739,Diadema,Brazil,BR,-23.68611,-46.62278,America/Sao_Paulo,393237,PPL
+3464374,Duque de Caxias,Brazil,BR,-22.78556,-43.31167,America/Sao_Paulo,818329,PPL
+3463478,Feira de Santana,Brazil,BR,-12.26667,-38.96667,America/Bahia,619609,PPL
+3463237,Florianópolis,Brazil,BR,-27.59667,-48.54917,America/Sao_Paulo,508826,PPLA
+3399415,Fortaleza,Brazil,BR,-3.71722,-38.54306,America/Fortaleza,2400000,PPLA
+3463011,Franca,Brazil,BR,-20.53861,-47.40083,America/Sao_Paulo,358539,PPLA2
+3462377,Goiânia,Brazil,BR,-16.67861,-49.25389,America/Sao_Paulo,1536097,PPLA
+11962371,Grajaú,Brazil,BR,-23.76979,-46.67112,America/Sao_Paulo,384873,PPLX
+3461789,Guarujá,Brazil,BR,-23.99306,-46.25639,America/Sao_Paulo,322750,PPLA2
+3461786,Guarulhos,Brazil,BR,-23.46278,-46.53333,America/Sao_Paulo,1169577,PPL
+3460644,Itaquaquecetuba,Brazil,BR,-23.48611,-46.34833,America/Sao_Paulo,369275,PPL
+6317344,Jaboatão dos Guararapes,Brazil,BR,-8.11278,-35.01472,America/Recife,644037,PPLA2
+3459712,Joinville,Brazil,BR,-26.30444,-48.84556,America/Sao_Paulo,461304,PPL
+3397277,João Pessoa,Brazil,BR,-7.115,-34.86306,America/Fortaleza,817511,PPLA
+3459505,Juiz de Fora,Brazil,BR,-21.76417,-43.35028,America/Sao_Paulo,573285,PPLA2
+3459462,Jundiaí,Brazil,BR,-23.18639,-46.88417,America/Sao_Paulo,443221,PPLA2
+3458449,Londrina,Brazil,BR,-23.31028,-51.16278,America/Sao_Paulo,588125,PPLA2
+3396016,Macapá,Brazil,BR,0.03889,-51.06639,America/Belem,512902,PPLA
+3395981,Maceió,Brazil,BR,-9.66583,-35.73528,America/Maceio,1031597,PPLA
+3663517,Manaus,Brazil,BR,-3.10194,-60.025,America/Manaus,2219580,PPLA
+3457381,Mauá,Brazil,BR,-23.66778,-46.46139,America/Sao_Paulo,477552,PPLA2
+3457001,Mogi das Cruzes,Brazil,BR,-23.52278,-46.18833,America/Sao_Paulo,325746,PPL
+3456814,Montes Claros,Brazil,BR,-16.735,-43.86167,America/Sao_Paulo,414240,PPL
+3394023,Natal,Brazil,BR,-5.795,-35.20944,America/Fortaleza,896708,PPLA
+3456283,Niterói,Brazil,BR,-22.88333,-43.10361,America/Sao_Paulo,456456,PPL
+3456160,Nova Iguaçu,Brazil,BR,-22.75917,-43.45111,America/Sao_Paulo,823302,PPLA2
+3393536,Olinda,Brazil,BR,-8.00889,-34.85528,America/Recife,366754,PPL
+3455775,Osasco,Brazil,BR,-23.5325,-46.79167,America/Sao_Paulo,728615,PPL
+3392740,Paulista,Brazil,BR,-7.94083,-34.87306,America/Recife,342167,PPL
+3392242,Petrolina,Brazil,BR,-9.39861,-40.50083,America/Recife,386791,PPL
+3453643,Piracicaba,Brazil,BR,-22.72528,-47.64917,America/Sao_Paulo,407252,PPLA2
+3452925,Porto Alegre,Brazil,BR,-30.03283,-51.23019,America/Sao_Paulo,1488252,PPLA
+3662762,Porto Velho,Brazil,BR,-8.76194,-63.90389,America/Porto_Velho,548952,PPLA
+3452465,Praia Grande,Brazil,BR,-24.00583,-46.40278,America/Sao_Paulo,349935,PPL
+3390760,Recife,Brazil,BR,-8.05389,-34.88111,America/Recife,1653461,PPLA
+3451353,Ribeirão das Neves,Brazil,BR,-19.76694,-44.08667,America/Sao_Paulo,329794,PPL
+3451328,Ribeirão Preto,Brazil,BR,-21.1775,-47.81028,America/Sao_Paulo,711825,PPLA2
+3662574,Rio Branco,Brazil,BR,-9.97472,-67.81,America/Rio_Branco,419452,PPLA
+3451190,Rio de Janeiro,Brazil,BR,-22.90642,-43.18223,America/Sao_Paulo,6747815,PPLA
+3450554,Salvador,Brazil,BR,-12.97563,-38.49096,America/Bahia,2711840,PPLA
+3449701,Santo André,Brazil,BR,-23.66389,-46.53833,America/Sao_Paulo,662373,PPL
+3449433,Santos,Brazil,BR,-23.96083,-46.33361,America/Sao_Paulo,433656,PPLA2
+3447779,Serra,Brazil,BR,-20.12861,-40.30778,America/Sao_Paulo,520653,PPL
+3447399,Sorocaba,Brazil,BR,-23.50167,-47.45806,America/Sao_Paulo,687357,PPLA2
+3449344,São Bernardo do Campo,Brazil,BR,-23.69389,-46.565,America/Sao_Paulo,743372,PPL
+3448639,São José do Rio Preto,Brazil,BR,-20.81972,-49.37944,America/Sao_Paulo,480393,PPLA2
+3448636,São José dos Campos,Brazil,BR,-23.17944,-45.88694,America/Sao_Paulo,729737,PPLA2
+3448632,São José dos Pinhais,Brazil,BR,-25.5302,-49.20836,America/Sao_Paulo,329628,PPL
+3448877,São João de Meriti,Brazil,BR,-22.80389,-43.37222,America/Sao_Paulo,466536,PPL
+3388368,São Luís,Brazil,BR,-2.52972,-44.30278,America/Fortaleza,917237,PPLA
+3448439,São Paulo,Brazil,BR,-23.5475,-46.63611,America/Sao_Paulo,12400232,PPLA
+3448136,São Vicente,Brazil,BR,-23.96306,-46.39194,America/Sao_Paulo,329911,PPL
+3386496,Teresina,Brazil,BR,-5.08917,-42.80194,America/Fortaleza,871126,PPLA
+3445839,Uberaba,Brazil,BR,-19.74833,-47.93194,America/Sao_Paulo,337836,PPL
+3445831,Uberlândia,Brazil,BR,-18.91861,-48.27722,America/Sao_Paulo,563536,PPL
+3445026,Vila Velha,Brazil,BR,-20.32972,-40.2925,America/Sao_Paulo,394930,PPL
+5881791,Abbotsford,Canada,CA,49.05798,-122.25257,America/Vancouver,141397,PPL
+5882725,Ahuntsic-Cartierville,Canada,CA,45.56667,-73.66667,America/Toronto,135336,PPLX
+5882873,Ajax,Canada,CA,43.85012,-79.03288,America/Toronto,119677,PPL
+5894171,Barrie,Canada,CA,44.40011,-79.66634,America/Toronto,147829,PPL
+5907364,Brampton,Canada,CA,43.68341,-79.76633,America/Toronto,656480,PPL
+5907990,Brantford,Canada,CA,43.1334,-80.26636,America/Toronto,104688,PPL
+5911592,Burlington,Canada,CA,43.38621,-79.83713,America/Toronto,186948,PPL
+5911606,Burnaby,Canada,CA,49.26636,-122.95263,America/Vancouver,249125,PPLA3
+5913490,Calgary,Canada,CA,51.05011,-114.08529,America/Edmonton,1306784,PPL
+5913695,Cambridge,Canada,CA,43.3601,-80.31269,America/Toronto,129920,PPL
+5921356,Chilliwack,Canada,CA,49.16638,-121.95257,America/Vancouver,101491,PPLA2
+5927690,Coquitlam,Canada,CA,49.2846,-122.78217,America/Vancouver,148625,PPLA3
+5935277,Dartmouth,Canada,CA,44.67134,-63.57719,America/Halifax,101343,PPL
+5937615,Delta,Canada,CA,49.08917,-123.05322,America/Vancouver,101668,PPL
+5946768,Edmonton,Canada,CA,53.55014,-113.46871,America/Edmonton,1010899,PPLA
+5950268,Etobicoke,Canada,CA,43.64415,-79.56985,America/Toronto,365000,PPL
+5959974,Gatineau,Canada,CA,45.47723,-75.70164,America/Toronto,300045,PPL
+5962204,Gloucester,Canada,CA,45.35,-75.63333,America/Toronto,150012,PPL
+5964700,Greater Sudbury,Canada,CA,46.49,-80.99001,America/Toronto,166004,PPL
+5967629,Guelph,Canada,CA,43.54594,-80.25599,America/Toronto,143740,PPL
+6324729,Halifax,Canada,CA,44.64269,-63.57688,America/Halifax,471559,PPLA
+5969782,Hamilton,Canada,CA,43.25011,-79.84963,America/Toronto,569353,PPL
+5989045,Kamloops,Canada,CA,50.66648,-120.3192,America/Vancouver,104460,PPL
+5990579,Kelowna,Canada,CA,49.88307,-119.48568,America/Vancouver,144576,PPL
+5992500,Kingston,Canada,CA,44.22976,-76.48098,America/Toronto,132485,PPL
+5992996,Kitchener,Canada,CA,43.42537,-80.5112,America/Toronto,256885,PPLA2
+13589045,La Cité-Limoilou,Canada,CA,46.82894,-71.22641,America/Toronto,108415,PPLX
+6049429,Langley,Canada,CA,49.10107,-122.65883,America/Vancouver,132603,PPL
+6050610,Laval,Canada,CA,45.56995,-73.692,America/Toronto,438366,PPL
+13546316,Le Plateau-Mont-Royal,Canada,CA,45.52833,-73.58081,America/Toronto,105813,PPLA4
+13546325,Le Vieux-Longueuil,Canada,CA,45.53721,-73.50773,America/Toronto,135218,PPLX
+6053154,Lethbridge,Canada,CA,49.69999,-112.81856,America/Edmonton,103197,PPL
+6058560,London,Canada,CA,42.98339,-81.23304,America/Toronto,422324,PPL
+6059891,Longueuil,Canada,CA,45.5152,-73.46818,America/Toronto,229330,PPLA2
+6325521,Lévis,Canada,CA,46.80326,-71.17793,America/Toronto,143414,PPL
+6066513,Markham,Canada,CA,43.86682,-79.2663,America/Toronto,338503,PPL
+13546319,Mercier–Hochelaga-Maisonneuve,Canada,CA,45.57194,-73.54626,America/Toronto,142753,PPLA4
+6074377,Milton,Canada,CA,43.51681,-79.88294,America/Toronto,132979,PPLA2
+6075357,Mississauga,Canada,CA,43.5789,-79.6583,America/Toronto,717961,PPL
+6077243,Montréal,Canada,CA,45.50884,-73.58781,America/Toronto,1762949,PPLA2
+6087029,Nepean,Canada,CA,45.33619,-75.7225,America/Toronto,180000,PPL
+6087790,Newton,Canada,CA,49.13333,-122.85,America/Vancouver,159390,PPLX
+6087892,Niagara Falls,Canada,CA,43.10012,-79.06627,America/Toronto,99818,PPL
+6092122,Oakville,Canada,CA,43.45011,-79.68292,America/Toronto,213759,PPL
+8556295,Orléans,Canada,CA,45.45732,-75.50433,America/Toronto,125937,PPL
+6094578,Oshawa,Canada,CA,43.90012,-78.84957,America/Toronto,175383,PPL
+6094817,Ottawa,Canada,CA,45.41117,-75.69812,America/Toronto,1017449,PPLC
+6094835,Ottawa South,Canada,CA,45.3921,-75.68725,America/Toronto,125090,PPL
+6325494,Québec,Canada,CA,46.81228,-71.21454,America/Toronto,531902,PPLA
+6118158,Red Deer,Canada,CA,52.26682,-113.802,America/Edmonton,100844,PPL
+6119109,Regina,Canada,CA,50.45008,-104.6178,America/Regina,226404,PPLA
+6122085,Richmond,Canada,CA,49.17003,-123.13683,America/Vancouver,209937,PPL
+6122091,Richmond Hill,Canada,CA,43.87111,-79.43725,America/Toronto,202022,PPL
+13546322,Rivière-des-Prairies–Pointe-aux-Trembles,Canada,CA,45.64064,-73.58463,America/Toronto,113868,PPLA4
+13546323,Rosemont–La Petite-Patrie,Canada,CA,45.53661,-73.60686,America/Toronto,146501,PPLA4
+6136944,Saanich,Canada,CA,48.54964,-123.36931,America/Vancouver,117735,PPL
+6137270,Saguenay,Canada,CA,48.41675,-71.06573,America/Toronto,148886,PPL
+6138610,Saint-Laurent,Canada,CA,45.50008,-73.66585,America/Toronto,98828,PPLX
+6138671,Saint-Louis-de-Terrebonne,Canada,CA,45.70198,-73.78669,America/Toronto,119944,PPL
+6325488,Sainte-Foy,Canada,CA,46.78139,-71.29217,America/Toronto,111300,PPLX
+6141256,Saskatoon,Canada,CA,52.13238,-106.66892,America/Regina,266141,PPL
+6146143,Sherbrooke,Canada,CA,45.40008,-71.89908,America/Toronto,129447,PPL
+6155721,St. Catharines,Canada,CA,43.17126,-79.24267,America/Toronto,136803,PPL
+6324733,St. John's,Canada,CA,47.56494,-52.70931,America/St_Johns,110525,PPLA
+6159905,Surrey,Canada,CA,49.10635,-122.82509,America/Vancouver,568322,PPL
+6354908,Sydney,Canada,CA,46.1351,-60.1831,America/Glace_Bay,105968,PPL
+6163012,Terrebonne,Canada,CA,45.70004,-73.64732,America/Toronto,111575,PPL
+6166142,Thunder Bay,Canada,CA,48.38202,-89.25018,America/Toronto,108843,PPL
+6167865,Toronto,Canada,CA,43.70643,-79.39864,America/Toronto,2794356,PPLA
+6169141,Trois-Rivières,Canada,CA,46.34515,-72.5477,America/Toronto,144472,PPL
+6173331,Vancouver,Canada,CA,49.24966,-123.11934,America/Vancouver,662248,PPL
+6173577,Vaughan,Canada,CA,43.8361,-79.49827,America/Toronto,323103,PPL
+6174041,Victoria,Canada,CA,48.4359,-123.35155,America/Vancouver,289625,PPLA
+13546317,Ville-Marie,Canada,CA,45.49899,-73.57046,America/Toronto,104944,PPLA4
+13546324,Villeray–Saint-Michel–Parc-Extension,Canada,CA,45.55869,-73.60535,America/Toronto,144814,PPLA4
+6176823,Waterloo,Canada,CA,43.4668,-80.51639,America/Toronto,104986,PPL
+6179830,Whalley,Canada,CA,49.17917,-122.86667,America/Vancouver,102555,PPLX
+6180170,Whitby,Canada,CA,43.88342,-78.93287,America/Toronto,138501,PPL
+6182962,Windsor,Canada,CA,42.30008,-83.01654,America/Toronto,229660,PPL
+6183235,Winnipeg,Canada,CA,49.8844,-97.14704,America/Winnipeg,749607,PPLA
+3899887,Alto Hospicio,Chile,CL,-20.26871,-70.1049,America/Santiago,142086,PPLA2
+3899695,Ancud,Chile,CL,-41.8707,-73.81622,America/Santiago,40819,PPL
+3899629,Angol,Chile,CL,-37.79519,-72.71636,America/Santiago,44856,PPLA2
+3899539,Antofagasta,Chile,CL,-23.65094,-70.39752,America/Santiago,401096,PPLA
+3899361,Arica,Chile,CL,-18.47552,-70.30058,America/Santiago,241653,PPLA
+3897774,Buin,Chile,CL,-33.73257,-70.74281,America/Santiago,63419,PPL
+3897347,Calama,Chile,CL,-22.45667,-68.92371,America/Santiago,166334,PPLA2
+3896218,Castro,Chile,CL,-42.4721,-73.77319,America/Santiago,41667,PPL
+3896105,Cauquenes,Chile,CL,-35.9671,-72.32248,America/Santiago,38522,PPL
+3895138,Chiguayante,Chile,CL,-36.9256,-73.02841,America/Santiago,84718,PPL
+3895088,Chillán,Chile,CL,-36.60664,-72.10344,America/Santiago,150396,PPLA
+3894242,Colina,Chile,CL,-33.20443,-70.67474,America/Santiago,146207,PPLA2
+3893894,Concepción,Chile,CL,-36.82699,-73.04977,America/Santiago,223574,PPLA
+3893865,Concón,Chile,CL,-32.92203,-71.51619,America/Santiago,42152,PPL
+3893726,Constitución,Chile,CL,-35.33321,-72.41156,America/Santiago,41207,PPL
+3893656,Copiapó,Chile,CL,-27.36737,-70.33219,America/Santiago,129280,PPLA
+3893629,Coquimbo,Chile,CL,-29.95332,-71.33947,America/Santiago,161317,PPLA2
+3893532,Coronel,Chile,CL,-37.03386,-73.14019,America/Santiago,107759,PPL
+3894426,Coyhaique,Chile,CL,-45.57524,-72.06619,America/Coyhaique,45787,PPLA
+3892870,Curicó,Chile,CL,-34.98279,-71.23943,America/Santiago,102438,PPLA2
+3888214,Hacienda La Calera,Chile,CL,-32.78333,-71.21667,America/Santiago,49106,PPLX
+3887781,Hualpén,Chile,CL,-36.78908,-73.10165,America/Santiago,86639,PPL
+3887127,Iquique,Chile,CL,-20.21326,-70.15027,America/Santiago,199587,PPLA
+3886405,La Calera,Chile,CL,-32.78676,-71.19795,America/Santiago,50221,PPL
+7281017,La Pintana,Chile,CL,-33.58331,-70.63419,America/Santiago,201178,PPL
+3884373,La Serena,Chile,CL,-29.90591,-71.25014,America/Santiago,154521,PPLA
+3886460,Labranza,Chile,CL,-38.76523,-72.75296,America/Santiago,35893,PPL
+3885273,Lampa,Chile,CL,-33.2863,-70.87561,America/Santiago,102234,PPL
+3883615,Lautaro,Chile,CL,-38.53066,-72.43652,America/Santiago,34268,PPL
+3883214,Limache,Chile,CL,-33.01327,-71.26084,America/Santiago,46121,PPL
+3883167,Linares,Chile,CL,-35.84667,-71.59308,America/Santiago,69535,PPLA2
+7281020,Lo Prado,Chile,CL,-33.4443,-70.72552,America/Santiago,104316,PPL
+3882434,Los Andes,Chile,CL,-32.83369,-70.59827,America/Santiago,63009,PPL
+3882428,Los Ángeles,Chile,CL,-37.46973,-72.35366,America/Santiago,125430,PPLA2
+3881276,Lota,Chile,CL,-37.08994,-73.1577,America/Santiago,47339,PPL
+3881102,Machalí,Chile,CL,-34.18082,-70.64933,America/Santiago,42572,PPL
+3880980,Maipú,Chile,CL,-33.51421,-70.7651,America/Santiago,503635,PPL
+3880107,Melipilla,Chile,CL,-33.68909,-71.21528,America/Santiago,63100,PPLA2
+3879627,Molina,Chile,CL,-35.11428,-71.28232,America/Santiago,40329,PPL
+3877949,Osorno,Chile,CL,-40.57395,-73.13348,America/Santiago,135773,PPLA2
+3877918,Ovalle,Chile,CL,-30.60106,-71.19901,America/Santiago,77138,PPLA2
+3877794,Padre Hurtado,Chile,CL,-33.56839,-70.80584,America/Santiago,63250,PPL
+3877793,Padre Las Casas,Chile,CL,-38.76081,-72.5982,America/Santiago,72892,PPL
+3877739,Paine,Chile,CL,-33.80796,-70.74109,America/Santiago,72759,PPL
+3876664,Penco,Chile,CL,-36.74075,-72.99528,America/Santiago,46091,PPL
+3876685,Peñaflor,Chile,CL,-33.60627,-70.87649,America/Santiago,85671,PPL
+3876682,Peñalolén,Chile,CL,-33.46836,-70.53411,America/Santiago,241599,PPL
+3875684,Placilla,Chile,CL,-33.1144,-71.56806,America/Santiago,39344,PPLX
+3875024,Puente Alto,Chile,CL,-33.61169,-70.57577,America/Santiago,568106,PPLA2
+3874960,Puerto Montt,Chile,CL,-41.4693,-72.94237,America/Santiago,245902,PPLA
+3874930,Puerto Varas,Chile,CL,-41.31946,-72.98538,America/Santiago,37561,PPL
+3874787,Punta Arenas,Chile,CL,-53.16282,-70.90922,America/Punta_Arenas,117430,PPLA
+3874212,Quilicura,Chile,CL,-33.36799,-70.71388,America/Santiago,210410,PPL
+3874119,Quillota,Chile,CL,-32.88341,-71.24882,America/Santiago,67779,PPLA2
+3874096,Quilpué,Chile,CL,-33.04752,-71.44249,America/Santiago,130263,PPLA2
+3873775,Rancagua,Chile,CL,-34.1691,-70.74053,America/Santiago,212695,PPLA
+3873454,Renca,Chile,CL,-33.4019,-70.70619,America/Santiago,147151,PPL
+3873441,Rengo,Chile,CL,-34.40639,-70.85834,America/Santiago,38100,PPL
+3872395,San Antonio,Chile,CL,-33.59473,-71.60746,America/Santiago,87675,PPL
+3872348,San Bernardo,Chile,CL,-33.59217,-70.6996,America/Santiago,249858,PPLA2
+3872306,San Clemente,Chile,CL,-35.53777,-71.487,America/Santiago,39538,PPL
+3872255,San Felipe,Chile,CL,-32.74976,-70.72584,America/Santiago,59294,PPLA2
+3872154,San Javier,Chile,CL,-35.5952,-71.72924,America/Santiago,40189,PPL
+6693576,San Pedro de la Paz,Chile,CL,-36.83897,-73.10028,America/Santiago,121631,PPL
+3871276,San Vicente de Tagua Tagua,Chile,CL,-34.43859,-71.07751,America/Santiago,44046,PPL
+3871616,Santa Cruz,Chile,CL,-34.63881,-71.36576,America/Santiago,34914,PPL
+3871336,Santiago,Chile,CL,-33.45694,-70.64827,America/Santiago,4837295,PPLC
+3870306,Talagante,Chile,CL,-33.66386,-70.92734,America/Santiago,57323,PPLA2
+3870294,Talca,Chile,CL,-35.4232,-71.64974,America/Santiago,197479,PPLA
+3870282,Talcahuano,Chile,CL,-36.72494,-73.11684,America/Santiago,150499,PPL
+3870011,Temuco,Chile,CL,-38.73628,-72.59738,America/Santiago,238129,PPLA
+3869657,Tomé,Chile,CL,-36.61756,-72.95593,America/Santiago,53219,PPL
+3868707,Valdivia,Chile,CL,-39.81422,-73.24589,America/Santiago,133419,PPLA
+3868633,Vallenar,Chile,CL,-28.57617,-70.75938,America/Santiago,44895,PPLA2
+3868626,Valparaíso,Chile,CL,-33.036,-71.62963,America/Santiago,282448,PPLA
+3868192,Villa Alemana,Chile,CL,-33.04823,-71.3729,America/Santiago,97320,PPL
+11947989,Villa Mercedes,Chile,CL,-37.40421,-71.97949,America/Santiago,131936,PPL
+3868158,Villarrica,Chile,CL,-39.28569,-72.2279,America/Santiago,49184,PPL
+3868121,Viña del Mar,Chile,CL,-33.02457,-71.55183,America/Santiago,334248,PPL
+3878431,Ñuñoa,Chile,CL,-33.44735,-70.58279,America/Santiago,255823,PPLX
+1816670,Beijing,China,CN,39.9075,116.39723,Asia/Shanghai,18960744,PPLC
+1815286,Chengdu,China,CN,30.66667,104.06667,Asia/Shanghai,13568357,PPLA
+1814906,Chongqing,China,CN,29.56026,106.55771,Asia/Shanghai,7457599,PPLA
+1812545,Dongguan,China,CN,23.01797,113.74866,Asia/Shanghai,9644871,PPLA2
+1811103,Foshan,China,CN,23.02677,113.13148,Asia/Shanghai,9042509,PPLA2
+1809858,Guangzhou,China,CN,23.11667,113.25,Asia/Shanghai,16096724,PPLA
+1808926,Hangzhou,China,CN,30.29365,120.16142,Asia/Shanghai,9236032,PPLA
+1799962,Nanjing,China,CN,32.06167,118.77778,Asia/Shanghai,9314685,PPLA
+1797929,Qingdao,China,CN,36.06488,120.38042,Asia/Shanghai,7172451,PPLA2
+1796236,Shanghai,China,CN,31.22222,121.45806,Asia/Shanghai,24874500,PPLA
+1795565,Shenzhen,China,CN,22.54554,114.0683,Asia/Shanghai,17494398,PPLA2
+1792947,Tianjin,China,CN,39.14222,117.17667,Asia/Shanghai,11090314,PPLA
+1791247,Wuhan,China,CN,30.58333,114.26667,Asia/Shanghai,10392693,PPLA
+1790842,Wuzhong,China,CN,37.9867,106.201,Asia/Shanghai,7202654,PPLA2
+1790630,Xi’an,China,CN,34.25833,108.92861,Asia/Shanghai,9600000,PPLA
+3690465,Aguachica,Colombia,CO,8.30844,-73.6166,America/Bogota,97525,PPLA2
+3689798,Apartadó,Colombia,CO,7.88299,-76.62587,America/Bogota,86438,PPLA2
+3689718,Arauca,Colombia,CO,7.08471,-70.75908,America/Bogota,85585,PPLA
+3689560,Armenia,Colombia,CO,4.53656,-75.67263,America/Bogota,304314,PPLA
+3689235,Baranoa,Colombia,CO,10.79408,-74.9164,America/Bogota,68383,PPLA2
+3689169,Barrancabermeja,Colombia,CO,7.06528,-73.85472,America/Bogota,191403,PPLA2
+3689147,Barranquilla,Colombia,CO,10.96854,-74.78132,America/Bogota,1206319,PPLA
+3688928,Bello,Colombia,CO,6.33732,-75.55795,America/Bogota,392939,PPLA3
+3688689,Bogotá,Colombia,CO,4.60971,-74.08175,America/Bogota,7674366,PPLC
+3688465,Bucaramanga,Colombia,CO,7.125,-73.11895,America/Bogota,581130,PPLA
+3688451,Buenaventura,Colombia,CO,3.8801,-77.03116,America/Bogota,240387,PPLA2
+3688452,Buenaventura,Colombia,CO,3.58333,-77,America/Bogota,432385,PPL
+3687964,Calarcá,Colombia,CO,4.52949,-75.64091,America/Bogota,79569,PPLA2
+3687952,Caldas,Colombia,CO,6.09106,-75.63569,America/Bogota,82234,PPLA2
+3687925,Cali,Colombia,CO,3.43054,-76.5199,America/Bogota,2392877,PPLA
+3687238,Cartagena,Colombia,CO,10.39817,-75.49328,America/Bogota,914552,PPLA
+3687230,Cartago,Colombia,CO,4.74639,-75.91167,America/Bogota,134972,PPLA2
+3686922,Cereté,Colombia,CO,8.88479,-75.79052,America/Bogota,94935,PPLA2
+3686636,Chigorodó,Colombia,CO,7.66638,-76.68106,America/Bogota,86239,PPLA2
+3686561,Chinchiná,Colombia,CO,4.9825,-75.60361,America/Bogota,68512,PPLA2
+3686675,Chía,Colombia,CO,4.85876,-74.05866,America/Bogota,124309,PPLA2
+3686279,Ciénaga,Colombia,CO,11.00703,-74.24765,America/Bogota,88311,PPLA2
+3685533,Cúcuta,Colombia,CO,7.90745,-72.5049,America/Bogota,777106,PPLA
+3685095,Dosquebradas,Colombia,CO,4.83916,-75.66727,America/Bogota,206693,PPLA2
+3685084,Duitama,Colombia,CO,5.8245,-73.03408,America/Bogota,92040,PPLA2
+3682631,Envigado,Colombia,CO,6.17591,-75.59174,America/Bogota,163007,PPLA2
+3682516,Facatativá,Colombia,CO,4.81367,-74.35453,America/Bogota,141762,PPLA2
+3682426,Florencia,Colombia,CO,1.61549,-75.60412,America/Bogota,168346,PPLA
+3682385,Floridablanca,Colombia,CO,7.06222,-73.08644,America/Bogota,267591,PPLA2
+3682281,Funza,Colombia,CO,4.71638,-74.21195,America/Bogota,116890,PPLA2
+3682274,Fusagasugá,Colombia,CO,4.33646,-74.36378,America/Bogota,88820,PPLA2
+3682028,Girardot City,Colombia,CO,4.30079,-74.80754,America/Bogota,107324,PPL
+3682018,Girón,Colombia,CO,7.0682,-73.16981,America/Bogota,108466,PPLA2
+3681957,Granada,Colombia,CO,3.54625,-73.70687,America/Bogota,68876,PPLA2
+3688256,Guadalajara de Buga,Colombia,CO,3.90089,-76.29783,America/Bogota,114316,PPLA2
+3680656,Ibagué,Colombia,CO,4.43573,-75.20289,America/Bogota,529635,PPLA
+3680539,Ipiales,Colombia,CO,0.82501,-77.63966,America/Bogota,77729,PPLA2
+3680450,Itagüí,Colombia,CO,6.18461,-75.59913,America/Bogota,281853,PPLA2
+7033318,Kennedy,Colombia,CO,4.6165,-74.14597,America/Bogota,979914,PPLX
+3679277,La Dorada,Colombia,CO,5.44783,-74.66311,America/Bogota,81950,PPLA2
+3675707,Madrid,Colombia,CO,4.73245,-74.26419,America/Bogota,135000,PPLA2
+3675692,Magangué,Colombia,CO,9.24202,-74.75467,America/Bogota,123982,PPLA2
+3675657,Maicao,Colombia,CO,11.37837,-72.2395,America/Bogota,166603,PPLA2
+3675595,Malambo,Colombia,CO,10.85953,-74.77386,America/Bogota,129148,PPLA2
+3675443,Manizales,Colombia,CO,5.0668,-75.50684,America/Bogota,434403,PPLA
+3674962,Medellín,Colombia,CO,6.245,-75.57151,America/Bogota,1999979,PPLA
+3674470,Montelíbano,Colombia,CO,7.97917,-75.4202,America/Bogota,90450,PPL
+3674453,Montería,Colombia,CO,8.75081,-75.87823,America/Bogota,490935,PPLA
+3674292,Mosquera,Colombia,CO,4.70592,-74.23021,America/Bogota,128012,PPLA2
+3673899,Neiva,Colombia,CO,2.93001,-75.27973,America/Bogota,357392,PPLA
+3673662,Ocaña,Colombia,CO,8.23773,-73.35604,America/Bogota,101158,PPLA2
+3673164,Palmira,Colombia,CO,3.53944,-76.30361,America/Bogota,312519,PPLA2
+3672778,Pasto,Colombia,CO,1.21456,-77.27846,America/Bogota,392930,PPLA
+3672486,Pereira,Colombia,CO,4.81428,-75.69488,America/Bogota,467269,PPLA
+3672328,Piedecuesta,Colombia,CO,6.98789,-73.04953,America/Bogota,163362,PPLA2
+3672110,Pitalito,Colombia,CO,1.85371,-76.05071,America/Bogota,135711,PPL
+3672068,Planeta Rica,Colombia,CO,8.4115,-75.58508,America/Bogota,69708,PPL
+3671916,Popayán,Colombia,CO,2.43823,-76.61316,America/Bogota,318059,PPLA
+3671116,Quibdó,Colombia,CO,5.69188,-76.65835,America/Bogota,129237,PPLA
+3670745,Riohacha,Colombia,CO,11.54444,-72.90722,America/Bogota,188014,PPLA
+3670730,Rionegro,Colombia,CO,6.15515,-75.37371,America/Bogota,128153,PPLA2
+3670502,Sabanalarga,Colombia,CO,10.63072,-74.92214,America/Bogota,102334,PPLA2
+3670475,Sabaneta,Colombia,CO,6.15153,-75.61657,America/Bogota,82375,PPLX
+3670419,Sahagún,Colombia,CO,8.94617,-75.44275,America/Bogota,59188,PPLA2
+3669346,San Marcos,Colombia,CO,8.65972,-75.12809,America/Bogota,60735,PPLA2
+3668605,Santa Marta,Colombia,CO,11.23855,-74.19427,America/Bogota,499192,PPLA
+3668572,Santander de Quilichao,Colombia,CO,3.00945,-76.48494,America/Bogota,99354,PPLA2
+3667983,Sincelejo,Colombia,CO,9.3045,-75.3905,America/Bogota,277773,PPLA
+3667905,Soacha,Colombia,CO,4.57937,-74.21682,America/Bogota,655025,PPLA2
+3667873,Sogamoso,Colombia,CO,5.71434,-72.93391,America/Bogota,111336,PPLA2
+3667849,Soledad,Colombia,CO,10.91843,-74.76459,America/Bogota,342556,PPLA2
+3666645,Tuluá,Colombia,CO,4.08466,-76.19536,America/Bogota,221684,PPLA2
+3666640,Tumaco,Colombia,CO,1.79112,-78.79275,America/Bogota,86713,PPLA2
+3666608,Tunja,Colombia,CO,5.54481,-73.35756,America/Bogota,172548,PPLA
+3666304,Valledupar,Colombia,CO,10.46538,-73.2531,America/Bogota,490075,PPLA
+3665913,Villa del Rosario,Colombia,CO,7.83389,-72.47417,America/Bogota,64951,PPLA2
+3665900,Villavicencio,Colombia,CO,4.13238,-73.62564,America/Bogota,321717,PPLA
+3665688,Yopal,Colombia,CO,5.33573,-72.3939,America/Bogota,168433,PPLA
+3665657,Yumbo,Colombia,CO,3.58234,-76.49146,America/Bogota,71436,PPLA2
+3665542,Zipaquirá,Colombia,CO,5.02208,-74.00481,America/Bogota,130432,PPLA2
+3624955,Alajuela,Costa Rica,CR,10.01723,-84.21275,America/Costa_Rica,47494,PPLA
+3624848,Aserrí,Costa Rica,CR,9.86142,-84.09266,America/Costa_Rica,25874,PPL
+3624509,Calle Blancos,Costa Rica,CR,9.9453,-84.0669,America/Costa_Rica,20710,PPLX
+3624370,Cartago,Costa Rica,CR,9.86371,-83.9195,America/Costa_Rica,26594,PPLA
+3624468,Cañas,Costa Rica,CR,10.43105,-85.09825,America/Costa_Rica,20306,PPL
+3624288,Chacarita,Costa Rica,CR,9.98424,-84.77892,America/Costa_Rica,26354,PPL
+3624174,Colima,Costa Rica,CR,9.95532,-84.08235,America/Costa_Rica,15875,PPLX
+3623977,Curridabat,Costa Rica,CR,9.9139,-84.03595,America/Costa_Rica,34586,PPL
+3623781,Esparza,Costa Rica,CR,9.99197,-84.66628,America/Costa_Rica,15575,PPL
+3623593,Guadalupe,Costa Rica,CR,9.94805,-84.05665,America/Costa_Rica,26005,PPL
+3623580,Guápiles,Costa Rica,CR,10.21682,-83.78483,America/Costa_Rica,19092,PPLA3
+3623486,Heredia,Costa Rica,CR,9.99872,-84.11587,America/Costa_Rica,21947,PPLA
+3623394,Ipís,Costa Rica,CR,9.96548,-84.0182,America/Costa_Rica,26669,PPLX
+3623076,Liberia,Costa Rica,CR,10.63517,-85.43779,America/Costa_Rica,45380,PPLA
+3622247,Limón,Costa Rica,CR,9.99074,-83.03596,America/Costa_Rica,63081,PPLA
+3622881,Mercedes Norte,Costa Rica,CR,10.00611,-84.13018,America/Costa_Rica,26007,PPLX
+3622716,Nicoya,Costa Rica,CR,10.15038,-85.45093,America/Costa_Rica,15313,PPL
+3622547,Paraíso,Costa Rica,CR,9.83847,-83.86655,America/Costa_Rica,39702,PPL
+3622507,Patarrá,Costa Rica,CR,9.88059,-84.03551,America/Costa_Rica,23983,PPL
+3622228,Puntarenas,Costa Rica,CR,9.97691,-84.8379,America/Costa_Rica,35650,PPLA
+3622217,Purral,Costa Rica,CR,9.95689,-84.03209,America/Costa_Rica,30034,PPL
+3622190,Quesada,Costa Rica,CR,10.3266,-84.432,America/Costa_Rica,27310,PPL
+3621926,San Diego,Costa Rica,CR,9.90028,-84.0017,America/Costa_Rica,16991,PPL
+3621922,San Felipe,Costa Rica,CR,9.90444,-84.1062,America/Costa_Rica,24985,PPL
+3621911,San Francisco,Costa Rica,CR,9.9938,-84.12742,America/Costa_Rica,55923,PPLX
+3621889,San Isidro,Costa Rica,CR,9.3674,-83.69713,America/Costa_Rica,34877,PPLA3
+3621841,San José,Costa Rica,CR,10.95192,-85.13572,America/Costa_Rica,31430,PPL
+3621849,San José,Costa Rica,CR,9.93388,-84.08489,America/Costa_Rica,335007,PPLC
+3621819,San Juan,Costa Rica,CR,9.96188,-84.07876,America/Costa_Rica,26047,PPL
+3621804,San Juan de Dios,Costa Rica,CR,9.87812,-84.08438,America/Costa_Rica,15469,PPL
+3621753,San Miguel,Costa Rica,CR,9.87121,-84.06084,America/Costa_Rica,28827,PPL
+3621729,San Pablo,Costa Rica,CR,9.99559,-84.09656,America/Costa_Rica,21662,PPL
+3621717,San Pedro,Costa Rica,CR,9.92829,-84.05074,America/Costa_Rica,27477,PPLA2
+3621689,San Rafael,Costa Rica,CR,9.92826,-84.13537,America/Costa_Rica,25410,PPL
+3621659,San Rafael Abajo,Costa Rica,CR,9.831,-84.29008,America/Costa_Rica,27419,PPL
+3621655,San Rafael Arriba,Costa Rica,CR,9.87648,-84.07479,America/Costa_Rica,15051,PPL
+3621505,San Vicente,Costa Rica,CR,9.96194,-84.0494,America/Costa_Rica,34447,PPL
+6612154,San Vicente de Moravia,Costa Rica,CR,9.96164,-84.0488,America/Costa_Rica,34447,PPL
+3621440,Siquirres,Costa Rica,CR,10.09748,-83.50659,America/Costa_Rica,18231,PPLA4
+3621335,Tejar,Costa Rica,CR,9.74301,-84.23219,America/Costa_Rica,22433,PPL
+3621184,Turrialba,Costa Rica,CR,9.90371,-83.68361,America/Costa_Rica,28955,PPL
+3569370,Alamar,Cuba,CU,23.15794,-82.27837,America/Havana,100000,PPLX
+3569175,Almendares,Cuba,CU,23.11012,-82.42322,America/Havana,240000,PPLX
+3569024,Amancio,Cuba,CU,20.82876,-77.5786,America/Havana,41523,PPLA2
+3568342,Arroyo Naranjo,Cuba,CU,23.03811,-82.37703,America/Havana,210053,PPL
+3568312,Artemisa,Cuba,CU,22.81366,-82.75814,America/Havana,68073,PPLA
+3567924,Balcón de la Lisa,Cuba,CU,23.05346,-82.4476,America/Havana,147415,PPLX
+3567869,Banes,Cuba,CU,20.96134,-75.72306,America/Havana,53104,PPLA2
+3567834,Baracoa,Cuba,CU,20.34801,-74.49714,America/Havana,48362,PPLA2
+3567669,Bartolomé Masó,Cuba,CU,20.16657,-76.94395,America/Havana,53024,PPLA2
+3567612,Bauta,Cuba,CU,22.9821,-82.54764,America/Havana,45768,PPLA2
+3567597,Bayamo,Cuba,CU,20.37368,-76.64272,America/Havana,192632,PPLA
+6956647,Boyeros,Cuba,CU,23.0072,-82.4017,America/Havana,188593,PPLX
+3566603,Cabaiguán,Cuba,CU,22.0784,-79.49626,America/Havana,44515,PPLA2
+3566429,Cacocum,Cuba,CU,20.73682,-76.32622,America/Havana,42623,PPLA2
+3566356,Caibarién,Cuba,CU,22.51992,-79.46601,America/Havana,39140,PPLA2
+3566067,Camagüey,Cuba,CU,21.38083,-77.91694,America/Havana,347562,PPLA
+3566054,Camajuaní,Cuba,CU,22.48333,-79.75,America/Havana,35515,PPLL
+3746183,Centro Habana,Cuba,CU,23.13488,-82.36893,America/Havana,158151,PPLX
+3564436,Cerro,Cuba,CU,23.10789,-82.38356,America/Havana,132351,PPLX
+3564178,Ciego de Ávila,Cuba,CU,21.8422,-78.76034,America/Havana,142027,PPLA
+3564124,Cienfuegos,Cuba,CU,22.14681,-80.4481,America/Havana,186644,PPLA
+3564114,Cifuentes,Cuba,CU,22.6493,-80.04935,America/Havana,40142,PPL
+3746181,Ciudad Camilo Cienfuegos,Cuba,CU,23.16076,-82.32798,America/Havana,178041,PPLX
+3563843,Colón,Cuba,CU,22.72108,-80.90368,America/Havana,63882,PPLA2
+3563609,Condado,Cuba,CU,21.87596,-79.84008,America/Havana,38248,PPL
+3563559,Consolación del Sur,Cuba,CU,22.50545,-83.51309,America/Havana,69857,PPLA2
+3563504,Contramaestre,Cuba,CU,20.29884,-76.24499,America/Havana,70438,PPLA2
+3563317,Corralillo,Cuba,CU,22.98213,-80.58532,America/Havana,51881,PPLA2
+3562827,Cumanayagua,Cuba,CU,22.15247,-80.20354,America/Havana,38687,PPLA2
+3565432,Cárdenas,Cuba,CU,23.03632,-81.20602,America/Havana,98515,PPLA2
+6956648,Diez de Octubre,Cuba,CU,23.0881,-82.3597,America/Havana,227293,PPLX
+3558771,Florida,Cuba,CU,21.5264,-78.22553,America/Havana,63007,PPLA2
+3558729,Fontanar,Cuba,CU,23.02389,-82.408,America/Havana,178601,PPL
+3557846,Guanabacoa,Cuba,CU,23.12518,-82.30067,America/Havana,112964,PPL
+3557689,Guantánamo,Cuba,CU,20.14444,-75.20917,America/Havana,272801,PPLA
+3557923,Guáimaro,Cuba,CU,21.05383,-77.3494,America/Havana,39358,PPLA2
+3557378,Güines,Cuba,CU,22.83837,-82.02673,America/Havana,68935,PPLA2
+3557347,Güira de Melena,Cuba,CU,22.79688,-82.50651,America/Havana,69879,PPLA2
+3553478,Havana,Cuba,CU,23.13302,-82.38304,America/Havana,2163824,PPLC
+3556969,Holguín,Cuba,CU,20.88722,-76.26306,America/Havana,319102,PPLA
+3556437,Jagüey Grande,Cuba,CU,22.52629,-81.12855,America/Havana,54363,PPLA2
+3556268,Jesús Menéndez,Cuba,CU,21.16153,-76.4777,America/Havana,51002,PPLA2
+3556168,Jiguaní,Cuba,CU,20.36839,-76.42905,America/Havana,41106,PPLA2
+3556078,Jobabo,Cuba,CU,20.90981,-77.28454,America/Havana,49403,PPLA2
+3555907,Jovellanos,Cuba,CU,22.80454,-81.19177,America/Havana,47164,PPLA2
+3746184,La Habana Vieja,Cuba,CU,23.13028,-82.35306,America/Havana,95383,PPLX
+3550598,Las Tunas,Cuba,CU,20.96135,-76.95192,America/Havana,203684,PPLA
+3547976,Manicaragua,Cuba,CU,22.15021,-79.97867,America/Havana,41532,PPLA2
+3547932,Mantilla,Cuba,CU,23.06794,-82.34143,America/Havana,206918,PPLX
+3547867,Manzanillo,Cuba,CU,20.3424,-77.11928,America/Havana,128188,PPLA2
+3547640,Marianao,Cuba,CU,23.07387,-82.42969,America/Havana,134057,PPLX
+3547398,Matanzas,Cuba,CU,23.04388,-81.58284,America/Havana,146733,PPLA
+3546882,Minas de Matahambre,Cuba,CU,22.58692,-83.94567,America/Havana,34419,PPLA2
+3546791,Moa,Cuba,CU,20.65776,-74.95075,America/Havana,92852,PPLA2
+3546434,Morón,Cuba,CU,22.10881,-78.62685,America/Havana,66060,PPLA2
+3545841,Nuevitas,Cuba,CU,21.54446,-77.26489,America/Havana,54022,PPLA2
+3545064,Palma Soriano,Cuba,CU,20.21149,-75.99438,America/Havana,102826,PPLA2
+3544091,Pinar del Río,Cuba,CU,22.41649,-83.69657,America/Havana,186990,PPLA
+3543961,Placetas,Cuba,CU,22.31377,-79.65384,America/Havana,55408,PPLA2
+8393989,Plaza de la Revolución,Cuba,CU,23.11936,-82.39197,America/Havana,139135,PPLX
+3543299,Puerto Padre,Cuba,CU,21.19594,-76.60351,America/Havana,76838,PPLA2
+3542744,Ranchuelo,Cuba,CU,22.37266,-80.15046,America/Havana,43695,PPL
+3542502,Regla,Cuba,CU,23.12576,-82.33058,America/Havana,44431,PPL
+3541440,Sagua la Grande,Cuba,CU,22.80599,-80.0742,America/Havana,62073,PPLA2
+3540885,San Antonio de los Baños,Cuba,CU,22.889,-82.5059,America/Havana,42724,PPLA2
+3540680,San Cristobal,Cuba,CU,22.71658,-83.05647,America/Havana,59579,PPL
+3534749,San Germán,Cuba,CU,20.59971,-76.1347,America/Havana,43892,PPLA2
+3539560,San José de las Lajas,Cuba,CU,22.96121,-82.15151,America/Havana,54847,PPLA
+3539093,San Luis,Cuba,CU,20.18813,-75.8503,America/Havana,67293,PPLA2
+3538803,San Miguel del Padrón,Cuba,CU,23.09544,-82.32669,America/Havana,159273,PPL
+3540667,Sancti Spíritus,Cuba,CU,21.93429,-79.4398,America/Havana,127069,PPLA
+3537906,Santa Clara,Cuba,CU,22.40711,-79.96581,America/Havana,250512,PPLA
+3537840,Santa Cruz del Sur,Cuba,CU,20.71549,-77.99551,America/Havana,34601,PPLA2
+3536729,Santiago de Cuba,Cuba,CU,20.02287,-75.82171,America/Havana,555865,PPLA
+3536724,Santiago de las Vegas,Cuba,CU,22.97,-82.38694,America/Havana,35241,PPL
+3536640,Santo Domingo,Cuba,CU,22.5867,-80.24259,America/Havana,45476,PPLA2
+3534915,Trinidad,Cuba,CU,21.79956,-79.98349,America/Havana,60206,PPLA2
+3534599,Vedado,Cuba,CU,23.13767,-82.39339,America/Havana,108369,PPLX
+3534597,Vedado del Cotorro,Cuba,CU,23.05,-82.25,America/Havana,74650,PPLX
+3533826,Yaguajay,Cuba,CU,22.32693,-79.23687,America/Havana,42218,PPLA2
+3512208,Azua,Dominican Republic,DO,18.45319,-70.7349,America/Santo_Domingo,59139,PPLA
+3512128,Bajos de Haina,Dominican Republic,DO,18.41538,-70.03317,America/Santo_Domingo,66784,PPL
+3512067,Baní,Dominican Republic,DO,18.27971,-70.33181,America/Santo_Domingo,66709,PPLA
+3511626,Bayaguana,Dominican Republic,DO,18.75031,-69.63525,America/Santo_Domingo,21055,PPL
+3511550,Bella Vista,Dominican Republic,DO,18.45539,-69.9454,America/Santo_Domingo,175683,PPLX
+3511336,Boca Chica,Dominican Republic,DO,18.45,-69.6,America/Santo_Domingo,46300,PPLA3
+3511233,Bonao,Dominican Republic,DO,18.94154,-70.41111,America/Santo_Domingo,73269,PPLA
+3509578,Ciudad Nueva,Dominican Republic,DO,18.46707,-69.89339,America/Santo_Domingo,18756,PPLX
+3509363,Constanza,Dominican Republic,DO,18.90919,-70.74499,America/Santo_Domingo,29481,PPL
+3509207,Cotuí,Dominican Republic,DO,19.05385,-70.15116,America/Santo_Domingo,41641,PPLA
+3509183,Cristo Rey,Dominican Republic,DO,18.5,-69.93333,America/Santo_Domingo,57084,PPLX
+3508952,Dajabón,Dominican Republic,DO,19.54811,-71.70821,America/Santo_Domingo,16398,PPLA
+3505855,Esperanza,Dominican Republic,DO,19.58469,-70.98489,America/Santo_Domingo,42169,PPL
+3504765,Hato Mayor del Rey,Dominican Republic,DO,18.76575,-69.25579,America/Santo_Domingo,35999,PPLA
+3504158,Jarabacoa,Dominican Republic,DO,19.11683,-70.63595,America/Santo_Domingo,29983,PPL
+3500957,La Romana,Dominican Republic,DO,18.42332,-68.96635,America/Santo_Domingo,208437,PPLA
+3509382,La Vega,Dominican Republic,DO,19.22031,-70.53101,America/Santo_Domingo,102426,PPLA
+3500370,Las Matas de Farfán,Dominican Republic,DO,18.87309,-71.51656,America/Santo_Domingo,21802,PPL
+3496831,Mao,Dominican Republic,DO,19.54908,-71.07808,America/Santo_Domingo,48297,PPLA
+3496331,Moca,Dominican Republic,DO,19.39289,-70.52347,America/Santo_Domingo,61834,PPLA
+3496150,Monte Llano,Dominican Republic,DO,19.7346,-70.59915,America/Santo_Domingo,19029,PPL
+3496134,Monte Plata,Dominican Republic,DO,18.80748,-69.78431,America/Santo_Domingo,15532,PPLA
+3496021,Nagua,Dominican Republic,DO,19.3832,-69.8474,America/Santo_Domingo,33862,PPLA
+3495857,Neiba,Dominican Republic,DO,18.4898,-71.41894,America/Santo_Domingo,18670,PPLA
+3493175,Puerto Plata,Dominican Republic,DO,19.79344,-70.6884,America/Santo_Domingo,146000,PPLA
+3494242,Punta Cana,Dominican Republic,DO,18.58182,-68.40431,America/Santo_Domingo,100023,PPL
+3494121,Quisqueya,Dominican Republic,DO,18.55542,-69.40814,America/Santo_Domingo,17694,PPL
+3493769,Río Grande,Dominican Republic,DO,19.66667,-70.76667,America/Santo_Domingo,20154,PPL
+3493482,Sabana Grande de Boyá,Dominican Republic,DO,18.94498,-69.79331,America/Santo_Domingo,16834,PPL
+3493283,Salcedo,Dominican Republic,DO,19.37766,-70.41719,America/Santo_Domingo,45299,PPLA
+3493240,Salvaleón de Higüey,Dominican Republic,DO,18.61501,-68.70798,America/Santo_Domingo,123787,PPLA
+3511540,San Cristóbal,Dominican Republic,DO,18.41713,-70.10682,America/Santo_Domingo,154040,PPLA
+3493174,San Fernando de Monte Cristi,Dominican Republic,DO,19.84799,-71.64604,America/Santo_Domingo,17001,PPLA
+3493146,San Francisco de Macorís,Dominican Republic,DO,19.29377,-70.25285,America/Santo_Domingo,124763,PPLA
+3493383,San Ignacio de Sabaneta,Dominican Republic,DO,19.47837,-71.33932,America/Santo_Domingo,16380,PPLA
+3493100,San José de Ocoa,Dominican Republic,DO,18.54685,-70.50692,America/Santo_Domingo,21148,PPLA
+3493081,San Juan de la Maguana,Dominican Republic,DO,18.8064,-71.22626,America/Santo_Domingo,72950,PPLA
+3493032,San Pedro de Macorís,Dominican Republic,DO,18.4539,-69.30864,America/Santo_Domingo,217899,PPLA
+3492985,Santa Cruz de Barahona,Dominican Republic,DO,18.20861,-71.10068,America/Santo_Domingo,77160,PPLA
+3492984,Santa Cruz de El Seibo,Dominican Republic,DO,18.76484,-69.03991,America/Santo_Domingo,23547,PPLA
+3492914,Santiago de los Caballeros,Dominican Republic,DO,19.45036,-70.69085,America/Santo_Domingo,1200000,PPLA
+3492908,Santo Domingo,Dominican Republic,DO,18.47186,-69.89232,America/Santo_Domingo,2201941,PPLC
+8601412,Santo Domingo Este,Dominican Republic,DO,18.48511,-69.84757,America/Santo_Domingo,700000,PPLA
+7874116,Santo Domingo Oeste,Dominican Republic,DO,18.5,-70,America/Santo_Domingo,701269,PPL
+3492517,Tamboril,Dominican Republic,DO,19.48538,-70.61104,America/Santo_Domingo,23304,PPL
+3491952,Villa Altagracia,Dominican Republic,DO,18.67297,-70.17095,America/Santo_Domingo,40027,PPL
+3491948,Villa Bisonó,Dominican Republic,DO,19.56378,-70.87582,America/Santo_Domingo,33137,PPL
+3491946,Villa Consuelo,Dominican Republic,DO,18.48333,-69.9,America/Santo_Domingo,28621,PPLX
+3491941,Villa Francisca,Dominican Republic,DO,18.48278,-69.88914,America/Santo_Domingo,50185,PPLX
+3660689,Ambato,Ecuador,EC,-1.24908,-78.61675,America/Guayaquil,387309,PPLA
+3660559,Arenillas,Ecuador,EC,-3.55399,-80.06682,America/Guayaquil,26000,PPL
+3660478,Atuntaqui,Ecuador,EC,0.32759,-78.21908,America/Guayaquil,17456,PPLA2
+3660434,Azogues,Ecuador,EC,-2.73982,-78.84561,America/Guayaquil,34877,PPLA
+3660418,Babahoyo,Ecuador,EC,-1.80493,-79.52492,America/Guayaquil,76279,PPLA
+3660401,Bahía de Caráquez,Ecuador,EC,-0.60033,-80.42444,America/Guayaquil,37056,PPLA2
+3660361,Balzar,Ecuador,EC,-1.36553,-79.90507,America/Guayaquil,40115,PPLA2
+3660152,Boca Suno,Ecuador,EC,-0.69832,-77.14083,America/Guayaquil,20313,PPL
+3659926,Calceta,Ecuador,EC,-0.84582,-80.16389,America/Guayaquil,17286,PPL
+3659711,Cariamanga,Ecuador,EC,-4.32804,-79.55575,America/Guayaquil,16862,PPLA2
+3659599,Catamayo,Ecuador,EC,-3.98661,-79.35763,America/Guayaquil,18565,PPLA2
+3659578,Cayambe,Ecuador,EC,0.04103,-78.14636,America/Guayaquil,26582,PPLA2
+3659139,Chone,Ecuador,EC,-0.6985,-80.0925,America/Guayaquil,44751,PPLA2
+3658666,Cuenca,Ecuador,EC,-2.8953,-78.9963,America/Guayaquil,636996,PPLA
+3658501,Daule,Ecuador,EC,-1.86032,-79.97683,America/Guayaquil,173684,PPLA2
+3650273,El Empalme,Ecuador,EC,-1.04491,-79.6384,America/Guayaquil,48754,PPLA2
+3658053,El Triunfo,Ecuador,EC,-1.93333,-79.96667,America/Guayaquil,32282,PPL
+3658192,Eloy Alfaro,Ecuador,EC,-2.16919,-79.83987,America/Guayaquil,315724,PPLA2
+3657990,Esmeraldas,Ecuador,EC,0.9592,-79.65397,America/Guayaquil,218727,PPLA
+3657722,Guabo,Ecuador,EC,-3.24401,-79.82874,America/Guayaquil,26635,PPL
+3657670,Gualaceo,Ecuador,EC,-2.89418,-78.77907,America/Guayaquil,17122,PPLA2
+3657571,Guaranda,Ecuador,EC,-1.59106,-78.99903,America/Guayaquil,22199,PPLA
+3657509,Guayaquil,Ecuador,EC,-2.19616,-79.88621,America/Guayaquil,2723665,PPLA
+3655720,Huaquillas,Ecuador,EC,-3.47523,-80.23084,America/Guayaquil,39757,PPL
+3655673,Ibarra,Ecuador,EC,0.34881,-78.12462,America/Guayaquil,221149,PPLA
+3655446,Jipijapa,Ecuador,EC,-1.34841,-80.57913,America/Guayaquil,35901,PPLA2
+3655131,La Libertad,Ecuador,EC,-2.233,-80.91039,America/Guayaquil,75881,PPL
+3655117,La Maná,Ecuador,EC,-0.94096,-79.22655,America/Guayaquil,16450,PPLA2
+3654853,La Troncal,Ecuador,EC,-2.42466,-79.34159,America/Guayaquil,36353,PPLA2
+3654870,Latacunga,Ecuador,EC,-0.93424,-78.6152,America/Guayaquil,205624,PPLA
+3654667,Loja,Ecuador,EC,-3.99313,-79.20422,America/Guayaquil,274112,PPLA
+3654541,Macas,Ecuador,EC,-2.30741,-78.12026,America/Guayaquil,23687,PPLA
+3654536,Machachi,Ecuador,EC,-0.51273,-78.57066,America/Guayaquil,25742,PPLA2
+3654533,Machala,Ecuador,EC,-3.25886,-79.95876,America/Guayaquil,289141,PPLA
+3654410,Manta,Ecuador,EC,-0.94937,-80.73137,America/Guayaquil,264281,PPLA2
+3654215,Milagro,Ecuador,EC,-2.13396,-79.59337,America/Guayaquil,133508,PPLA2
+3654064,Montalvo,Ecuador,EC,-1.79008,-79.28759,America/Guayaquil,15547,PPL
+3654055,Montecristi,Ecuador,EC,-1.04576,-80.65889,America/Guayaquil,18351,PPL
+3653882,Naranjal,Ecuador,EC,-2.67638,-79.61735,America/Guayaquil,32045,PPLA2
+3653873,Naranjito,Ecuador,EC,-2.17071,-79.465,America/Guayaquil,34206,PPLA2
+3655185,Nueva Loja,Ecuador,EC,0.086,-76.89528,America/Guayaquil,24211,PPLA
+3653693,Otavalo,Ecuador,EC,0.23457,-78.26248,America/Guayaquil,32330,PPL
+3653403,Pasaje,Ecuador,EC,-3.32561,-79.80697,America/Guayaquil,44860,PPL
+3653295,Pedro Carbo,Ecuador,EC,-1.81619,-80.23431,America/Guayaquil,23372,PPL
+3653287,Pelileo,Ecuador,EC,-1.33057,-78.54523,America/Guayaquil,16572,PPLA2
+3653130,Piñas,Ecuador,EC,-3.68017,-79.68169,America/Guayaquil,16981,PPLA2
+3653015,Playas,Ecuador,EC,-2.63199,-80.38808,America/Guayaquil,30564,PPL
+3652977,Pomasqui,Ecuador,EC,-0.0542,-78.45382,America/Guayaquil,28724,PPL
+3652941,Portoviejo,Ecuador,EC,-1.05764,-80.45145,America/Guayaquil,321800,PPLA
+3652928,Posorja,Ecuador,EC,-2.70924,-80.24719,America/Guayaquil,30886,PPLA3
+3652743,Puerto Francisco de Orellana,Ecuador,EC,-0.44967,-76.99724,America/Guayaquil,48144,PPLA
+3652684,Pujilí,Ecuador,EC,-0.95759,-78.69636,America/Guayaquil,16168,PPL
+3652584,Puyo,Ecuador,EC,-1.49156,-78.00337,America/Guayaquil,24881,PPLA
+3652567,Quevedo,Ecuador,EC,-1.02881,-79.46264,America/Guayaquil,213842,PPLA2
+3652462,Quito,Ecuador,EC,-0.22985,-78.52495,America/Guayaquil,2781641,PPLC
+3652350,Riobamba,Ecuador,EC,-1.66506,-78.65887,America/Guayaquil,264048,PPLA
+3652257,Rosa Zarate,Ecuador,EC,0.32779,-79.47407,America/Guayaquil,42121,PPL
+3652100,Salinas,Ecuador,EC,-2.21452,-80.95151,America/Guayaquil,43862,PPL
+3652065,Samborondón,Ecuador,EC,-1.96071,-79.72566,America/Guayaquil,24118,PPLA2
+3651694,San Lorenzo de Esmeraldas,Ecuador,EC,1.28626,-78.83514,America/Guayaquil,20209,PPL
+3651438,Santa Elena,Ecuador,EC,-2.22652,-80.85807,America/Guayaquil,42214,PPLA
+3651356,Santa Rosa,Ecuador,EC,-3.45571,-79.9637,America/Guayaquil,41816,PPLA2
+3651297,Santo Domingo de los Colorados,Ecuador,EC,-0.25368,-79.17628,America/Guayaquil,458580,PPLA
+3650960,Sucre,Ecuador,EC,-1.27987,-80.41776,America/Guayaquil,15286,PPLA2
+3650721,Tena,Ecuador,EC,-0.9961,-77.81315,America/Guayaquil,17172,PPLA
+3650472,Tulcán,Ecuador,EC,0.8124,-77.71709,America/Guayaquil,86498,PPLA
+3650301,Valencia,Ecuador,EC,-0.95312,-79.35513,America/Guayaquil,18841,PPLA2
+3650267,Ventanas,Ecuador,EC,-1.44285,-79.46274,America/Guayaquil,38168,PPLA2
+3650186,Vinces,Ecuador,EC,-1.55637,-79.75249,America/Guayaquil,32497,PPLA2
+3650121,Yaguachi Nuevo,Ecuador,EC,-2.09757,-79.69261,America/Guayaquil,27947,PPL
+3649959,Zamora,Ecuador,EC,-4.06446,-78.95123,America/Guayaquil,15276,PPLA
+360630,Cairo,Egypt,EG,30.06263,31.24967,Africa/Cairo,9606916,PPLC
+3038354,Aix-en-Provence,France,FR,43.5283,5.44973,Europe/Paris,146821,PPLA3
+3037854,Amiens,France,FR,49.9,2.3,Europe/Paris,143086,PPLA2
+3037656,Angers,France,FR,47.47156,-0.55202,Europe/Paris,168279,PPLA2
+3037044,Argenteuil,France,FR,48.94788,2.24744,Europe/Paris,101475,PPLA3
+3036572,Asnières-sur-Seine,France,FR,48.91667,2.28333,Europe/Paris,86742,PPL
+3036145,Aulnay-sous-Bois,France,FR,48.93814,2.49402,Europe/Paris,80615,PPL
+3035681,Avignon,France,FR,43.94834,4.80892,Europe/Paris,89769,PPLA2
+3033123,Besançon,France,FR,47.24878,6.01815,Europe/Paris,128426,PPLA2
+3031582,Bordeaux,France,FR,44.84124,-0.58046,Europe/Paris,265328,PPLA
+3031137,Boulogne-Billancourt,France,FR,48.83545,2.24128,Europe/Paris,108782,PPLA3
+3030300,Brest,France,FR,48.39029,-4.48628,Europe/Paris,144899,PPLA3
+3029241,Caen,France,FR,49.18585,-0.35912,Europe/Paris,110624,PPLA2
+8555643,Cergy-Pontoise,France,FR,49.03894,2.07805,Europe/Paris,183430,PPLL
+3027105,Champigny-sur-Marne,France,FR,48.81642,2.49366,Europe/Paris,76726,PPL
+3024635,Clermont-Ferrand,France,FR,45.77969,3.08682,Europe/Paris,147865,PPLA2
+3024266,Colombes,France,FR,48.91882,2.25404,Europe/Paris,82300,PPL
+3023141,Courbevoie,France,FR,48.89672,2.25666,Europe/Paris,85158,PPL
+3022530,Créteil,France,FR,48.79266,2.46569,Europe/Paris,84833,PPLA2
+3021372,Dijon,France,FR,47.31344,5.01391,Europe/Paris,159941,PPLA
+3020686,Dunkirk,France,FR,51.0344,2.37681,Europe/Paris,86263,PPLA3
+3014728,Grenoble,France,FR,45.17869,5.71479,Europe/Paris,158552,PPLA2
+3006787,La Rochelle,France,FR,46.16308,-1.15222,Europe/Paris,76810,PPLA2
+3003796,Le Havre,France,FR,49.49346,0.10785,Europe/Paris,185972,PPLA3
+3003603,Le Mans,France,FR,48.0021,0.20251,Europe/Paris,144515,PPLA2
+2998324,Lille,France,FR,50.63391,3.05512,Europe/Paris,238695,PPLA
+2998286,Limoges,France,FR,45.83362,1.24759,Europe/Paris,141176,PPLA2
+2996944,Lyon,France,FR,45.74906,4.84789,Europe/Paris,520774,PPLA
+6543969,Lyon 03,France,FR,45.76124,4.85184,Europe/Paris,102725,PPLX
+6543973,Lyon 07,France,FR,45.74525,4.84197,Europe/Paris,82573,PPLX
+6543974,Lyon 08,France,FR,45.73626,4.86866,Europe/Paris,86154,PPLX
+12278193,Marne La Vallée,France,FR,48.83584,2.64241,Europe/Paris,318325,PPL
+2995469,Marseille,France,FR,43.29695,5.38107,Europe/Paris,877215,PPLA
+7284889,Marseille 08,France,FR,43.27083,5.3821,Europe/Paris,78837,PPLA5
+7284891,Marseille 09,France,FR,43.25433,5.4057,Europe/Paris,76868,PPLA5
+7284894,Marseille 13,France,FR,43.31856,5.40836,Europe/Paris,89316,PPLA5
+7284896,Marseille 15,France,FR,43.37224,5.35386,Europe/Paris,77770,PPLA5
+2994160,Metz,France,FR,49.11911,6.17269,Europe/Paris,123914,PPLA2
+2992166,Montpellier,France,FR,43.61093,3.87635,Europe/Paris,248252,PPLA2
+2992090,Montreuil,France,FR,48.86415,2.44322,Europe/Paris,111240,PPL
+2991214,Mulhouse,France,FR,47.75205,7.32866,Europe/Paris,111430,PPLA3
+2990999,Nancy,France,FR,48.68439,6.18496,Europe/Paris,105058,PPLA2
+2990970,Nanterre,France,FR,48.89198,2.20675,Europe/Paris,86719,PPLA2
+2990969,Nantes,France,FR,47.21725,-1.55336,Europe/Paris,325070,PPLA
+2990440,Nice,France,FR,43.70313,7.26608,Europe/Paris,342669,PPLA2
+2990363,Nîmes,France,FR,43.83665,4.35788,Europe/Paris,148236,PPLA2
+2989317,Orléans,France,FR,47.90248,1.90407,Europe/Paris,116344,PPLA
+2988507,Paris,France,FR,48.85341,2.3488,Europe/Paris,2138551,PPLC
+3020216,Paris 10 Entrepôt,France,FR,48.8709,2.3561,Europe/Paris,83873,PPL
+12808653,Paris 10e Arrondissement,France,FR,48.87668,2.35904,Europe/Paris,83459,PPLX
+2986082,Paris 11 Popincourt,France,FR,48.8574,2.3795,Europe/Paris,138170,PPL
+12808658,Paris 11e Arrondissement,France,FR,48.85834,2.37952,Europe/Paris,144292,PPLX
+2983854,Paris 12 Reuilly,France,FR,48.8412,2.3876,Europe/Paris,138024,PPL
+12808663,Paris 12e Arrondissement,France,FR,48.83523,2.43505,Europe/Paris,140311,PPLX
+3015772,Paris 13 Gobelins,France,FR,48.8322,2.3561,Europe/Paris,181271,PPL
+12808673,Paris 13e Arrondissement,France,FR,48.8262,2.35986,Europe/Paris,177833,PPLX
+2989781,Paris 14 Observatoire,France,FR,48.8331,2.3264,Europe/Paris,136455,PPL
+2970479,Paris 15 Vaugirard,France,FR,48.8412,2.3003,Europe/Paris,229713,PPL
+2988394,Paris 16 Passy,France,FR,48.8637,2.2769,Europe/Paris,159386,PPL
+3034610,Paris 17 Batignolles-Monceau,France,FR,48.8835,2.3219,Europe/Paris,159212,PPL
+3029374,Paris 18 Buttes-Montmartre,France,FR,48.8925,2.3444,Europe/Paris,183127,PPL
+3029372,Paris 19 Buttes-Chaumont,France,FR,48.8817,2.3822,Europe/Paris,178691,PPL
+2994540,Paris 20 Ménilmontant,France,FR,48.8646,2.3984,Europe/Paris,185140,PPL
+2988358,Pau,France,FR,43.31117,-0.35583,Europe/Paris,82697,PPLA2
+2987914,Perpignan,France,FR,42.69764,2.89541,Europe/Paris,110706,PPLA2
+2986495,Poitiers,France,FR,46.58261,0.34348,Europe/Paris,85960,PPLA2
+2984114,Reims,France,FR,49.26526,4.02853,Europe/Paris,196565,PPLA3
+2983990,Rennes,France,FR,48.11109,-1.67431,Europe/Paris,227830,PPLA
+2982681,Roubaix,France,FR,50.69421,3.17456,Europe/Paris,99507,PPL
+2982652,Rouen,France,FR,49.44313,1.09932,Europe/Paris,116331,PPLA
+2980916,Saint-Denis,France,FR,48.93564,2.35387,Europe/Paris,96128,PPLA3
+8533870,Saint-Quentin-en-Yvelines,France,FR,48.77186,2.01891,Europe/Paris,146598,PPL
+2980291,Saint-Étienne,France,FR,45.43389,4.39,Europe/Paris,176280,PPLA2
+2973783,Strasbourg,France,FR,48.58392,7.74553,Europe/Paris,274845,PPLA
+2972328,Toulon,France,FR,43.12442,5.92836,Europe/Paris,168701,PPLA2
+2972315,Toulouse,France,FR,43.60426,1.44367,Europe/Paris,511684,PPLA
+2972284,Tourcoing,France,FR,50.72391,3.16117,Europe/Paris,99160,PPL
+2972191,Tours,France,FR,47.39484,0.70398,Europe/Paris,141621,PPLA2
+2969679,Versailles,France,FR,48.80359,2.13424,Europe/Paris,85416,PPLA2
+2968254,Villeurbanne,France,FR,45.76601,4.8795,Europe/Paris,131445,PPL
+2967849,Vitry-sur-Seine,France,FR,48.78716,2.40332,Europe/Paris,81001,PPL
+3247449,Aachen,Germany,DE,50.77664,6.08342,Europe/Berlin,265208,PPLA3
+2911296,Altona,Germany,DE,53.55,9.93333,Europe/Berlin,250192,PPLX
+2954172,Augsburg,Germany,DE,48.37154,10.89851,Europe/Berlin,301105,PPLA2
+7290243,Bergedorf,Germany,DE,53.48462,10.22904,Europe/Berlin,119665,PPLX
+2950159,Berlin,Germany,DE,52.52437,13.41053,Europe/Berlin,3426354,PPLC
+2949186,Bielefeld,Germany,DE,52.03333,8.53333,Europe/Berlin,331906,PPLA4
+2947416,Bochum,Germany,DE,51.48165,7.21648,Europe/Berlin,385729,PPLA3
+2946447,Bonn,Germany,DE,50.73438,7.09549,Europe/Berlin,330579,PPLA3
+2945756,Bottrop,Germany,DE,51.52392,6.9285,Europe/Berlin,119909,PPLA3
+2945024,Braunschweig,Germany,DE,52.26594,10.52673,Europe/Berlin,244715,PPLA3
+2944388,Bremen,Germany,DE,53.07582,8.80717,Europe/Berlin,546501,PPLA
+2940187,Charlottenburg,Germany,DE,52.51667,13.28333,Europe/Berlin,129359,PPLX
+2940132,Chemnitz,Germany,DE,50.8357,12.92922,Europe/Berlin,247220,PPLA3
+2938913,Darmstadt,Germany,DE,49.87167,8.65027,Europe/Berlin,167029,PPLA2
+2935517,Dortmund,Germany,DE,51.51494,7.466,Europe/Berlin,588462,PPLA3
+2935022,Dresden,Germany,DE,51.05089,13.73832,Europe/Berlin,564904,PPLA
+2934691,Duisburg,Germany,DE,51.43247,6.76516,Europe/Berlin,504358,PPLA3
+2934246,Düsseldorf,Germany,DE,51.22319,6.77927,Europe/Berlin,618685,PPLA
+2911293,Eimsbüttel,Germany,DE,53.57416,9.95679,Europe/Berlin,269118,PPLX
+2929670,Erfurt,Germany,DE,50.97734,11.03536,Europe/Berlin,218793,PPLA
+2928810,Essen,Germany,DE,51.45657,7.01228,Europe/Berlin,593085,PPLA3
+2925533,Frankfurt am Main,Germany,DE,50.11552,8.68417,Europe/Berlin,650000,PPLA3
+2925177,Freiburg,Germany,DE,47.9959,7.85222,Europe/Berlin,237460,PPLA2
+2923544,Fürth,Germany,DE,49.47593,10.98856,Europe/Berlin,132036,PPL
+2921466,Gelsenkirchen,Germany,DE,51.50508,7.09654,Europe/Berlin,270028,PPLA3
+2918632,Göttingen,Germany,DE,51.53443,9.93228,Europe/Berlin,122149,PPLA3
+2912621,Hagen,Germany,DE,51.36081,7.47168,Europe/Berlin,198972,PPLA3
+2911522,Halle (Saale),Germany,DE,51.48158,11.97947,Europe/Berlin,237865,PPL
+2911298,Hamburg,Germany,DE,53.55073,9.99302,Europe/Berlin,1973896,PPLA
+2911288,Hamburg-Mitte,Germany,DE,53.55,10.01667,Europe/Berlin,301231,PPLX
+8354626,Hamburg-Nord,Germany,DE,53.58935,9.984,Europe/Berlin,315514,PPLX
+2911240,Hamm,Germany,DE,51.68033,7.82089,Europe/Berlin,178967,PPL
+2910831,Hannover,Germany,DE,52.37052,9.73322,Europe/Berlin,515140,PPLA
+2910685,Harburg,Germany,DE,53.46057,9.98388,Europe/Berlin,169221,PPLX
+2907911,Heidelberg,Germany,DE,49.40768,8.69079,Europe/Berlin,143345,PPLA3
+2907669,Heilbronn,Germany,DE,49.13995,9.22054,Europe/Berlin,120733,PPLA3
+2905891,Herne,Germany,DE,51.5388,7.22572,Europe/Berlin,172108,PPLA3
+2895992,Ingolstadt,Germany,DE,48.76508,11.42372,Europe/Berlin,120658,PPLA3
+2892794,Karlsruhe,Germany,DE,49.00937,8.40444,Europe/Berlin,283799,PPLA2
+2892518,Kassel,Germany,DE,51.31667,9.5,Europe/Berlin,197230,PPLA2
+2891122,Kiel,Germany,DE,54.32133,10.13489,Europe/Berlin,252668,PPLA
+2884509,Krefeld,Germany,DE,51.33645,6.55381,Europe/Berlin,237984,PPLA3
+2884161,Kreuzberg,Germany,DE,52.49973,13.40338,Europe/Berlin,153135,PPLX
+2886242,Köln,Germany,DE,50.93333,6.95,Europe/Berlin,1024621,PPLA2
+2879139,Leipzig,Germany,DE,51.33962,12.37129,Europe/Berlin,504971,PPLA3
+2878234,Leverkusen,Germany,DE,51.0303,6.98432,Europe/Berlin,162738,PPLA3
+2875376,Ludwigshafen am Rhein,Germany,DE,49.48121,8.44641,Europe/Berlin,163196,PPLA3
+2875601,Lübeck,Germany,DE,53.86893,10.68729,Europe/Berlin,212207,PPLA3
+2874545,Magdeburg,Germany,DE,52.13129,11.63189,Europe/Berlin,244329,PPLA
+2874225,Mainz,Germany,DE,49.98185,8.28008,Europe/Berlin,222889,PPLA
+2873891,Mannheim,Germany,DE,49.4891,8.46694,Europe/Berlin,307960,PPLA3
+2911287,Marienthal,Germany,DE,53.56667,10.08333,Europe/Berlin,287101,PPLX
+2867714,Munich,Germany,DE,48.13743,11.57549,Europe/Berlin,1505005,PPLA
+2869894,Mönchengladbach,Germany,DE,51.18539,6.44172,Europe/Berlin,261742,PPLA3
+2867838,Mülheim,Germany,DE,51.43218,6.87967,Europe/Berlin,173050,PPL
+2867543,Münster,Germany,DE,51.96236,7.62571,Europe/Berlin,308258,PPLA2
+2864072,Neue Neustadt,Germany,DE,52.15,11.63333,Europe/Berlin,226851,PPLX
+2864695,Neukölln,Germany,DE,52.47719,13.43126,Europe/Berlin,164636,PPLX
+2864118,Neuss,Germany,DE,51.19807,6.68504,Europe/Berlin,152457,PPLA3
+2861650,Nuremberg,Germany,DE,49.45421,11.07752,Europe/Berlin,515543,PPLA3
+2860410,Oberhausen,Germany,DE,51.47805,6.8625,Europe/Berlin,219176,PPLA3
+2857458,Oldenburg,Germany,DE,53.14039,8.21479,Europe/Berlin,159218,PPLA3
+2856883,Osnabrück,Germany,DE,52.27264,8.0498,Europe/Berlin,166462,PPLA3
+2855745,Paderborn,Germany,DE,51.71905,8.75439,Europe/Berlin,142161,PPLA3
+2853969,Pforzheim,Germany,DE,48.88436,8.69892,Europe/Berlin,119313,PPLA3
+2852458,Potsdam,Germany,DE,52.39886,13.06566,Europe/Berlin,184754,PPLA
+2852217,Prenzlauer Berg,Germany,DE,52.53878,13.42443,Europe/Berlin,148878,PPLX
+2849647,Recklinghausen,Germany,DE,51.61379,7.19738,Europe/Berlin,122438,PPLA3
+2849483,Regensburg,Germany,DE,49.01513,12.10161,Europe/Berlin,151389,PPLA2
+2844588,Rostock,Germany,DE,54.0887,12.14049,Europe/Berlin,198293,PPLA3
+2842647,Saarbrücken,Germany,DE,49.23262,7.00982,Europe/Berlin,182971,PPLA
+2836788,Schöneberg,Germany,DE,52.49801,13.3443,Europe/Berlin,122658,PPLX
+2831580,Solingen,Germany,DE,51.17343,7.0845,Europe/Berlin,164359,PPLA3
+2825297,Stuttgart,Germany,DE,48.78232,9.17702,Europe/Berlin,612663,PPLA
+2820256,Ulm,Germany,DE,48.39841,9.99155,Europe/Berlin,120451,PPLA3
+2911285,Wandsbek,Germany,DE,53.58334,10.08305,Europe/Berlin,411422,PPLX
+2809346,Wiesbaden,Germany,DE,50.08601,8.24435,Europe/Berlin,288850,PPLA
+2806654,Wolfsburg,Germany,DE,52.42452,10.7815,Europe/Berlin,123064,PPLA3
+2805753,Wuppertal,Germany,DE,51.25627,7.14816,Europe/Berlin,360797,PPLA3
+2805615,Würzburg,Germany,DE,49.79391,9.95121,Europe/Berlin,133731,PPLA2
+3599788,Alotenango,Guatemala,GT,14.48585,-90.80437,America/Guatemala,23986,PPLA2
+3599735,Amatitlán,Guatemala,GT,14.4774,-90.63489,America/Guatemala,71836,PPLA2
+3599699,Antigua Guatemala,Guatemala,GT,14.55636,-90.7332,America/Guatemala,46054,PPLA
+3599639,Asunción Mita,Guatemala,GT,14.33365,-89.71094,America/Guatemala,48297,PPLA2
+3599582,Barberena,Guatemala,GT,14.30739,-90.36156,America/Guatemala,47093,PPLA2
+3599287,Cabricán,Guatemala,GT,15.07485,-91.648,America/Guatemala,23033,PPLA2
+3599069,Cantel,Guatemala,GT,14.81154,-91.45536,America/Guatemala,42142,PPLA2
+3598678,Chicacao,Guatemala,GT,14.54295,-91.32636,America/Guatemala,60735,PPLA2
+3598655,Chichicastenango,Guatemala,GT,14.94333,-91.11116,America/Guatemala,141567,PPLA2
+3598572,Chimaltenango,Guatemala,GT,14.65881,-90.8216,America/Guatemala,96985,PPLA
+3598529,Chinautla,Guatemala,GT,14.70289,-90.49983,America/Guatemala,104972,PPLA2
+3598465,Chiquimula,Guatemala,GT,14.8009,-89.54641,America/Guatemala,111505,PPLA
+3598128,Ciudad Vieja,Guatemala,GT,14.52396,-90.76308,America/Guatemala,33405,PPLA2
+3598122,Coatepeque,Guatemala,GT,14.70413,-91.86426,America/Guatemala,105415,PPLA2
+3598119,Cobán,Guatemala,GT,15.47025,-90.37455,America/Guatemala,212047,PPLA
+3598073,Colomba,Guatemala,GT,14.7073,-91.73167,America/Guatemala,47544,PPLA2
+3598034,Comalapa,Guatemala,GT,14.74086,-90.88761,America/Guatemala,32312,PPLA2
+3598025,Comitancillo,Guatemala,GT,15.08937,-91.74971,America/Guatemala,59489,PPLA2
+3597804,Cuilapa,Guatemala,GT,14.27537,-90.29865,America/Guatemala,41359,PPLA
+3597078,El Estor,Guatemala,GT,15.53221,-89.33111,America/Guatemala,20489,PPLA2
+3595803,Escuintla,Guatemala,GT,14.30097,-90.78816,America/Guatemala,156313,PPLA
+3595783,Esquipulas,Guatemala,GT,14.56571,-89.35166,America/Guatemala,20674,PPLA2
+3595725,Flores,Guatemala,GT,16.92258,-89.89941,America/Guatemala,20464,PPLA
+3595714,Fraijanes,Guatemala,GT,14.46528,-90.44083,America/Guatemala,58922,PPLA2
+3596421,Guastatoya,Guatemala,GT,14.85442,-90.06991,America/Guatemala,24831,PPLA
+3598132,Guatemala City,Guatemala,GT,14.64072,-90.51327,America/Guatemala,994938,PPLC
+3595416,Huehuetenango,Guatemala,GT,15.32097,-91.47001,America/Guatemala,79426,PPLA
+3595248,Jacaltenango,Guatemala,GT,15.66662,-91.71177,America/Guatemala,37171,PPLA2
+3595237,Jalapa,Guatemala,GT,14.63542,-89.99112,America/Guatemala,159840,PPLA
+3595232,Jalpatagua,Guatemala,GT,14.1369,-90.00908,America/Guatemala,28832,PPLA2
+3595069,Jutiapa,Guatemala,GT,14.28491,-89.88798,America/Guatemala,145880,PPLA
+3594575,La Gomera,Guatemala,GT,14.08213,-91.05383,America/Guatemala,24001,PPLA2
+3592753,Malacatán,Guatemala,GT,14.91132,-92.05788,America/Guatemala,92816,PPLA2
+3592642,Masagua,Guatemala,GT,14.20306,-90.84806,America/Guatemala,45323,PPLA2
+3592609,Mazatenango,Guatemala,GT,14.53412,-91.50311,America/Guatemala,77431,PPLA
+3592519,Mixco,Guatemala,GT,14.63077,-90.60711,America/Guatemala,465773,PPLA2
+3592483,Momostenango,Guatemala,GT,15.04437,-91.40864,America/Guatemala,31739,PPLA2
+3592286,Nahualá,Guatemala,GT,14.8429,-91.31799,America/Guatemala,27690,PPLA2
+3592237,Nebaj,Guatemala,GT,15.40614,-91.14682,America/Guatemala,23301,PPLA2
+3592105,Nuevo San Carlos,Guatemala,GT,14.593,-91.6939,America/Guatemala,39565,PPLA2
+3591997,Ostuncalco,Guatemala,GT,14.86899,-91.62137,America/Guatemala,51828,PPLA2
+3591833,Palín,Guatemala,GT,14.40358,-90.69659,America/Guatemala,65873,PPLA2
+3591676,Panzos,Guatemala,GT,15.39862,-89.64147,America/Guatemala,71846,PPLA2
+3591541,Patulul,Guatemala,GT,14.42321,-91.16049,America/Guatemala,40683,PPLA2
+3591523,Patzicía,Guatemala,GT,14.63194,-90.92659,America/Guatemala,21249,PPLA2
+3591512,Patzún,Guatemala,GT,14.68189,-91.01397,America/Guatemala,58240,PPLA2
+3591415,Petapa,Guatemala,GT,14.50189,-90.56196,America/Guatemala,135447,PPLA2
+3591062,Puerto Barrios,Guatemala,GT,15.72724,-88.59787,America/Guatemala,100593,PPLA
+3590979,Quetzaltenango,Guatemala,GT,14.84462,-91.52316,America/Guatemala,180706,PPLA
+3590858,Retalhuleu,Guatemala,GT,14.53575,-91.67848,America/Guatemala,90505,PPLA
+3590616,Salamá,Guatemala,GT,15.1021,-90.31906,America/Guatemala,65275,PPLA
+3590529,San Andrés Itzapa,Guatemala,GT,14.62222,-90.84314,America/Guatemala,24992,PPLA2
+3590389,San Benito,Guatemala,GT,16.91675,-89.91898,America/Guatemala,30764,PPLA2
+3590288,San Felipe,Guatemala,GT,14.62304,-91.595,America/Guatemala,24446,PPLA2
+3590219,San Francisco El Alto,Guatemala,GT,14.9449,-91.4431,America/Guatemala,57894,PPLA2
+3590197,San Francisco Zapotitlán,Guatemala,GT,14.58939,-91.52144,America/Guatemala,22533,PPLA2
+3589977,San José Pinula,Guatemala,GT,14.546,-90.41288,America/Guatemala,79844,PPLA2
+3589885,San Juan Sacatepéquez,Guatemala,GT,14.71889,-90.64417,America/Guatemala,136886,PPLA2
+3589852,San Lucas Sacatepéquez,Guatemala,GT,14.61075,-90.65681,America/Guatemala,20723,PPLA2
+3589822,San Luis Jilotepeque,Guatemala,GT,14.64724,-89.72463,America/Guatemala,24679,PPLA2
+3589805,San Marcos,Guatemala,GT,14.96437,-91.79486,America/Guatemala,47063,PPLA
+3589646,San Pedro Ayampuc,Guatemala,GT,14.77943,-90.45318,America/Guatemala,58609,PPLA2
+3589626,San Pedro Sacatepéquez,Guatemala,GT,14.96807,-91.76172,America/Guatemala,40021,PPLA2
+3589548,San Sebastián,Guatemala,GT,14.56177,-91.64865,America/Guatemala,29167,PPLA2
+3589452,Santa Catarina Pinula,Guatemala,GT,14.57047,-90.49925,America/Guatemala,80582,PPLA2
+3589404,Santa Cruz del Quiché,Guatemala,GT,15.02995,-91.14876,America/Guatemala,78279,PPLA
+3589289,Santa Lucía Cotzumalguapa,Guatemala,GT,14.33505,-91.02339,America/Guatemala,112780,PPLA2
+3589253,Santa María de Jesús,Guatemala,GT,14.49452,-90.71036,America/Guatemala,21795,PPLA2
+3589105,Santiago Atitlán,Guatemala,GT,14.63823,-91.22901,America/Guatemala,33309,PPL
+3589101,Santiago Sacatepéquez,Guatemala,GT,14.6351,-90.67654,America/Guatemala,29238,PPLA2
+3588698,Sololá,Guatemala,GT,14.7707,-91.18344,America/Guatemala,45373,PPLA
+3588694,Soloma,Guatemala,GT,15.65841,-91.42994,America/Guatemala,49030,PPLA2
+3588653,Sumpango,Guatemala,GT,14.64623,-90.73427,America/Guatemala,28488,PPLA2
+3588476,Tecpán Guatemala,Guatemala,GT,14.76181,-90.99247,America/Guatemala,34519,PPLA2
+3588258,Totonicapán,Guatemala,GT,14.91188,-91.36054,America/Guatemala,103952,PPLA
+3587923,Villa Canales,Guatemala,GT,14.48285,-90.53425,America/Guatemala,155423,PPLA2
+3587902,Villa Nueva,Guatemala,GT,14.52512,-90.58544,America/Guatemala,618397,PPLA2
+3587636,Yepocapa,Guatemala,GT,14.50195,-90.95396,America/Guatemala,34948,PPLA2
+3587587,Zacapa,Guatemala,GT,14.96867,-89.52732,America/Guatemala,60424,PPLA
+3587543,Zaragoza,Guatemala,GT,14.64968,-90.89034,America/Guatemala,24022,PPLA2
+2962361,An Muileann gCearr,Ireland,IE,53.52466,-7.3385,Europe/Dublin,22667,PPLA2
+3313472,Athlone,Ireland,IE,53.42278,-7.93722,Europe/Dublin,22869,PPL
+2966794,Balbriggan,Ireland,IE,53.60846,-6.1831,Europe/Dublin,21722,PPL
+2966749,Ballincollig,Ireland,IE,51.88333,-8.58333,Europe/Dublin,18621,PPL
+2966110,Blanchardstown,Ireland,IE,53.38806,-6.37556,Europe/Dublin,16511,PPL
+2966022,Bray,Ireland,IE,53.20278,-6.09833,Europe/Dublin,33512,PPL
+2965768,Carlow,Ireland,IE,52.84083,-6.92611,Europe/Dublin,27351,PPLA2
+2965715,Carrigaline,Ireland,IE,51.81167,-8.39861,Europe/Dublin,18239,PPL
+2965529,Celbridge,Ireland,IE,53.34165,-6.54419,Europe/Dublin,20288,PPL
+2965353,Cluain Meala,Ireland,IE,52.355,-7.70389,Europe/Dublin,18369,PPLA2
+2965140,Cork,Ireland,IE,51.89797,-8.47061,Europe/Dublin,224004,PPLA2
+6691033,Donaghmede,Ireland,IE,53.39845,-6.16179,Europe/Dublin,15299,PPLX
+2964690,Douglas,Ireland,IE,51.87444,-8.435,Europe/Dublin,26883,PPL
+2964661,Drogheda,Ireland,IE,53.71889,-6.34778,Europe/Dublin,44135,PPL
+2962290,Droichead Nua,Ireland,IE,53.18194,-6.79667,Europe/Dublin,22742,PPL
+2964574,Dublin,Ireland,IE,53.33306,-6.24889,Europe/Dublin,1024027,PPLC
+2964540,Dundalk,Ireland,IE,54,-6.41667,Europe/Dublin,43112,PPLA2
+2964506,Dún Laoghaire,Ireland,IE,53.29395,-6.13586,Europe/Dublin,31239,PPL
+2964405,Ennis,Ireland,IE,52.84361,-8.98639,Europe/Dublin,27923,PPLA2
+2964303,Finglas,Ireland,IE,53.38917,-6.29694,Europe/Dublin,19768,PPL
+2964180,Galway,Ireland,IE,53.27245,-9.05095,Europe/Dublin,85910,PPLA
+2963848,Greystones,Ireland,IE,53.14083,-6.06306,Europe/Dublin,22009,PPL
+2963398,Kilkenny,Ireland,IE,52.65417,-7.25222,Europe/Dublin,21589,PPLA2
+2962974,Leixlip,Ireland,IE,53.36583,-6.49556,Europe/Dublin,15504,PPL
+2962961,Letterkenny,Ireland,IE,54.95,-7.73333,Europe/Dublin,22549,PPL
+2962943,Limerick,Ireland,IE,52.66472,-8.62306,Europe/Dublin,102287,PPLA2
+2962785,Lucan,Ireland,IE,53.35736,-6.44859,Europe/Dublin,15269,PPL
+2962725,Malahide,Ireland,IE,53.45083,-6.15444,Europe/Dublin,16550,PPL
+2962668,Maynooth,Ireland,IE,53.385,-6.59361,Europe/Dublin,17259,PPL
+2962334,Naas,Ireland,IE,53.21583,-6.66694,Europe/Dublin,20713,PPLA2
+2962308,Navan,Ireland,IE,53.65278,-6.68139,Europe/Dublin,33886,PPLA2
+2962026,Portlaoise,Ireland,IE,53.03441,-7.29979,Europe/Dublin,23494,PPLA2
+2961911,Rathfarnham,Ireland,IE,53.30056,-6.28278,Europe/Dublin,17333,PPL
+3315278,Sandyford,Ireland,IE,53.2747,-6.2253,Europe/Dublin,22288,PPL
+2961423,Sligo,Ireland,IE,54.26969,-8.46943,Europe/Dublin,20608,PPLA2
+6697759,South Dublin,Ireland,IE,53.29026,-6.34151,Europe/Dublin,301075,PPLX
+2961297,Swords,Ireland,IE,53.45972,-6.21806,Europe/Dublin,40776,PPLA
+2961284,Tallaght,Ireland,IE,53.2859,-6.37344,Europe/Dublin,81022,PPLA2
+3315404,Templeogue,Ireland,IE,53.29528,-6.30889,Europe/Dublin,18076,PPLX
+2961123,Tralee,Ireland,IE,52.27042,-9.70264,Europe/Dublin,26079,PPLA2
+2961086,Tullamore,Ireland,IE,53.27389,-7.48889,Europe/Dublin,15598,PPLA2
+2960992,Waterford,Ireland,IE,52.25833,-7.11194,Europe/Dublin,60079,PPLA2
+2960964,Wexford,Ireland,IE,52.33417,-6.4575,Europe/Dublin,21524,PPLA2
+3183539,Acilia-Castel Fusano-Ostia Antica,Italy,IT,41.76337,12.33078,Europe/Rome,129362,PPL
+3183299,Alessandria,Italy,IT,44.90924,8.61007,Europe/Rome,92104,PPLA2
+3183089,Ancona,Italy,IT,43.60717,13.5103,Europe/Rome,89994,PPLA
+3183072,Andria,Italy,IT,41.23117,16.29797,Europe/Rome,99784,PPLA2
+3182884,Arezzo,Italy,IT,43.46276,11.88068,Europe/Rome,100734,PPLA2
+3182351,Bari,Italy,IT,41.12066,16.86982,Europe/Rome,316491,PPLA
+3182340,Barletta,Italy,IT,41.31429,16.28165,Europe/Rome,93279,PPLA2
+3182164,Bergamo,Italy,IT,45.69601,9.66721,Europe/Rome,121200,PPLA2
+3181928,Bologna,Italy,IT,44.49381,11.33875,Europe/Rome,394843,PPLA
+3181913,Bolzano,Italy,IT,46.49067,11.33982,Europe/Rome,107436,PPLA2
+3181554,Brescia,Italy,IT,45.53558,10.21472,Europe/Rome,200423,PPLA2
+3181528,Brindisi,Italy,IT,40.63215,17.93607,Europe/Rome,87141,PPLA2
+3181355,Busto Arsizio,Italy,IT,45.61128,8.84914,Europe/Rome,83405,PPLA3
+2525473,Cagliari,Italy,IT,39.23054,9.11917,Europe/Rome,149257,PPLA
+12023195,Campo di Marte,Italy,IT,43.77693,11.27707,Europe/Rome,88588,PPLX
+2525068,Catania,Italy,IT,37.49223,15.07041,Europe/Rome,311584,PPLA2
+2525059,Catanzaro,Italy,IT,38.88247,16.60086,Europe/Rome,78970,PPLA
+3178957,Cesena,Italy,IT,44.1391,12.24315,Europe/Rome,97137,PPLA3
+13607965,Circoiscrizione I,Italy,IT,45.06639,7.6868,Europe/Rome,78523,PPLX
+13607966,Circoiscrizione II,Italy,IT,45.05013,7.64052,Europe/Rome,141344,PPLX
+13607967,Circoiscrizione III,Italy,IT,45.06279,7.63071,Europe/Rome,130709,PPLX
+13607968,Circoiscrizione IV,Italy,IT,45.08125,7.63188,Europe/Rome,98787,PPLX
+13607969,Circoiscrizione V,Italy,IT,45.10147,7.65538,Europe/Rome,126666,PPLX
+13607970,Circoiscrizione VI,Italy,IT,45.1022,7.70029,Europe/Rome,107369,PPLX
+13607971,Circoiscrizione VII,Italy,IT,45.07824,7.69718,Europe/Rome,89448,PPLX
+13607972,Circoiscrizione VIII,Italy,IT,45.03789,7.67174,Europe/Rome,134028,PPLX
+3178229,Como,Italy,IT,45.80819,9.0832,Europe/Rome,84808,PPLA2
+3177090,Ferrara,Italy,IT,44.83804,11.62057,Europe/Rome,132009,PPLA2
+3176959,Florence,Italy,IT,43.77925,11.24626,Europe/Rome,367150,PPLA
+3176885,Foggia,Italy,IT,41.45845,15.55188,Europe/Rome,137032,PPLA2
+3176746,Forlì,Italy,IT,44.22177,12.04144,Europe/Rome,116696,PPLA2
+3176477,Fuorigrotta,Italy,IT,40.83333,14.2,Europe/Rome,76521,PPL
+3176219,Genoa,Italy,IT,44.40478,8.94439,Europe/Rome,580097,PPLA
+3176059,Giugliano in Campania,Italy,IT,40.92849,14.20197,Europe/Rome,80269,PPLA3
+6534228,Guidonia Montecelio,Italy,IT,41.99362,12.72238,Europe/Rome,89165,PPLA3
+3175081,La Spezia,Italy,IT,44.103,9.82375,Europe/Rome,93288,PPLA2
+3175058,Latina,Italy,IT,41.46614,12.9043,Europe/Rome,76305,PPLA2
+3174953,Lecce,Italy,IT,40.35481,18.17244,Europe/Rome,80695,PPLA2
+3174741,Lido di Ostia,Italy,IT,41.73212,12.27654,Europe/Rome,85301,PPL
+3174659,Livorno,Italy,IT,43.54427,10.32615,Europe/Rome,157017,PPLA2
+3174530,Lucca,Italy,IT,43.84369,10.50447,Europe/Rome,81748,PPLA2
+2524245,Marsala,Italy,IT,37.7992,12.4367,Europe/Rome,77915,PPLA3
+2524170,Messina,Italy,IT,38.19394,15.55256,Europe/Rome,219948,PPLA2
+3173529,Mestre,Italy,IT,45.49167,12.24538,Europe/Rome,147662,PPL
+3173435,Milan,Italy,IT,45.46427,9.18951,Europe/Rome,1371498,PPLA
+3173331,Modena,Italy,IT,44.64783,10.92539,Europe/Rome,184732,PPLA2
+3172629,Monza,Italy,IT,45.58005,9.27246,Europe/Rome,124398,PPLA2
+3172394,Naples,Italy,IT,40.85216,14.26811,Europe/Rome,909048,PPLA
+3172189,Novara,Italy,IT,45.44694,8.62118,Europe/Rome,101916,PPLA2
+3171728,Padua,Italy,IT,45.40797,11.88586,Europe/Rome,203725,PPLA2
+2523920,Palermo,Italy,IT,38.1166,13.3636,Europe/Rome,648260,PPLA
+3171457,Parma,Italy,IT,44.79935,10.32618,Europe/Rome,198292,PPLA2
+3171180,Perugia,Italy,IT,43.1122,12.38878,Europe/Rome,120137,PPLA
+3171173,Pesaro,Italy,IT,43.90921,12.9164,Europe/Rome,77241,PPLA2
+3171168,Pescara,Italy,IT,42.4584,14.20283,Europe/Rome,119554,PPLA2
+3171058,Piacenza,Italy,IT,45.05242,9.69342,Europe/Rome,103607,PPLA2
+3170647,Pisa,Italy,IT,43.70853,10.4036,Europe/Rome,109960,PPLA2
+3169984,Pozzuoli,Italy,IT,40.84394,14.0952,Europe/Rome,81231,PPLA3
+3169921,Prato,Italy,IT,43.8805,11.09699,Europe/Rome,195089,PPLA2
+3169694,Quarto Oggiaro,Italy,IT,45.51314,9.14343,Europe/Rome,182118,PPLX
+3169561,Ravenna,Italy,IT,44.41344,12.20121,Europe/Rome,80868,PPLA2
+2523630,Reggio Calabria,Italy,IT,38.11047,15.66129,Europe/Rome,182455,PPLA2
+3169522,Reggio nell'Emilia,Italy,IT,44.69825,10.63125,Europe/Rome,171944,PPLA2
+3169361,Rimini,Italy,IT,44.05755,12.56528,Europe/Rome,148688,PPLA2
+3169070,Rome,Italy,IT,41.89193,12.51133,Europe/Rome,2318895,PPLC
+3168673,Salerno,Italy,IT,40.67545,14.79328,Europe/Rome,125797,PPLA2
+3167096,Sassari,Italy,IT,40.72586,8.55552,Europe/Rome,91895,PPLA2
+3166598,Sesto San Giovanni,Italy,IT,45.53329,9.22585,Europe/Rome,81822,PPLA3
+2523083,Siracusa,Italy,IT,37.07542,15.28664,Europe/Rome,121605,PPLA2
+3165926,Taranto,Italy,IT,40.46438,17.24707,Europe/Rome,198585,PPLA2
+3165771,Terni,Italy,IT,42.56335,12.64329,Europe/Rome,111189,PPLA2
+3165456,Torre del Greco,Italy,IT,40.78931,14.36806,Europe/Rome,85332,PPLA3
+3165243,Trento,Italy,IT,46.06787,11.12108,Europe/Rome,120709,PPLA
+3165201,Treviso,Italy,IT,45.66673,12.2416,Europe/Rome,85760,PPLA2
+3165185,Trieste,Italy,IT,45.64953,13.77678,Europe/Rome,204338,PPLA
+3165524,Turin,Italy,IT,45.07049,7.68682,Europe/Rome,847287,PPLA
+3165072,Udine,Italy,IT,46.0693,13.23715,Europe/Rome,100170,PPLA2
+3164699,Varese,Italy,IT,45.82058,8.82511,Europe/Rome,80588,PPLA2
+3164527,Verona,Italy,IT,45.43854,10.9938,Europe/Rome,258031,PPLA2
+3164419,Vicenza,Italy,IT,45.54672,11.5475,Europe/Rome,111980,PPLA2
+1853909,Osaka,Japan,JP,34.69379,135.50107,Asia/Tokyo,2753862,PPLA
+1850147,Tokyo,Japan,JP,35.6895,139.69171,Asia/Tokyo,9733276,PPLC
+2960634,Dudelange,Luxembourg,LU,49.48056,6.0875,Europe/Luxembourg,18013,PPLA3
+2960596,Esch-sur-Alzette,Luxembourg,LU,49.49583,5.98056,Europe/Luxembourg,36625,PPLA2
+2960316,Luxembourg,Luxembourg,LU,49.60982,6.13268,Europe/Luxembourg,76684,PPLC
+3533462,Acapulco de Juárez,Mexico,MX,16.84942,-99.90891,America/Mexico_City,658609,PPL
+4019233,Aguascalientes,Mexico,MX,21.88262,-102.2843,America/Mexico_City,722250,PPLA
+3532497,Azcapotzalco,Mexico,MX,19.48698,-99.18594,America/Mexico_City,414711,PPL
+3827406,Benito Juarez,Mexico,MX,19.3984,-99.15766,America/Mexico_City,355017,PPL
+6957079,Benito Juárez,Mexico,MX,19.3727,-99.1564,America/Mexico_City,385439,PPLX
+3531673,Cancún,Mexico,MX,21.17429,-86.84656,America/Cancun,888797,PPL
+4014875,Celaya,Mexico,MX,20.52181,-100.81399,America/Mexico_City,340387,PPLA2
+4014338,Chihuahua,Mexico,MX,28.63528,-106.08889,America/Chihuahua,925762,PPLA
+3530757,Cholula,Mexico,MX,19.06406,-98.30352,America/Mexico_City,292881,PPL
+4018390,Ciudad Apodaca,Mexico,MX,25.78143,-100.18911,America/Monterrey,467157,PPL
+4003757,Ciudad Benito Juárez,Mexico,MX,25.6466,-100.09142,America/Monterrey,308285,PPL
+4005867,Ciudad General Escobedo,Mexico,MX,25.79663,-100.31767,America/Monterrey,454967,PPL
+4013708,Ciudad Juárez,Mexico,MX,31.72024,-106.46084,America/Ciudad_Juarez,1512450,PPLA2
+3532624,Ciudad López Mateos,Mexico,MX,19.55793,-99.25675,America/Mexico_City,489160,PPLA2
+3530589,Ciudad Nezahualcoyotl,Mexico,MX,19.40061,-99.01483,America/Mexico_City,1077208,PPL
+4013704,Ciudad Obregón,Mexico,MX,27.48642,-109.94079,America/Hermosillo,329404,PPLA2
+3530580,Ciudad Victoria,Mexico,MX,23.74061,-99.14364,America/Monterrey,332100,PPLA
+3530569,Coacalco,Mexico,MX,19.62923,-99.10689,America/Mexico_City,277959,PPLA2
+3530517,Coatzacoalcos,Mexico,MX,18.14905,-94.4447,America/Mexico_City,310698,PPL
+3530139,Coyoacán,Mexico,MX,19.3467,-99.16174,America/Mexico_City,614447,PPL
+3827409,Cuauhtémoc,Mexico,MX,19.44506,-99.14612,America/Mexico_City,531831,PPL
+3515807,Cuautitlán Izcalli,Mexico,MX,19.64388,-99.21598,America/Mexico_City,555163,PPL
+3529947,Cuernavaca,Mexico,MX,18.9261,-99.23075,America/Mexico_City,338650,PPLA
+4012176,Culiacán,Mexico,MX,24.80209,-107.39421,America/Mazatlan,808416,PPLA
+3529612,Ecatepec de Morelos,Mexico,MX,19.60492,-99.06064,America/Mexico_City,1645352,PPLA2
+4006702,Ensenada,Mexico,MX,31.87149,-116.60071,America/Tijuana,443807,PPLA2
+4005539,Guadalajara,Mexico,MX,20.67738,-103.34749,America/Mexico_City,1385629,PPLA
+4005492,Guadalupe,Mexico,MX,25.67663,-100.25907,America/Monterrey,673616,PPL
+3514674,Gustavo Adolfo Madero,Mexico,MX,19.49392,-99.11075,America/Mexico_City,1185772,PPL
+4005775,Gómez Palacio,Mexico,MX,25.56871,-103.4996,America/Monterrey,257352,PPLA2
+4004898,Hermosillo,Mexico,MX,29.08874,-110.96677,America/Hermosillo,812229,PPLA
+3523466,Heroica Matamoros,Mexico,MX,25.87972,-97.50417,America/Matamoros,510739,PPL
+4004330,Irapuato,Mexico,MX,20.671,-101.35577,America/Mexico_City,380941,PPLA2
+3526682,Ixtapaluca,Mexico,MX,19.31556,-98.88284,America/Mexico_City,322271,PPLA2
+3526700,Iztacalco,Mexico,MX,19.39528,-99.09778,America/Mexico_City,384326,PPL
+3526683,Iztapalapa,Mexico,MX,19.35529,-99.06224,America/Mexico_City,1835486,PPL
+3998655,León de los Aldama,Mexico,MX,21.12183,-101.68253,America/Mexico_City,1579803,PPLA2
+3996322,Mazatlán,Mexico,MX,23.22163,-106.41885,America/Mazatlan,381583,PPLA2
+3996069,Mexicali,Mexico,MX,32.62781,-115.45446,America/Tijuana,1032686,PPLA
+3530597,Mexico City,Mexico,MX,19.42847,-99.12766,America/Mexico_City,12294193,PPLC
+3827408,Miguel Hidalgo,Mexico,MX,19.43411,-99.20024,America/Mexico_City,372889,PPL
+3995465,Monterrey,Mexico,MX,25.68435,-100.31721,America/Monterrey,1135512,PPLA
+3995402,Morelia,Mexico,MX,19.70078,-101.18443,America/Mexico_City,743275,PPLA
+3523349,Mérida,Mexico,MX,20.967,-89.62318,America/Merida,1201000,PPLA
+3522790,Naucalpan de Juárez,Mexico,MX,19.47851,-99.23963,America/Mexico_City,834434,PPLA2
+3522732,Nicolás Romero,Mexico,MX,19.64177,-99.3068,America/Mexico_City,281799,PPLA2
+4004886,Nogales,Mexico,MX,31.30862,-110.94217,America/Hermosillo,264782,PPL
+3522551,Nuevo Laredo,Mexico,MX,27.47629,-99.51639,America/Matamoros,416055,PPL
+3827598,Ojo de Agua,Mexico,MX,19.68028,-99.01,America/Mexico_City,386290,PPL
+3521081,Puebla,Mexico,MX,19.04778,-98.20723,America/Mexico_City,1692181,PPLA
+3520339,Reynosa,Mexico,MX,26.08005,-98.28456,America/Matamoros,589466,PPLA2
+3988086,Saltillo,Mexico,MX,25.42595,-100.97963,America/Monterrey,709671,PPLA
+3985606,San Luis Potosí,Mexico,MX,22.15234,-100.97135,America/Monterrey,722772,PPLA
+3985241,San Nicolás de los Garza,Mexico,MX,25.74167,-100.30222,America/Monterrey,412199,PPL
+3984583,Santa Catarina,Mexico,MX,25.67325,-100.45813,America/Monterrey,304052,PPL
+3991164,Santiago de Querétaro,Mexico,MX,20.58806,-100.38806,America/Mexico_City,1594212,PPLA
+3982912,Soledad de Graciano Sánchez,Mexico,MX,22.18912,-100.93792,America/Mexico_City,332072,PPLA2
+3516355,Tampico,Mexico,MX,22.28519,-97.87777,America/Monterrey,309003,PPLA2
+3516266,Tapachula,Mexico,MX,14.90541,-92.25891,America/Merida,353706,PPLA2
+3981941,Tepic,Mexico,MX,21.50733,-104.89332,America/Mazatlan,332863,PPLA
+3981609,Tijuana,Mexico,MX,32.5027,-117.00371,America/Tijuana,1922523,PPLA2
+3515431,Tlalnepantla,Mexico,MX,19.54005,-99.19538,America/Mexico_City,653410,PPL
+3515428,Tlalpan,Mexico,MX,19.29513,-99.16206,America/Mexico_City,574577,PPL
+3981461,Tlaquepaque,Mexico,MX,20.64121,-103.29342,America/Mexico_City,650123,PPLA2
+3515463,Tláhuac,Mexico,MX,19.28689,-99.00507,America/Mexico_City,305076,PPL
+3515302,Toluca,Mexico,MX,19.28786,-99.65324,America/Mexico_City,489333,PPLA
+3981369,Tonalá,Mexico,MX,20.62263,-103.24168,America/Mexico_City,408759,PPLA2
+3981254,Torreón,Mexico,MX,25.54389,-103.41898,America/Monterrey,735340,PPLA2
+3515001,Tuxtla,Mexico,MX,16.75357,-93.11578,America/Merida,604147,PPLA
+3980760,Uruapan,Mexico,MX,19.41677,-102.05842,America/Mexico_City,299523,PPLA2
+3827407,Venustiano Carranza,Mexico,MX,19.44361,-99.10499,America/Mexico_City,430978,PPLX
+3514783,Veracruz,Mexico,MX,19.18095,-96.1429,America/Mexico_City,428323,PPLA2
+4011743,Victoria de Durango,Mexico,MX,24.02032,-104.65756,America/Monterrey,518709,PPL
+3514670,Villahermosa,Mexico,MX,17.98625,-92.93928,America/Merida,353577,PPLA
+3526617,Xalapa de Enríquez,Mexico,MX,19.53124,-96.91589,America/Mexico_City,424755,PPLA
+3514519,Xico,Mexico,MX,19.27032,-98.95088,America/Mexico_City,384327,PPLA2
+3514450,Xochimilco,Mexico,MX,19.25465,-99.10356,America/Mexico_City,442178,PPL
+3979770,Zapopan,Mexico,MX,20.72111,-103.38742,America/Mexico_City,1476491,PPLA2
+3513966,Zumpango,Mexico,MX,19.7967,-99.09946,America/Mexico_City,280455,PPL
+3514663,Álvaro Obregón,Mexico,MX,19.35867,-99.20329,America/Mexico_City,726664,PPLX
+6217081,Ashburton,New Zealand,NZ,-43.89834,171.73011,Pacific/Auckland,21600,PPL
+2193733,Auckland,New Zealand,NZ,-36.84853,174.76349,Pacific/Auckland,1547200,PPLA
+2193703,Avondale,New Zealand,NZ,-36.88333,174.7,Pacific/Auckland,26450,PPL
+6243926,Blenheim,New Zealand,NZ,-41.51603,173.9528,Pacific/Auckland,29800,PPLA
+6240770,Cambridge,New Zealand,NZ,-37.87822,175.4402,Pacific/Auckland,15192,PPL
+2192362,Christchurch,New Zealand,NZ,-43.53333,172.63333,Pacific/Auckland,419200,PPLA
+2191562,Dunedin,New Zealand,NZ,-45.87416,170.50361,Pacific/Auckland,132800,PPLA
+6232235,Epsom,New Zealand,NZ,-36.88745,174.77059,Pacific/Auckland,20200,PPLX
+2206854,Gisborne,New Zealand,NZ,-38.65333,178.00417,Pacific/Auckland,38100,PPLA
+2190324,Hamilton,New Zealand,NZ,-37.78333,175.28333,Pacific/Auckland,192100,PPLA
+6249340,Hamilton East,New Zealand,NZ,-37.78821,175.2902,Pacific/Auckland,15300,PPLX
+2190224,Hastings,New Zealand,NZ,-39.6381,176.84918,Pacific/Auckland,88300,PPL
+6232338,Henderson,New Zealand,NZ,-36.88012,174.61975,Pacific/Auckland,18770,PPLX
+2189529,Invercargill,New Zealand,NZ,-46.4,168.35,Pacific/Auckland,58000,PPLA
+2189028,Karori,New Zealand,NZ,-41.28374,174.74141,Pacific/Auckland,15380,PPL
+2206371,Levin,New Zealand,NZ,-40.63333,175.275,Pacific/Auckland,19789,PPL
+6232336,Lincoln,New Zealand,NZ,-36.8582,174.62019,Pacific/Auckland,17240,PPLX
+2188164,Lower Hutt,New Zealand,NZ,-41.21667,174.91667,Pacific/Auckland,114200,PPL
+2187454,Mangere,New Zealand,NZ,-36.96807,174.79875,Pacific/Auckland,23310,PPL
+6231929,Mangere East,New Zealand,NZ,-36.96587,174.82389,Pacific/Auckland,28540,PPLX
+2187404,Manukau City,New Zealand,NZ,-36.99282,174.87986,Pacific/Auckland,362000,PPL
+6232064,Manurewa,New Zealand,NZ,-37.0182,174.88019,Pacific/Auckland,40820,PPL
+6232390,Massey,New Zealand,NZ,-36.8382,174.61019,Pacific/Auckland,22210,PPLX
+6232326,Massey East,New Zealand,NZ,-36.8282,174.62019,Pacific/Auckland,22210,PPLX
+2206890,Masterton,New Zealand,NZ,-40.95972,175.6575,Pacific/Auckland,28900,PPL
+6232237,Mount Eden,New Zealand,NZ,-36.88158,174.76204,Pacific/Auckland,15650,PPL
+2186313,Napier,New Zealand,NZ,-39.4926,176.91233,Pacific/Auckland,66400,PPLA
+2186280,Nelson,New Zealand,NZ,-41.27078,173.28404,Pacific/Auckland,54400,PPLA
+6232192,New Lynn,New Zealand,NZ,-36.90694,174.68704,Pacific/Auckland,23800,PPL
+2186239,New Plymouth,New Zealand,NZ,-39.06667,174.08333,Pacific/Auckland,90100,PPLA
+2185964,North Shore,New Zealand,NZ,-36.8,174.75,Pacific/Auckland,258697,PPLX
+6232009,Otahuhu,New Zealand,NZ,-36.9382,174.84019,Pacific/Auckland,17780,PPL
+6232067,Otara,New Zealand,NZ,-36.9482,174.87019,Pacific/Auckland,24420,PPL
+2185018,Palmerston North,New Zealand,NZ,-40.35636,175.61113,Pacific/Auckland,90500,PPLA
+2208329,Papakura,New Zealand,NZ,-37.0646,174.94212,Pacific/Auckland,37720,PPL
+6232008,Papatoetoe,New Zealand,NZ,-36.9682,174.84019,Pacific/Auckland,56010,PPL
+2184904,Paraparaumu,New Zealand,NZ,-40.91667,175.01667,Pacific/Auckland,29900,PPL
+2184397,Porirua,New Zealand,NZ,-41.13333,174.85,Pacific/Auckland,61500,PPL
+2184155,Pukekohe East,New Zealand,NZ,-37.2,174.95,Pacific/Auckland,21438,PPL
+6220565,Rangiora,New Zealand,NZ,-43.30437,172.58356,Pacific/Auckland,19300,PPLA2
+6232305,Remuera,New Zealand,NZ,-36.88041,174.79819,Pacific/Auckland,27810,PPL
+2183472,Richmond,New Zealand,NZ,-41.33333,173.18333,Pacific/Auckland,19950,PPLA
+2183310,Rolleston,New Zealand,NZ,-43.58333,172.38333,Pacific/Auckland,34100,PPL
+6241325,Rotorua,New Zealand,NZ,-38.13874,176.24516,Pacific/Auckland,65901,PPLA2
+2182311,Stoke,New Zealand,NZ,-41.31667,173.23333,Pacific/Auckland,20260,PPL
+6231568,Takanini,New Zealand,NZ,-37.0393,174.92815,Pacific/Auckland,17060,PPL
+2181742,Taupo,New Zealand,NZ,-38.68333,176.08333,Pacific/Auckland,27000,PPL
+2208032,Tauranga,New Zealand,NZ,-37.68611,176.16667,Pacific/Auckland,161000,PPLA2
+6232329,Te Atatu Peninsula,New Zealand,NZ,-36.84103,174.65223,Pacific/Auckland,15200,PPLX
+6232330,Te Atatu South,New Zealand,NZ,-36.86472,174.64768,Pacific/Auckland,17240,PPLX
+2181133,Timaru,New Zealand,NZ,-44.39672,171.25364,Pacific/Auckland,29300,PPL
+6232280,Titirangi,New Zealand,NZ,-36.93754,174.65584,Pacific/Auckland,15490,PPLX
+6244895,Upper Hutt,New Zealand,NZ,-41.13827,175.0502,Pacific/Auckland,47400,PPL
+2180118,Wainuiomata,New Zealand,NZ,-41.26667,174.95,Pacific/Auckland,20450,PPL
+2179537,Wellington,New Zealand,NZ,-41.28664,174.77557,Pacific/Auckland,381900,PPLC
+2208330,Whakatane,New Zealand,NZ,-37.95855,176.98545,Pacific/Auckland,18602,PPLA
+2179670,Whanganui,New Zealand,NZ,-39.93333,175.05,Pacific/Auckland,49200,PPL
+6230919,Whangarei,New Zealand,NZ,-35.73167,174.32391,Pacific/Auckland,50900,PPLA
+3714932,Alcalde Díaz,Panama,PA,9.12273,-79.55667,America/Panama,20285,PPLA3
+3714734,Ancón,Panama,PA,8.96015,-79.5514,America/Panama,20706,PPL
+3714637,Arraiján,Panama,PA,8.9398,-79.64038,America/Panama,76815,PPLA2
+3712884,Cativá,Panama,PA,9.36218,-79.83232,America/Panama,29607,PPLA3
+3712560,Changuinola,Panama,PA,9.43,-82.52,America/Panama,17997,PPL
+3712455,Chilibre,Panama,PA,9.15403,-79.62019,America/Panama,33536,PPLA3
+3712076,Colón,Panama,PA,9.36025,-79.90019,America/Panama,78000,PPLA
+3711699,Curundú,Panama,PA,8.97092,-79.54612,America/Panama,16361,PPL
+3711668,David,Panama,PA,8.42729,-82.43085,America/Panama,82907,PPLA
+3711125,El Chorrillo,Panama,PA,8.94964,-79.54715,America/Panama,18302,PPLX
+3708306,Juan Díaz,Panama,PA,9.04059,-79.44083,America/Panama,100636,PPL
+3708066,La Cabima,Panama,PA,9.118,-79.53324,America/Panama,17975,PPLX
+3707961,La Chorrera,Panama,PA,8.87763,-79.78007,America/Panama,61232,PPLA
+3707899,La Concepción,Panama,PA,8.51667,-82.62393,America/Panama,17698,PPLA2
+3706567,Las Cumbres,Panama,PA,9.09211,-79.53895,America/Panama,69102,PPLX
+10180082,Nuevo Belén,Panama,PA,9.08929,-79.39177,America/Panama,24056,PPLX
+3703443,Panama City,Panama,PA,8.9936,-79.51973,America/Panama,408168,PPLC
+3703346,Parque Lefevre,Panama,PA,9.02266,-79.47864,America/Panama,36997,PPLX
+3703227,Pedregal,Panama,PA,9.0661,-79.42577,America/Panama,51641,PPLX
+3703229,Pedregal,Panama,PA,8.37698,-82.42947,America/Panama,17427,PPLA3
+3703068,Penonomé,Panama,PA,8.51889,-80.35727,America/Panama,16250,PPLA
+3701917,Río Abajo,Panama,PA,9.02397,-79.49361,America/Panama,26607,PPLX
+3701682,Sabanitas,Panama,PA,9.34521,-79.80543,America/Panama,15577,PPLA3
+3701329,San Miguelito,Panama,PA,9.05032,-79.47068,America/Panama,321501,PPLA2
+3701117,Santiago de Veraguas,Panama,PA,8.1,-80.98333,America/Panama,45355,PPLA
+3700563,Tocumen,Panama,PA,9.08939,-79.3831,America/Panama,50844,PPLA3
+3700164,Veracruz,Panama,PA,8.89319,-79.62338,America/Panama,17144,PPLA3
+3439389,Asunción,Paraguay,PY,-25.28646,-57.647,America/Asuncion,1482200,PPLC
+3439320,Caacupé,Paraguay,PY,-25.38575,-57.14217,America/Asuncion,56864,PPLA
+3439317,Caaguazú,Paraguay,PY,-25.47104,-56.01603,America/Asuncion,54808,PPL
+3439297,Caazapá,Paraguay,PY,-26.1966,-56.36786,America/Asuncion,23996,PPLA
+3439214,Capiatá,Paraguay,PY,-25.3552,-57.44545,America/Asuncion,198553,PPL
+3439101,Ciudad del Este,Paraguay,PY,-25.5036,-54.65067,America/Asuncion,301815,PPLA
+3438834,Concepción,Paraguay,PY,-23.39985,-57.43236,America/Asuncion,48123,PPLA
+3438819,Coronel Oviedo,Paraguay,PY,-25.44613,-56.43928,America/Asuncion,51286,PPLA
+3438735,Encarnación,Paraguay,PY,-27.33176,-55.86662,America/Asuncion,74983,PPLA
+3438115,Fernando de la Mora,Paraguay,PY,-25.3386,-57.52167,America/Asuncion,120167,PPL
+3867291,Filadelfia,Paraguay,PY,-22.33936,-60.03157,America/Asuncion,19927,PPLA
+3437918,Itauguá,Paraguay,PY,-25.39258,-57.35421,America/Asuncion,64997,PPL
+3437954,Itá,Paraguay,PY,-25.50054,-57.36717,America/Asuncion,18459,PPL
+3437863,Lambaré,Paraguay,PY,-25.34682,-57.60647,America/Asuncion,126377,PPL
+3437842,Limpio,Paraguay,PY,-25.16611,-57.48562,America/Asuncion,96143,PPL
+3437824,Loma Plata,Paraguay,PY,-22.3829,-59.83549,America/Asuncion,16460,PPL
+3438995,Mariano Roque Alonso,Paraguay,PY,-25.20791,-57.53202,America/Asuncion,72008,PPL
+3437665,Nemby,Paraguay,PY,-25.3949,-57.53574,America/Asuncion,94641,PPL
+3437547,Pedro Juan Caballero,Paraguay,PY,-22.54925,-55.7387,America/Asuncion,75109,PPLA
+3437526,Pilar,Paraguay,PY,-26.85874,-58.30639,America/Asuncion,32810,PPLA
+3437444,Presidente Franco,Paraguay,PY,-25.56384,-54.61097,America/Asuncion,54292,PPL
+3437127,San Antonio,Paraguay,PY,-25.42126,-57.54725,America/Asuncion,55754,PPL
+3437063,San Juan Bautista,Paraguay,PY,-26.67028,-57.14073,America/Asuncion,16593,PPLA
+3437056,San Lorenzo,Paraguay,PY,-25.33968,-57.50879,America/Asuncion,227876,PPL
+3436728,Villa Elisa,Paraguay,PY,-25.3676,-57.59274,America/Asuncion,64099,PPL
+3436725,Villa Hayes,Paraguay,PY,-25.093,-57.52725,America/Asuncion,57217,PPLA
+3436714,Villarrica,Paraguay,PY,-25.74946,-56.43518,America/Asuncion,41157,PPLA
+3436622,Yby Yaú,Paraguay,PY,-22.96611,-56.54066,America/Asuncion,31290,PPL
+3948642,Abancay,Peru,PE,-13.63426,-72.8838,America/Lima,72277,PPLA
+3947322,Arequipa,Peru,PE,-16.39899,-71.53747,America/Lima,1195700,PPLA
+3947019,Ayacucho,Peru,PE,-13.1638,-74.22345,America/Lima,140033,PPLA
+3946820,Barranca,Peru,PE,-10.75,-77.76667,America/Lima,46290,PPLA3
+3946818,Barranco,Peru,PE,-12.14297,-77.01862,America/Lima,37525,PPLX
+3827811,Belen,Peru,PE,-3.76016,-73.2497,America/Lima,57824,PPLX
+12165736,Breña,Peru,PE,-12.05605,-77.05295,America/Lima,81909,PPLA3
+3699088,Cajamarca,Peru,PE,-7.16378,-78.50027,America/Lima,201329,PPLA
+3946083,Callao,Peru,PE,-12.05162,-77.13452,America/Lima,1226200,PPLA
+12157070,Carmen De La Legua Reynoso,Peru,PE,-12.05354,-77.09802,America/Lima,41863,PPL
+3698658,Catacaos,Peru,PE,-5.26667,-80.68333,America/Lima,57304,PPLA3
+12157064,Centenario,Peru,PE,-9.51656,-77.53045,America/Lima,47581,PPL
+3944797,Cerro de Pasco,Peru,PE,-10.66577,-76.25309,America/Lima,58899,PPLA
+3698540,Chachapoyas,Peru,PE,-6.23169,-77.86903,America/Lima,32026,PPLA
+3698390,Chepén,Peru,PE,-7.22436,-79.42476,America/Lima,41992,PPL
+3698350,Chiclayo,Peru,PE,-6.77008,-79.85495,America/Lima,609400,PPLA
+12157030,Chilca,Peru,PE,-12.08628,-75.20827,America/Lima,73371,PPLA3
+3698304,Chimbote,Peru,PE,-9.07508,-78.59373,America/Lima,316966,PPLA3
+3943789,Chincha Alta,Peru,PE,-13.40985,-76.13235,America/Lima,153076,PPLA3
+3698194,Chocope,Peru,PE,-7.79139,-79.22167,America/Lima,32370,PPLA3
+3943423,Chosica,Peru,PE,-11.94306,-76.70944,America/Lima,88606,PPLA3
+3698105,Chulucanas,Peru,PE,-5.0925,-80.1625,America/Lima,68835,PPLA3
+12157025,Ciudad Satelite,Peru,PE,-16.43085,-71.52921,America/Lima,76410,PPLA3
+12157065,Cono Norte,Peru,PE,-16.32369,-71.58151,America/Lima,47347,PPL
+3941584,Cusco,Peru,PE,-13.53188,-71.96701,America/Lima,428450,PPLA
+3697033,Ferreñafe,Peru,PE,-6.63889,-79.78889,America/Lima,34357,PPLA3
+3940002,Huacho,Peru,PE,-11.11718,-77.60584,America/Lima,54545,PPLA
+3939470,Huancavelica,Peru,PE,-12.78691,-74.97298,America/Lima,49570,PPLA
+3939459,Huancayo,Peru,PE,-12.06866,-75.21027,America/Lima,456250,PPLA
+3939285,Huaral,Peru,PE,-11.495,-77.20778,America/Lima,62174,PPLA3
+3696378,Huaraz,Peru,PE,-9.52614,-77.52869,America/Lima,118836,PPLA
+3696417,Huánuco,Peru,PE,-9.92882,-76.23989,America/Lima,196627,PPLA
+3938527,Ica,Peru,PE,-14.07538,-75.73422,America/Lima,282407,PPLA
+3938415,Ilo,Peru,PE,-17.63185,-71.34108,America/Lima,53476,PPLA3
+3938396,Imperial,Peru,PE,-13.05927,-76.35269,America/Lima,32344,PPLA3
+3696183,Iquitos,Peru,PE,-3.74814,-73.2529,America/Lima,377609,PPLA
+3949231,Jacobo Hunter,Peru,PE,-16.44083,-71.55333,America/Lima,46092,PPLA3
+3696150,Jaén,Peru,PE,-5.70729,-78.80785,America/Lima,52493,PPL
+12157038,Jesus Maria,Peru,PE,-12.06982,-77.04495,America/Lima,66171,PPL
+3696057,Juanjuí,Peru,PE,-7.17697,-76.72774,America/Lima,37715,PPL
+3937513,Juliaca,Peru,PE,-15.5,-70.13333,America/Lima,245675,PPLA3
+3936952,La Oroya,Peru,PE,-11.51893,-75.89935,America/Lima,33345,PPLA3
+3695466,La Unión,Peru,PE,-5.40232,-80.74224,America/Lima,34834,PPL
+3695754,Lambayeque,Peru,PE,-6.70111,-79.90611,America/Lima,43710,PPLA3
+3936456,Lima,Peru,PE,-12.04318,-77.02824,America/Lima,7737002,PPLC
+3934876,Miraflores,Peru,PE,-12.11331,-77.03274,America/Lima,187401,PPLX
+3934608,Moquegua,Peru,PE,-17.19747,-70.93587,America/Lima,69882,PPLA
+3694564,Moyobamba,Peru,PE,-6.03441,-76.97423,America/Lima,50073,PPLA
+3934239,Nuevo Imperial,Peru,PE,-13.07541,-76.31719,America/Lima,32344,PPLA3
+3694112,Paita,Peru,PE,-5.08917,-81.11444,America/Lima,56151,PPLA3
+3693645,Picsi,Peru,PE,-6.71778,-79.76972,America/Lima,43610,PPLA3
+3932145,Pisco,Peru,PE,-13.71029,-76.20538,America/Lima,61869,PPLA3
+3693528,Piura,Peru,PE,-5.18192,-80.65715,America/Lima,630000,PPLA
+3693345,Pucallpa,Peru,PE,-8.37915,-74.55387,America/Lima,326040,PPLA
+3931470,Puerto Maldonado,Peru,PE,-12.58946,-69.19948,America/Lima,85024,PPLA
+3931276,Puno,Peru,PE,-15.84003,-70.02198,America/Lima,128637,PPLA
+12157037,San Fernando,Peru,PE,-8.39818,-74.53774,America/Lima,67844,PPL
+12157013,San Francisco De Borja,Peru,PE,-12.08911,-76.99876,America/Lima,105076,PPL
+3929631,San Isidro,Peru,PE,-12.09655,-77.04258,America/Lima,68309,PPL
+3692462,San Juan,Peru,PE,-3.77611,-73.28139,America/Lima,78153,PPL
+12157008,San Martin,Peru,PE,-5.18591,-80.66927,America/Lima,130000,PPL
+13132929,San Miguel,Peru,PE,-15.47798,-70.12498,America/Lima,60850,PPLA3
+12157007,Santa Anita - Los Ficus,Peru,PE,-12.05048,-76.97335,America/Lima,184614,PPL
+12157129,Santiago,Peru,PE,-13.52728,-71.9843,America/Lima,64075,PPL
+3928245,Santiago de Surco,Peru,PE,-12.13588,-77.00742,America/Lima,251648,PPLX
+3692667,Saña,Peru,PE,-6.91888,-79.582,America/Lima,39200,PPL
+12157128,Selva Alegre,Peru,PE,-16.37057,-71.52724,America/Lima,72696,PPL
+3928679,Sicuani,Peru,PE,-14.26944,-71.22611,America/Lima,33575,PPLA3
+3691674,Sullana,Peru,PE,-4.90389,-80.68528,America/Lima,160789,PPLA3
+3928128,Tacna,Peru,PE,-18.01465,-70.25362,America/Lima,286240,PPLA
+3691582,Talara,Peru,PE,-4.57722,-81.27194,America/Lima,99074,PPLA3
+3691530,Tambo Grande,Peru,PE,-4.92694,-80.34472,America/Lima,30033,PPLA3
+3927942,Tambopata,Peru,PE,-12.67191,-69.35547,America/Lima,38966,PPL
+3927758,Tarma,Peru,PE,-11.41899,-75.68992,America/Lima,51350,PPLA3
+3691348,Tingo María,Peru,PE,-9.29532,-75.99574,America/Lima,53177,PPL
+3691175,Trujillo,Peru,PE,-8.11599,-79.02998,America/Lima,1067700,PPLA
+3691148,Tumbes,Peru,PE,-3.55592,-80.44258,America/Lima,96946,PPLA
+3937547,Villa Poeta José Gálvez Barrenechea,Peru,PE,-12.21312,-76.90522,America/Lima,61000,PPLL
+12157056,Wanchaq,Peru,PE,-13.52493,-71.96531,America/Lima,59134,PPL
+3690654,Yurimaguas,Peru,PE,-5.90181,-76.12234,America/Lima,41827,PPLA3
+2743373,Afurada de Baixo,Portugal,PT,41.14389,-8.64639,Europe/Lisbon,34332,PPL
+2272215,Alcabideche,Portugal,PT,38.73366,-9.40928,Europe/Lisbon,33315,PPL
+2743131,Aldoar,Portugal,PT,41.1671,-8.6691,Europe/Lisbon,29085,PPL
+2272005,Alfornelos,Portugal,PT,38.76098,-9.20508,Europe/Lisbon,27093,PPL
+2271977,Algueirão,Portugal,PT,38.79764,-9.3437,Europe/Lisbon,66250,PPL
+2271961,Almada,Portugal,PT,38.67902,-9.1569,Europe/Lisbon,34008,PPLA2
+6930162,Alvalade,Portugal,PT,38.75328,-9.14397,Europe/Lisbon,31813,PPL
+2271772,Amadora,Portugal,PT,38.75382,-9.23083,Europe/Lisbon,178858,PPL
+2271680,Amora,Portugal,PT,38.62961,-9.11557,Europe/Lisbon,52577,PPL
+2271473,Arrentela,Portugal,PT,38.625,-9.10151,Europe/Lisbon,30156,PPL
+2742611,Aveiro,Portugal,PT,40.64575,-8.64643,Europe/Lisbon,80880,PPLA
+2742493,Bairro Novo,Portugal,PT,41.54317,-8.40725,Europe/Lisbon,32876,PPL
+2271071,Barreiro,Portugal,PT,38.66314,-9.0724,Europe/Lisbon,51280,PPLA2
+2270985,Beja,Portugal,PT,38.01469,-7.86284,Europe/Lisbon,34760,PPLA
+2270962,Benfica,Portugal,PT,38.75087,-9.20282,Europe/Lisbon,36985,PPL
+2742032,Braga,Portugal,PT,41.5514,-8.42311,Europe/Lisbon,193324,PPLA
+2742027,Bragança,Portugal,PT,41.80716,-6.75898,Europe/Lisbon,35341,PPLA
+2270503,Cacém,Portugal,PT,38.76698,-9.29793,Europe/Lisbon,93982,PPL
+2270437,Caldas da Rainha,Portugal,PT,39.40326,-9.13839,Europe/Lisbon,27378,PPLA2
+2741667,Campanhã,Portugal,PT,41.15706,-8.57466,Europe/Lisbon,29666,PPL
+2741551,Canidelo,Portugal,PT,41.12314,-8.64654,Europe/Lisbon,26431,PPL
+2269594,Cascais,Portugal,PT,38.69681,-9.42147,Europe/Lisbon,36436,PPL
+2269514,Castelo Branco,Portugal,PT,39.82364,-7.49101,Europe/Lisbon,33479,PPLA
+2269282,Charneca de Caparica,Portugal,PT,38.62032,-9.19426,Europe/Lisbon,29763,PPL
+12776117,Cidade Universitária,Portugal,PT,38.75199,-9.15917,Europe/Lisbon,37000,PPLX
+2740637,Coimbra,Portugal,PT,40.20686,-8.41996,Europe/Lisbon,140796,PPLA
+2269041,Corroios,Portugal,PT,38.64004,-9.1508,Europe/Lisbon,52520,PPL
+2270380,Câmara de Lobos,Portugal,PT,32.65043,-16.97718,Atlantic/Madeira,32209,PPL
+2268728,Damaia,Portugal,PT,38.75141,-9.21227,Europe/Lisbon,37607,PPL
+2739997,Ermesinde,Portugal,PT,41.21653,-8.55318,Europe/Lisbon,39420,PPL
+2739868,Espinho,Portugal,PT,41.00763,-8.64125,Europe/Lisbon,32786,PPLA2
+2739848,Esposende,Portugal,PT,41.5361,-8.78201,Europe/Lisbon,34625,PPLA2
+2268339,Faro,Portugal,PT,37.01869,-7.92716,Europe/Lisbon,70347,PPLA
+2739693,Felgueiras,Portugal,PT,41.36806,-8.19396,Europe/Lisbon,58065,PPLA2
+2739590,Figueira da Foz,Portugal,PT,40.15085,-8.86179,Europe/Lisbon,46600,PPLA2
+2267827,Funchal,Portugal,PT,32.66568,-16.92547,Atlantic/Madeira,105795,PPLA
+2738925,Gondomar,Portugal,PT,41.14454,-8.53223,Europe/Lisbon,27691,PPLA2
+2738785,Guarda,Portugal,PT,40.53754,-7.26631,Europe/Lisbon,40126,PPLA
+2738752,Guimarães,Portugal,PT,41.44443,-8.29619,Europe/Lisbon,40604,PPLA2
+2267226,Lagos,Portugal,PT,37.10202,-8.67422,Europe/Lisbon,33494,PPL
+2267095,Leiria,Portugal,PT,39.74362,-8.80705,Europe/Lisbon,128640,PPLA
+2267057,Lisbon,Portugal,PT,38.72509,-9.1498,Europe/Lisbon,517802,PPLC
+2266977,Loures,Portugal,PT,38.83091,-9.16845,Europe/Lisbon,66231,PPL
+2266940,Lumiar,Portugal,PT,38.77478,-9.15601,Europe/Lisbon,46334,PPL
+2738014,Maia,Portugal,PT,41.23574,-8.6199,Europe/Lisbon,36426,PPLA2
+2266703,Marinha Grande,Portugal,PT,39.74769,-8.93228,Europe/Lisbon,28916,PPLA2
+2266629,Marvila,Portugal,PT,38.73981,-9.10165,Europe/Lisbon,35463,PPL
+2266621,Massamá,Portugal,PT,38.75279,-9.2811,Europe/Lisbon,28112,PPL
+2737824,Matosinhos,Portugal,PT,41.18207,-8.68908,Europe/Lisbon,28070,PPLA2
+2266249,Monsanto,Portugal,PT,39.46203,-8.7118,Europe/Lisbon,50000,PPL
+2265788,Montijo,Portugal,PT,38.70675,-8.97388,Europe/Lisbon,30011,PPLA2
+2265467,Odivelas,Portugal,PT,38.79269,-9.1838,Europe/Lisbon,54624,PPL
+2265464,Oeiras,Portugal,PT,38.69105,-9.31085,Europe/Lisbon,35000,PPLA2
+2265447,Olhão,Portugal,PT,37.0286,-7.8411,Europe/Lisbon,29239,PPLA2
+2265432,Olivais,Portugal,PT,38.76994,-9.10674,Europe/Lisbon,33788,PPL
+2265428,Olival,Portugal,PT,38.77079,-9.25015,Europe/Lisbon,42961,PPL
+2736680,Paranhos,Portugal,PT,41.17289,-8.59931,Europe/Lisbon,45883,PPL
+2736041,Ponte de Lima,Portugal,PT,41.76719,-8.58393,Europe/Lisbon,44667,PPLA2
+2264456,Portimão,Portugal,PT,37.13856,-8.53775,Europe/Lisbon,38487,PPL
+2735943,Porto,Portugal,PT,41.1485,-8.61097,Europe/Lisbon,252687,PPLA
+2264359,Póvoa de Santa Iria,Portugal,PT,38.86101,-9.06453,Europe/Lisbon,28901,PPL
+2735787,Póvoa de Varzim,Portugal,PT,41.38344,-8.76364,Europe/Lisbon,29044,PPLA2
+2264268,Queluz,Portugal,PT,38.75657,-9.25451,Europe/Lisbon,103399,PPL
+2263827,Rio de Mouro,Portugal,PT,38.76613,-9.32804,Europe/Lisbon,54695,PPL
+2735083,Rio Tinto,Portugal,PT,41.17872,-8.55953,Europe/Lisbon,49966,PPL
+2263480,Santarém,Portugal,PT,39.23379,-8.68617,Europe/Lisbon,29385,PPLA
+2734585,Santo António dos Olivais,Portugal,PT,40.21805,-8.40523,Europe/Lisbon,41150,PPL
+2734576,Santo Ovídio,Portugal,PT,41.11379,-8.60235,Europe/Lisbon,38544,PPL
+2734140,Senhora da Hora,Portugal,PT,41.18641,-8.65172,Europe/Lisbon,28930,PPL
+2734106,Sequeira,Portugal,PT,40.55364,-7.22594,Europe/Lisbon,28502,PPL
+2262957,Sesimbra,Portugal,PT,38.44451,-9.10149,Europe/Lisbon,41134,PPL
+2262963,Setúbal,Portugal,PT,38.5244,-8.8882,Europe/Lisbon,118166,PPLA
+2263352,São Domingos de Rana,Portugal,PT,38.70194,-9.34083,Europe/Lisbon,46718,PPL
+2263284,São Martinho,Portugal,PT,32.6448,-16.93843,Atlantic/Madeira,26482,PPL
+2732773,Viana do Castelo,Portugal,PT,41.69323,-8.83287,Europe/Lisbon,36148,PPLA
+2732649,Vila do Conde,Portugal,PT,41.35326,-8.74516,Europe/Lisbon,27642,PPLA2
+2732544,Vila Nova de Gaia,Portugal,PT,41.12401,-8.61241,Europe/Lisbon,70811,PPLA2
+2732265,Viseu,Portugal,PT,40.66165,-7.90905,Europe/Lisbon,103502,PPLA
+2743304,Águas Santas,Portugal,PT,41.21017,-8.57599,Europe/Lisbon,27686,PPL
+2268406,Évora,Portugal,PT,38.56587,-7.90405,Europe/Lisbon,53591,PPLA
+580497,Astrakhan,Russia,RU,46.34968,48.04076,Europe/Astrakhan,533925,PPLA
+1510853,Barnaul,Russia,RU,53.36199,83.72786,Asia/Barnaul,632372,PPLA
+569696,Cheboksary,Russia,RU,56.13218,47.246,Europe/Moscow,492331,PPLA
+1508291,Chelyabinsk,Russia,RU,55.1611,61.42877,Asia/Yekaterinburg,1202371,PPLA
+2023469,Irkutsk,Russia,RU,52.29566,104.29076,Asia/Irkutsk,623869,PPLA
+554840,Izhevsk,Russia,RU,56.85225,53.19862,Europe/Samara,648213,PPLA
+8504951,Kalininskiy,Russia,RU,59.99675,30.3899,Europe/Moscow,504641,PPLX
+551487,Kazan,Russia,RU,55.78874,49.12214,Europe/Moscow,1243500,PPLA
+1503901,Kemerovo,Russia,RU,55.35417,86.10435,Asia/Novokuznetsk,558973,PPLA
+2022890,Khabarovsk,Russia,RU,48.46204,135.0971,Asia/Vladivostok,618150,PPLA
+548408,Kirov,Russia,RU,58.59809,49.65783,Europe/Kirov,507155,PPLA
+542420,Krasnodar,Russia,RU,45.04534,38.98178,Europe/Moscow,899541,PPLA
+1502026,Krasnoyarsk,Russia,RU,56.03742,92.93136,Asia/Krasnoyarsk,1090811,PPLA
+535121,Lipetsk,Russia,RU,52.5876,39.55151,Europe/Moscow,509735,PPLA
+532096,Makhachkala,Russia,RU,42.97782,47.50027,Europe/Moscow,596356,PPLA
+524901,Moscow,Russia,RU,55.75204,37.61781,Europe/Moscow,10381222,PPLC
+523750,Naberezhnyye Chelny,Russia,RU,55.73718,52.41961,Europe/Moscow,509870,PPLA2
+520555,Nizhniy Novgorod,Russia,RU,56.32867,44.00205,Europe/Moscow,1259013,PPLA
+1496990,Novokuznetsk,Russia,RU,53.75752,87.13599,Asia/Novokuznetsk,539616,PPLA2
+1496747,Novosibirsk,Russia,RU,55.02259,82.93175,Asia/Novosibirsk,1612833,PPLA
+1496153,Omsk,Russia,RU,54.99244,73.36859,Asia/Omsk,1172070,PPLA
+515003,Orenburg,Russia,RU,51.76712,55.09883,Asia/Yekaterinburg,564773,PPLA
+511565,Penza,Russia,RU,53.19568,45.01075,Europe/Moscow,523553,PPLA
+511196,Perm,Russia,RU,58.01046,56.25017,Asia/Yekaterinburg,982419,PPLA
+501175,Rostov-on-Don,Russia,RU,47.21997,39.70769,Europe/Moscow,1130305,PPLA
+500096,Ryazan’,Russia,RU,54.62696,39.70415,Europe/Moscow,538962,PPLA
+498817,Saint Petersburg,Russia,RU,59.93863,30.31413,Europe/Moscow,5351935,PPLA
+499099,Samara,Russia,RU,53.20767,50.13553,Europe/Samara,1163399,PPLA
+498677,Saratov,Russia,RU,51.54048,45.9901,Europe/Saratov,844858,PPLA
+482283,Tolyatti,Russia,RU,53.5303,49.3461,Europe/Samara,702879,PPL
+1489425,Tomsk,Russia,RU,56.50049,84.98216,Asia/Tomsk,574002,PPLA
+480562,Tula,Russia,RU,54.19609,37.61822,Europe/Moscow,482873,PPLA
+1488754,Tyumen,Russia,RU,57.15222,65.52722,Asia/Yekaterinburg,768358,PPLA
+479561,Ufa,Russia,RU,54.74306,55.96779,Asia/Yekaterinburg,1120547,PPLA
+479123,Ulyanovsk,Russia,RU,54.32824,48.38657,Europe/Ulyanovsk,626540,PPLA
+2013348,Vladivostok,Russia,RU,43.10562,131.87353,Asia/Vladivostok,604901,PPLA
+472757,Volgograd,Russia,RU,48.71378,44.4976,Europe/Volgograd,1013533,PPLA
+472045,Voronezh,Russia,RU,51.66833,39.19204,Europe/Moscow,1047549,PPLA
+468902,Yaroslavl,Russia,RU,57.62987,39.87368,Europe/Moscow,608722,PPLA
+1486209,Yekaterinburg,Russia,RU,56.85733,60.61529,Asia/Yekaterinburg,1495066,PPLA
+1880252,Singapore,Singapore,SG,1.28967,103.85007,Asia/Singapore,5638700,PPLC
+1023441,Alberton,South Africa,ZA,-26.26786,28.12225,Africa/Johannesburg,121536,PPL
+1023374,Alexandra,South Africa,ZA,-26.10528,28.09884,Africa/Johannesburg,179624,PPLX
+3370356,Athlone,South Africa,ZA,-33.96722,18.50214,Africa/Johannesburg,237414,PPLX
+1020098,Benoni,South Africa,ZA,-26.18848,28.32078,Africa/Johannesburg,605344,PPL
+1019330,Bhisho,South Africa,ZA,-32.84721,27.44218,Africa/Johannesburg,137287,PPLA
+1018725,Bloemfontein,South Africa,ZA,-29.12107,26.214,Africa/Johannesburg,556637,PPLA
+1017780,Boksburg,South Africa,ZA,-26.21197,28.25958,Africa/Johannesburg,445168,PPL
+1016670,Botshabelo,South Africa,ZA,-29.26737,26.72595,Africa/Johannesburg,309714,PPL
+1016181,Brakpan,South Africa,ZA,-26.23656,28.36938,Africa/Johannesburg,305692,PPL
+1015621,Brits,South Africa,ZA,-25.63473,27.78022,Africa/Johannesburg,122497,PPLA3
+3369157,Cape Town,South Africa,ZA,-33.92584,18.42322,Africa/Johannesburg,4772846,PPLA
+1014073,Carletonville,South Africa,ZA,-26.36094,27.39767,Africa/Johannesburg,182304,PPLA3
+1105777,Centurion,South Africa,ZA,-25.85891,28.18577,Africa/Johannesburg,236580,PPL
+1011031,Delmas,South Africa,ZA,-26.1466,28.68322,Africa/Johannesburg,92046,PPLA3
+8764562,Diepsloot,South Africa,ZA,-25.93312,28.01213,Africa/Johannesburg,350000,PPLX
+1007311,Durban,South Africa,ZA,-29.8579,31.0292,Africa/Johannesburg,3338026,PPLA2
+1006984,East London,South Africa,ZA,-33.01529,27.91162,Africa/Johannesburg,478676,PPLA2
+939270,Emalahleni,South Africa,ZA,-25.87133,29.23323,Africa/Johannesburg,373403,PPLA3
+1005646,eMbalenhle,South Africa,ZA,-26.53333,29.06667,Africa/Johannesburg,142443,PPL
+1005125,Ermelo,South Africa,ZA,-26.53333,29.98333,Africa/Johannesburg,100324,PPLA3
+11204106,Etwatwa,South Africa,ZA,-26.12516,28.45472,Africa/Johannesburg,151866,PPL
+1004866,Evaton,South Africa,ZA,-26.53333,27.85,Africa/Johannesburg,725468,PPL
+1002145,George,South Africa,ZA,-33.963,22.46173,Africa/Johannesburg,188580,PPLA2
+1002108,Germiston,South Africa,ZA,-26.23481,28.17665,Africa/Johannesburg,255863,PPLA2
+964420,Gqeberha,South Africa,ZA,-33.96109,25.61494,Africa/Johannesburg,1050078,PPLA2
+998082,Hammanskraal,South Africa,ZA,-25.40892,28.287,Africa/Johannesburg,112950,PPL
+11204237,Ivory Park,South Africa,ZA,-25.9957,28.1971,Africa/Johannesburg,184383,PPLX
+993800,Johannesburg,South Africa,ZA,-26.20227,28.04363,Africa/Johannesburg,9418183,PPLA
+946877,Kariega,South Africa,ZA,-33.75562,25.40074,Africa/Johannesburg,291052,PPL
+990930,Kimberley,South Africa,ZA,-28.73226,24.76232,Africa/Johannesburg,142089,PPLA
+989921,Klerksdorp,South Africa,ZA,-26.85213,26.66672,Africa/Johannesburg,227039,PPLA2
+986846,Kroonstad,South Africa,ZA,-27.65036,27.23488,Africa/Johannesburg,117152,PPLA3
+986822,Krugersdorp,South Africa,ZA,-26.08577,27.77515,Africa/Johannesburg,378821,PPLA3
+986083,Kutloanong,South Africa,ZA,-27.83333,26.75,Africa/Johannesburg,95008,PPL
+952734,KwaDukuza,South Africa,ZA,-29.32816,31.28954,Africa/Johannesburg,161177,PPL
+984998,Ladysmith,South Africa,ZA,-28.55874,29.77896,Africa/Johannesburg,143446,PPLA2
+980921,Mabopane,South Africa,ZA,-25.509,28.064,Africa/Johannesburg,110972,PPL
+971534,Mbombela,South Africa,ZA,-25.47512,30.96935,Africa/Johannesburg,110159,PPLA
+977432,Mdantsane,South Africa,ZA,-32.93324,27.77656,Africa/Johannesburg,205504,PPL
+976361,Middelburg,South Africa,ZA,-25.77507,29.46482,Africa/Johannesburg,196263,PPLA2
+964315,Mokopane,South Africa,ZA,-24.19436,29.00974,Africa/Johannesburg,101090,PPLA3
+973111,Mpumalanga,South Africa,ZA,-29.81292,30.63646,Africa/Johannesburg,140121,PPL
+946058,Mthatha,South Africa,ZA,-31.58893,28.78443,Africa/Johannesburg,164848,PPL
+971421,Newcastle,South Africa,ZA,-27.75796,29.9318,Africa/Johannesburg,404838,PPLA2
+970566,Nigel,South Africa,ZA,-26.43138,28.47713,Africa/Johannesburg,140644,PPL
+11205667,Ntuzuma,South Africa,ZA,-29.739,30.949,Africa/Johannesburg,125394,PPL
+967476,Orkney,South Africa,ZA,-26.98023,26.67272,Africa/Johannesburg,110052,PPL
+3363094,Paarl,South Africa,ZA,-33.73378,18.97523,Africa/Johannesburg,236910,PPLA3
+965528,Phalaborwa,South Africa,ZA,-23.94299,31.14107,Africa/Johannesburg,109468,PPLA3
+965301,Pietermaritzburg,South Africa,ZA,-29.61679,30.39278,Africa/Johannesburg,839327,PPLA
+965154,Pinetown,South Africa,ZA,-29.82068,30.88674,Africa/Johannesburg,144026,PPL
+965289,Polokwane,South Africa,ZA,-23.90449,29.46885,Africa/Johannesburg,272461,PPLA
+964349,Potchefstroom,South Africa,ZA,-26.71667,27.1,Africa/Johannesburg,178285,PPLA3
+964137,Pretoria,South Africa,ZA,-25.74486,28.18783,Africa/Johannesburg,2112693,PPLC
+990849,Qonce,South Africa,ZA,-32.88076,27.39377,Africa/Johannesburg,93072,PPL
+963516,Queenstown,South Africa,ZA,-31.89756,26.87533,Africa/Johannesburg,118599,PPLA2
+963241,Randburg,South Africa,ZA,-26.0941,28.00123,Africa/Johannesburg,337053,PPL
+963230,Randfontein,South Africa,ZA,-26.1844,27.70203,Africa/Johannesburg,133654,PPLA2
+962367,Richards Bay,South Africa,ZA,-28.78301,32.03768,Africa/Johannesburg,252968,PPLA2
+936374,Roodepoort,South Africa,ZA,-26.1625,27.8725,Africa/Johannesburg,326416,PPL
+958724,Rustenburg,South Africa,ZA,-25.66756,27.24208,Africa/Johannesburg,373695,PPLA3
+957487,Sasolburg,South Africa,ZA,-26.81358,27.81695,Africa/Johannesburg,135828,PPLA2
+1105728,Somaroboro,South Africa,ZA,-25.34604,28.83431,Africa/Johannesburg,114369,PPL
+6951112,Somerset West,South Africa,ZA,-34.08401,18.82113,Africa/Johannesburg,225289,PPL
+954013,Soshanguve,South Africa,ZA,-25.47288,28.09919,Africa/Johannesburg,872309,PPL
+953781,Soweto,South Africa,ZA,-26.26781,27.85849,Africa/Johannesburg,1695047,PPL
+952865,Springs,South Africa,ZA,-26.25,28.4,Africa/Johannesburg,186394,PPLX
+952747,Standerton,South Africa,ZA,-26.93366,29.24152,Africa/Johannesburg,101101,PPLA3
+3361025,Stellenbosch,South Africa,ZA,-33.93462,18.86676,Africa/Johannesburg,96228,PPLA3
+952192,Stilfontein,South Africa,ZA,-26.84493,26.76829,Africa/Johannesburg,93110,PPL
+949880,Thembisa,South Africa,ZA,-25.99636,28.2268,Africa/Johannesburg,511655,PPL
+949224,Thohoyandou,South Africa,ZA,-22.94564,30.48497,Africa/Johannesburg,107144,PPLA2
+948542,Tokoza,South Africa,ZA,-26.36,28.129,Africa/Johannesburg,106000,PPL
+944986,Vanderbijlpark,South Africa,ZA,-26.71171,27.83795,Africa/Johannesburg,246754,PPLA3
+944385,Vereeniging,South Africa,ZA,-26.67313,27.92615,Africa/Johannesburg,474681,PPLA2
+943882,Virginia,South Africa,ZA,-28.10391,26.86593,Africa/Johannesburg,122502,PPL
+942470,Vryheid,South Africa,ZA,-27.76952,30.79165,Africa/Johannesburg,150012,PPLA3
+940909,Welkom,South Africa,ZA,-27.97742,26.73506,Africa/Johannesburg,431944,PPLA2
+940316,Westonaria,South Africa,ZA,-26.31905,27.6486,Africa/Johannesburg,156831,PPLA3
+3359041,Worcester,South Africa,ZA,-33.64651,19.44852,Africa/Johannesburg,127597,PPLA2
+1835848,Seoul,South Korea,KR,37.566,126.9784,Asia/Seoul,10349312,PPLC
+3119841,A Coruña,Spain,ES,43.37135,-8.396,Europe/Madrid,250438,PPLA3
+2522258,Albacete,Spain,ES,38.99424,-1.85643,Europe/Madrid,173050,PPLA2
+3130564,Alcorcón,Spain,ES,40.34582,-3.82487,Europe/Madrid,172384,PPLA3
+2522013,Algeciras,Spain,ES,36.13326,-5.45051,Europe/Madrid,121414,PPLA3
+2521978,Alicante,Spain,ES,38.34517,-0.48149,Europe/Madrid,348901,PPLA2
+2521886,Almería,Spain,ES,36.83814,-2.45974,Europe/Madrid,196851,PPLA2
+6544487,Arganzuela,Spain,ES,40.40021,-3.69618,Europe/Madrid,148797,PPLX
+2521420,Badajoz,Spain,ES,38.87789,-6.97061,Europe/Madrid,150530,PPLA3
+3128760,Barcelona,Spain,ES,41.38879,2.15899,Europe/Madrid,1686208,PPLA
+3128026,Bilbao,Spain,ES,43.26271,-2.92528,Europe/Madrid,347342,PPLA2
+3127461,Burgos,Spain,ES,42.34106,-3.70184,Europe/Madrid,176418,PPLA2
+6544493,Carabanchel,Spain,ES,40.39094,-3.7242,Europe/Madrid,253678,PPLX
+2520058,Cartagena,Spain,ES,37.60197,-0.98397,Europe/Madrid,213943,PPLA3
+2519752,Castelló de la Plana,Spain,ES,39.98567,-0.04935,Europe/Madrid,171857,PPLA2
+3125239,Chamartín,Spain,ES,40.46206,-3.6766,Europe/Madrid,140000,PPL
+6544492,Chamberí,Spain,ES,40.43404,-3.70379,Europe/Madrid,145934,PPLX
+3124964,Ciudad Lineal,Spain,ES,40.44505,-3.65132,Europe/Madrid,228171,PPL
+2519240,Córdoba,Spain,ES,37.89155,-4.77275,Europe/Madrid,325708,PPLA2
+3110044,Donostia / San Sebastián,Spain,ES,43.31283,-1.97499,Europe/Madrid,185357,PPLA2
+2518794,Dos Hermanas,Spain,ES,37.28287,-5.92088,Europe/Madrid,122943,PPLA3
+6544100,Eixample,Spain,ES,41.38896,2.16179,Europe/Madrid,266477,PPLX
+2518559,Elche,Spain,ES,38.26218,-0.70107,Europe/Madrid,234765,PPLA3
+3121969,Fuencarral,Spain,ES,40.5,-3.68333,Europe/Madrid,238765,PPLX
+8285534,Fuencarral-El Pardo,Spain,ES,40.4984,-3.7314,Europe/Madrid,220085,PPLX
+3104499,Gasteiz / Vitoria,Spain,ES,42.84998,-2.67268,Europe/Madrid,257407,PPLA
+3121424,Gijón,Spain,ES,43.53573,-5.66152,Europe/Madrid,271780,PPLA3
+2517117,Granada,Spain,ES,37.18817,-3.60667,Europe/Madrid,233532,PPLA2
+3121245,Gràcia,Spain,ES,41.40237,2.15641,Europe/Madrid,121502,PPLX
+6544103,Horta-Guinardó,Spain,ES,41.41849,2.1677,Europe/Madrid,168092,PPLX
+3120635,Hortaleza,Spain,ES,40.47444,-3.6411,Europe/Madrid,161661,PPLX
+2516548,Huelva,Spain,ES,37.26638,-6.94004,Europe/Madrid,144258,PPLA2
+11549939,Ibiza,Spain,ES,40.41888,-3.67434,Europe/Madrid,21492,PPLX
+2516479,Ibiza,Spain,ES,38.90883,1.43296,Europe/Madrid,49727,PPLA3
+2516326,Jerez de la Frontera,Spain,ES,36.68645,-6.13606,Europe/Madrid,212879,PPLA3
+2511401,La Laguna,Spain,ES,28.4853,-16.32014,Atlantic/Canary,150661,PPL
+2515270,Las Palmas de Gran Canaria,Spain,ES,28.10178,-15.41573,Atlantic/Canary,383516,PPLA
+6544489,Latina,Spain,ES,40.38897,-3.74569,Europe/Madrid,256644,PPLX
+3118532,León,Spain,ES,42.60003,-5.57032,Europe/Madrid,124772,PPLA2
+3118514,Lleida,Spain,ES,41.61674,0.62218,Europe/Madrid,140797,PPLA2
+3118150,Logroño,Spain,ES,42.46615,-2.45115,Europe/Madrid,151164,PPLA
+3117735,Madrid,Spain,ES,40.4165,-3.70256,Europe/Madrid,3255944,PPLC
+6544494,Madrid Centro,Spain,ES,40.41831,-3.70275,Europe/Madrid,149718,PPLX
+2514169,Marbella,Spain,ES,36.51543,-4.88583,Europe/Madrid,156295,PPLA3
+3117164,Mataró,Spain,ES,41.54211,2.4445,Europe/Madrid,126988,PPLA3
+2513416,Murcia,Spain,ES,37.98704,-1.13004,Europe/Madrid,471982,PPLA
+2514256,Málaga,Spain,ES,36.72016,-4.42034,Europe/Madrid,592346,PPLA2
+6252065,Nou Barris,Spain,ES,41.44163,2.17727,Europe/Madrid,166310,PPLX
+3114711,Oviedo,Spain,ES,43.36029,-5.84476,Europe/Madrid,220027,PPLA
+2512989,Palma,Spain,ES,39.56939,2.65024,Europe/Madrid,438234,PPLA
+3114472,Pamplona,Spain,ES,42.81687,-1.64323,Europe/Madrid,208243,PPLA
+3112737,Puente de Vallecas,Spain,ES,40.39354,-3.662,Europe/Madrid,244151,PPLX
+6544495,Retiro,Spain,ES,40.41317,-3.68307,Europe/Madrid,126058,PPLX
+3111199,Sabadell,Spain,ES,41.54329,2.10942,Europe/Madrid,211734,PPLA3
+3111108,Salamanca,Spain,ES,40.96882,-5.66388,Europe/Madrid,144825,PPLA2
+6544491,Salamanca,Spain,ES,40.42972,-3.67975,Europe/Madrid,147707,PPLX
+6544488,San Blas-Canillejas,Spain,ES,40.43893,-3.61537,Europe/Madrid,157367,PPLX
+3110876,Sant Andreu,Spain,ES,41.43541,2.18982,Europe/Madrid,142598,PPLX
+6544105,Sant Martí,Spain,ES,41.41814,2.19933,Europe/Madrid,235719,PPLQ
+3109981,Santa Coloma de Gramenet,Spain,ES,41.45152,2.2081,Europe/Madrid,118821,PPL
+2511174,Santa Cruz de Tenerife,Spain,ES,28.46824,-16.25462,Atlantic/Canary,211359,PPLA
+3109718,Santander,Spain,ES,43.46589,-3.80493,Europe/Madrid,173635,PPLA
+6544104,Sants-Montjuïc,Spain,ES,41.37263,2.1546,Europe/Madrid,183120,PPLX
+6544102,Sarrià-Sant Gervasi,Spain,ES,41.40104,2.1394,Europe/Madrid,147912,PPLX
+2510911,Sevilla,Spain,ES,37.38283,-5.97317,Europe/Madrid,686741,PPLA
+3108288,Tarragona,Spain,ES,41.11905,1.24544,Europe/Madrid,141542,PPLA2
+2510542,Telde,Spain,ES,27.99243,-15.41915,Atlantic/Canary,123265,PPLA3
+3108286,Terrassa,Spain,ES,41.56667,2.01667,Europe/Madrid,218535,PPL
+3108118,Tetuán de las Victorias,Spain,ES,40.45975,-3.6975,Europe/Madrid,155000,PPLX
+3107784,Torrejón de Ardoz,Spain,ES,40.45535,-3.46973,Europe/Madrid,118162,PPLA3
+6544490,Usera,Spain,ES,40.38866,-3.70035,Europe/Madrid,141189,PPLX
+2509954,Valencia,Spain,ES,39.47391,-0.37966,Europe/Madrid,824340,PPLA
+3106672,Valladolid,Spain,ES,41.65541,-4.72353,Europe/Madrid,300618,PPLA
+3105976,Vigo,Spain,ES,42.23282,-8.72264,Europe/Madrid,293642,PPLA3
+3104748,Villaverde,Spain,ES,40.35,-3.7,Europe/Madrid,126802,PPLX
+3104324,Zaragoza,Spain,ES,41.65606,-0.87734,Europe/Madrid,686986,PPLA
+2661881,Aarau,Switzerland,CH,47.39254,8.04422,Europe/Zurich,21503,PPLA
+2661810,Allschwil,Switzerland,CH,47.55074,7.53599,Europe/Zurich,18189,PPL
+2661653,Baar,Switzerland,CH,47.19625,8.52954,Europe/Zurich,20546,PPL
+2661646,Baden,Switzerland,CH,47.47333,8.30592,Europe/Zurich,19340,PPLA2
+2661604,Basel,Switzerland,CH,47.55839,7.57327,Europe/Zurich,177595,PPLA
+2661567,Bellinzona,Switzerland,CH,46.19278,9.01703,Europe/Zurich,43220,PPLA
+2661552,Bern,Switzerland,CH,46.94809,7.44744,Europe/Zurich,121631,PPLC
+2661513,Biel/Bienne,Switzerland,CH,47.13713,7.24608,Europe/Zurich,55120,PPLA2
+2661337,Bulle,Switzerland,CH,46.61797,7.0569,Europe/Zurich,23438,PPL
+2661321,Burgdorf,Switzerland,CH,47.05901,7.62786,Europe/Zurich,16420,PPL
+2661338,Bülach,Switzerland,CH,47.52197,8.54049,Europe/Zurich,20443,PPLA2
+2661265,Carouge,Switzerland,CH,46.18096,6.13921,Europe/Zurich,19344,PPL
+2661228,Cham,Switzerland,CH,47.18213,8.46358,Europe/Zurich,16719,PPL
+2661169,Chur,Switzerland,CH,46.84986,9.53287,Europe/Zurich,35373,PPLA
+2661015,Dietikon,Switzerland,CH,47.40165,8.40015,Europe/Zurich,20893,PPL
+2660971,Dübendorf,Switzerland,CH,47.39724,8.61872,Europe/Zurich,19882,PPL
+2660911,Emmen,Switzerland,CH,47.07819,8.27331,Europe/Zurich,30926,PPL
+2660727,Frauenfeld,Switzerland,CH,47.55776,8.89893,Europe/Zurich,25607,PPLA
+2660718,Fribourg,Switzerland,CH,46.80237,7.15128,Europe/Zurich,38365,PPLA
+2660646,Geneva,Switzerland,CH,46.20222,6.14569,Europe/Zurich,201741,PPLA
+2660549,Gossau,Switzerland,CH,47.41551,9.25482,Europe/Zurich,17043,PPL
+2660305,Horgen,Switzerland,CH,47.25983,8.59778,Europe/Zurich,22662,PPLA2
+2660221,Jona,Switzerland,CH,47.22983,8.83884,Europe/Zurich,17655,PPL
+2660127,Kloten,Switzerland,CH,47.45152,8.58491,Europe/Zurich,16289,PPL
+2660108,Kreuzlingen,Switzerland,CH,47.65051,9.17504,Europe/Zurich,21997,PPLA2
+2660104,Kriens,Switzerland,CH,47.0311,8.28547,Europe/Zurich,25010,PPL
+2660119,Köniz,Switzerland,CH,46.92436,7.41457,Europe/Zurich,41784,PPL
+2660076,La Chaux-de-Fonds,Switzerland,CH,47.09993,6.82586,Europe/Zurich,37942,PPLA2
+6691640,Lancy,Switzerland,CH,46.18981,6.11441,Europe/Zurich,27291,PPLX
+2659994,Lausanne,Switzerland,CH,46.516,6.63282,Europe/Zurich,139111,PPLA
+2659836,Lugano,Switzerland,CH,46.01008,8.96004,Europe/Zurich,63185,PPLA2
+2659811,Luzern,Switzerland,CH,47.05048,8.30635,Europe/Zurich,81691,PPLA
+2659748,Martigny-Ville,Switzerland,CH,46.10276,7.07245,Europe/Zurich,18301,PPLA2
+2659667,Meyrin,Switzerland,CH,46.23424,6.08025,Europe/Zurich,19772,PPL
+2659613,Monthey,Switzerland,CH,46.25451,6.95406,Europe/Zurich,17777,PPLA2
+2659601,Montreux,Switzerland,CH,46.43301,6.91143,Europe/Zurich,25984,PPL
+2659522,Muttenz,Switzerland,CH,47.52271,7.64511,Europe/Zurich,16927,PPL
+2659496,Neuchâtel,Switzerland,CH,46.99179,6.931,Europe/Zurich,33475,PPLA
+2659422,Nyon,Switzerland,CH,46.38318,6.23955,Europe/Zurich,16797,PPLA2
+6295536,Oberwinterthur (Kreis 2),Switzerland,CH,47.51692,8.76863,Europe/Zurich,16356,PPLX
+2659297,Olten,Switzerland,CH,47.34999,7.90329,Europe/Zurich,18362,PPLA2
+2659296,Onex,Switzerland,CH,46.18396,6.10237,Europe/Zurich,17302,PPL
+2659292,Opfikon,Switzerland,CH,47.43169,8.57588,Europe/Zurich,21554,PPL
+2659099,Rapperswil,Switzerland,CH,47.22557,8.82228,Europe/Zurich,34776,PPL
+6698588,Reinach,Switzerland,CH,47.49702,7.59172,Europe/Zurich,19216,PPL
+2659070,Renens,Switzerland,CH,46.53989,6.5881,Europe/Zurich,20927,PPLA2
+3206590,Riehen,Switzerland,CH,47.57884,7.64683,Europe/Zurich,20000,PPL
+2658822,Sankt Gallen,Switzerland,CH,47.42391,9.37477,Europe/Zurich,75833,PPLA
+2658761,Schaffhausen,Switzerland,CH,47.69732,8.63493,Europe/Zurich,36587,PPLA
+2658606,Sierre,Switzerland,CH,46.29192,7.53559,Europe/Zurich,16790,PPLA2
+2658576,Sitten,Switzerland,CH,46.22739,7.35559,Europe/Zurich,34708,PPLA
+2658564,Solothurn,Switzerland,CH,47.20791,7.53714,Europe/Zurich,16777,PPLA
+2658377,Thun,Switzerland,CH,46.75118,7.62166,Europe/Zurich,43723,PPLA2
+2658216,Uster,Switzerland,CH,47.34713,8.72091,Europe/Zurich,34715,PPLA2
+2658154,Vernier,Switzerland,CH,46.21702,6.08497,Europe/Zurich,30086,PPL
+2658145,Vevey,Switzerland,CH,46.46299,6.84345,Europe/Zurich,19891,PPLA2
+2658011,Wettingen,Switzerland,CH,47.46606,8.32663,Europe/Zurich,18191,PPL
+2658010,Wetzikon,Switzerland,CH,47.3264,8.79779,Europe/Zurich,24764,PPL
+2657996,Wil,Switzerland,CH,47.46152,9.04552,Europe/Zurich,23955,PPL
+2657970,Winterthur,Switzerland,CH,47.50564,8.72413,Europe/Zurich,111840,PPLA2
+2657941,Yverdon-les-Bains,Switzerland,CH,46.77852,6.64115,Europe/Zurich,30157,PPLA2
+2657908,Zug,Switzerland,CH,47.17242,8.51745,Europe/Zurich,30542,PPLA
+2657896,Zürich,Switzerland,CH,47.36667,8.55,Europe/Zurich,415367,PPLA
+6295539,Zürich (Kreis 10),Switzerland,CH,47.40773,8.5005,Europe/Zurich,36216,PPLX
+2660306,Zürich (Kreis 10) / Höngg,Switzerland,CH,47.40313,8.4971,Europe/Zurich,17117,PPLX
+6295533,Zürich (Kreis 11),Switzerland,CH,47.42326,8.52166,Europe/Zurich,54260,PPLX
+6295484,Zürich (Kreis 11) / Affoltern,Switzerland,CH,47.41814,8.5122,Europe/Zurich,17241,PPLX
+2659310,Zürich (Kreis 11) / Oerlikon,Switzerland,CH,47.40823,8.54258,Europe/Zurich,17922,PPLX
+2658656,Zürich (Kreis 11) / Seebach,Switzerland,CH,47.42181,8.54779,Europe/Zurich,17851,PPLX
+6295523,Zürich (Kreis 12),Switzerland,CH,47.40372,8.57608,Europe/Zurich,28189,PPLX
+6295540,Zürich (Kreis 2),Switzerland,CH,47.33756,8.5211,Europe/Zurich,29215,PPLX
+6295532,Zürich (Kreis 3),Switzerland,CH,47.35785,8.50296,Europe/Zurich,46018,PPLX
+6295498,Zürich (Kreis 3) / Sihlfeld,Switzerland,CH,47.37382,8.51164,Europe/Zurich,20977,PPLX
+2661666,Zürich (Kreis 4) / Aussersihl,Switzerland,CH,47.37752,8.52127,Europe/Zurich,27273,PPLX
+6295550,Zürich (Kreis 6),Switzerland,CH,47.39223,8.54381,Europe/Zurich,29951,PPLX
+6295504,Zürich (Kreis 6) / Unterstrass,Switzerland,CH,47.3953,8.53721,Europe/Zurich,20045,PPLX
+6295548,Zürich (Kreis 7),Switzerland,CH,47.37328,8.58038,Europe/Zurich,33820,PPLX
+6295534,Zürich (Kreis 9),Switzerland,CH,47.38245,8.47993,Europe/Zurich,44878,PPLX
+6295512,Zürich (Kreis 9) / Albisrieden,Switzerland,CH,47.37398,8.49007,Europe/Zurich,16480,PPLX
+6295513,Zürich (Kreis 9) / Altstetten,Switzerland,CH,47.38946,8.48533,Europe/Zurich,28307,PPLX
+292223,Dubai,United Arab Emirates,AE,25.07725,55.30927,Asia/Dubai,3790000,PPLA
+2657832,Aberdeen,United Kingdom,GB,57.14369,-2.09814,Europe/London,198590,PPLA2
+11777624,Archway,United Kingdom,GB,51.56733,-0.13415,Europe/London,215667,PPLL
+2656333,Barking,United Kingdom,GB,51.53333,0.08333,Europe/London,218534,PPL
+2656194,Basildon,United Kingdom,GB,51.56844,0.45782,Europe/London,144859,PPL
+2655984,Belfast,United Kingdom,GB,54.59682,-5.92541,Europe/London,348005,PPLA
+2655775,Bexley,United Kingdom,GB,51.44162,0.14866,Europe/London,228000,PPLL
+2655613,Birkenhead,United Kingdom,GB,53.39337,-3.01479,Europe/London,325264,PPL
+2655603,Birmingham,United Kingdom,GB,52.48142,-1.89983,Europe/London,1157603,PPLA2
+2655524,Blackburn,United Kingdom,GB,53.75,-2.48333,Europe/London,146521,PPLA2
+2655459,Blackpool,United Kingdom,GB,53.81667,-3.05,Europe/London,145007,PPLA2
+2655237,Bolton,United Kingdom,GB,53.58333,-2.43333,Europe/London,141331,PPLA2
+2655095,Bournemouth,United Kingdom,GB,50.72048,-1.8795,Europe/London,163600,PPLA2
+2654993,Bradford,United Kingdom,GB,53.79391,-1.75206,Europe/London,366187,PPLA2
+2654789,Brent,United Kingdom,GB,51.55306,-0.3023,Europe/London,329100,PPLX
+2654710,Brighton,United Kingdom,GB,50.82838,-0.13947,Europe/London,283870,PPL
+2654675,Bristol,United Kingdom,GB,51.45523,-2.59665,Europe/London,479024,PPLA2
+2654264,Burnley,United Kingdom,GB,53.8,-2.23333,Europe/London,149422,PPLA4
+2653941,Cambridge,United Kingdom,GB,52.2,0.11667,Europe/London,145674,PPLA2
+2653822,Cardiff,United Kingdom,GB,51.48,-3.18,Europe/London,372089,PPLA
+2634341,City of Westminster,United Kingdom,GB,51.4975,-0.1357,Europe/London,247614,PPLA3
+2652618,Colchester,United Kingdom,GB,51.88921,0.90421,Europe/London,130245,PPL
+2652221,Coventry,United Kingdom,GB,52.40656,-1.51217,Europe/London,345324,PPLA2
+2651817,Croydon,United Kingdom,GB,51.38333,-0.1,Europe/London,173314,PPLA3
+2651347,Derby,United Kingdom,GB,52.92277,-1.47663,Europe/London,270468,PPLA2
+2650839,Dudley,United Kingdom,GB,52.5,-2.08333,Europe/London,199059,PPLA2
+2650752,Dundee,United Kingdom,GB,56.46913,-2.97489,Europe/London,148210,PPLA2
+2650225,Edinburgh,United Kingdom,GB,55.95206,-3.19648,Europe/London,514990,PPLA
+2649997,Enfield Town,United Kingdom,GB,51.65147,-0.08497,Europe/London,156858,PPLA3
+2649808,Exeter,United Kingdom,GB,50.7236,-3.52751,Europe/London,130709,PPLA2
+2648579,Glasgow,United Kingdom,GB,55.86515,-4.25763,Europe/London,626410,PPLA2
+2648404,Gloucester,United Kingdom,GB,51.86568,-2.2431,Europe/London,132416,PPLA2
+2647425,Harrow,United Kingdom,GB,51.57835,-0.33208,Europe/London,149246,PPLA3
+2646914,High Wycombe,United Kingdom,GB,51.62907,-0.74934,Europe/London,133204,PPL
+2646458,Huddersfield,United Kingdom,GB,53.64904,-1.78416,Europe/London,149017,PPLA2
+2646277,Ilford,United Kingdom,GB,51.55765,0.07278,Europe/London,168168,PPLA3
+2646057,Ipswich,United Kingdom,GB,52.05917,1.15545,Europe/London,178835,PPLA2
+2646003,Islington,United Kingdom,GB,51.53622,-0.10304,Europe/London,319143,PPLA3
+2645425,Kingston upon Hull,United Kingdom,GB,53.7446,-0.33525,Europe/London,314018,PPLA2
+2644688,Leeds,United Kingdom,GB,53.79648,-1.54785,Europe/London,536280,PPLA2
+2644668,Leicester,United Kingdom,GB,52.6386,-1.13169,Europe/London,368600,PPLA2
+2644210,Liverpool,United Kingdom,GB,53.41058,-2.97794,Europe/London,496770,PPLA2
+2643743,London,United Kingdom,GB,51.50853,-0.12574,Europe/London,8961989,PPLC
+2643339,Luton,United Kingdom,GB,51.87967,-0.41748,Europe/London,225262,PPLA2
+2643123,Manchester,United Kingdom,GB,53.48095,-2.23743,Europe/London,568996,PPLA2
+2643097,Mansfield,United Kingdom,GB,53.13333,-1.2,Europe/London,171958,PPL
+2642607,Middlesbrough,United Kingdom,GB,54.57623,-1.23483,Europe/London,142707,PPLA2
+2642465,Milton Keynes,United Kingdom,GB,52.04172,-0.75583,Europe/London,256385,PPLA2
+2641674,Newcastle under Lyme,United Kingdom,GB,53,-2.23333,Europe/London,127727,PPL
+2641673,Newcastle upon Tyne,United Kingdom,GB,54.97328,-1.61396,Europe/London,300125,PPLA2
+2641598,Newport,United Kingdom,GB,51.58774,-2.99835,Europe/London,161506,PPLA2
+2641430,Northampton,United Kingdom,GB,52.25,-0.88333,Europe/London,245899,PPLA2
+2641181,Norwich,United Kingdom,GB,52.62783,1.29834,Europe/London,143135,PPLA2
+2641170,Nottingham,United Kingdom,GB,52.9536,-1.15047,Europe/London,323632,PPLA2
+2641022,Oldham,United Kingdom,GB,53.54051,-2.1183,Europe/London,237110,PPLA2
+2640729,Oxford,United Kingdom,GB,51.75222,-1.25596,Europe/London,162100,PPLA2
+2640354,Peterborough,United Kingdom,GB,52.57364,-0.24777,Europe/London,163379,PPLA2
+2640194,Plymouth,United Kingdom,GB,50.37153,-4.14305,Europe/London,260203,PPLA2
+2640101,Poole,United Kingdom,GB,50.71429,-1.98458,Europe/London,151500,PPL
+2639996,Portsmouth,United Kingdom,GB,50.79899,-1.09125,Europe/London,208100,PPLA2
+2639912,Preston,United Kingdom,GB,53.76282,-2.70452,Europe/London,313332,PPLA2
+2639577,Reading,United Kingdom,GB,51.45625,-0.97113,Europe/London,318014,PPLA2
+2638671,Salford,United Kingdom,GB,53.48771,-2.29042,Europe/London,129794,PPLA2
+2638077,Sheffield,United Kingdom,GB,53.38297,-1.4659,Europe/London,556500,PPLA2
+2637627,Slough,United Kingdom,GB,51.50949,-0.59541,Europe/London,164793,PPLA2
+2637487,Southampton,United Kingdom,GB,50.90395,-1.40428,Europe/London,269781,PPLA2
+2637433,Southend-on-Sea,United Kingdom,GB,51.53782,0.71433,Europe/London,295310,PPLA2
+2638785,St Helens,United Kingdom,GB,53.45,-2.73333,Europe/London,183200,PPLA2
+2636882,Stockport,United Kingdom,GB,53.40979,-2.15761,Europe/London,139052,PPLA2
+2636841,Stoke-on-Trent,United Kingdom,GB,53.00415,-2.18538,Europe/London,258366,PPLA2
+2636531,Sunderland,United Kingdom,GB,54.90465,-1.38222,Europe/London,170134,PPLA2
+2636503,Sutton,United Kingdom,GB,51.35,-0.2,Europe/London,187600,PPLA3
+2636432,Swansea,United Kingdom,GB,51.62079,-3.94323,Europe/London,300352,PPLA2
+2636389,Swindon,United Kingdom,GB,51.55797,-1.78116,Europe/London,201669,PPLA2
+3345439,Telford,United Kingdom,GB,52.67659,-2.44926,Europe/London,155570,PPLA2
+2635608,Tottenham,United Kingdom,GB,51.60373,-0.06794,Europe/London,130000,PPL
+2634853,Walsall,United Kingdom,GB,52.58528,-1.98396,Europe/London,172141,PPLA2
+2634739,Warrington,United Kingdom,GB,53.39254,-2.58024,Europe/London,172330,PPLA2
+2633948,Wigan,United Kingdom,GB,53.54296,-2.63706,Europe/London,175405,PPLA2
+2633691,Wolverhampton,United Kingdom,GB,52.58547,-2.12296,Europe/London,263700,PPLA2
+2633352,York,United Kingdom,GB,53.95763,-1.08271,Europe/London,156135,PPLA2
+5454711,Albuquerque,United States,US,35.08449,-106.65114,America/Denver,564559,PPLA2
+5323810,Anaheim,United States,US,33.83529,-117.9145,America/Los_Angeles,350742,PPL
+5879400,Anchorage,United States,US,61.21806,-149.90028,America/Anchorage,289600,PPLA2
+4671240,Arlington,United States,US,32.73569,-97.10807,America/Chicago,388125,PPL
+4180439,Atlanta,United States,US,33.749,-84.38798,America/New_York,510823,PPLA
+5412347,Aurora,United States,US,39.72943,-104.83192,America/Denver,359407,PPL
+4671654,Austin,United States,US,30.26715,-97.74306,America/Chicago,974447,PPLA
+5325738,Bakersfield,United States,US,35.37329,-119.01871,America/Los_Angeles,373640,PPLA2
+4347778,Baltimore,United States,US,39.29038,-76.61219,America/New_York,585708,PPLA2
+4930956,Boston,United States,US,42.35843,-71.05977,America/New_York,653833,PPLA
+5110302,Brooklyn,United States,US,40.6501,-73.94958,America/New_York,2736074,PPLA2
+4460243,Charlotte,United States,US,35.22709,-80.84313,America/New_York,911311,PPLA2
+4887398,Chicago,United States,US,41.85003,-87.65005,America/Chicago,2664452,PPLA2
+4508722,Cincinnati,United States,US,39.12711,-84.51439,America/New_York,311097,PPLA2
+5150529,Cleveland,United States,US,41.4995,-81.69541,America/New_York,365379,PPLA2
+5417598,Colorado Springs,United States,US,38.83388,-104.82136,America/Denver,456568,PPLA2
+4509177,Columbus,United States,US,39.96118,-82.99879,America/New_York,913175,PPLA
+4683416,Corpus Christi,United States,US,27.80058,-97.39638,America/Chicago,316239,PPLA2
+4684888,Dallas,United States,US,32.78306,-96.80667,America/Chicago,1326087,PPLA2
+5419384,Denver,United States,US,39.73915,-104.9847,America/Denver,729019,PPLA
+4990729,Detroit,United States,US,42.33143,-83.04575,America/Detroit,645705,PPLA2
+5520993,El Paso,United States,US,31.75872,-106.48693,America/Denver,678815,PPLA2
+4691930,Fort Worth,United States,US,32.72541,-97.32085,America/Chicago,1008106,PPLA2
+5350937,Fresno,United States,US,36.74773,-119.77237,America/Los_Angeles,542107,PPLA2
+4469146,Greensboro,United States,US,36.07264,-79.79198,America/New_York,285342,PPL
+5505411,Henderson,United States,US,36.0397,-114.98194,America/Los_Angeles,285667,PPL
+5856195,Honolulu,United States,US,21.30694,-157.85833,Pacific/Honolulu,350964,PPLA
+4699066,Houston,United States,US,29.76328,-95.36327,America/Chicago,2314157,PPLA2
+4259418,Indianapolis,United States,US,39.76838,-86.15804,America/Indiana/Indianapolis,887642,PPLA
+4160021,Jacksonville,United States,US,30.33218,-81.65565,America/New_York,1009833,PPLA2
+4393217,Kansas City,United States,US,39.09973,-94.57857,America/Chicago,475378,PPL
+5506956,Las Vegas,United States,US,36.17497,-115.13722,America/Los_Angeles,641903,PPLA2
+4297983,Lexington,United States,US,37.98869,-84.47772,America/New_York,320347,PPLA2
+4297999,Lexington-Fayette,United States,US,38.0498,-84.45855,America/New_York,314488,PPL
+5072006,Lincoln,United States,US,40.8,-96.66696,America/Chicago,294757,PPLA
+5367929,Long Beach,United States,US,33.76696,-118.18923,America/Los_Angeles,474140,PPL
+5368361,Los Angeles,United States,US,34.05223,-118.24368,America/Los_Angeles,3820914,PPLA2
+4299276,Louisville,United States,US,38.25424,-85.75941,America/Kentucky/Louisville,624444,PPLA2
+5125771,Manhattan,United States,US,40.78343,-73.96625,America/New_York,1487536,PPLA2
+4300488,Meads,United States,US,38.41258,-82.70905,America/New_York,288649,PPL
+4641239,Memphis,United States,US,35.14953,-90.04898,America/Chicago,633104,PPLA2
+5304391,Mesa,United States,US,33.42227,-111.82264,America/Phoenix,471825,PPL
+4164138,Miami,United States,US,25.77427,-80.19366,America/New_York,487014,PPLA2
+5263045,Milwaukee,United States,US,43.0389,-87.90647,America/Chicago,563531,PPLA2
+5037649,Minneapolis,United States,US,44.97997,-93.26384,America/Chicago,410939,PPLA2
+4644585,Nashville,United States,US,36.16589,-86.78444,America/Chicago,689447,PPLA
+4335045,New Orleans,United States,US,29.95465,-90.07507,America/Chicago,362701,PPLA2
+4645421,New South Memphis,United States,US,35.08676,-90.05676,America/Chicago,641608,PPLX
+5128581,New York City,United States,US,40.71427,-74.00597,America/New_York,8804190,PPL
+5378538,Oakland,United States,US,37.80437,-122.2708,America/Los_Angeles,419267,PPLA2
+4544349,Oklahoma City,United States,US,35.46756,-97.51643,America/Chicago,681054,PPLA
+5074472,Omaha,United States,US,41.25626,-95.94043,America/Chicago,486051,PPLA2
+4167147,Orlando,United States,US,28.53834,-81.37924,America/New_York,334854,PPLA2
+4560349,Philadelphia,United States,US,39.95238,-75.16362,America/New_York,1573916,PPLA2
+5308655,Phoenix,United States,US,33.44838,-112.07404,America/Phoenix,1650070,PPLA
+5206379,Pittsburgh,United States,US,40.44062,-79.99589,America/New_York,304391,PPLA2
+4719457,Plano,United States,US,33.01984,-96.69889,America/Chicago,283558,PPL
+5746545,Portland,United States,US,45.52345,-122.67621,America/Los_Angeles,652503,PPLA2
+5133273,Queens,United States,US,40.68149,-73.83652,America/New_York,2316841,PPLA2
+4487042,Raleigh,United States,US,35.7721,-78.63861,America/New_York,482295,PPLA
+5387877,Riverside,United States,US,33.95335,-117.39616,America/Los_Angeles,317261,PPLA2
+5389489,Sacramento,United States,US,38.58157,-121.4944,America/Los_Angeles,524943,PPLA
+5045360,Saint Paul,United States,US,44.94441,-93.09327,America/Chicago,303176,PPLA
+4726206,San Antonio,United States,US,29.42412,-98.49363,America/Chicago,1526656,PPLA2
+5391811,San Diego,United States,US,32.71571,-117.16472,America/Los_Angeles,1404452,PPLA2
+5391959,San Francisco,United States,US,37.77493,-122.41942,America/Los_Angeles,827526,PPLA2
+5392171,San Jose,United States,US,37.33939,-121.89496,America/Los_Angeles,997368,PPLA2
+5392900,Santa Ana,United States,US,33.74557,-117.86783,America/Los_Angeles,310227,PPLA2
+5809844,Seattle,United States,US,47.60621,-122.33207,America/Los_Angeles,780995,PPLA2
+4951305,South Boston,United States,US,42.33343,-71.04949,America/New_York,571281,PPLX
+5139568,Staten Island,United States,US,40.56233,-74.13986,America/New_York,468730,PPLA2
+5399020,Stockton,United States,US,37.9577,-121.29078,America/Los_Angeles,305658,PPLA2
+4174757,Tampa,United States,US,27.94752,-82.45843,America/New_York,414547,PPLA2
+5110266,The Bronx,United States,US,40.84985,-73.86641,America/New_York,1385108,PPLA2
+5318313,Tucson,United States,US,32.22174,-110.92648,America/Phoenix,542629,PPLA2
+4553433,Tulsa,United States,US,36.15398,-95.99277,America/Chicago,413066,PPLA2
+4791259,Virginia Beach,United States,US,36.85293,-75.97799,America/New_York,454808,PPLA2
+4140963,Washington,United States,US,38.89511,-77.03637,America/New_York,689545,PPLC
+4915545,Washington,United States,US,40.70365,-89.40731,America/Chicago,16664,PPL
+5549222,Washington,United States,US,37.13054,-113.50829,America/Denver,24299,PPL
+4498303,West Raleigh,United States,US,35.78682,-78.66389,America/New_York,338759,PPLX
+4281730,Wichita,United States,US,37.69224,-97.33754,America/Chicago,396119,PPLA2
+3443758,Artigas,Uruguay,UY,-30.40431,-56.46926,America/Montevideo,43897,PPLA
+10098279,Barros Blancos,Uruguay,UY,-34.7524,-56.00259,America/Montevideo,31650,PPL
+3443413,Canelones,Uruguay,UY,-34.52381,-56.28215,America/Montevideo,24185,PPLA
+3443341,Carmelo,Uruguay,UY,-34.00023,-58.28402,America/Montevideo,18041,PPL
+3443013,Colonia del Sacramento,Uruguay,UY,-34.46262,-57.83976,America/Montevideo,32164,PPLA
+3442778,Delta del Tigre,Uruguay,UY,-34.76488,-56.3645,America/Montevideo,17973,PPL
+3442750,Dolores,Uruguay,UY,-33.53009,-58.21701,America/Montevideo,17174,PPL
+3442727,Durazno,Uruguay,UY,-33.38063,-56.52312,America/Montevideo,40279,PPLA
+3442585,Florida,Uruguay,UY,-34.10032,-56.21477,America/Montevideo,36471,PPLA
+3442568,Fray Bentos,Uruguay,UY,-33.11651,-58.31067,America/Montevideo,26297,PPLA
+3442098,La Paz,Uruguay,UY,-34.76031,-56.2259,America/Montevideo,19913,PPL
+3442057,Las Piedras,Uruguay,UY,-34.7302,-56.21915,America/Montevideo,69682,PPL
+3441894,Maldonado,Uruguay,UY,-34.89791,-54.95021,America/Montevideo,102000,PPLA
+3441702,Melo,Uruguay,UY,-32.3682,-54.16409,America/Montevideo,56013,PPLA
+3441684,Mercedes,Uruguay,UY,-33.2524,-58.03047,America/Montevideo,43543,PPLA
+3441665,Minas,Uruguay,UY,-34.37589,-55.23771,America/Montevideo,38645,PPLA
+3441575,Montevideo,Uruguay,UY,-34.90328,-56.18816,America/Montevideo,1270737,PPLC
+3441354,Pando,Uruguay,UY,-34.71716,-55.9584,America/Montevideo,24047,PPL
+3441292,Paso de Carrasco,Uruguay,UY,-34.86028,-56.05222,America/Montevideo,15393,PPL
+3441243,Paysandú,Uruguay,UY,-32.3171,-58.08072,America/Montevideo,81550,PPLA
+3440963,Progreso,Uruguay,UY,-34.66737,-56.21758,America/Montevideo,16244,PPL
+3440781,Rivera,Uruguay,UY,-30.90534,-55.55076,America/Montevideo,84775,PPLA
+3440777,Rocha,Uruguay,UY,-34.47995,-54.33064,America/Montevideo,26784,PPLA
+3440714,Salto,Uruguay,UY,-31.38811,-57.95983,America/Montevideo,114084,PPLA
+3440696,San Carlos,Uruguay,UY,-34.79123,-54.91824,America/Montevideo,27471,PPL
+3440639,San José de Mayo,Uruguay,UY,-34.33898,-56.71339,America/Montevideo,35883,PPLA
+3440571,Santa Lucía,Uruguay,UY,-34.45333,-56.39056,America/Montevideo,16438,PPL
+3440034,Tacuarembó,Uruguay,UY,-31.71882,-55.97925,America/Montevideo,60586,PPLA
+3439781,Treinta y Tres,Uruguay,UY,-33.231,-54.38577,America/Montevideo,25890,PPLA
+3439748,Trinidad,Uruguay,UY,-33.5165,-56.89957,America/Montevideo,22897,PPLA
+3439525,Young,Uruguay,UY,-32.69844,-57.62693,America/Montevideo,16756,PPL
+3649833,Acarigua,Venezuela,VE,9.55451,-69.19564,America/Caracas,188278,PPLA2
+3487903,Alto Barinas,Venezuela,VE,8.5931,-70.2261,America/Caracas,284289,PPL
+3486270,Anaco,Venezuela,VE,9.42958,-64.46428,America/Caracas,139397,PPLA2
+3649017,Araure,Venezuela,VE,9.58144,-69.23851,America/Caracas,181820,PPLA2
+3648559,Barcelona,Venezuela,VE,10.1384,-64.68769,America/Caracas,815141,PPLA
+3648546,Barinas,Venezuela,VE,8.62064,-70.23105,America/Caracas,397279,PPLA
+3648522,Barquisimeto,Venezuela,VE,10.0647,-69.35703,America/Caracas,1240714,PPLA
+3648439,Baruta,Venezuela,VE,10.43424,-66.87558,America/Caracas,244216,PPLA2
+3648279,Biruaca,Venezuela,VE,7.84483,-67.51679,America/Caracas,76553,PPLA2
+3647651,Cabimas,Venezuela,VE,10.39907,-71.45206,America/Caracas,351736,PPLA2
+3647637,Cabudare,Venezuela,VE,10.02658,-69.26203,America/Caracas,102686,PPLA2
+3647549,Cagua,Venezuela,VE,10.18634,-67.45935,America/Caracas,119033,PPLA2
+3647444,Calabozo,Venezuela,VE,8.92416,-67.42929,America/Caracas,168605,PPLA2
+3646738,Caracas,Venezuela,VE,10.48801,-66.87919,America/Caracas,3000000,PPLC
+3646487,Carora,Venezuela,VE,10.17283,-70.081,America/Caracas,121741,PPLA2
+3646382,Carúpano,Venezuela,VE,10.66516,-63.25387,America/Caracas,167187,PPLA2
+3646190,Catia La Mar,Venezuela,VE,10.60545,-67.03238,America/Caracas,106822,PPLA3
+3645854,Charallave,Venezuela,VE,10.24247,-66.85723,America/Caracas,129182,PPLA2
+3645532,Ciudad Bolívar,Venezuela,VE,8.12366,-63.54694,America/Caracas,412619,PPLA
+3645528,Ciudad Guayana,Venezuela,VE,8.35122,-62.64102,America/Caracas,978202,PPLA2
+3645527,Ciudad Ojeda,Venezuela,VE,10.20161,-71.3148,America/Caracas,240283,PPLA2
+3638374,Concepción,Venezuela,VE,10.4119,-71.68919,America/Caracas,92463,PPLA2
+3645213,Coro,Venezuela,VE,11.40769,-69.67822,America/Caracas,246657,PPLA
+3644768,Cumaná,Venezuela,VE,10.4639,-64.17859,America/Caracas,405626,PPLA
+3644918,Cúa,Venezuela,VE,10.16245,-66.88248,America/Caracas,182558,PPLA2
+3644417,Ejido,Venezuela,VE,8.54665,-71.24087,America/Caracas,120978,PPLA2
+3803449,El Cafetal,Venezuela,VE,10.46541,-66.82951,America/Caracas,80029,PPLX
+3642833,El Limón,Venezuela,VE,10.30589,-67.63212,America/Caracas,148247,PPLA2
+3641351,El Tigre,Venezuela,VE,8.88902,-64.2527,America/Caracas,222450,PPLA2
+3641275,El Tocuyo,Venezuela,VE,9.78709,-69.79294,America/Caracas,74829,PPLA2
+3641099,El Vigía,Venezuela,VE,8.6135,-71.65702,America/Caracas,162289,PPLA2
+3640465,Guacara,Venezuela,VE,10.22609,-67.877,America/Caracas,198883,PPLA2
+3640226,Guanare,Venezuela,VE,9.03934,-69.73364,America/Caracas,112286,PPLA
+3640049,Guarenas,Venezuela,VE,10.47027,-66.61934,America/Caracas,248588,PPLA2
+3639898,Guatire,Venezuela,VE,10.474,-66.54241,America/Caracas,227666,PPLA2
+3639747,Güigüe,Venezuela,VE,10.08344,-67.77799,America/Caracas,80627,PPLA2
+3638371,La Concepción,Venezuela,VE,10.61919,-71.83814,America/Caracas,120478,PPLA2
+3634922,La Victoria,Venezuela,VE,10.22677,-67.33122,America/Caracas,126721,PPLA2
+3628966,La Villa del Rosario,Venezuela,VE,10.3258,-72.31343,America/Caracas,82766,PPLA2
+3637012,Lander,Venezuela,VE,10.18333,-66.7,America/Caracas,176346,PPLA2
+3649417,Los Puertos de Altagracia,Venezuela,VE,10.71492,-71.52168,America/Caracas,101527,PPLA2
+3633677,Los Rastrojos,Venezuela,VE,10.02588,-69.24166,America/Caracas,100497,PPL
+3633622,Los Teques,Venezuela,VE,10.34954,-67.04266,America/Caracas,252242,PPLA
+3633444,Machiques,Venezuela,VE,10.06077,-72.55212,America/Caracas,132734,PPLA2
+3633009,Maracaibo,Venezuela,VE,10.64232,-71.61089,America/Caracas,1752602,PPLA
+3632998,Maracay,Venezuela,VE,10.24972,-67.59475,America/Caracas,464700,PPLA
+3632929,Mariara,Venezuela,VE,10.29532,-67.7177,America/Caracas,116142,PPLA2
+3778045,Maturín,Venezuela,VE,9.74569,-63.18323,America/Caracas,647459,PPLA
+3632308,Mérida,Venezuela,VE,8.57899,-71.16922,America/Caracas,300000,PPLA
+3631412,Ocumare del Tuy,Venezuela,VE,10.1182,-66.77513,America/Caracas,166072,PPLA2
+3630932,Palo Negro,Venezuela,VE,10.17389,-67.54194,America/Caracas,128875,PPLA2
+3630297,Petare,Venezuela,VE,10.47679,-66.80786,America/Caracas,364684,PPLA2
+3629965,Porlamar,Venezuela,VE,10.95771,-63.86971,America/Caracas,216234,PPLA2
+3629710,Puerto Ayacucho,Venezuela,VE,5.66049,-67.58343,America/Caracas,125840,PPLA
+3629706,Puerto Cabello,Venezuela,VE,10.47306,-68.0125,America/Caracas,174000,PPLA2
+3629672,Puerto La Cruz,Venezuela,VE,10.21382,-64.6328,America/Caracas,370000,PPLA2
+3629614,Punta Cardón,Venezuela,VE,11.65806,-70.215,America/Caracas,113999,PPL
+3629576,Punto Fijo,Venezuela,VE,11.69152,-70.19918,America/Caracas,141729,PPLA2
+3628952,Rubio,Venezuela,VE,7.70156,-72.35551,America/Caracas,93197,PPLA2
+3628503,San Carlos,Venezuela,VE,9.66415,-68.58659,America/Caracas,120375,PPLA
+3628489,San Carlos del Zulia,Venezuela,VE,9.00098,-71.92683,America/Caracas,126353,PPLA2
+3628473,San Cristóbal,Venezuela,VE,7.76593,-72.23576,America/Caracas,289852,PPLA
+3628423,San Felipe,Venezuela,VE,10.3401,-68.74297,America/Caracas,206270,PPLA
+3805673,San Fernando de Apure,Venezuela,VE,7.88963,-67.47181,America/Caracas,229197,PPLA
+3628142,San José de Guanipa,Venezuela,VE,8.88724,-64.16512,America/Caracas,83092,PPLA2
+3628066,San Juan Bautista,Venezuela,VE,11.01243,-63.94412,America/Caracas,90387,PPLA2
+3628053,San Juan de los Morros,Venezuela,VE,9.91246,-67.35398,America/Caracas,160868,PPLA
+3627034,San Timoteo,Venezuela,VE,9.7901,-71.07084,America/Caracas,81017,PPLA2
+3627047,Santa Teresa del Tuy,Venezuela,VE,10.23291,-66.66474,America/Caracas,278890,PPLA2
+3626219,Tinaquillo,Venezuela,VE,9.91861,-68.30472,America/Caracas,115937,PPLA2
+3625929,Tucupita,Venezuela,VE,9.06263,-62.05208,America/Caracas,99778,PPLA
+3625829,Turmero,Venezuela,VE,10.22856,-67.47421,America/Caracas,344700,PPLA2
+3626402,Táriba,Venezuela,VE,7.82117,-72.22329,America/Caracas,138402,PPLA2
+3625710,Upata,Venezuela,VE,8.0162,-62.40561,America/Caracas,112617,PPLA2
+3625549,Valencia,Venezuela,VE,10.16153,-68.00044,America/Caracas,1619470,PPLA
+3625542,Valera,Venezuela,VE,9.31778,-70.60361,America/Caracas,244708,PPLA2
+3625515,Valle de La Pascua,Venezuela,VE,9.21554,-66.00734,America/Caracas,153136,PPLA2
+3625341,Villa de Cura,Venezuela,VE,10.03863,-67.48938,America/Caracas,99669,PPLA2
+3625207,Yaritagua,Venezuela,VE,10.08081,-69.1242,America/Caracas,113343,PPLA2
+3625066,Zaraza,Venezuela,VE,9.35029,-65.32452,America/Caracas,74017,PPLA2
