@@ -59,14 +59,11 @@ internal fun BirthplacePreset.matchesBirthplaceQuery(query: String): Boolean {
 private fun BirthplacePreset.birthplaceSearchScore(normalizedQuery: String): BirthplaceSearchScore? {
     val normalizedCity = normalizeBirthplaceSearchText(cityName)
     val normalizedCountry = normalizeBirthplaceSearchText(countryName)
-    val normalizedTimezone = normalizeBirthplaceSearchText(timezoneId)
-
     val matchTier = when {
         normalizedCity == normalizedQuery -> 0
         normalizedCity.startsWith(normalizedQuery) -> 1
         normalizedCity.contains(normalizedQuery) -> 2
         normalizedCountry.contains(normalizedQuery) -> 3
-        normalizedTimezone.contains(normalizedQuery) -> 4
         else -> return null
     }
 

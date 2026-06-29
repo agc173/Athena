@@ -155,8 +155,6 @@ def ranking_score(
 ) -> tuple[int, int, int, int, int] | None:
     normalized_city = normalize_search_text(row.city_name)
     normalized_country = normalize_search_text(row.country_name)
-    normalized_timezone = normalize_search_text(row.timezone_id)
-
     if normalized_city == normalized_query:
         match_tier = 0
     elif normalized_city.startswith(normalized_query):
@@ -165,8 +163,6 @@ def ranking_score(
         match_tier = 2
     elif normalized_query in normalized_country:
         match_tier = 3
-    elif normalized_query in normalized_timezone:
-        match_tier = 4
     else:
         return None
 
