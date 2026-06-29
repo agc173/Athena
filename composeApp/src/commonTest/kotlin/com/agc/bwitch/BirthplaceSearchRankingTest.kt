@@ -81,6 +81,25 @@ class BirthplaceSearchRankingTest {
     }
 
     @Test
+    fun doesNotMatchBirthplacesByTimezoneOnly() {
+        val presets = listOf(
+            birthplace("madrid-es", "Madrid", "Spain", "ES", "Europe/Madrid"),
+            birthplace("barcelona-es", "Barcelona", "Spain", "ES", "Europe/Madrid"),
+            birthplace("moscow-ru", "Moscow", "Russia", "RU", "Europe/Moscow"),
+            birthplace("saint-petersburg-ru", "Saint Petersburg", "Russia", "RU", "Europe/Moscow"),
+            birthplace("tokyo-jp", "Tokyo", "Japan", "JP", "Asia/Tokyo"),
+            birthplace("osaka-jp", "Osaka", "Japan", "JP", "Asia/Tokyo"),
+            birthplace("bogota-co", "Bogota", "Colombia", "CO", "America/Bogota"),
+            birthplace("cali-co", "Cali", "Colombia", "CO", "America/Bogota"),
+        )
+
+        assertEquals(listOf("madrid-es"), rankBirthplaceMatches("madrid", presets).map { it.id })
+        assertEquals(listOf("moscow-ru"), rankBirthplaceMatches("moscow", presets).map { it.id })
+        assertEquals(listOf("tokyo-jp"), rankBirthplaceMatches("tokyo", presets).map { it.id })
+        assertEquals(listOf("bogota-co"), rankBirthplaceMatches("bogota", presets).map { it.id })
+    }
+
+    @Test
     fun emptyQueryKeepsOriginalOrderAndLimit() {
         val presets = (1..25).map { index ->
             birthplace("city-$index", "City $index", "Country", "CO", "Etc/UTC")
