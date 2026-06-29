@@ -24,6 +24,8 @@ DEFAULT_MARKDOWN_PATH = Path("docs/reports/birthplace_catalog_audit.md")
 TOP_LIMIT = 30
 QUERY_LIMIT = 10
 DEFAULT_COUNTRY_PRIORITY = sys.maxsize
+EXPECTED_MIN_COUNTRY_CODES = 100
+EXPECTED_MIN_ROWS = 10_000
 
 URBAN_SUBDIVISION_FEATURE_CODES = {"PPLX"}
 URBAN_SUBDIVISION_NAME_TERMS = (
@@ -81,6 +83,7 @@ KEY_CITIES = [
     [("London", "GB")],
     [("Paris", "FR")],
     [("Berlin", "DE")],
+    [("Amsterdam", "NL")],
     [("Rome", "IT")],
     [("Moscow", "RU")],
     [("Tokyo", "JP")],
@@ -293,10 +296,20 @@ def build_report(csv_path: Path, rows: Sequence[BirthplaceRow]) -> str:
     lines.append(f"- CSV bytes: {format_bytes(len(raw_bytes))}")
     lines.append(f"- Approx. gzip size: {format_bytes(len(gzip_bytes))}")
     lines.append(f"- Total rows: {len(rows):,}")
+    rows_status = "OK" if len(rows) >= EXPECTED_MIN_ROWS else "WARN"
+    lines.append(
+        f"- Broad-catalogue row expectation: {rows_status} "
+        f"(expected at least {EXPECTED_MIN_ROWS:,} rows when regenerated from full cities15000 without compact limits)"
+    )
     lines.append("")
 
     lines.append("## 2. Coverage by countryCode")
     lines.append(f"- Distinct country codes: {len(country_counts):,}")
+    country_status = "OK" if len(country_counts) >= EXPECTED_MIN_COUNTRY_CODES else "WARN"
+    lines.append(
+        f"- Broad-catalogue country expectation: {country_status} "
+        f"(expected at least {EXPECTED_MIN_COUNTRY_CODES:,} country codes; compact 39-country catalogues are no longer the target)"
+    )
     lines.append("- Top 30 countries by entries:")
     for code, count in country_counts.most_common(TOP_LIMIT):
         lines.append(f"  - {code}: {count:,}")
