@@ -30,6 +30,22 @@ CSV_HEADER = (
 PACKAGE_NAME = "com.agc.bwitch.ui.astrology.birthplace"
 DEFAULT_KOTLIN_MAX_PRESETS = 200
 
+URBAN_SUBDIVISION_FEATURE_CODES = {"PPLX"}
+URBAN_SUBDIVISION_NAME_TERMS = (
+    "administrative district",
+    "arrondissement",
+    "barrio",
+    "borough",
+    "district",
+    "quarter",
+    "ward",
+)
+# `centro` is intentionally narrower than the terms above: many real places are
+# named Centro, so only common big-city centre patterns found during catalogue
+# audits are excluded by default. Add explicit `!` exclusions for any future
+# ambiguous centre entries that should be removed even if allowlisted.
+URBAN_CENTER_PARENT_TERMS = ("habana", "havana", "madrid")
+
 
 @dataclass(frozen=True)
 class City:
@@ -211,6 +227,36 @@ def city_matches(city: City, match_list: MatchList, *, include_forced: bool = Tr
     )
 
 
+def normalize_policy_text(text: str) -> str:
+    normalized = unicodedata.normalize("NFKD", text.strip().casefold())
+    without_marks = "".join(char for char in normalized if not unicodedata.combining(char))
+    return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9]+", " ", without_marks)).strip()
+
+
+def is_urban_subdivision_name(name: str) -> bool:
+    normalized = normalize_policy_text(name)
+    if not normalized:
+        return False
+    tokens = set(normalized.split())
+    if any(
+        re.search(rf"\b{re.escape(term)}\b", normalized)
+        for term in URBAN_SUBDIVISION_NAME_TERMS
+    ):
+        return True
+    if "centro" in tokens:
+        without_centro = " ".join(token for token in normalized.split() if token != "centro")
+        if without_centro in URBAN_CENTER_PARENT_TERMS:
+            return True
+    return False
+
+
+def is_birthplace_catalog_eligible(city: City) -> bool:
+    return (
+        city.feature_code.upper() not in URBAN_SUBDIVISION_FEATURE_CODES
+        and not is_urban_subdivision_name(city.name)
+    )
+
+
 def select_matching_cities(cities: list[City], match_list: MatchList) -> list[City]:
     return [city for city in cities if city_matches(city, match_list)]
 
@@ -233,13 +279,14 @@ def select_tiered_cities(
     exclude_list: MatchList,
 ) -> tuple[list[City], dict[str, int]]:
     selected: dict[str, City] = {}
-    allowlisted_cities = select_matching_cities(all_cities, allowlist)
+    eligible_cities = [city for city in all_cities if is_birthplace_catalog_eligible(city)]
+    allowlisted_cities = select_matching_cities(eligible_cities, allowlist)
     for city in allowlisted_cities:
         add_city(selected, city, global_limit)
 
     selectable = [
         city
-        for city in all_cities
+        for city in eligible_cities
         if min_population is None or city.population >= min_population or city_matches(city, allowlist)
     ]
     cities_by_country: dict[str, list[City]] = defaultdict(list)
@@ -319,6 +366,7 @@ def select_tiered_cities(
         "allowlist_missing": len(requested_allowlist_keys - matched_allowlist_keys),
         "exclude_requested": exclude_list.requested_count,
         "exclude_matched": len({city.geoname_id for city in excluded_matches}),
+        "policy_excluded": len(all_cities) - len(eligible_cities),
     }
     return final_sort(list(selected.values())), stats
 
@@ -391,6 +439,7 @@ def print_summary(cities: list[City], kotlin_output: Path | None, stats: dict[st
         f"{stats['allowlist_requested']}/{stats['allowlist_matched']}/{stats['allowlist_missing']}"
     )
     print(f"Excluded requested/matched: {stats['exclude_requested']}/{stats['exclude_matched']}")
+    print(f"Policy-excluded urban subdivisions: {stats['policy_excluded']}")
     print("Top country counts:")
     for country_code, count in Counter(city.country_code for city in cities).most_common(20):
         print(f"  {country_code}: {count}")
@@ -410,7 +459,7 @@ def main() -> None:
     parser.add_argument("--kotlin-output", type=Path, default=None, help="Optional Kotlin fallback/legacy output file. Disabled by default; use only for small fallback catalogues.")
     parser.add_argument("--output", dest="legacy_output", type=Path, default=None, help="Deprecated alias for --kotlin-output. Disabled by default.")
     parser.add_argument("--kotlin-max-presets", type=positive_int, default=DEFAULT_KOTLIN_MAX_PRESETS, help=f"Maximum number of selected cities allowed when writing Kotlin fallback output (default: {DEFAULT_KOTLIN_MAX_PRESETS})")
-    parser.add_argument("--min-population", type=positive_int, default=None, help="Only include non-allowlisted cities with at least this GeoNames population value")
+    parser.add_argument("--min-population", type=positive_int, default=None, help="Only include non-allowlisted, policy-eligible cities with at least this GeoNames population value")
     parser.add_argument("--limit", type=positive_int, default=None, help="Deprecated alias for --global-limit when --global-limit is omitted")
     parser.add_argument("--priority-country", type=parse_country_codes, default=[], help="Deprecated alias for --tier-a-country")
     parser.add_argument("--per-priority-country-limit", type=positive_int, default=None, help="Deprecated alias for --tier-a-limit")

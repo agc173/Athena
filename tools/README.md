@@ -36,20 +36,21 @@ The recommended generator mode uses configurable country tiers:
 Selection order:
 
 1. Parse all local GeoNames cities.
-2. Apply `--min-population` to normal candidates when provided. Allowlisted cities are still eligible below the minimum.
-3. Include allowlist entries first.
-4. Add up to `--tier-a-limit` largest cities for each Tier A country.
-5. Add up to `--tier-b-limit` largest cities for each Tier B country.
-6. Add up to `--tier-c-limit` largest cities for each remaining country.
-7. Fill remaining slots with the largest global cities until `--global-limit` is reached.
-8. Apply the exclude file after candidate selection. Allowlisted cities are not excluded unless the exclude entry is prefixed with `!`.
-9. Deduplicate by GeoName ID.
-10. Sort the final CSV output by country name, city name, and GeoName ID for deterministic diffs.
-11. Write `birthplaces.csv` by default. Kotlin is written only when `--kotlin-output` (or deprecated `--output`) is passed, and only if the selected city count stays under `--kotlin-max-presets` (default `200`).
+2. Apply the generator-only urban subdivision eligibility policy before tier selection and before allowlist selection. By default, rows with GeoNames `featureCode=PPLX` (section of populated place) are omitted, as are names that clearly describe neighbourhood/district-level entities: `administrative district`, `arrondissement`, `barrio`, `borough`, `district`, `quarter`, or `ward`. The word `centro` is narrower: it is excluded only for audited big-city-centre patterns currently covered by `Centro Habana` / `Centro Havana` and `Madrid Centro`, so real cities named Centro are not dropped by accident.
+3. Apply `--min-population` to normal candidates when provided. Allowlisted, policy-eligible cities are still eligible below the minimum.
+4. Include policy-eligible allowlist entries first. Allowlist entries cannot re-add `PPLX` or barrio/district-like rows.
+5. Add up to `--tier-a-limit` largest cities for each Tier A country.
+6. Add up to `--tier-b-limit` largest cities for each Tier B country.
+7. Add up to `--tier-c-limit` largest cities for each remaining country.
+8. Fill remaining slots with the largest global cities until `--global-limit` is reached.
+9. Apply the exclude file after candidate selection. Allowlisted cities are not excluded unless the exclude entry is prefixed with `!`.
+10. Deduplicate by GeoName ID.
+11. Sort the final CSV output by country name, city name, and GeoName ID for deterministic diffs.
+12. Write `birthplaces.csv` by default. Kotlin is written only when `--kotlin-output` (or deprecated `--output`) is passed, and only if the selected city count stays under `--kotlin-max-presets` (default `200`).
 
 ### Allowlist and exclude list
 
-`--allowlist-file` keeps must-have cities in the candidate set. Each non-empty line can be a GeoName ID or `City|CountryCode`. `tools/geonames/birthplace_allowlist.txt` contains globally important birthplaces that should not be missed, such as Madrid, Tokyo, New York, Sydney, Beijing, Shanghai, São Paulo, Buenos Aires, Bogotá, and others.
+`--allowlist-file` keeps must-have, policy-eligible real cities in the candidate set. It does not override the urban subdivision policy: `PPLX`, barrio/district-like, arrondissement, ward, quarter, and audited `centro` subdivision rows remain excluded even if listed. Each non-empty line can be a GeoName ID or `City|CountryCode`. `tools/geonames/birthplace_allowlist.txt` contains globally important birthplaces that should not be missed, such as Madrid, Tokyo, New York, Sydney, Beijing, Shanghai, São Paulo, Buenos Aires, Bogotá, and others.
 
 `--exclude-file` removes compact-catalogue false positives after candidate selection. Each non-empty line can be a GeoName ID or `City|CountryCode`. Prefix an entry with `!` to force exclusion even when it also appears in the allowlist. `tools/geonames/birthplace_exclude.txt` starts with Spanish satellite municipalities such as Getafe, Leganés, Barakaldo, and nearby examples that should not appear as independent reference birthplaces in the compact catalogue.
 
@@ -87,7 +88,7 @@ The console report measures:
 - raw CSV bytes, approximate gzip size, and total rows;
 - `countryCode` coverage and the top 30 countries by entry count;
 - repeated city names / homonyms, including the top 30 repeated `cityName` values;
-- suspicious entries that look like neighbourhoods, districts, boroughs, wards, barrios, quarters, arrondissements, municipios, comunas, or other urban subdivisions, using broad report-only heuristics;
+- entries that still match the same generator-only urban subdivision policy (`PPLX`, district/barrio/borough/ward/quarter/arrondissement name terms, and the narrow audited `centro` patterns);
 - presence of the minimum key-city checklist;
 - top 10 approximate search results for diagnostic queries using Python logic aligned with the current birthplace normalizer/ranking rules.
 
@@ -97,7 +98,7 @@ Optionally write the same report as Markdown:
 python tools/audit_birthplace_catalog.py --markdown-output docs/reports/birthplace_catalog_audit.md
 ```
 
-The suspicious-entry section is intentionally diagnostic only; it must not be interpreted as an automatic exclusion policy.
+The suspicious-entry section is read-only: it reports rows that the current generator policy would exclude on the next regeneration, but it does not modify the existing CSV or any runtime code.
 
 ### Legacy options
 
