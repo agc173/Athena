@@ -8,6 +8,7 @@ then pass the local cities15000.txt path to this script.
 from __future__ import annotations
 
 import argparse
+import csv
 import re
 import unicodedata
 from collections import Counter, defaultdict
@@ -16,6 +17,18 @@ from pathlib import Path
 
 DEFAULT_OUTPUT = Path(
     "composeApp/src/commonMain/kotlin/com/agc/bwitch/ui/astrology/birthplace/BirthplacePresets.generated.kt"
+)
+DEFAULT_CSV_OUTPUT = Path("composeApp/src/commonMain/composeResources/files/birthplaces.csv")
+CSV_HEADER = (
+    "geonameId",
+    "cityName",
+    "countryName",
+    "countryCode",
+    "latitudeDegrees",
+    "longitudeDegrees",
+    "timezoneId",
+    "population",
+    "featureCode",
 )
 PACKAGE_NAME = "com.agc.bwitch.ui.astrology.birthplace"
 
@@ -30,6 +43,7 @@ class City:
     longitude: str
     timezone_id: str
     population: int
+    feature_code: str
 
 
 @dataclass(frozen=True)
@@ -82,6 +96,7 @@ def parse_cities(path: Path, countries: dict[str, str]) -> list[City]:
             latitude = columns[4].strip()
             longitude = columns[5].strip()
             country_code = columns[8].strip().upper()
+            feature_code = columns[7].strip()
             population = parse_population(columns[14], line_number)
             timezone_id = columns[17].strip()
             if not (geoname_id and name and latitude and longitude and country_code and timezone_id):
@@ -96,6 +111,7 @@ def parse_cities(path: Path, countries: dict[str, str]) -> list[City]:
                     longitude=longitude,
                     timezone_id=timezone_id,
                     population=population,
+                    feature_code=feature_code,
                 )
             )
     return final_sort(cities)
@@ -343,7 +359,30 @@ def render(cities: list[City]) -> str:
     return "\n".join(lines)
 
 
-def print_summary(cities: list[City], output: Path, stats: dict[str, int]) -> None:
+def render_csv(cities: list[City]) -> str:
+    from io import StringIO
+
+    buffer = StringIO()
+    writer = csv.writer(buffer, lineterminator="\n")
+    writer.writerow(CSV_HEADER)
+    for city in cities:
+        writer.writerow(
+            (
+                city.geoname_id,
+                city.name,
+                city.country_name,
+                city.country_code,
+                city.latitude,
+                city.longitude,
+                city.timezone_id,
+                city.population,
+                city.feature_code,
+            )
+        )
+    return buffer.getvalue()
+
+
+def print_summary(cities: list[City], output: Path, stats: dict[str, int], csv_output: Path | None) -> None:
     print(f"Generated {len(cities)} birthplace presets at {output}")
     print(
         "Allowlist requested/matched/missing: "
@@ -354,7 +393,9 @@ def print_summary(cities: list[City], output: Path, stats: dict[str, int]) -> No
     for country_code, count in Counter(city.country_code for city in cities).most_common(20):
         print(f"  {country_code}: {count}")
     if output.exists():
-        print(f"Generated file size: {output.stat().st_size} bytes")
+        print(f"Generated Kotlin file size: {output.stat().st_size} bytes")
+    if csv_output is not None and csv_output.exists():
+        print(f"Generated CSV file size: {csv_output.stat().st_size} bytes")
 
 
 def main() -> None:
@@ -364,6 +405,7 @@ def main() -> None:
     parser.add_argument("cities15000", type=Path, help="Path to a local GeoNames cities15000.txt file")
     parser.add_argument("--country-info", type=Path, default=None, help="Optional local GeoNames countryInfo.txt for country names")
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT, help=f"Output Kotlin file (default: {DEFAULT_OUTPUT})")
+    parser.add_argument("--csv-output", type=Path, default=None, help=f"Optional output CSV resource file (recommended: {DEFAULT_CSV_OUTPUT})")
     parser.add_argument("--min-population", type=positive_int, default=None, help="Only include non-allowlisted cities with at least this GeoNames population value")
     parser.add_argument("--limit", type=positive_int, default=None, help="Deprecated alias for --global-limit when --global-limit is omitted")
     parser.add_argument("--priority-country", type=parse_country_codes, default=[], help="Deprecated alias for --tier-a-country")
@@ -398,7 +440,10 @@ def main() -> None:
     )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(render(cities), encoding="utf-8")
-    print_summary(cities, args.output, stats)
+    if args.csv_output is not None:
+        args.csv_output.parent.mkdir(parents=True, exist_ok=True)
+        args.csv_output.write_text(render_csv(cities), encoding="utf-8")
+    print_summary(cities, args.output, stats, args.csv_output)
 
 
 if __name__ == "__main__":
