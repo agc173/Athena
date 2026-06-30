@@ -31,15 +31,17 @@ class BwitchFirebaseMessagingService : FirebaseMessagingService() {
     override fun onMessageReceived(message: RemoteMessage) {
         super.onMessageReceived(message)
 
+        Log.i(TAG, "Push message received: id=${message.messageId} from=${message.from} dataKeys=${message.data.keys.joinToString()} hasNotification=${message.notification != null}")
+
         val title = message.data["title"] ?: message.notification?.title
         val body = message.data["body"] ?: message.notification?.body
         if (title.isNullOrBlank() || body.isNullOrBlank()) {
-            Log.i(TAG, "Push message ignored (missing title/body)")
+            Log.i(TAG, "Push notification display skipped: reason=missing_title_or_body")
             return
         }
 
         if (!canPostNotifications()) {
-            Log.i(TAG, "Push message received but notifications are disabled/no permission")
+            Log.i(TAG, "Push notification display skipped: reason=permission_or_notifications_disabled")
             return
         }
 
@@ -77,6 +79,7 @@ class BwitchFirebaseMessagingService : FirebaseMessagingService() {
 
         val notificationId = message.messageId?.hashCode() ?: System.currentTimeMillis().toInt()
         NotificationManagerCompat.from(this).notify(notificationId, notification)
+        Log.i(TAG, "Push notification displayed: id=$notificationId channel=$channelId route=${message.data["route"]}")
     }
 
     private fun canPostNotifications(): Boolean {

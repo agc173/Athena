@@ -129,6 +129,9 @@ fun AppRoot() {
     var hasProfileGateSnapshot by remember { mutableStateOf(false) }
     var isProfileGateLoading by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+    LaunchedEffect(Unit) {
+        rewardedAdsService.preloadRewardedAd(REWARDED_AD_PAYWALL_PLACEMENT)
+    }
     var isRewardedAdFlowRunning by rememberSaveable { mutableStateOf(false) }
 
     if (session.isLoading) {
