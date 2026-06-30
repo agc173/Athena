@@ -19,7 +19,6 @@ class BWitchApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         logAdMobAppId()
-
         if (FirebaseApp.getApps(this).isEmpty()) {
             FirebaseApp.initializeApp(this)
         }

@@ -1,37 +1,53 @@
 package com.agc.bwitch.ui.astrology
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.unit.dp
 import com.agc.bwitch.domain.astrology.birthchart.BirthEssenceArchetype
 import com.agc.bwitch.domain.astrology.birthchart.BirthEssenceProfile
+import com.agc.bwitch.domain.astrology.natal.BirthDateTimeLocal
+import com.agc.bwitch.domain.astrology.natal.BirthLocation
+import com.agc.bwitch.domain.astrology.natal.BirthplacePreset
+import com.agc.bwitch.domain.astrology.natal.NatalChartResult
+import com.agc.bwitch.domain.astrology.natal.ZodiacSign as NatalZodiacSign
+import com.agc.bwitch.domain.astrology.natal.toUtc
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
 import com.agc.bwitch.domain.model.DeckCardUnlockReward
 import com.agc.bwitch.localization.AppStrings
+import com.agc.bwitch.localization.BirthChartStrings
 import com.agc.bwitch.localization.appStrings
 import com.agc.bwitch.presentation.astrology.birthchart.BirthChartUiState
 import com.agc.bwitch.presentation.astrology.birthchart.BirthChartViewModel
@@ -53,15 +69,22 @@ import com.agc.bwitch.presentation.astrology.birthchart.BIRTH_CHART_SYNC_UPDATED
 import com.agc.bwitch.presentation.astrology.birthchart.BIRTH_CHART_SYNC_UP_TO_DATE_KEY
 import com.agc.bwitch.presentation.economy.EconomyViewModel
 import com.agc.bwitch.presentation.economy.runWithEconomyGate
+import com.agc.bwitch.ui.common.BirthDateSelector
+import com.agc.bwitch.ui.common.BirthTimeSelector
 import com.agc.bwitch.ui.common.toVisualResource
 import com.agc.bwitch.ui.common.economy.DailyLimitPaywallCard
 import com.agc.bwitch.ui.common.economy.EconomyGateInfoRow
+import com.agc.bwitch.ui.astrology.birthplace.BirthplacePresets
+import com.agc.bwitch.ui.astrology.birthplace.DefaultBirthplaceCatalogRepository
+import com.agc.bwitch.ui.astrology.birthplace.matchesBirthplaceQuery
+import com.agc.bwitch.ui.astrology.birthplace.rankBirthplaceMatches
 import com.agc.bwitch.ui.common.economy.isDailyLimitRejected
 import com.agc.bwitch.ui.common.economy.hasPremiumBenefit
 import com.agc.bwitch.ui.common.designsystem.BWitchCard
 import com.agc.bwitch.ui.common.designsystem.BWitchPrimaryButton
 import com.agc.bwitch.ui.theme.BWitchThemeTokens
 import com.agc.bwitch.ui.tarot.DeckCardUnlockRewardDialog
+import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 
@@ -151,6 +174,8 @@ fun BirthChartScreen(
             enabled = !state.isBusy,
             onSelect = viewModel::onRisingSignChange,
         )
+
+        BasicNatalChartSection(strings = birthChartStrings, appStrings = strings)
 
         EconomyGateInfoRow(
             preview = birthEssencePreview,
@@ -270,6 +295,335 @@ fun BirthChartScreen(
         )
     }
 }
+
+@Composable
+private fun BasicNatalChartSection(strings: BirthChartStrings, appStrings: AppStrings) {
+    val dimens = BWitchThemeTokens.dimens
+    val extras = BWitchThemeTokens.extras
+    var birthDate by remember { mutableStateOf<LocalDate?>(null) }
+    var birthHour by remember { mutableStateOf<Int?>(null) }
+    var birthMinute by remember { mutableStateOf<Int?>(null) }
+    var birthplaceQuery by remember { mutableStateOf("") }
+    var selectedBirthplace by remember { mutableStateOf<BirthplacePreset?>(null) }
+    var isBirthplaceDialogOpen by remember { mutableStateOf(false) }
+    var result by remember { mutableStateOf<NatalChartResult?>(null) }
+    var error by remember { mutableStateOf<String?>(null) }
+    var hasAttemptedBasicNatalCalculation by remember { mutableStateOf(false) }
+
+    val birthplaceCatalogState by produceState(
+        initialValue = BirthplaceCatalogUiState(
+            presets = BirthplacePresets,
+            isLoadingRuntimeCatalog = true,
+        ),
+    ) {
+        value = BirthplaceCatalogUiState(
+            presets = DefaultBirthplaceCatalogRepository.getBirthplaces(),
+            isLoadingRuntimeCatalog = false,
+        )
+    }
+    val matchingBirthplaces = remember(birthplaceQuery, birthplaceCatalogState.presets) {
+        rankBirthplaceMatches(birthplaceQuery, birthplaceCatalogState.presets)
+    }
+    val validationMessage = remember(strings, birthDate, birthHour, birthMinute, selectedBirthplace) {
+        validateBasicNatalChartInput(
+            strings = strings,
+            birthDate = birthDate,
+            birthHour = birthHour,
+            birthMinute = birthMinute,
+            selectedBirthplace = selectedBirthplace,
+        )
+    }
+
+    BWitchCard(contentVerticalArrangement = Arrangement.spacedBy(dimens.spacingMd)) {
+        Column(verticalArrangement = Arrangement.spacedBy(dimens.spacingXs)) {
+            Text(strings.basicNatalTitle, style = MaterialTheme.typography.titleLarge)
+            Text(
+                strings.basicNatalSubtitle,
+                style = MaterialTheme.typography.bodyMedium,
+                color = extras.textSecondary,
+            )
+        }
+
+        BirthDateSelector(
+            selectedDate = birthDate,
+            onDateSelected = { birthDate = it },
+            label = strings.basicNatalBirthDateLabel,
+            enabled = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
+
+        BirthTimeSelector(
+            selectedHour = birthHour,
+            selectedMinute = birthMinute,
+            onTimeSelected = { hour, minute ->
+                birthHour = hour
+                birthMinute = minute
+            },
+            label = strings.basicNatalBirthTimeLabel,
+            hourLabel = strings.basicNatalHourLabel,
+            minuteLabel = strings.basicNatalMinuteLabel,
+            pickerTitle = strings.basicNatalBirthTimeLabel,
+            placeholder = strings.basicNatalBirthTimePlaceholder,
+            enabled = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
+
+        Column(verticalArrangement = Arrangement.spacedBy(dimens.spacingSm)) {
+            Text(strings.basicNatalBirthplaceLabel, style = MaterialTheme.typography.labelLarge)
+            Surface(
+                onClick = { isBirthplaceDialogOpen = true },
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.medium,
+                color = MaterialTheme.colorScheme.surface,
+                tonalElevation = 0.dp,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+            ) {
+                Row(
+                    modifier = Modifier.padding(dimens.spacingMd),
+                    horizontalArrangement = Arrangement.spacedBy(dimens.spacingSm),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(dimens.spacingXs),
+                    ) {
+                        Text(
+                            text = selectedBirthplace?.displayName() ?: strings.basicNatalBirthplacePlaceholder,
+                            style = if (selectedBirthplace == null) MaterialTheme.typography.bodyMedium else MaterialTheme.typography.titleMedium,
+                            color = if (selectedBirthplace == null) extras.textSecondary else MaterialTheme.colorScheme.onSurface,
+                        )
+                    }
+                    Text(
+                        text = if (selectedBirthplace == null) strings.basicNatalBirthplaceSearchLabel else strings.basicNatalBirthplaceChangeCta,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
+            }
+            Text(
+                text = strings.basicNatalBirthplaceSearchSupportingText,
+                style = MaterialTheme.typography.bodySmall,
+                color = extras.textSecondary,
+            )
+            if (birthplaceCatalogState.isLoadingRuntimeCatalog) {
+                Text(
+                    text = strings.basicNatalBirthplaceLoadingText,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = extras.textSecondary,
+                )
+            }
+        }
+
+        if (isBirthplaceDialogOpen) {
+            BirthplacePickerDialog(
+                strings = strings,
+                query = birthplaceQuery,
+                matchingBirthplaces = matchingBirthplaces,
+                isCatalogLoading = birthplaceCatalogState.isLoadingRuntimeCatalog,
+                onQueryChange = { query ->
+                    birthplaceQuery = query
+                    if (selectedBirthplace != null && !selectedBirthplace!!.matchesBirthplaceQuery(query)) {
+                        selectedBirthplace = null
+                    }
+                },
+                onSelect = { preset ->
+                    selectedBirthplace = preset
+                    birthplaceQuery = preset.displayName()
+                    isBirthplaceDialogOpen = false
+                },
+                onDismiss = { isBirthplaceDialogOpen = false },
+            )
+        }
+
+        if (hasAttemptedBasicNatalCalculation) {
+            validationMessage?.let { message ->
+                Text(message, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+            }
+        }
+
+        BWitchPrimaryButton(
+            onClick = {
+                hasAttemptedBasicNatalCalculation = true
+                result = null
+                error = null
+                val message = validationMessage
+                if (message != null) return@BWitchPrimaryButton
+                val date = birthDate ?: return@BWitchPrimaryButton
+                val hour = birthHour ?: return@BWitchPrimaryButton
+                val minute = birthMinute ?: return@BWitchPrimaryButton
+                val birthplace = selectedBirthplace ?: return@BWitchPrimaryButton
+                runCatching {
+                    BirthDateTimeLocal(
+                        year = date.year,
+                        month = date.monthNumber,
+                        day = date.dayOfMonth,
+                        hour = hour,
+                        minute = minute,
+                    ).toUtc(birthplace.timezoneId)
+                }.mapCatching { utc ->
+                    BasicNatalChartUiCalculator.calculate(
+                        birthDateTimeUtc = utc,
+                        birthLocation = BirthLocation(
+                            latitudeDegrees = birthplace.latitudeDegrees,
+                            longitudeDegrees = birthplace.longitudeDegrees,
+                        ),
+                    )
+                }.onSuccess { chart ->
+                    result = chart
+                }.onFailure {
+                    error = strings.basicNatalCalculateError
+                }
+            },
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(strings.basicNatalCalculateCta)
+        }
+
+        result?.let { chart ->
+            BasicNatalChartResultCards(chart = chart, strings = strings, appStrings = appStrings)
+        }
+        error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+    }
+}
+
+@Composable
+private fun BasicNatalChartResultCards(chart: NatalChartResult, strings: BirthChartStrings, appStrings: AppStrings) {
+    val dimens = BWitchThemeTokens.dimens
+
+    Column(verticalArrangement = Arrangement.spacedBy(dimens.spacingSm)) {
+        Text(strings.basicNatalPreviewTitle, style = MaterialTheme.typography.titleSmall)
+        Row(horizontalArrangement = Arrangement.spacedBy(dimens.spacingSm)) {
+            BasicNatalChartResultCard("☀", strings.basicNatalSunLabel, chart.sunSign.toNatalDisplayName(appStrings), Modifier.weight(1f))
+            BasicNatalChartResultCard("🌙", strings.basicNatalMoonLabel, chart.moonSign.toNatalDisplayName(appStrings), Modifier.weight(1f))
+        }
+        chart.ascendantSign?.let { ascendantSign ->
+            BasicNatalChartResultCard("↗", strings.basicNatalAscendantLabel, ascendantSign.toNatalDisplayName(appStrings), Modifier.fillMaxWidth())
+        }
+    }
+}
+
+@Composable
+private fun BasicNatalChartResultCard(
+    symbol: String,
+    title: String,
+    sign: String,
+    modifier: Modifier = Modifier,
+) {
+    BWitchCard(
+        modifier = modifier,
+        contentVerticalArrangement = Arrangement.spacedBy(BWitchThemeTokens.dimens.spacingXs),
+    ) {
+        Text("$symbol $title", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(sign, style = MaterialTheme.typography.titleMedium)
+    }
+}
+
+@Composable
+private fun BirthplacePickerDialog(
+    strings: BirthChartStrings,
+    query: String,
+    matchingBirthplaces: List<BirthplacePreset>,
+    isCatalogLoading: Boolean,
+    onQueryChange: (String) -> Unit,
+    onSelect: (BirthplacePreset) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val spacing = BWitchThemeTokens.dimens
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = true),
+    ) {
+        Surface(
+            shape = MaterialTheme.shapes.large,
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = spacing.spacingXs,
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(spacing.spacingMd),
+                verticalArrangement = Arrangement.spacedBy(spacing.spacingMd),
+            ) {
+                Text(text = strings.basicNatalBirthplaceLabel, style = MaterialTheme.typography.titleMedium)
+                OutlinedTextField(
+                    value = query,
+                    onValueChange = onQueryChange,
+                    label = { Text(strings.basicNatalBirthplaceSearchLabel) },
+                    supportingText = { Text(strings.basicNatalBirthplaceSearchSupportingText) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                if (isCatalogLoading) {
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                    Text(
+                        text = strings.basicNatalBirthplaceLoadingText,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                if (query.isNotBlank() && matchingBirthplaces.isEmpty()) {
+                    Text(
+                        text = strings.basicNatalBirthplaceEmptyResultsText,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 320.dp)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(spacing.spacingXs),
+                ) {
+                    matchingBirthplaces.forEach { preset ->
+                        OutlinedButton(
+                            onClick = { onSelect(preset) },
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Text(
+                                text = preset.displayName(),
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                        }
+                    }
+                }
+                TextButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(strings.shareCancelCta)
+                }
+            }
+        }
+    }
+}
+
+private data class BirthplaceCatalogUiState(
+    val presets: List<BirthplacePreset>,
+    val isLoadingRuntimeCatalog: Boolean,
+)
+
+private fun validateBasicNatalChartInput(
+    strings: BirthChartStrings,
+    birthDate: LocalDate?,
+    birthHour: Int?,
+    birthMinute: Int?,
+    selectedBirthplace: BirthplacePreset?,
+): String? {
+    val date = birthDate ?: return strings.basicNatalInvalidDayError
+    val hour = birthHour ?: return strings.basicNatalInvalidHourError
+    val minute = birthMinute ?: return strings.basicNatalInvalidMinuteError
+
+    if (date.year !in 1..9999) return strings.basicNatalYearRangeError
+    if (hour !in 0..23) return strings.basicNatalHourRangeError
+    if (minute !in 0..59) return strings.basicNatalMinuteRangeError
+    if (selectedBirthplace == null) return strings.basicNatalBirthplaceRequiredError
+
+    return null
+}
+
+private fun BirthplacePreset.displayName(): String = "$cityName, $countryName"
 
 private fun String?.isBirthEssenceEconomyError(): Boolean {
     val normalized = this?.trim()?.lowercase().orEmpty()
@@ -428,6 +782,21 @@ private fun ZodiacSign.toDisplayName(strings: AppStrings): String = when (this) 
     ZodiacSign.capricorn -> strings.zodiac.capricorn
     ZodiacSign.aquarius -> strings.zodiac.aquarius
     ZodiacSign.pisces -> strings.zodiac.pisces
+}
+
+private fun NatalZodiacSign.toNatalDisplayName(strings: AppStrings): String = when (this) {
+    NatalZodiacSign.aries -> strings.zodiac.aries
+    NatalZodiacSign.taurus -> strings.zodiac.taurus
+    NatalZodiacSign.gemini -> strings.zodiac.gemini
+    NatalZodiacSign.cancer -> strings.zodiac.cancer
+    NatalZodiacSign.leo -> strings.zodiac.leo
+    NatalZodiacSign.virgo -> strings.zodiac.virgo
+    NatalZodiacSign.libra -> strings.zodiac.libra
+    NatalZodiacSign.scorpio -> strings.zodiac.scorpio
+    NatalZodiacSign.sagittarius -> strings.zodiac.sagittarius
+    NatalZodiacSign.capricorn -> strings.zodiac.capricorn
+    NatalZodiacSign.aquarius -> strings.zodiac.aquarius
+    NatalZodiacSign.pisces -> strings.zodiac.pisces
 }
 
 @Composable

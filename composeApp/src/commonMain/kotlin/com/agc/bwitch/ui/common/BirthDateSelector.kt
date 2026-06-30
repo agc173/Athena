@@ -30,7 +30,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.agc.bwitch.localization.appStrings
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
+import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -179,7 +180,7 @@ private fun BirthDatePickerDialog(
 }
 
 @Composable
-private fun WheelSelector(
+internal fun WheelSelector(
     label: String,
     options: List<Int>,
     selected: Int,
@@ -246,8 +247,10 @@ fun LocalDate.toFriendlyBirthDate(): String = toString()
 @Composable
 private fun rememberToday(): LocalDate = remember { currentSystemLocalDate() }
 
-private fun currentSystemLocalDate(): LocalDate =
-    Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+private fun currentSystemLocalDate(): LocalDate {
+    val now = Instant.fromEpochMilliseconds(Clock.System.now().toEpochMilliseconds())
+    return now.toLocalDateTime(TimeZone.currentSystemDefault()).date
+}
 
 private fun defaultBirthDate(today: LocalDate): LocalDate =
     LocalDate((today.year - 18).coerceAtLeast(MinimumBirthYear), today.monthNumber, today.dayOfMonth)

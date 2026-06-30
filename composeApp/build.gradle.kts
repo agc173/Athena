@@ -91,6 +91,7 @@ kotlin {
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+            implementation(libs.kotlinx.coroutines.test)
         }
     }
 }
@@ -141,8 +142,8 @@ android {
         applicationId = "com.agc.bwitch"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 17
-        versionName = "1.1.6"
+        versionCode = 18
+        versionName = "1.1.7"
     }
     buildFeatures {
         buildConfig = true
