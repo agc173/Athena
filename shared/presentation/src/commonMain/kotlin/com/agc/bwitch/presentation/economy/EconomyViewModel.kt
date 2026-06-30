@@ -31,6 +31,7 @@ data class EconomyUiState(
     val isClaimingDailyLogin: Boolean = false,
     val isClaimingRewardedAd: Boolean = false,
     val modulePreviews: List<EconomyModulePreview> = emptyList(),
+    val hasLoadedModulePreviews: Boolean = false,
     val lastClaimResult: EconomyClaimUiResult? = null,
     val error: String? = null,
 ) {
@@ -306,6 +307,7 @@ class EconomyViewModel(
                     dailyLoginClaimed = balance?.dailyLoginClaimed ?: state.dailyLoginClaimed,
                     rewardedAdsRemaining = balance?.rewardedAdsRemaining ?: state.rewardedAdsRemaining,
                     modulePreviews = previewsResult.getOrNull() ?: state.modulePreviews,
+                    hasLoadedModulePreviews = state.hasLoadedModulePreviews || previewsResult.isSuccess,
                     error = if (statusResult.isFailure && balanceResult.isFailure) {
                         ECONOMY_LOAD_ERROR_KEY
                     } else {
