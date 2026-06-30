@@ -1,13 +1,17 @@
 import {HttpsError, onCall} from 'firebase-functions/v2/https';
-import {DateTime} from 'luxon';
-import {ENV} from '../../config/env';
-import {completeBasicNatalEconomyRequest, reserveBasicNatalEconomyAccess} from '../basicNatalEconomy';
 
 type BasicNatalAuthorizeRequest = {requestId?: string; languageCode?: string};
 
+function allowUnverifiedAppCheckInDev(): boolean {
+  const raw = process.env.ALLOW_UNVERIFIED_APPCHECK_IN_DEV;
+  if (raw == null || raw.trim() === '') return false;
+  const normalized = raw.trim().toLowerCase();
+  return normalized === '1' || normalized === 'true';
+}
+
 export const basicNatalAuthorize = onCall({
   region: 'europe-west1',
-  enforceAppCheck: !ENV.ALLOW_UNVERIFIED_APPCHECK_IN_DEV,
+  enforceAppCheck: !allowUnverifiedAppCheckInDev(),
 }, async (request) => {
   const uid = request.auth?.uid;
   if (!uid) throw new HttpsError('unauthenticated', 'Authentication required');
@@ -15,6 +19,11 @@ export const basicNatalAuthorize = onCall({
   const data = (request.data ?? {}) as BasicNatalAuthorizeRequest;
   const requestId = data.requestId?.trim();
   if (!requestId) throw new HttpsError('invalid-argument', 'requestId required');
+
+  const [{DateTime}, {completeBasicNatalEconomyRequest, reserveBasicNatalEconomyAccess}] = await Promise.all([
+    import('luxon'),
+    import('../basicNatalEconomy.js'),
+  ]);
 
   const dateIso = DateTime.now().setZone('Europe/Madrid').toISODate();
   if (!dateIso) throw new HttpsError('internal', 'Unable to resolve dateIso');
