@@ -135,6 +135,9 @@ fun HoroscopeScreen(
     var rewardDialogRewards by remember { mutableStateOf<List<DeckCardUnlockReward>>(emptyList()) }
     var isRewardedAdFlowRunning by rememberSaveable { mutableStateOf(false) }
 
+    LaunchedEffect(Unit) {
+        rewardedAdsService.preloadRewardedAd("horoscope_period_lock_overlay")
+    }
     LaunchedEffect(preselectedSign) { preselectedSign?.let(viewModel::onSelectSign) }
     LaunchedEffect(economyState.hasUsableSnapshot, economyState.isPremium) {
         if (economyState.hasUsableSnapshot) {

@@ -1,6 +1,7 @@
 package com.agc.bwitch.presentation.ads
 
 interface RewardedAdsService {
+    fun preloadRewardedAd(placement: String) = Unit
     suspend fun showRewardedAd(placement: String): RewardedAdResult
 }
 
