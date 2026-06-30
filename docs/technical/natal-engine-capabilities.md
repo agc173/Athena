@@ -502,6 +502,8 @@ El comando ejecuta de forma explícita el test Android unitario `com.agc.bwitch.
 shared/data/build/reports/natal-engine-precision-report.txt
 ```
 
+El reporte declara al inicio la muestra pseudoaleatoria solicitada y la efectiva. Sin propiedad explícita debe indicar `Requested random samples: <default>`, `Effective random samples: 64` y `Samples: 72 (8 manual + 64 random)`.
+
 Para aumentar la muestra sin convertir 1000 comparaciones en requisito permanente de build:
 
 ```bash

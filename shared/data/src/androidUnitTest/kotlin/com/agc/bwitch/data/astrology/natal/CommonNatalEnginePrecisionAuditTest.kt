@@ -23,11 +23,12 @@ import kotlin.test.assertNotNull
 class CommonNatalEnginePrecisionAuditTest {
     @Test
     fun reportsPrecisionAgainstAstronomyEngineWithoutFailingBuild() {
-        val sampleSize = System.getProperty(SampleSizeProperty)
+        val requestedRandomSamples = System.getProperty(SampleSizeProperty)
+        val effectiveRandomSamples = requestedRandomSamples
             ?.toIntOrNull()
             ?.coerceAtLeast(0)
             ?: DefaultRandomSampleSize
-        val samples = manualBoundarySamples() + randomSamples(sampleSize)
+        val samples = manualBoundarySamples() + randomSamples(effectiveRandomSamples)
         val referenceCalculator = BasicNatalChartCalculator()
         val experimentalCalculator = ExperimentalCommonNatalChartCalculator()
 
@@ -51,7 +52,14 @@ class CommonNatalEnginePrecisionAuditTest {
             )
         }
 
-        writeReport(buildReport(samples = samples, results = results))
+        writeReport(
+            buildReport(
+                requestedRandomSamples = requestedRandomSamples,
+                effectiveRandomSamples = effectiveRandomSamples,
+                samples = samples,
+                results = results,
+            ),
+        )
     }
 
     private fun randomSamples(count: Int): List<AuditSample> {
@@ -89,12 +97,19 @@ class CommonNatalEnginePrecisionAuditTest {
         AuditSample("near-south-limit", BirthDateTimeUtc(2038, 1, 19, 3, 14, 7.0), BirthLocation(-65.9, 179.5)),
     )
 
-    private fun buildReport(samples: List<AuditSample>, results: List<AuditResult>): String = buildString {
+    private fun buildReport(
+        requestedRandomSamples: String?,
+        effectiveRandomSamples: Int,
+        samples: List<AuditSample>,
+        results: List<AuditResult>,
+    ): String = buildString {
         appendLine("Common natal engine precision audit (report-only)")
+        appendLine("Requested random samples: ${requestedRandomSamples ?: "<default>"}")
+        appendLine("Effective random samples: $effectiveRandomSamples")
         appendLine("Reference: Android BasicNatalChartCalculator / Astronomy Engine")
         appendLine("Candidate: ExperimentalCommonNatalChartCalculator")
         appendLine("Deterministic seed: $DeterministicSeed")
-        appendLine("Samples: ${samples.size} (${manualBoundarySamples().size} manual + ${samples.size - manualBoundarySamples().size} random)")
+        appendLine("Samples: ${samples.size} (${manualBoundarySamples().size} manual + $effectiveRandomSamples random)")
         appendLine("Random range: years $MinYear-$MaxYear, latitudes $MinLatitudeDegrees..$MaxLatitudeDegrees, longitudes $MinLongitudeDegrees..$MaxLongitudeDegrees")
         appendLine("Guidance: Sun should be very close; Moon is the highest-risk body; Ascendant maxima indicate sidereal-time sensitivity.")
         appendLine(metricReport("Sun", results, AuditResult::sunErrorDegrees))

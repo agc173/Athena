@@ -117,6 +117,8 @@ tasks.matching {
 }
 
 val natalEnginePrecisionReport = layout.buildDirectory.file("reports/natal-engine-precision-report.txt")
+val natalAuditSampleSize = providers.systemProperty("natalAuditSampleSize")
+    .orElse(providers.gradleProperty("natalAuditSampleSize"))
 val isNatalEnginePrecisionAuditRequested = provider {
     gradle.startParameter.taskNames.any { requestedTask ->
         requestedTask == "natalEnginePrecisionAudit" || requestedTask.endsWith(":natalEnginePrecisionAudit")
@@ -126,6 +128,9 @@ val isNatalEnginePrecisionAuditRequested = provider {
 tasks.withType<Test>().configureEach {
     if (name == "testDebugUnitTest") {
         systemProperty("natalPrecisionAuditReportPath", natalEnginePrecisionReport.get().asFile.absolutePath)
+        natalAuditSampleSize.orNull?.let { requestedSampleSize ->
+            systemProperty("natalAuditSampleSize", requestedSampleSize)
+        }
         outputs.file(natalEnginePrecisionReport)
 
         if (isNatalEnginePrecisionAuditRequested.get()) {
