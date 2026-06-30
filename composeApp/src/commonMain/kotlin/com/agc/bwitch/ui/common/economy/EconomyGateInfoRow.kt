@@ -40,7 +40,7 @@ fun resolveEconomyGateLabel(
     packUsesLabel: String? = null,
     freeLabelOverride: String? = null,
 ): String? {
-    val currentPreview = preview ?: return null
+    val currentPreview = preview ?: return freeLabelOverride
     val packUses = currentPreview.moonPackUsesPerMoon?.takeIf { it > 1 }
     val packRemaining = currentPreview.moonRemaining?.takeIf { it > 0 }
     if (packRemaining != null && packUses != null) {
@@ -54,9 +54,10 @@ fun resolveEconomyGateLabel(
         EconomyNextSource.FREE -> {
             val freeRemaining = currentPreview.freeRemaining
             when {
+                freeLabelOverride != null -> freeLabelOverride
                 freeRemaining == 1 -> economyStrings.freeRemainingTodaySingular
                 freeRemaining != null && freeRemaining > 1 -> economyStrings.freeRemainingTodayPlural.replaceFirst("%d", freeRemaining.toString())
-                else -> freeLabelOverride ?: economyStrings.freeToday
+                else -> economyStrings.freeToday
             }
         }
         EconomyNextSource.PREMIUM -> economyStrings.includedWithPremium
