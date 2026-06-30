@@ -18,24 +18,22 @@ export {
   sendTestNotification,
   sendDailyHoroscopeNotifications,
 } from './notifications';
-export {
-  getEconomyBalance,
-  getEconomyStatus,
-  getEconomyModulePreviews,
-  claimDailyLogin,
-  claimRewardedAd,
-  unlockHoroscopeDay,
-  getHoroscopeDailyUnlocks,
-  unlockHoroscopeWeekly,
-  unlockHoroscopeMonthly,
-  getHoroscopeWeeklyUnlocks,
-  getHoroscopeMonthlyUnlocks,
-  synastryAuthorize,
-  basicNatalAuthorize,
-  pendulumAuthorize,
-  claimMoonPackPurchase,
-  recoverTimedOutEconomyRequestsScheduled,
-} from './economy';
+export {getEconomyBalance} from './economy/callables/getEconomyBalance';
+export {getEconomyStatus} from './economy/callables/getEconomyStatus';
+export {getEconomyModulePreviews} from './economy/callables/getEconomyModulePreviews';
+export {claimDailyLogin} from './economy/callables/claimDailyLogin';
+export {claimRewardedAd} from './economy/callables/claimRewardedAd';
+export {unlockHoroscopeDay} from './economy/callables/unlockHoroscopeDay';
+export {getHoroscopeDailyUnlocks} from './economy/callables/getHoroscopeDailyUnlocks';
+export {unlockHoroscopeWeekly} from './economy/callables/unlockHoroscopeWeekly';
+export {unlockHoroscopeMonthly} from './economy/callables/unlockHoroscopeMonthly';
+export {getHoroscopeWeeklyUnlocks} from './economy/callables/getHoroscopeWeeklyUnlocks';
+export {getHoroscopeMonthlyUnlocks} from './economy/callables/getHoroscopeMonthlyUnlocks';
+export {synastryAuthorize} from './economy/callables/synastryAuthorize';
+export {basicNatalAuthorize} from './economy/callables/basicNatalAuthorize';
+export {pendulumAuthorize} from './economy/callables/pendulumAuthorize';
+export {claimMoonPackPurchase} from './economy/callables/claimMoonPackPurchase';
+export {recoverTimedOutEconomyRequestsScheduled} from './economy/processingWatchdog';
 export {claimDailyConstellationProgress} from './economy/callables/claimDailyConstellationProgress';
 export {getConstellationProgress} from './economy/callables/getConstellationProgress';
 
