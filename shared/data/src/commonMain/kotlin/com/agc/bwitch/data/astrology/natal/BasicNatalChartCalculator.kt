@@ -12,16 +12,16 @@ import kotlin.math.sin
 import kotlin.math.tan
 
 /**
- * Internal common natal engine for the scoped Sol/Luna/Ascendente calculation.
+ * Common natal engine for the scoped Sol/Luna/Ascendente calculation.
  *
- * This file is intentionally small and auditable. It is an experimental common approximation
- * created after the Astronomy Engine audit, but it is not a faithful port and must not replace
- * the validated Android Astronomy Engine runtime until its precision is proven by tests.
+ * This implementation is the production runtime on Android and iOS. The Android-only
+ * Astronomy Engine implementation is kept out of production and used only by the precision audit
+ * as an oracle for future regression detection.
  */
-internal class ExperimentalCommonNatalChartCalculator {
+class BasicNatalChartCalculator {
     fun calculate(
         birthDateTimeUtc: BirthDateTimeUtc,
-        birthLocation: BirthLocation?,
+        birthLocation: BirthLocation? = null,
     ): NatalChartResult {
         val time = NatalTime.fromUtc(birthDateTimeUtc)
         val sunLongitude = sunLongitudeDegrees(time)

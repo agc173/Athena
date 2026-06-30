@@ -29,25 +29,25 @@ class CommonNatalEnginePrecisionAuditTest {
             ?.coerceAtLeast(0)
             ?: DefaultRandomSampleSize
         val samples = manualBoundarySamples() + randomSamples(effectiveRandomSamples)
-        val referenceCalculator = BasicNatalChartCalculator()
-        val experimentalCalculator = ExperimentalCommonNatalChartCalculator()
+        val referenceCalculator = AstronomyEngineNatalChartCalculator()
+        val commonCalculator = BasicNatalChartCalculator()
 
         val results = samples.map { sample ->
             val reference = referenceCalculator.calculate(sample.birthDateTimeUtc, sample.birthLocation)
-            val experimental = experimentalCalculator.calculate(sample.birthDateTimeUtc, sample.birthLocation)
+            val common = commonCalculator.calculate(sample.birthDateTimeUtc, sample.birthLocation)
             AuditResult(
                 sample = sample,
                 sunErrorDegrees = angularDifferenceDegrees(
                     reference.sunLongitudeDegrees,
-                    experimental.sunLongitudeDegrees,
+                    common.sunLongitudeDegrees,
                 ),
                 moonErrorDegrees = angularDifferenceDegrees(
                     reference.moonLongitudeDegrees,
-                    experimental.moonLongitudeDegrees,
+                    common.moonLongitudeDegrees,
                 ),
                 ascendantErrorDegrees = angularDifferenceDegrees(
                     assertNotNull(reference.ascendantLongitudeDegrees),
-                    assertNotNull(experimental.ascendantLongitudeDegrees),
+                    assertNotNull(common.ascendantLongitudeDegrees),
                 ),
             )
         }
@@ -106,8 +106,8 @@ class CommonNatalEnginePrecisionAuditTest {
         appendLine("Common natal engine precision audit (report-only)")
         appendLine("Requested random samples: ${requestedRandomSamples ?: "<default>"}")
         appendLine("Effective random samples: $effectiveRandomSamples")
-        appendLine("Reference: Android BasicNatalChartCalculator / Astronomy Engine")
-        appendLine("Candidate: ExperimentalCommonNatalChartCalculator")
+        appendLine("Reference: Android test-only AstronomyEngineNatalChartCalculator / Astronomy Engine")
+        appendLine("Candidate: common BasicNatalChartCalculator")
         appendLine("Deterministic seed: $DeterministicSeed")
         appendLine("Samples: ${samples.size} (${manualBoundarySamples().size} manual + $effectiveRandomSamples random)")
         appendLine("Random range: years $MinYear-$MaxYear, latitudes $MinLatitudeDegrees..$MaxLatitudeDegrees, longitudes $MinLongitudeDegrees..$MaxLongitudeDegrees")

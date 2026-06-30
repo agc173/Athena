@@ -10,10 +10,10 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-class ExperimentalCommonNatalChartCalculatorTest {
+class BasicNatalChartCalculatorCommonTest {
     @Test
     fun calculatesSunAndMoonSignsWithoutAscendantWhenLocationIsNotProvided() {
-        val result = ExperimentalCommonNatalChartCalculator().calculate(SunMoonOnlyBirthDateTimeUtc)
+        val result = BasicNatalChartCalculator().calculate(SunMoonOnlyBirthDateTimeUtc)
 
         assertWithinTolerance(expected = 112.746, actual = result.sunLongitudeDegrees)
         assertEquals(ZodiacSign.cancer, result.sunSign)
@@ -25,7 +25,7 @@ class ExperimentalCommonNatalChartCalculatorTest {
 
     @Test
     fun calculatesMadridNatalChartWithValidatedAstroSeekCase() {
-        val result = ExperimentalCommonNatalChartCalculator().calculate(
+        val result = BasicNatalChartCalculator().calculate(
             birthDateTimeUtc = BirthDateTimeUtc(
                 year = 1994,
                 month = 12,
@@ -50,7 +50,7 @@ class ExperimentalCommonNatalChartCalculatorTest {
 
     @Test
     fun calculatesNewYorkNatalChartWithValidatedAstroSeekCase() {
-        val result = ExperimentalCommonNatalChartCalculator().calculate(
+        val result = BasicNatalChartCalculator().calculate(
             birthDateTimeUtc = BirthDateTimeUtc(
                 year = 1980,
                 month = 6,
@@ -75,7 +75,7 @@ class ExperimentalCommonNatalChartCalculatorTest {
 
     @Test
     fun calculatesBeijingNatalChartWithValidatedAstroSeekCase() {
-        val result = ExperimentalCommonNatalChartCalculator().calculate(
+        val result = BasicNatalChartCalculator().calculate(
             birthDateTimeUtc = BirthDateTimeUtc(
                 year = 2007,
                 month = 10,
