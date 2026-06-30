@@ -16,8 +16,9 @@ object BirthplaceCatalogLoader {
 }
 
 internal object BirthplaceCatalogCsvParser {
-    private const val ExpectedColumnCount = 9
-    private val Header = listOf(
+    private const val LegacyColumnCount = 9
+    private const val SearchNamesColumnCount = 10
+    private val LegacyHeader = listOf(
         "geonameId",
         "cityName",
         "countryName",
@@ -28,6 +29,7 @@ internal object BirthplaceCatalogCsvParser {
         "population",
         "featureCode",
     )
+    private val Header = LegacyHeader + "searchNames"
     private val NonAlphaNumericRegex = Regex("[^a-z0-9]+")
 
     fun parse(csv: String): List<BirthplacePreset> {
@@ -42,8 +44,8 @@ internal object BirthplaceCatalogCsvParser {
 
     private fun parseLine(line: String): BirthplacePreset? {
         val columns = splitCsvLine(line) ?: return null
-        if (columns == Header) return null
-        if (columns.size != ExpectedColumnCount) return null
+        if (columns == LegacyHeader || columns == Header) return null
+        if (columns.size != LegacyColumnCount && columns.size != SearchNamesColumnCount) return null
 
         val geonameId = columns[0].trim()
         val cityName = columns[1].trim()
@@ -52,6 +54,11 @@ internal object BirthplaceCatalogCsvParser {
         val latitude = columns[4].trim().toDoubleOrNull()
         val longitude = columns[5].trim().toDoubleOrNull()
         val timezoneId = columns[6].trim()
+        val searchNames = columns.getOrNull(9)
+            ?.split("|")
+            ?.map { it.trim() }
+            ?.filter { it.isNotEmpty() }
+            .orEmpty()
 
         if (
             geonameId.isBlank() ||
@@ -73,6 +80,7 @@ internal object BirthplaceCatalogCsvParser {
             longitudeDegrees = longitude,
             timezoneId = timezoneId,
             countryCode = countryCode,
+            searchNames = searchNames,
         )
     }
 

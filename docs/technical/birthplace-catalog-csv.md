@@ -7,10 +7,11 @@ The offline birthplace CSV is generated from a local GeoNames `cities15000.txt` 
 1. Download `cities15000.zip` from `https://download.geonames.org/export/dump/`.
 2. Unzip it to `tools/geonames/cities15000.txt` (the local dump is ignored by git).
 3. Download `countryInfo.txt` from the same GeoNames dump directory to `tools/geonames/countryInfo.txt`.
-4. From the repository root, regenerate the CSV only:
+4. Optional, recommended for localized search: download `alternateNamesV2.txt` to `tools/geonames/alternateNamesV2.txt`.
+5. From the repository root, regenerate the CSV only:
 
 ```bash
-python tools/generate_birthplace_presets.py tools/geonames/cities15000.txt --country-info tools/geonames/countryInfo.txt
+python tools/generate_birthplace_presets.py tools/geonames/cities15000.txt --country-info tools/geonames/countryInfo.txt --alternate-names tools/geonames/alternateNamesV2.txt
 ```
 
 By default the generator writes `composeApp/src/commonMain/composeResources/files/birthplaces.csv` and does **not** write `BirthplacePresets.generated.kt`. With no tier, per-country, population, or global-limit flags, it selects all policy-eligible `cities15000` rows after filtering clear urban subdivisions. This keeps the real runtime catalogue in a resource file and avoids creating a huge Kotlin source that can break compilation.
@@ -31,8 +32,10 @@ This means users searching from neighbourhoods such as Carabanchel, Madrid Centr
 The CSV schema is stable:
 
 ```csv
-geonameId,cityName,countryName,countryCode,latitudeDegrees,longitudeDegrees,timezoneId,population,featureCode
+geonameId,cityName,countryName,countryCode,latitudeDegrees,longitudeDegrees,timezoneId,population,featureCode,searchNames
 ```
+
+`searchNames` is an optional final column containing GeoNames alternate names separated by `|`. The runtime parser remains backward-compatible with the previous nine-column CSV. When `--alternate-names` is passed, the generator reads local `alternateNamesV2.txt`, keeps only aliases for selected GeoName IDs in ATHENA-supported languages (`es,en,fr,it,pt,ru,de` by default), normalizes/deduplicates them, and omits aliases equivalent to the canonical `cityName`. Ranking treats `cityName` matches first, `searchNames` as city aliases above `countryName`, and country names only as fallback.
 
 ## Broad catalogue policy
 

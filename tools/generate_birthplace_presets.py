@@ -26,9 +26,11 @@ CSV_HEADER = (
     "timezoneId",
     "population",
     "featureCode",
+    "searchNames",
 )
 PACKAGE_NAME = "com.agc.bwitch.ui.astrology.birthplace"
 DEFAULT_KOTLIN_MAX_PRESETS = 200
+DEFAULT_SEARCH_NAME_LANGUAGES = ("es", "en", "fr", "it", "pt", "ru", "de")
 
 URBAN_SUBDIVISION_FEATURE_CODES = {"PPLX"}
 URBAN_SUBDIVISION_NAME_TERMS = (
@@ -166,6 +168,51 @@ def final_sort(cities: list[City]) -> list[City]:
         cities,
         key=lambda city: (city.country_name.casefold(), city.name.casefold(), city.geoname_id),
     )
+
+
+def parse_search_name_languages(value: str) -> set[str]:
+    languages = {language.strip().lower() for language in value.split(",") if language.strip()}
+    if not languages:
+        raise argparse.ArgumentTypeError("provide at least one language code")
+    return languages
+
+
+def normalize_search_name(value: str) -> str:
+    normalized = unicodedata.normalize("NFKD", value.strip().casefold())
+    without_marks = "".join(char for char in normalized if not unicodedata.combining(char))
+    return re.sub(r"\s+", " ", re.sub(r"[^\w]+", " ", without_marks, flags=re.UNICODE)).strip()
+
+
+def collect_search_names(path: Path, cities: list[City], languages: set[str]) -> dict[str, list[str]]:
+    selected_by_id = {city.geoname_id: city for city in cities}
+    aliases_by_city: dict[str, list[str]] = {city.geoname_id: [] for city in cities}
+    seen_by_city: dict[str, set[str]] = {city.geoname_id: set() for city in cities}
+    city_names = {city.geoname_id: normalize_search_name(city.name) for city in cities}
+    with path.open("r", encoding="utf-8") as handle:
+        for line_number, raw_line in enumerate(handle, start=1):
+            line = raw_line.rstrip("\n")
+            if not line:
+                continue
+            columns = line.split("\t")
+            if len(columns) < 4:
+                raise ValueError(
+                    f"Invalid alternateNamesV2 row at line {line_number}: expected at least 4 columns"
+                )
+            geoname_id = columns[1].strip()
+            if geoname_id not in selected_by_id:
+                continue
+            language = columns[2].strip().lower()
+            if language not in languages:
+                continue
+            alias = columns[3].strip()
+            normalized_alias = normalize_search_name(alias)
+            if not alias or not normalized_alias or normalized_alias == city_names[geoname_id]:
+                continue
+            if normalized_alias in seen_by_city[geoname_id]:
+                continue
+            seen_by_city[geoname_id].add(normalized_alias)
+            aliases_by_city[geoname_id].append(alias)
+    return aliases_by_city
 
 
 def parse_country_codes(value: str) -> list[str]:
@@ -405,7 +452,7 @@ def render(cities: list[City]) -> str:
     return "\n".join(lines)
 
 
-def render_csv(cities: list[City]) -> str:
+def render_csv(cities: list[City], search_names: dict[str, list[str]] | None = None) -> str:
     from io import StringIO
 
     buffer = StringIO()
@@ -423,6 +470,7 @@ def render_csv(cities: list[City]) -> str:
                 city.timezone_id,
                 city.population,
                 city.feature_code,
+                "|".join((search_names or {}).get(city.geoname_id, [])),
             )
         )
     return buffer.getvalue()
@@ -472,6 +520,21 @@ def main() -> None:
     parser.add_argument("--global-limit", type=positive_int, default=None, help="Fill with the largest global cities until this total preset count is reached")
     parser.add_argument("--allowlist-file", type=Path, default=None, help='Optional allowlist file with one GeoName ID or "City|CountryCode" per line')
     parser.add_argument("--exclude-file", type=Path, default=None, help='Optional exclude file with one GeoName ID or "City|CountryCode" per line; prefix with ! to override allowlist')
+    parser.add_argument(
+        "--alternate-names",
+        type=Path,
+        default=None,
+        help="Optional local GeoNames alternateNamesV2.txt used to populate the searchNames CSV column",
+    )
+    parser.add_argument(
+        "--search-name-language",
+        type=parse_search_name_languages,
+        default=parse_search_name_languages(",".join(DEFAULT_SEARCH_NAME_LANGUAGES)),
+        help=(
+            "Comma-separated GeoNames alternate-name language codes to include when "
+            "--alternate-names is present (default: es,en,fr,it,pt,ru,de)"
+        ),
+    )
     args = parser.parse_args()
 
     countries = parse_country_info(args.country_info)
@@ -499,9 +562,14 @@ def main() -> None:
             "the CSV resource. Re-run without --kotlin-output/--output for the runtime CSV, "
             "or lower the selection limits for a small legacy fallback."
         )
+    search_names = (
+        collect_search_names(args.alternate_names, cities, args.search_name_language)
+        if args.alternate_names is not None
+        else None
+    )
     if args.csv_output is not None:
         args.csv_output.parent.mkdir(parents=True, exist_ok=True)
-        csv_content = render_csv(cities)
+        csv_content = render_csv(cities, search_names)
         csv_row_count = max(0, csv_content.count("\n") - 1)
         if csv_row_count != len(cities):
             raise RuntimeError(

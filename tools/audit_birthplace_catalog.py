@@ -136,6 +136,7 @@ class BirthplaceRow:
     timezone_id: str
     population: int
     feature_code: str
+    search_names: tuple[str, ...] = ()
 
     @classmethod
     def from_csv(cls, row: dict[str, str]) -> "BirthplaceRow":
@@ -149,6 +150,9 @@ class BirthplaceRow:
             timezone_id=row.get("timezoneId", "").strip(),
             population=parse_int(row.get("population", "")),
             feature_code=row.get("featureCode", "").strip(),
+            search_names=tuple(
+                alias.strip() for alias in row.get("searchNames", "").split("|") if alias.strip()
+            ),
         )
 
 
@@ -229,8 +233,10 @@ def ranking_score(
         match_tier = 1
     elif normalized_query in normalized_city:
         match_tier = 2
-    elif normalized_query in normalized_country:
+    elif any(normalized_query in normalize_search_text(alias) for alias in row.search_names):
         match_tier = 3
+    elif normalized_query in normalized_country:
+        match_tier = 4
     else:
         return None
 
@@ -271,6 +277,8 @@ def format_row(row: BirthplaceRow) -> str:
 def build_report(csv_path: Path, rows: Sequence[BirthplaceRow]) -> str:
     raw_bytes = csv_path.read_bytes()
     gzip_bytes = gzip.compress(raw_bytes, compresslevel=9)
+    rows_with_search_names = sum(1 for row in rows if row.search_names)
+    total_search_name_aliases = sum(len(row.search_names) for row in rows)
     country_counts = Counter(row.country_code or "<missing>" for row in rows)
 
     city_countries: dict[str, set[str]] = defaultdict(set)
@@ -296,6 +304,8 @@ def build_report(csv_path: Path, rows: Sequence[BirthplaceRow]) -> str:
     lines.append(f"- CSV bytes: {format_bytes(len(raw_bytes))}")
     lines.append(f"- Approx. gzip size: {format_bytes(len(gzip_bytes))}")
     lines.append(f"- Total rows: {len(rows):,}")
+    lines.append(f"- Rows with searchNames: {rows_with_search_names:,}")
+    lines.append(f"- Total searchNames aliases: {total_search_name_aliases:,}")
     rows_status = "OK" if len(rows) >= EXPECTED_MIN_ROWS else "WARN"
     lines.append(
         f"- Broad-catalogue row expectation: {rows_status} "
