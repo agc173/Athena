@@ -122,6 +122,67 @@ class BirthplaceSearchRankingTest {
         assertEquals("new-york-city-us", rankBirthplaceMatches("new york", presets).first().id)
     }
 
+
+    @Test
+    fun findsCityBySearchNames() {
+        val results = rankBirthplaceMatches(
+            query = "Moskau",
+            presets = listOf(
+                birthplace(
+                    "moscow-ru",
+                    "Moscow",
+                    "Russia",
+                    "RU",
+                    "Europe/Moscow",
+                    searchNames = listOf("Москва", "Moscú", "Moskau", "Moscou"),
+                ),
+            ),
+        )
+
+        assertEquals(listOf("moscow-ru"), results.map { it.id })
+    }
+
+    @Test
+    fun searchNamesDoNotDisplaceDifferentCityExactMatch() {
+        val results = rankBirthplaceMatches(
+            query = "Paris",
+            presets = listOf(
+                birthplace(
+                    "london-gb",
+                    "London",
+                    "United Kingdom",
+                    "GB",
+                    "Europe/London",
+                    searchNames = listOf("Paris"),
+                ),
+                birthplace("paris-fr", "Paris", "France", "FR", "Europe/Paris"),
+            ),
+        )
+
+        assertEquals("paris-fr", results.first().id)
+    }
+
+    @Test
+    fun countryNameRanksBelowCityAndSearchNames() {
+        val results = rankBirthplaceMatches(
+            query = "Georgia",
+            presets = listOf(
+                birthplace("atlanta-us", "Atlanta", "Georgia", "US", "America/New_York"),
+                birthplace(
+                    "tbilisi-ge",
+                    "Tbilisi",
+                    "Georgia",
+                    "GE",
+                    "Asia/Tbilisi",
+                    searchNames = listOf("Georgia"),
+                ),
+                birthplace("georgia-us", "Georgia", "United States", "US", "America/New_York"),
+            ),
+        )
+
+        assertEquals(listOf("georgia-us", "tbilisi-ge", "atlanta-us"), results.map { it.id })
+    }
+
     @Test
     fun emptyQueryKeepsOriginalOrderAndLimit() {
         val presets = (1..25).map { index ->
@@ -139,6 +200,7 @@ class BirthplaceSearchRankingTest {
         countryName: String,
         countryCode: String,
         timezoneId: String,
+        searchNames: List<String> = emptyList(),
     ): BirthplacePreset = BirthplacePreset(
         id = id,
         cityName = cityName,
@@ -147,5 +209,6 @@ class BirthplaceSearchRankingTest {
         longitudeDegrees = 0.0,
         timezoneId = timezoneId,
         countryCode = countryCode,
+        searchNames = searchNames,
     )
 }

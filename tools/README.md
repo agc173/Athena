@@ -10,7 +10,8 @@ Manual GeoNames download steps:
 2. Download `cities15000.zip`.
 3. Unzip it locally under `tools/geonames/` (ignored by git) or another local-only folder.
 4. Optional: download `countryInfo.txt` from the same directory if generated presets should contain country names instead of only ISO country codes.
-5. Run the generator from the repository root.
+5. Optional, recommended for localized search: download `alternateNamesV2.txt` from the same directory to populate CSV `searchNames`.
+6. Run the generator from the repository root.
 
 ### Reference birthplace catalogue philosophy
 
@@ -39,7 +40,7 @@ Selection order for the recommended broad mode:
 6. Apply an exclude file only when explicitly provided. Allowlisted cities are not excluded unless the exclude entry is prefixed with `!`.
 7. Deduplicate by GeoName ID.
 8. Sort the final CSV output by country name, city name, and GeoName ID for deterministic diffs.
-9. Write `birthplaces.csv` by default. Kotlin is written only when `--kotlin-output` (or deprecated `--output`) is passed, and only if the selected city count stays under `--kotlin-max-presets` (default `200`).
+9. Write `birthplaces.csv` by default, including a final `searchNames` column (empty unless `--alternate-names` is provided). Kotlin is written only when `--kotlin-output` (or deprecated `--output`) is passed, and only if the selected city count stays under `--kotlin-max-presets` (default `200`).
 
 Legacy tier and global-limit flags remain available for intentionally compact catalogues, but they are no longer the recommended ATHENA regeneration strategy.
 
@@ -52,10 +53,10 @@ Legacy tier and global-limit flags remain available for intentionally compact ca
 ### Recommended ATHENA command
 
 ```bash
-python tools/generate_birthplace_presets.py tools/geonames/cities15000.txt --country-info tools/geonames/countryInfo.txt
+python tools/generate_birthplace_presets.py tools/geonames/cities15000.txt --country-info tools/geonames/countryInfo.txt --alternate-names tools/geonames/alternateNamesV2.txt
 ```
 
-The generator prints a summary with total selected presets, allowlist requested/matched/missing counts, exclude requested/matched counts, top country counts, and CSV file size. With no tier, per-country, population, or global-limit flags, the default mode selects all eligible `cities15000` rows after urban-subdivision filtering. The recommended flow regenerates only `birthplaces.csv`; `BirthplacePresets.generated.kt` remains a small fallback/legacy source.
+When `--alternate-names` is provided, the generator fills `searchNames` from supported-language GeoNames aliases (`es,en,fr,it,pt,ru,de` by default via `--search-name-language`) after filtering to selected GeoName IDs and deduplicating normalized aliases. The generator prints a summary with total selected presets, allowlist requested/matched/missing counts, exclude requested/matched counts, top country counts, and CSV file size. With no tier, per-country, population, or global-limit flags, the default mode selects all eligible `cities15000` rows after urban-subdivision filtering. The recommended flow regenerates only `birthplaces.csv`; `BirthplacePresets.generated.kt` remains a small fallback/legacy source.
 
 ### Optional Kotlin fallback output
 
@@ -80,7 +81,7 @@ python tools/audit_birthplace_catalog.py
 
 The console report measures:
 
-- raw CSV bytes, approximate gzip size, and total rows;
+- raw CSV bytes, approximate gzip size, total rows, rows with `searchNames`, and total `searchNames` aliases;
 - `countryCode` coverage and the top 30 countries by entry count;
 - repeated city names / homonyms, including the top 30 repeated `cityName` values;
 - entries that still match the same generator-only urban subdivision policy (`PPLX`, district/barrio/borough/ward/quarter/arrondissement name terms, and the narrow audited `centro` patterns);

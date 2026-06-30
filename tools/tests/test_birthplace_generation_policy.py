@@ -1,9 +1,14 @@
+import tempfile
 import unittest
+from pathlib import Path
 
 from tools.generate_birthplace_presets import (
     City,
     MatchList,
     is_birthplace_catalog_eligible,
+    collect_search_names,
+    parse_search_name_languages,
+    render_csv,
     select_tiered_cities,
 )
 
@@ -26,6 +31,41 @@ EMPTY_MATCH_LIST = MatchList(set(), set(), set(), set(), 0)
 
 
 class BirthplaceGenerationPolicyTest(unittest.TestCase):
+
+    def test_render_csv_includes_search_names_column(self):
+        madrid = city("Madrid", "ES", geoname_id="1")
+
+        csv_text = render_csv([madrid], {"1": ["Madriz", "Madryt"]})
+
+        self.assertIn("featureCode,searchNames", csv_text.splitlines()[0])
+        self.assertIn("Madriz|Madryt", csv_text)
+
+    def test_collect_search_names_filters_languages_selected_ids_duplicates_and_city_name(self):
+        madrid = city("Madrid", "ES", geoname_id="1")
+        paris = city("Paris", "FR", geoname_id="2")
+        with tempfile.TemporaryDirectory() as temp_dir:
+            alt_path = Path(temp_dir) / "alternateNamesV2.txt"
+            alt_path.write_text(
+                "\n".join(
+                    [
+                        "10\t1\tes\tMadrid\t\t\t\t",
+                        "11\t1\tes\tMadriz\t\t\t\t",
+                        "12\t1\tes\tMÁDRIZ\t\t\t\t",
+                        "13\t1\tde\tMadryt\t\t\t\t",
+                        "14\t1\tja\tマドリード\t\t\t\t",
+                        "15\t999\tes\tOther\t\t\t\t",
+                        "16\t2\tfr\tParis\t\t\t\t",
+                        "17\t2\tes\tParís Ciudad\t\t\t\t",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+
+            aliases = collect_search_names(alt_path, [madrid, paris], parse_search_name_languages("es,de"))
+
+        self.assertEqual(["Madriz", "Madryt"], aliases["1"])
+        self.assertEqual(["París Ciudad"], aliases["2"])
+
     def test_city_policy_keeps_major_cities_and_excludes_urban_subdivisions(self):
         cases = [
             ("Madrid", "ES", "PPLC", True),
