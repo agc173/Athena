@@ -103,7 +103,8 @@ private fun BirthplacePreset.birthplaceSearchScore(
         normalizedCity == normalizedQuery -> 0
         normalizedCity.startsWith(normalizedQuery) -> 1
         normalizedCity.contains(normalizedQuery) -> 2
-        normalizedCountry.contains(normalizedQuery) -> 3
+        matchesSearchName(normalizedQuery) -> 3
+        normalizedCountry.contains(normalizedQuery) -> 4
         else -> return null
     }
 
@@ -114,6 +115,13 @@ private fun BirthplacePreset.birthplaceSearchScore(
         countryPriority = countryPriorityFor(normalizedCity, countryCode),
         countryNameLength = normalizedCountry.length,
     )
+}
+
+private fun BirthplacePreset.matchesSearchName(normalizedQuery: String): Boolean = searchNames.any { searchName ->
+    val normalizedSearchName = normalizeBirthplaceSearchText(searchName)
+    normalizedSearchName == normalizedQuery ||
+        normalizedSearchName.startsWith(normalizedQuery) ||
+        normalizedSearchName.contains(normalizedQuery)
 }
 
 private data class EquivalentBirthplaceQuery(
