@@ -52,7 +52,7 @@ class GitLiveFunctionsClient(
 
     private fun FirebaseFunctionsException.toApiError(): ApiError {
         val exceptionCode = code
-        val haystack = searchableText(details)
+        val haystack = searchableText(extra = "${code} ${details}")
 
         return when (exceptionCode) {
             FunctionsExceptionCode.UNAUTHENTICATED -> ApiError.Unauthenticated(message)
@@ -69,6 +69,7 @@ class GitLiveFunctionsClient(
                 "resource-exhausted" in haystack || "resource exhausted" in haystack -> ApiError.ResourceExhausted(message)
                 "failed-precondition" in haystack || "failed precondition" in haystack -> ApiError.FailedPrecondition(message)
                 "invalid-argument" in haystack || "invalid argument" in haystack -> ApiError.InvalidArgument(message)
+                "not-found" in haystack || "not_found" in haystack || "function was not found" in haystack -> ApiError.NotFound(message)
                 "internal" in haystack -> ApiError.Internal(message)
                 haystack.hasConnectivityFailureHint() -> ApiError.Network(message)
                 else -> ApiError.Unknown(message)

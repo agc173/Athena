@@ -263,5 +263,23 @@ class EconomyRemoteDataSource(
 }
 
 private fun com.agc.bwitch.domain.shared.ApiError.toException(): IllegalStateException {
-    return IllegalStateException(message ?: "Economy backend request failed")
+    val code = when (this) {
+        is com.agc.bwitch.domain.shared.ApiError.Unauthenticated -> "unauthenticated"
+        is com.agc.bwitch.domain.shared.ApiError.PermissionDenied -> "permission_denied"
+        is com.agc.bwitch.domain.shared.ApiError.ResourceExhausted -> "resource_exhausted"
+        is com.agc.bwitch.domain.shared.ApiError.FailedPrecondition -> "failed_precondition"
+        is com.agc.bwitch.domain.shared.ApiError.InvalidArgument -> "invalid_argument"
+        is com.agc.bwitch.domain.shared.ApiError.NotFound -> "not_found"
+        is com.agc.bwitch.domain.shared.ApiError.Internal -> "internal"
+        is com.agc.bwitch.domain.shared.ApiError.Network -> "network"
+        is com.agc.bwitch.domain.shared.ApiError.Unknown -> "unknown"
+    }
+    val backendMessage = message?.takeIf { it.isNotBlank() } ?: "Economy backend request failed"
+    println("[EconomyRemoteDataSource] backend_error code=$code message=$backendMessage")
+    return EconomyBackendException(code = code, backendMessage = backendMessage)
 }
+
+class EconomyBackendException(
+    val code: String,
+    val backendMessage: String,
+) : IllegalStateException("$code:$backendMessage")

@@ -726,12 +726,26 @@ private fun String?.toBasicNatalEconomyErrorMessage(
     return when {
         normalized.contains("insufficient_moons") -> appStrings.economy.notEnoughMoons
         normalized.isDailyLimitError() -> appStrings.economy.dailyLimitReached
-        normalized.contains("network") ||
-            normalized.contains("connection") ||
+        normalized.startsWith("unauthenticated:") ||
+            normalized.contains("unauthenticated") -> appStrings.birthChart.generateSessionExpiredError
+        normalized.startsWith("network:") ||
             normalized.contains("offline") ||
+            normalized.contains("no internet") ||
+            normalized.contains("not connected to the internet") -> appStrings.birthChart.generateConnectionError
+        normalized.startsWith("not_found:") ||
+            normalized.startsWith("internal:") ||
+            normalized.startsWith("permission_denied:") ||
+            normalized.startsWith("resource_exhausted:") ||
+            normalized.startsWith("failed_precondition:") ||
+            normalized.startsWith("unknown:") ||
+            normalized.contains("app check") ||
+            normalized.contains("appcheck") ||
+            normalized.contains("function was not found") ||
+            normalized.contains("not-found") ||
             normalized.contains("unavailable") ||
             normalized.contains("deadline") ||
-            normalized.contains("timeout") -> appStrings.birthChart.generateConnectionError
+            normalized.contains("timeout") -> appStrings.birthChart.generateTemporaryAthenaError
+        normalized.contains("network") || normalized.contains("connection") -> appStrings.birthChart.generateConnectionError
         else -> fallback
     }
 }
