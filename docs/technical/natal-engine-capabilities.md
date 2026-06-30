@@ -470,3 +470,42 @@ Esta implementación común no sustituye todavía al runtime validado. Android m
 El motor común se documenta como aproximación experimental inspirada por la auditoría técnica, no como port fiel ni adaptación sustancial de Astronomy Engine. Por eso no se añade licencia MIT upstream en esta iteración. Si más adelante se copia o adapta código sustancial de `cosinekitty/astronomy`, deberá añadirse la atribución MIT completa y encabezados por archivo.
 
 No se implementan planetas adicionales, casas, aspectos, rueda natal, economía, Esencia Natal ni cambios de ranking/CSV de ciudades.
+
+## 13. Common engine precision audit
+
+Se añade una auditoría Android-only en `shared/data/src/androidUnitTest` para comparar el runtime Android validado (`BasicNatalChartCalculator`, Astronomy Engine) contra el motor común experimental (`ExperimentalCommonNatalChartCalculator`). La auditoría es **report-only**: imprime métricas de precisión y no sustituye el runtime, no habilita iOS y no elimina Astronomy Engine.
+
+La muestra es reproducible con seed fija `20260630` y combina:
+
+- casos manuales de frontera: cambios de año, equinoccios/solsticios aproximados, horas cercanas a medianoche y longitudes extremas;
+- casos pseudoaleatorios deterministas entre los años 1900 y 2100, latitudes `[-66°, +66°]`, longitudes `[-180°, +180°]`, y hora/minuto/segundo completos.
+
+La auditoría reporta por separado Sol, Luna y Ascendente:
+
+- error medio absoluto;
+- p95;
+- p99;
+- máximo;
+- peor caso con fecha/hora UTC completa y ubicación.
+
+La diferencia angular se calcula de forma circular, por lo que `359.9°` frente a `0.1°` se considera un error de `0.2°` y no de `359.8°`.
+
+Uso recomendado:
+
+```bash
+./gradlew :shared:data:testDebugUnitTest --tests '*CommonNatalEnginePrecisionAuditTest'
+```
+
+Para aumentar la muestra sin convertir 1000 comparaciones en requisito permanente de build:
+
+```bash
+./gradlew :shared:data:testDebugUnitTest --tests '*CommonNatalEnginePrecisionAuditTest' -DnatalAuditSampleSize=1000
+```
+
+Umbrales orientativos para interpretar el reporte inicial:
+
+- Sol debería quedar muy cercano al runtime Astronomy Engine.
+- Luna es el mayor riesgo por la simplificación de términos lunares del motor común.
+- Ascendente debe revisarse especialmente por máximos y p99, porque depende de tiempo sidéreo, ubicación y normalización circular.
+
+Esta auditoría es el paso previo para decidir con datos si el motor común experimental puede promoverse en el futuro para reemplazar Android y activar iOS. Hasta entonces, el runtime permanece intacto: Android sigue usando Astronomy Engine e iOS sigue fallando explícitamente.
