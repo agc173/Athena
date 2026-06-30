@@ -260,7 +260,7 @@ La opción **c) alternativa recomendada** para desbloquear únicamente Sol/Luna/
 4. Mover los casos Madrid/New York/Beijing y el caso sin ubicación a `commonTest` cuando exista el motor común.
 5. Mantener la tolerancia actual `0.25°` y documentar la fuente algorítmica/tolerancias antes de retirar el motor Android-only.
 
-Hasta que ese port común compile en targets iOS, iOS debe seguir considerándose **no soportado** para cálculo natal local. No se debe cambiar el mensaje de error actual por un fallback silencioso ni prometer soporte iOS en producto.
+El spike continúa en esta rama con un motor común interno para validar Sol/Luna/Ascendente en Android+iOS sin ampliar el alcance de producto.
 
 ### Evidencia de build/auditoría del spike
 
@@ -279,7 +279,7 @@ Resultados:
 
 ### Recomendación técnica
 
-Para desbloquear Esencia Natal en Android+iOS sin prometer carta completa, el siguiente paso recomendado es un spike de implementación separado:
+Para desbloquear Esencia Natal en Android+iOS sin prometer carta completa, el siguiente paso recomendado es un spike de implementación acotado en esta misma rama:
 
 1. Resolver primero el bloqueo de Gradle/plugin en el entorno de build.
 2. Verificar metadata real de `com.github.cosinekitty:astronomy:v2.1.17` en un entorno con acceso Maven/JitPack funcional.
@@ -445,7 +445,7 @@ Motivos:
 - Un adaptador común mantiene igual el resultado público (`NatalChartResult`) y reduce divergencia Android/iOS.
 - Incorporar otra librería KMP requeriría volver a auditar precisión, licencia, tamaño, targets iOS reales y diferencias de coordenadas.
 
-Condición antes de implementar: comprobar una vez más si existe artefacto KMP/iOS real de Astronomy Engine. Si no existe, portar solo el subconjunto anterior a `shared/data/src/commonMain`, con tests comunes y sin tocar UI, economía, Esencia Natal ni ranking/CSV de ciudades.
+Implementación acotada en esta rama: se explora un motor común aproximado y experimental en `shared/data/src/commonMain`, con tests comunes separados y sin sustituir el runtime Android validado hasta demostrar precisión.
 
 ### Siguiente paso recomendado
 
@@ -458,4 +458,15 @@ Continuar en esta rama con un spike de implementación acotado para crear un mot
 5. Reutilización exacta de la fórmula de Ascendente ya validada en Android.
 6. Tests `commonTest` contra los fixtures existentes de Madrid, New York, Beijing y caso sin ubicación.
 
-No se recomienda ampliar este port a planetas, casas, aspectos, MC/IC o carta completa en el mismo paso.
+No se recomienda ampliar este experimento a planetas, casas, aspectos, MC/IC o carta completa en el mismo paso.
+
+
+## 12. Estado del spike común Sol/Luna/Ascendente
+
+Se añadió una implementación común interna **experimental** en `shared/data/src/commonMain` para contrastar únicamente longitud/signo de Sol, longitud/signo de Luna y Ascendente opcional. La API pública se mantiene sin ampliar: `BirthDateTimeUtc`, `BirthLocation` y `NatalChartResult` conservan sus campos actuales.
+
+Esta implementación común no sustituye todavía al runtime validado. Android mantiene `shared/data/src/androidMain/.../BasicNatalChartCalculator.kt` con Astronomy Engine, e iOS mantiene el error explícito Android-only hasta que el motor común quede validado con fixtures y build.
+
+El motor común se documenta como aproximación experimental inspirada por la auditoría técnica, no como port fiel ni adaptación sustancial de Astronomy Engine. Por eso no se añade licencia MIT upstream en esta iteración. Si más adelante se copia o adapta código sustancial de `cosinekitty/astronomy`, deberá añadirse la atribución MIT completa y encabezados por archivo.
+
+No se implementan planetas adicionales, casas, aspectos, rueda natal, economía, Esencia Natal ni cambios de ranking/CSV de ciudades.
