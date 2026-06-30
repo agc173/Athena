@@ -9,6 +9,7 @@ test('basic natal preview shows weekly free while unused', () => {
     dailyUsage: {},
     weeklyUsage: {basicNatalFreeUsed: 0},
   });
+  assert.equal(preview.module, 'BASIC_NATAL_CHART');
   assert.equal(preview.nextSource, 'FREE');
   assert.equal(preview.cost, 0);
   assert.equal(preview.canExecute, true);
@@ -22,6 +23,7 @@ test('basic natal preview shows one moon after weekly free with balance', () => 
     dailyUsage: {},
     weeklyUsage: {basicNatalFreeUsed: 1},
   });
+  assert.equal(preview.module, 'BASIC_NATAL_CHART');
   assert.equal(preview.nextSource, 'MOON');
   assert.equal(preview.cost, 1);
   assert.equal(preview.canExecute, true);
@@ -35,6 +37,7 @@ test('basic natal preview rejects insufficient moons after weekly free without b
     dailyUsage: {},
     weeklyUsage: {basicNatalFreeUsed: 1},
   });
+  assert.equal(preview.module, 'BASIC_NATAL_CHART');
   assert.equal(preview.nextSource, 'REJECTED');
   assert.equal(preview.cost, 1);
   assert.equal(preview.canExecute, false);

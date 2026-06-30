@@ -46,7 +46,6 @@ import com.agc.bwitch.domain.astrology.natal.NatalChartResult
 import com.agc.bwitch.domain.astrology.natal.ZodiacSign as NatalZodiacSign
 import com.agc.bwitch.domain.astrology.natal.toUtc
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
-import com.agc.bwitch.domain.economy.EconomyModulePreview
 import com.agc.bwitch.domain.economy.EconomyRepository
 import com.agc.bwitch.domain.model.DeckCardUnlockReward
 import com.agc.bwitch.localization.AppStrings
@@ -327,14 +326,7 @@ private fun BasicNatalChartSection(
     var isAuthorizingBasicNatal by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
     val economyState by economyViewModel.uiState.collectAsState()
-    val loadedBasicNatalPreview = economyState.modulePreviews.findBasicNatalPreview()
-    var lastBasicNatalPreview by remember { mutableStateOf<EconomyModulePreview?>(null) }
-    LaunchedEffect(loadedBasicNatalPreview) {
-        if (loadedBasicNatalPreview != null) {
-            lastBasicNatalPreview = loadedBasicNatalPreview
-        }
-    }
-    val basicNatalPreview = loadedBasicNatalPreview ?: lastBasicNatalPreview.takeIf { economyState.isLoading }
+    val basicNatalPreview = economyState.modulePreviews.firstOrNull { it.module == "BASIC_NATAL_CHART" }
     val showBasicNatalDailyLimitPaywall = basicNatalPreview.isDailyLimitRejected()
 
     val birthplaceCatalogState by produceState(
@@ -724,10 +716,6 @@ private fun String?.isDailyLimitError(): Boolean {
         normalized.contains("daily_limit") ||
         normalized.contains("limit_reached") ||
         normalized.contains("resource_exhausted")
-}
-
-private fun List<EconomyModulePreview>.findBasicNatalPreview(): EconomyModulePreview? {
-    return firstOrNull { it.module == "BASIC_NATAL_CHART" || it.module == "BASIC_NATAL" }
 }
 
 private fun String?.toBasicNatalEconomyErrorMessage(
