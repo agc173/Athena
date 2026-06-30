@@ -326,6 +326,7 @@ class BirthChartViewModel(
                 normalizedMessage.hasDailyLimitHint() -> BIRTH_CHART_GENERATE_DAILY_LIMIT_KEY
                 else -> BIRTH_CHART_GENERATE_TEMPORARY_ATHENA_KEY
             }
+            is ApiError.NotFound -> BIRTH_CHART_GENERATE_UNAVAILABLE_KEY
             is ApiError.Network -> BIRTH_CHART_GENERATE_CONNECTION_KEY
             is ApiError.Unknown -> when {
                 normalizedMessage.hasNetworkHint() -> BIRTH_CHART_GENERATE_CONNECTION_KEY

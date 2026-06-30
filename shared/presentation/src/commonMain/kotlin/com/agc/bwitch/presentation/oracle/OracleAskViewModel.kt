@@ -304,6 +304,9 @@ class OracleAskViewModel(
                     message = OracleAskMessage(id = OracleAskMessageId.InternalGeneric),
                 )
             }
+            is ApiError.NotFound -> OracleAskMappedError(
+                message = OracleAskMessage(id = OracleAskMessageId.InternalTemporaryUnavailable),
+            )
             is ApiError.Network -> OracleAskMappedError(
                 message = OracleAskMessage(id = OracleAskMessageId.UnknownFallback),
             )
