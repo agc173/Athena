@@ -112,7 +112,7 @@ private fun String.toClaimStatus(): EconomyClaimStatus {
 }
 
 
-private fun EconomyModulePreviewDto.toEconomyModulePreview(): EconomyModulePreview {
+internal fun EconomyModulePreviewDto.toEconomyModulePreview(): EconomyModulePreview {
     return EconomyModulePreview(
         module = module,
         nextSource = nextSource.toEconomyNextSource(),
