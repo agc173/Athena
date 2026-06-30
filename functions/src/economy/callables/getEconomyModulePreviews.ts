@@ -109,6 +109,37 @@ function toNextSource(source: 'FREE' | 'PREMIUM_INCLUDED' | 'MOON' | 'REJECT'): 
   return source;
 }
 
+
+export function buildBasicNatalPreview(params: {
+  isPremium: boolean;
+  balance: number;
+  dailyUsage: EconomyDailyUsageDoc;
+  weeklyUsage: EconomyWeeklyUsageDoc;
+}): EconomyModulePreview {
+  const {isPremium, balance, dailyUsage, weeklyUsage} = params;
+  const decision = resolveBasicNatalDecision({isPremium, balance, dailyUsage, weeklyUsage});
+  const rule = getEconomyModuleRule('BASIC_NATAL_CHART');
+  const freeUsed = intValue(weeklyUsage.basicNatalFreeUsed);
+  const freeWeekly = intValue(rule.freeWeekly);
+  const premiumUsed = intValue(dailyUsage.basicNatalPremiumUsed);
+  const premiumIncludedDaily = intValue(rule.premiumIncludedDaily);
+  const moonUsed = intValue(dailyUsage.basicNatalMoonUsed);
+  const premiumDailyMax = intValue(rule.premiumDailyMax);
+  const isInsufficientMoonsReject = decision.source === 'REJECT' && decision.reason === 'INSUFFICIENT_MOON_BALANCE';
+  return {
+    module: 'BASIC_NATAL_CHART',
+    nextSource: toNextSource(decision.source),
+    cost: decision.source === 'MOON' ? decision.moonCost : (isInsufficientMoonsReject ? (rule.moonCostPerUse ?? 0) : 0),
+    balance,
+    canExecute: decision.source !== 'REJECT',
+    reasonIfRejected: normalizeReason(decision.reason),
+    freeRemaining: Math.max(0, freeWeekly - freeUsed),
+    premiumRemaining: Math.max(0, premiumIncludedDaily - premiumUsed),
+    moonRemaining: premiumDailyMax > 0 ? Math.max(0, premiumDailyMax - premiumUsed - moonUsed) : undefined,
+    dailyCap: premiumDailyMax || undefined,
+  };
+}
+
 function buildHoroscopePreview(module: 'HOROSCOPE_FUTURE_DAY' | 'HOROSCOPE_WEEKLY' | 'HOROSCOPE_MONTHLY', isPremium: boolean, balance: number): EconomyModulePreview {
   const rule = getEconomyModuleRule(module);
   const cost = rule.moonCostPerUse ?? 0;
@@ -214,32 +245,12 @@ export async function getEconomyModulePreviewsCore(uid: string, modulesInput?: u
 
 
     if (module === 'BASIC_NATAL_CHART') {
-      const decision = resolveBasicNatalDecision({
+      return buildBasicNatalPreview({
         isPremium: premium.isPremium,
         balance,
         dailyUsage: daily,
         weeklyUsage: weekly,
       });
-      const rule = getEconomyModuleRule(module);
-      const freeUsed = intValue(weekly.basicNatalFreeUsed);
-      const freeWeekly = intValue(rule.freeWeekly);
-      const premiumUsed = intValue(daily.basicNatalPremiumUsed);
-      const premiumIncludedDaily = intValue(rule.premiumIncludedDaily);
-      const moonUsed = intValue(daily.basicNatalMoonUsed);
-      const premiumDailyMax = intValue(rule.premiumDailyMax);
-      const isInsufficientMoonsReject = decision.source === 'REJECT' && decision.reason === 'INSUFFICIENT_MOON_BALANCE';
-      return {
-        module,
-        nextSource: toNextSource(decision.source),
-        cost: decision.source === 'MOON' ? decision.moonCost : (isInsufficientMoonsReject ? (rule.moonCostPerUse ?? 0) : 0),
-        balance,
-        canExecute: decision.source !== 'REJECT',
-        reasonIfRejected: normalizeReason(decision.reason),
-        freeRemaining: Math.max(0, freeWeekly - freeUsed),
-        premiumRemaining: Math.max(0, premiumIncludedDaily - premiumUsed),
-        moonRemaining: premiumDailyMax > 0 ? Math.max(0, premiumDailyMax - premiumUsed - moonUsed) : undefined,
-        dailyCap: premiumDailyMax || undefined,
-      };
     }
 
     if (module === 'SYNASTRY') {

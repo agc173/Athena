@@ -327,6 +327,9 @@ private fun BasicNatalChartSection(
     val coroutineScope = rememberCoroutineScope()
     val economyState by economyViewModel.uiState.collectAsState()
     val basicNatalPreview = economyState.modulePreviews.firstOrNull { it.module == "BASIC_NATAL_CHART" || it.module == "BASIC_NATAL" }
+    val basicNatalFreeLabelFallback = strings.basicNatalFreeWeeklyLabel.takeIf {
+        basicNatalPreview == null && (!economyState.hasLoadedModulePreviews || economyState.isLoading)
+    }
     val showBasicNatalDailyLimitPaywall = basicNatalPreview.isDailyLimitRejected()
 
     val birthplaceCatalogState by produceState(
@@ -464,7 +467,7 @@ private fun BasicNatalChartSection(
             preview = basicNatalPreview,
             economyStrings = appStrings.economy,
             fallbackCost = 1,
-            freeLabelOverride = strings.basicNatalFreeWeeklyLabel,
+            freeLabelOverride = basicNatalFreeLabelFallback,
         )
 
         if (showBasicNatalDailyLimitPaywall) {

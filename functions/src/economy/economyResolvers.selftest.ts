@@ -265,6 +265,18 @@ test('basic natal spends one moon after weekly free is exhausted', () => {
   assert.equal(decision.usageApplied.dailyCounter, 'basicNatalMoonUsed');
 });
 
+
+test('basic natal rejects insufficient moons after weekly free is exhausted', () => {
+  const decision = resolveBasicNatalDecision({
+    isPremium: false,
+    balance: 0,
+    dailyUsage: {},
+    weeklyUsage: {basicNatalFreeUsed: 1},
+  });
+  assert.equal(decision.source, 'REJECT');
+  assert.equal(decision.reason, 'INSUFFICIENT_MOON_BALANCE');
+});
+
 test('basic natal premium gets ten daily included after weekly free', () => {
   const decision = resolveBasicNatalDecision({
     isPremium: true,
