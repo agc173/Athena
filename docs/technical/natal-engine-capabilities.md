@@ -243,11 +243,45 @@ Opciones realistas, de menor a mayor cambio estructural:
    - Calcular Sol/Luna/Ascendente fuera del cliente y devolver el resultado al app.
    - Riesgo: cambia arquitectura offline/local, introduce latencia, coste, privacidad y contrato API. Requeriría diseño específico y documentación OpenAPI/seguridad.
 
+### Decisión técnica del spike `feature/natal-basic-multiplatform`
+
+Estado al cierre del spike: **b) no portable en la integración actual; requiere un port común o una librería KMP real**.
+
+La opción **a) portable con Astronomy Engine** no queda aprobada para este repo porque no se ha podido demostrar que `com.github.cosinekitty:astronomy:v2.1.17` publique variantes Kotlin Multiplatform/Kotlin Native consumibles desde `commonMain`/iOS. Con el código actual, el único uso compilable y validado de Astronomy Engine sigue siendo Android/JVM desde `androidMain`.
+
+La opción **c) alternativa recomendada** para desbloquear únicamente Sol/Luna/Ascendente en Android+iOS es:
+
+1. Mantener `NatalChartResult` sin ampliarlo.
+2. Crear un motor interno en `shared/data/src/commonMain` limitado a:
+   - longitud eclíptica solar;
+   - longitud eclíptica lunar;
+   - tiempo sidéreo necesario para la fórmula actual del Ascendente.
+3. Reutilizar la fórmula de Ascendente ya validada, sustituyendo solo las llamadas Android/JVM a Astronomy Engine por funciones comunes.
+4. Mover los casos Madrid/New York/Beijing y el caso sin ubicación a `commonTest` cuando exista el motor común.
+5. Mantener la tolerancia actual `0.25°` y documentar la fuente algorítmica/tolerancias antes de retirar el motor Android-only.
+
+Hasta que ese port común compile en targets iOS, iOS debe seguir considerándose **no soportado** para cálculo natal local. No se debe cambiar el mensaje de error actual por un fallback silencioso ni prometer soporte iOS en producto.
+
+### Evidencia de build/auditoría del spike
+
+Comandos ejecutados durante este spike:
+
+```bash
+./gradlew :shared:data:compileCommonMainKotlinMetadata --no-daemon
+curl -I -L https://repo1.maven.org/maven2/com/github/cosinekitty/astronomy/v2.1.17/astronomy-v2.1.17.pom
+```
+
+Resultados:
+
+- `compileCommonMainKotlinMetadata` falla antes de compilar código común por resolución del plugin `org.jetbrains.kotlin.plugin.serialization:2.3.0`; por tanto, este entorno no permite validar una migración real de Astronomy Engine a `commonMain`.
+- La consulta Maven directa queda bloqueada por el entorno con `CONNECT tunnel failed, response 403`; por tanto, tampoco se obtiene metadata remota concluyente desde este contenedor.
+- No se movió código productivo ni se amplió alcance a carta completa, casas, aspectos, planetas adicionales, UI, economía, Esencia Natal, CSV de ciudades ni ranking de ciudades.
+
 ### Recomendación técnica
 
-Para desbloquear Esencia Natal en Android+iOS sin prometer carta completa, el siguiente paso recomendado es un spike acotado:
+Para desbloquear Esencia Natal en Android+iOS sin prometer carta completa, el siguiente paso recomendado es un spike de implementación separado:
 
 1. Resolver primero el bloqueo de Gradle/plugin en el entorno de build.
-2. Verificar metadata real de `com.github.cosinekitty:astronomy:v2.1.17`.
-3. Si no hay KMP/iOS, descartar mover la librería a `commonMain` y elegir entre portar el subconjunto Sol/Luna/sidéreo a Kotlin común o introducir una librería KMP alternativa.
+2. Verificar metadata real de `com.github.cosinekitty:astronomy:v2.1.17` en un entorno con acceso Maven/JitPack funcional.
+3. Si no hay KMP/iOS, descartar mover la librería a `commonMain` y portar el subconjunto Sol/Luna/sidéreo a Kotlin común.
 4. Mantener el alcance en Sol, Luna y Ascendente; no ampliar a planetas/casas/aspectos sin una decisión técnica separada.
