@@ -2,6 +2,7 @@ package com.agc.bwitch.notifications
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
 import com.agc.bwitch.domain.auth.AuthRepository
 import com.agc.bwitch.domain.notifications.PushPlatform
 import com.agc.bwitch.domain.notifications.PushRegistrationRepository
@@ -51,10 +52,17 @@ class AndroidPushTokenSynchronizer(
     }
 
     suspend fun syncCurrentTokenIfPossible(reason: String) {
-        if (!pushManager.hasNotificationPermission()) return
+        if (!pushManager.hasNotificationPermission()) {
+            Log.i(TAG, "FCM token sync skipped: reason=$reason permission=false")
+            return
+        }
         val pendingToken = prefs.getString(KEY_PENDING_REGISTER_TOKEN, null)
         val token = pendingToken?.takeIf { it.isNotBlank() } ?: pushManager.getCurrentToken()
-        if (token.isNullOrBlank()) return
+        if (token.isNullOrBlank()) {
+            Log.i(TAG, "FCM token sync skipped: reason=$reason token_empty=true")
+            return
+        }
+        Log.i(TAG, "FCM token sync candidate: reason=$reason prefix=${token.take(6)}... length=${token.length}")
         syncTokenIfPossible(token = token, reason = reason)
     }
 
@@ -76,10 +84,12 @@ class AndroidPushTokenSynchronizer(
         val user = authRepository.authState.first()
         if (user?.uid.isNullOrBlank()) {
             prefs.edit().putString(KEY_PENDING_REGISTER_TOKEN, token).apply()
+            Log.i(TAG, "FCM token upload deferred: reason=$reason auth_ready=false")
             return
         }
         if (!pushManager.hasNotificationPermission()) {
             prefs.edit().putString(KEY_PENDING_REGISTER_TOKEN, token).apply()
+            Log.i(TAG, "FCM token upload deferred: reason=$reason permission=false")
             return
         }
 
@@ -98,10 +108,10 @@ class AndroidPushTokenSynchronizer(
             if (prefs.getString(KEY_PENDING_REGISTER_TOKEN, null) == token) {
                 prefs.edit().remove(KEY_PENDING_REGISTER_TOKEN).apply()
             }
-            println("BWITCH_PUSH_SYNC register_ok reason=$reason")
+            Log.i(TAG, "FCM token uploaded: reason=$reason prefix=${token.take(6)}... length=${token.length}")
         }.onFailure { error ->
             prefs.edit().putString(KEY_PENDING_REGISTER_TOKEN, token).apply()
-            println("BWITCH_PUSH_SYNC register_failed reason=$reason message=${error.message}")
+            Log.w(TAG, "FCM token upload failed: reason=$reason message=${error.message}", error)
         }
     }
 
@@ -116,10 +126,10 @@ class AndroidPushTokenSynchronizer(
                     .remove(KEY_PENDING_UNREGISTER_UID)
                     .remove(KEY_PENDING_UNREGISTER_TOKEN)
                     .apply()
-                println("BWITCH_PUSH_SYNC pending_unregister_ok")
+                Log.i(TAG, "FCM pending unregister uploaded")
             }
             .onFailure { error ->
-                println("BWITCH_PUSH_SYNC pending_unregister_failed message=${error.message}")
+                Log.w(TAG, "FCM pending unregister failed: message=${error.message}", error)
             }
     }
 
@@ -130,14 +140,14 @@ class AndroidPushTokenSynchronizer(
                     .remove(KEY_PENDING_UNREGISTER_UID)
                     .remove(KEY_PENDING_UNREGISTER_TOKEN)
                     .apply()
-                println("BWITCH_PUSH_SYNC unregister_ok reason=$reason")
+                Log.i(TAG, "FCM token unregistered: reason=$reason")
             }
             .onFailure { error ->
                 prefs.edit()
                     .putString(KEY_PENDING_UNREGISTER_UID, uid)
                     .putString(KEY_PENDING_UNREGISTER_TOKEN, token)
                     .apply()
-                println("BWITCH_PUSH_SYNC unregister_pending reason=$reason message=${error.message}")
+                Log.w(TAG, "FCM token unregister pending: reason=$reason message=${error.message}", error)
             }
     }
 
@@ -158,5 +168,6 @@ class AndroidPushTokenSynchronizer(
         const val KEY_PENDING_REGISTER_TOKEN = "pending_register_token"
         const val KEY_PENDING_UNREGISTER_UID = "pending_unregister_uid"
         const val KEY_PENDING_UNREGISTER_TOKEN = "pending_unregister_token"
+        const val TAG = "AndroidPushSync"
     }
 }

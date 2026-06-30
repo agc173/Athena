@@ -93,6 +93,7 @@ fun MoonStoreScreen(
     }
     LaunchedEffect(Unit) {
         economyViewModel.loadEconomy()
+        rewardedAdsService.preloadRewardedAd("moon_store")
     }
 
     LaunchedEffect(settingsState.subscriptionPrimaryAction) {
