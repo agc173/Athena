@@ -18,4 +18,10 @@ class BirthplaceSearchTextNormalizerTest {
     fun supportsMultiCharacterFolds() {
         assertEquals("strasse", normalizeBirthplaceSearchText("Straße"))
     }
+
+    @Test
+    fun normalizesPunctuationAsSingleSpaces() {
+        assertEquals("madrid spain", normalizeBirthplaceSearchText("Madrid, Spain"))
+        assertEquals("madrid es", normalizeBirthplaceSearchText("Madrid, ES"))
+    }
 }
