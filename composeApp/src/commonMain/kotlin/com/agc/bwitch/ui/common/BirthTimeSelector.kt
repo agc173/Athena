@@ -25,13 +25,14 @@ import com.agc.bwitch.localization.appStrings
 
 @Composable
 fun BirthTimeSelector(
-    selectedHour: Int,
-    selectedMinute: Int,
+    selectedHour: Int?,
+    selectedMinute: Int?,
     onTimeSelected: (hour: Int, minute: Int) -> Unit,
     label: String,
     hourLabel: String,
     minuteLabel: String,
     pickerTitle: String,
+    placeholder: String,
     enabled: Boolean,
     modifier: Modifier = Modifier,
 ) {
@@ -45,7 +46,7 @@ fun BirthTimeSelector(
             modifier = Modifier.fillMaxWidth(),
         ) {
             Text(
-                text = formatBirthTime(selectedHour, selectedMinute),
+                text = if (selectedHour == null || selectedMinute == null) placeholder else formatBirthTime(selectedHour, selectedMinute),
                 color = MaterialTheme.colorScheme.onSurface,
             )
         }
@@ -53,8 +54,8 @@ fun BirthTimeSelector(
 
     if (showPicker) {
         BirthTimePickerDialog(
-            initialHour = selectedHour,
-            initialMinute = selectedMinute,
+            initialHour = selectedHour ?: 12,
+            initialMinute = selectedMinute ?: 0,
             hourLabel = hourLabel,
             minuteLabel = minuteLabel,
             title = pickerTitle,

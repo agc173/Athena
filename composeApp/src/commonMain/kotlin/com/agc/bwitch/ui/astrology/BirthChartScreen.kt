@@ -1,5 +1,6 @@
 package com.agc.bwitch.ui.astrology
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -299,14 +300,15 @@ fun BirthChartScreen(
 private fun BasicNatalChartSection(strings: BirthChartStrings, appStrings: AppStrings) {
     val dimens = BWitchThemeTokens.dimens
     val extras = BWitchThemeTokens.extras
-    var birthDate by remember { mutableStateOf(LocalDate(1990, 1, 1)) }
-    var birthHour by remember { mutableStateOf(12) }
-    var birthMinute by remember { mutableStateOf(0) }
+    var birthDate by remember { mutableStateOf<LocalDate?>(null) }
+    var birthHour by remember { mutableStateOf<Int?>(null) }
+    var birthMinute by remember { mutableStateOf<Int?>(null) }
     var birthplaceQuery by remember { mutableStateOf("") }
     var selectedBirthplace by remember { mutableStateOf<BirthplacePreset?>(null) }
     var isBirthplaceDialogOpen by remember { mutableStateOf(false) }
     var result by remember { mutableStateOf<NatalChartResult?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
+    var hasAttemptedBasicNatalCalculation by remember { mutableStateOf(false) }
 
     val birthplaceCatalogState by produceState(
         initialValue = BirthplaceCatalogUiState(
@@ -325,15 +327,12 @@ private fun BasicNatalChartSection(strings: BirthChartStrings, appStrings: AppSt
     val validationMessage = remember(strings, birthDate, birthHour, birthMinute, selectedBirthplace) {
         validateBasicNatalChartInput(
             strings = strings,
-            year = birthDate.year.toString(),
-            month = birthDate.monthNumber.toString(),
-            day = birthDate.dayOfMonth.toString(),
-            hour = birthHour.toString(),
-            minute = birthMinute.toString(),
+            birthDate = birthDate,
+            birthHour = birthHour,
+            birthMinute = birthMinute,
             selectedBirthplace = selectedBirthplace,
         )
     }
-    val canCalculate = validationMessage == null
 
     BWitchCard(contentVerticalArrangement = Arrangement.spacedBy(dimens.spacingMd)) {
         Column(verticalArrangement = Arrangement.spacedBy(dimens.spacingXs)) {
@@ -364,6 +363,7 @@ private fun BasicNatalChartSection(strings: BirthChartStrings, appStrings: AppSt
             hourLabel = strings.basicNatalHourLabel,
             minuteLabel = strings.basicNatalMinuteLabel,
             pickerTitle = strings.basicNatalBirthTimeLabel,
+            placeholder = strings.basicNatalBirthTimePlaceholder,
             enabled = true,
             modifier = Modifier.fillMaxWidth(),
         )
@@ -371,35 +371,33 @@ private fun BasicNatalChartSection(strings: BirthChartStrings, appStrings: AppSt
         Column(verticalArrangement = Arrangement.spacedBy(dimens.spacingSm)) {
             Text(strings.basicNatalBirthplaceLabel, style = MaterialTheme.typography.labelLarge)
             Surface(
+                onClick = { isBirthplaceDialogOpen = true },
                 modifier = Modifier.fillMaxWidth(),
                 shape = MaterialTheme.shapes.medium,
-                color = if (selectedBirthplace == null) {
-                    MaterialTheme.colorScheme.surface
-                } else {
-                    MaterialTheme.colorScheme.surfaceVariant
-                },
+                color = MaterialTheme.colorScheme.surface,
                 tonalElevation = 0.dp,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
             ) {
-                Column(
+                Row(
                     modifier = Modifier.padding(dimens.spacingMd),
-                    verticalArrangement = Arrangement.spacedBy(dimens.spacingXs),
+                    horizontalArrangement = Arrangement.spacedBy(dimens.spacingSm),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(
-                        text = selectedBirthplace?.displayName() ?: strings.basicNatalBirthplacePlaceholder,
-                        style = if (selectedBirthplace == null) MaterialTheme.typography.bodyMedium else MaterialTheme.typography.titleMedium,
-                        color = if (selectedBirthplace == null) extras.textSecondary else MaterialTheme.colorScheme.onSurface,
-                    )
-                    TextButton(
-                        onClick = { isBirthplaceDialogOpen = true },
-                        modifier = Modifier.align(Alignment.Start),
-                        contentPadding = PaddingValues(horizontal = 0.dp, vertical = 0.dp),
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(dimens.spacingXs),
                     ) {
                         Text(
-                            text = if (selectedBirthplace == null) strings.basicNatalBirthplaceSearchLabel else strings.basicNatalBirthplaceChangeCta,
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            text = selectedBirthplace?.displayName() ?: strings.basicNatalBirthplacePlaceholder,
+                            style = if (selectedBirthplace == null) MaterialTheme.typography.bodyMedium else MaterialTheme.typography.titleMedium,
+                            color = if (selectedBirthplace == null) extras.textSecondary else MaterialTheme.colorScheme.onSurface,
                         )
                     }
+                    Text(
+                        text = if (selectedBirthplace == null) strings.basicNatalBirthplaceSearchLabel else strings.basicNatalBirthplaceChangeCta,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
                 }
             }
             Text(
@@ -437,26 +435,30 @@ private fun BasicNatalChartSection(strings: BirthChartStrings, appStrings: AppSt
             )
         }
 
-        validationMessage?.let { message ->
-            Text(message, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+        if (hasAttemptedBasicNatalCalculation) {
+            validationMessage?.let { message ->
+                Text(message, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+            }
         }
 
         BWitchPrimaryButton(
             onClick = {
+                hasAttemptedBasicNatalCalculation = true
                 result = null
                 error = null
-                val birthplace = selectedBirthplace
-                if (birthplace == null) {
-                    error = strings.basicNatalBirthplaceRequiredError
-                    return@BWitchPrimaryButton
-                }
+                val message = validationMessage
+                if (message != null) return@BWitchPrimaryButton
+                val date = birthDate ?: return@BWitchPrimaryButton
+                val hour = birthHour ?: return@BWitchPrimaryButton
+                val minute = birthMinute ?: return@BWitchPrimaryButton
+                val birthplace = selectedBirthplace ?: return@BWitchPrimaryButton
                 runCatching {
                     BirthDateTimeLocal(
-                        year = birthDate.year,
-                        month = birthDate.monthNumber,
-                        day = birthDate.dayOfMonth,
-                        hour = birthHour,
-                        minute = birthMinute,
+                        year = date.year,
+                        month = date.monthNumber,
+                        day = date.dayOfMonth,
+                        hour = hour,
+                        minute = minute,
                     ).toUtc(birthplace.timezoneId)
                 }.mapCatching { utc ->
                     BasicNatalChartUiCalculator.calculate(
@@ -472,7 +474,6 @@ private fun BasicNatalChartSection(strings: BirthChartStrings, appStrings: AppSt
                     error = strings.basicNatalCalculateError
                 }
             },
-            enabled = canCalculate,
             modifier = Modifier.fillMaxWidth(),
         ) {
             Text(strings.basicNatalCalculateCta)
@@ -482,11 +483,6 @@ private fun BasicNatalChartSection(strings: BirthChartStrings, appStrings: AppSt
             BasicNatalChartResultCards(chart = chart, strings = strings, appStrings = appStrings)
         }
         error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-        Text(
-            strings.basicNatalInfoText,
-            style = MaterialTheme.typography.bodySmall,
-            color = extras.textSecondary,
-        )
     }
 }
 
@@ -610,39 +606,24 @@ private data class BirthplaceCatalogUiState(
 
 private fun validateBasicNatalChartInput(
     strings: BirthChartStrings,
-    year: String,
-    month: String,
-    day: String,
-    hour: String,
-    minute: String,
+    birthDate: LocalDate?,
+    birthHour: Int?,
+    birthMinute: Int?,
     selectedBirthplace: BirthplacePreset?,
 ): String? {
-    val parsedYear = year.toIntOrNull() ?: return strings.basicNatalInvalidYearError
-    val parsedMonth = month.toIntOrNull() ?: return strings.basicNatalInvalidMonthError
-    val parsedDay = day.toIntOrNull() ?: return strings.basicNatalInvalidDayError
-    val parsedHour = hour.toIntOrNull() ?: return strings.basicNatalInvalidHourError
-    val parsedMinute = minute.toIntOrNull() ?: return strings.basicNatalInvalidMinuteError
+    val date = birthDate ?: return strings.basicNatalInvalidDayError
+    val hour = birthHour ?: return strings.basicNatalInvalidHourError
+    val minute = birthMinute ?: return strings.basicNatalInvalidMinuteError
 
-    if (parsedYear !in 1..9999) return strings.basicNatalYearRangeError
-    if (parsedMonth !in 1..12) return strings.basicNatalMonthRangeError
-    if (parsedDay !in 1..daysInMonth(parsedYear, parsedMonth)) return strings.basicNatalDayForMonthError
-    if (parsedHour !in 0..23) return strings.basicNatalHourRangeError
-    if (parsedMinute !in 0..59) return strings.basicNatalMinuteRangeError
+    if (date.year !in 1..9999) return strings.basicNatalYearRangeError
+    if (hour !in 0..23) return strings.basicNatalHourRangeError
+    if (minute !in 0..59) return strings.basicNatalMinuteRangeError
     if (selectedBirthplace == null) return strings.basicNatalBirthplaceRequiredError
 
     return null
 }
 
 private fun BirthplacePreset.displayName(): String = "$cityName, $countryName"
-
-private fun daysInMonth(year: Int, month: Int): Int = when (month) {
-    2 -> if (isLeapYear(year)) 29 else 28
-    4, 6, 9, 11 -> 30
-    else -> 31
-}
-
-private fun isLeapYear(year: Int): Boolean =
-    year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)
 
 private fun String?.isBirthEssenceEconomyError(): Boolean {
     val normalized = this?.trim()?.lowercase().orEmpty()
