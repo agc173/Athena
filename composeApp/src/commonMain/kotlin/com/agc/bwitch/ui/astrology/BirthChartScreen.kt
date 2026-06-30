@@ -30,8 +30,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -103,6 +103,7 @@ fun BirthChartScreen(
     val birthChartStrings = strings.birthChart
     val appName = strings.common.appName
     val state by viewModel.uiState.collectAsState()
+    val scrollState = rememberScrollState()
     val economyState by economyViewModel.uiState.collectAsState()
     val birthEssencePreview = economyState.modulePreviews.firstOrNull {
         it.module == "BIRTH_ESSENCE" || it.module == "NATAL_ESSENCE"
@@ -136,22 +137,21 @@ fun BirthChartScreen(
         modifier = modifier
             .padding(contentPadding)
             .padding(dimens.spacingMd)
-            .verticalScroll(rememberScrollState()),
+            .verticalScroll(scrollState),
         verticalArrangement = Arrangement.spacedBy(dimens.spacingSm + dimens.spacingXs)
     ) {
-        Text(
-            birthChartStrings.title,
-            style = MaterialTheme.typography.headlineSmall,
-            color = MaterialTheme.colorScheme.onSurface,
-        )
-
         Text(
             birthChartStrings.subtitle,
             style = MaterialTheme.typography.bodyMedium,
             color = extras.textSecondary,
         )
 
-        SignDropdown(
+        BasicNatalChartSection(strings = birthChartStrings, appStrings = strings)
+
+        BWitchCard {
+            Text(birthChartStrings.manualEssenceTitle, style = MaterialTheme.typography.titleLarge)
+
+            SignDropdown(
             label = birthChartStrings.sunSignLabel,
             selected = state.selectedSunSign,
             strings = strings,
@@ -174,8 +174,6 @@ fun BirthChartScreen(
             enabled = !state.isBusy,
             onSelect = viewModel::onRisingSignChange,
         )
-
-        BasicNatalChartSection(strings = birthChartStrings, appStrings = strings)
 
         EconomyGateInfoRow(
             preview = birthEssencePreview,
@@ -268,6 +266,7 @@ fun BirthChartScreen(
         }
         shareError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         state.savedSummary?.let { Text(it.toBirthChartUiText(birthChartStrings), color = MaterialTheme.colorScheme.onSurfaceVariant) }
+        }
     }
 
     sharePreviewEssence?.let { essence ->

@@ -15,7 +15,13 @@ import kotlin.math.floor
 import kotlin.math.sin
 import kotlin.math.tan
 
-class BasicNatalChartCalculator {
+/**
+ * Android/JVM-only Astronomy Engine oracle for the precision audit.
+ *
+ * This class intentionally lives in androidUnitTest so production Android and iOS use the common
+ * [BasicNatalChartCalculator] runtime while the audit can keep comparing against Astronomy Engine.
+ */
+internal class AstronomyEngineNatalChartCalculator {
     fun calculate(
         birthDateTimeUtc: BirthDateTimeUtc,
         birthLocation: BirthLocation? = null,
@@ -35,10 +41,7 @@ class BasicNatalChartCalculator {
         )
     }
 
-    private fun calculateAscendantLongitudeDegrees(
-        time: Time,
-        birthLocation: BirthLocation,
-    ): Double {
+    private fun calculateAscendantLongitudeDegrees(time: Time, birthLocation: BirthLocation): Double {
         val localSiderealDegrees = normalizeDegrees(
             degrees = (siderealTime(time) + birthLocation.longitudeDegrees / HoursToDegrees) * HoursToDegrees,
         )
@@ -54,14 +57,7 @@ class BasicNatalChartCalculator {
         return normalizeDegrees(rawLongitude + OppositePointDegrees)
     }
 
-    private fun BirthDateTimeUtc.toAstronomyTime(): Time = Time(
-        year,
-        month,
-        day,
-        hour,
-        minute,
-        second,
-    )
+    private fun BirthDateTimeUtc.toAstronomyTime(): Time = Time(year, month, day, hour, minute, second)
 
     private companion object {
         const val MeanObliquityDegrees = 23.4392911
@@ -71,10 +67,6 @@ class BasicNatalChartCalculator {
 }
 
 private fun Double.toRadians(): Double = this * PI / 180.0
-
 private fun Double.toDegrees(): Double = this * 180.0 / PI
-
-private fun normalizeDegrees(degrees: Double): Double =
-    degrees - (floor(degrees / FULL_CIRCLE_DEGREES) * FULL_CIRCLE_DEGREES)
-
-private const val FULL_CIRCLE_DEGREES = 360.0
+private fun normalizeDegrees(degrees: Double): Double = degrees - (floor(degrees / FullCircleDegrees) * FullCircleDegrees)
+private const val FullCircleDegrees = 360.0

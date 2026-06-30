@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -90,6 +91,7 @@ fun SynastryScreen(
     economyViewModel: EconomyViewModel = koinInject(),
     onOpenStore: () -> Unit = {},
     onOpenCollection: () -> Unit = {},
+    onCalculateBasicNatal: () -> Unit = {},
 ) {
     val state by viewModel.uiState.collectAsState()
     val economyState by economyViewModel.uiState.collectAsState()
@@ -130,19 +132,8 @@ fun SynastryScreen(
         verticalArrangement = Arrangement.spacedBy(spacing.spacingSm + spacing.spacingXs)
     ) {
         Text(
-            text = synastryStrings.screenTitle,
-            style = MaterialTheme.typography.headlineSmall,
-            color = MaterialTheme.colorScheme.onSurface,
-        )
-
-        Text(
             text = synastryStrings.screenSubtitle,
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Text(
-            text = synastryStrings.screenSupportingText,
-            style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
@@ -156,6 +147,7 @@ fun SynastryScreen(
             onPersonBMoonChange = viewModel::onPersonBMoonSignChange,
             onPersonBRisingChange = viewModel::onPersonBRisingSignChange,
             strings = strings,
+            onCalculateBasicNatal = onCalculateBasicNatal,
         )
 
         EconomyGateInfoRow(
@@ -256,6 +248,7 @@ private fun PersonFormCard(
     onPersonBMoonChange: (ZodiacSign?) -> Unit,
     onPersonBRisingChange: (ZodiacSign?) -> Unit,
     strings: AppStrings,
+    onCalculateBasicNatal: () -> Unit,
 ) {
     val synastryStrings = strings.synastry
     BWitchCard {
@@ -329,6 +322,25 @@ private fun PersonFormCard(
             onSelectB = onPersonBRisingChange,
             strings = strings,
         )
+
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
+            Text(
+                text = synastryStrings.basicNatalHelperTitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
+            TextButton(onClick = onCalculateBasicNatal) {
+                Text(
+                    text = synastryStrings.basicNatalHelperCta,
+                    style = MaterialTheme.typography.labelMedium,
+                )
+            }
+        }
     }
 }
 

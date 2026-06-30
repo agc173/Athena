@@ -243,11 +243,277 @@ Opciones realistas, de menor a mayor cambio estructural:
    - Calcular Sol/Luna/Ascendente fuera del cliente y devolver el resultado al app.
    - Riesgo: cambia arquitectura offline/local, introduce latencia, coste, privacidad y contrato API. Requeriría diseño específico y documentación OpenAPI/seguridad.
 
+### Decisión técnica del spike `feature/natal-basic-multiplatform`
+
+Estado al cierre del spike: **b) no portable en la integración actual; requiere un port común o una librería KMP real**.
+
+La opción **a) portable con Astronomy Engine** no queda aprobada para este repo porque no se ha podido demostrar que `com.github.cosinekitty:astronomy:v2.1.17` publique variantes Kotlin Multiplatform/Kotlin Native consumibles desde `commonMain`/iOS. Con el código actual, el único uso compilable y validado de Astronomy Engine sigue siendo Android/JVM desde `androidMain`.
+
+La opción **c) alternativa recomendada** para desbloquear únicamente Sol/Luna/Ascendente en Android+iOS es:
+
+1. Mantener `NatalChartResult` sin ampliarlo.
+2. Crear un motor interno en `shared/data/src/commonMain` limitado a:
+   - longitud eclíptica solar;
+   - longitud eclíptica lunar;
+   - tiempo sidéreo necesario para la fórmula actual del Ascendente.
+3. Reutilizar la fórmula de Ascendente ya validada, sustituyendo solo las llamadas Android/JVM a Astronomy Engine por funciones comunes.
+4. Mover los casos Madrid/New York/Beijing y el caso sin ubicación a `commonTest` cuando exista el motor común.
+5. Mantener la tolerancia actual `0.25°` y documentar la fuente algorítmica/tolerancias antes de retirar el motor Android-only.
+
+El spike continúa en esta rama con un motor común interno para validar Sol/Luna/Ascendente en Android+iOS sin ampliar el alcance de producto.
+
+### Evidencia de build/auditoría del spike
+
+Comandos ejecutados durante este spike:
+
+```bash
+./gradlew :shared:data:compileCommonMainKotlinMetadata --no-daemon
+curl -I -L https://repo1.maven.org/maven2/com/github/cosinekitty/astronomy/v2.1.17/astronomy-v2.1.17.pom
+```
+
+Resultados:
+
+- `compileCommonMainKotlinMetadata` falla antes de compilar código común por resolución del plugin `org.jetbrains.kotlin.plugin.serialization:2.3.0`; por tanto, este entorno no permite validar una migración real de Astronomy Engine a `commonMain`.
+- La consulta Maven directa queda bloqueada por el entorno con `CONNECT tunnel failed, response 403`; por tanto, tampoco se obtiene metadata remota concluyente desde este contenedor.
+- No se movió código productivo ni se amplió alcance a carta completa, casas, aspectos, planetas adicionales, UI, economía, Esencia Natal, CSV de ciudades ni ranking de ciudades.
+
 ### Recomendación técnica
 
-Para desbloquear Esencia Natal en Android+iOS sin prometer carta completa, el siguiente paso recomendado es un spike acotado:
+Para desbloquear Esencia Natal en Android+iOS sin prometer carta completa, el siguiente paso recomendado es un spike de implementación acotado en esta misma rama:
 
 1. Resolver primero el bloqueo de Gradle/plugin en el entorno de build.
-2. Verificar metadata real de `com.github.cosinekitty:astronomy:v2.1.17`.
-3. Si no hay KMP/iOS, descartar mover la librería a `commonMain` y elegir entre portar el subconjunto Sol/Luna/sidéreo a Kotlin común o introducir una librería KMP alternativa.
+2. Verificar metadata real de `com.github.cosinekitty:astronomy:v2.1.17` en un entorno con acceso Maven/JitPack funcional.
+3. Si no hay KMP/iOS, descartar mover la librería a `commonMain` y portar el subconjunto Sol/Luna/sidéreo a Kotlin común.
 4. Mantener el alcance en Sol, Luna y Ascendente; no ampliar a planetas/casas/aspectos sin una decisión técnica separada.
+
+## 11. Port mínimo de Astronomy Engine para Sol/Luna/Ascendente
+
+### Fuente inspeccionada
+
+No se encontró una copia local de `com.github.cosinekitty:astronomy:v2.1.17` en el caché Gradle del contenedor (`~/.gradle/caches`). La inspección se hizo contra la fuente Kotlin/JVM publicada en el tag upstream `v2.1.17`:
+
+```text
+https://raw.githubusercontent.com/cosinekitty/astronomy/v2.1.17/source/kotlin/src/main/kotlin/io/github/cosinekitty/astronomy/astronomy.kt
+```
+
+La implementación Kotlin/JVM de esa versión está concentrada en un único archivo `astronomy.kt`. El encabezado declara explícitamente `Astronomy Engine for Kotlin / JVM`, usa `@file:JvmName("Astronomy")` y el paquete `io.github.cosinekitty.astronomy`. La librería upstream documenta licencia MIT y objetivos de precisión de aproximadamente ±1 arcminute, basándose en VSOP87/NOVAS y tablas de coeficientes embebidas en código fuente.
+
+### APIs usadas por ATHENA
+
+La implementación Android actual de ATHENA solo necesita estas entradas públicas de Astronomy Engine:
+
+| API | Uso en ATHENA | Salida usada |
+|---|---|---|
+| `Time(...)` | Construir instante UTC astronómico desde `BirthDateTimeUtc` | `ut`, `tt` y cachés internos usados por cálculos posteriores |
+| `sunPosition(time)` | Calcular posición geocéntrica eclíptica del Sol | `Ecliptic.elon` |
+| `eclipticGeoMoon(time)` | Calcular posición geocéntrica eclíptica de la Luna | `Spherical.lon` |
+| `siderealTime(time)` | Calcular GAST para tiempo sidéreo local | `Double` en horas sidéreas |
+
+La fórmula del Ascendente de ATHENA no depende de más APIs de Astronomy Engine: toma `siderealTime(time)`, longitud/latitud geográfica, oblicuidad fija local y trigonometría propia.
+
+### Árbol interno de dependencias observado
+
+#### `Time`
+
+Dependencias mínimas:
+
+- `universalTimeDays(year, month, day, hour, minute, second)`: conversión calendario UTC → días UT desde J2000.
+- `terrestrialTime(ut)` y `universalTime(tt)`: conversión UT/TT mediante modelo delta-T.
+- `dayValueToDateTime(ut)` solo si se necesita serializar o depurar; no es necesario para calcular Sol/Luna/sidéreo en ATHENA.
+- Constantes de tiempo: `MILLISECONDS_PER_DAY`, `DAYS_PER_MILLENNIUM` y constantes auxiliares de calendario.
+- Cachés mutables internos en `Time`: `psi`, `eps`, `st` para nutación/oblicuidad y sidéreo.
+
+Portabilidad: el núcleo es matemático. El constructor desde fecha UTC usa enteros, `Double` y funciones de `kotlin.math`. El único elemento JVM-específico visible es `@JvmStatic`/`@file:JvmName` y APIs de formato/string que no son necesarias para el port mínimo.
+
+#### `siderealTime(time)`
+
+Dependencias mínimas:
+
+- `time.ut` y `time.julianCenturies()`.
+- `earthRotationAngle(time)`.
+- `earthTilt(time)`.
+- `iau2000b(time)` para calcular/cachar nutación (`psi`) y corrección de oblicuidad (`eps`).
+- `meanObliquity(time)`.
+- Helpers trigonométricos: `dcos`, grados↔radianes, normalización modular.
+- Constantes: `ASEC360`, `ASEC2RAD` y factores grados/horas.
+
+Tablas/coefs necesarios: no usa tablas grandes; solo la serie truncada IAU2000B de 5 términos embebida en la función `iau2000b` y el polinomio de oblicuidad media.
+
+Portabilidad: parece matemática pura y portable a `commonMain`. No requiere JVM, I/O, red, archivos ni recursos externos.
+
+#### `sunPosition(time)`
+
+Dependencias mínimas:
+
+- `time.addDays(-1.0 / C_AUDAY)` para corrección de tiempo-luz.
+- `helioEarthPos(adjustedTime)`.
+- `calcVsop(vsopModel(Body.Earth), time)`.
+- Modelo VSOP de la Tierra (`vsopModelEarth`) con series `lon`, `lat`, `rad`.
+- `vsopFormulaCalc`, `vsopSphereToRect`, `vsopRotate`.
+- Tipos mínimos: `Body.Earth`, `VsopModel`, `VsopFormula`, términos VSOP, `TerseVector`, `Vector`, `Ecliptic`.
+- Transformaciones de orientación: `gyration(..., PrecessDirection.From2000)`, precesión/nutación asociada, `earthTilt(adjustedTime)`, `rotateEquatorialToEcliptic(...)`.
+- Constantes: `C_AUDAY`, `DAYS_PER_MILLENNIUM`, `DEG2RAD`/`RAD2DEG`, constantes de precesión/nutación ya usadas por `earthTilt`.
+
+Tablas/coefs necesarios: solo el subconjunto VSOP87 de la Tierra. No se necesitan los modelos VSOP de Mercurio, Venus, Marte, Júpiter, Saturno, Urano ni Neptuno para la longitud solar usada por ATHENA.
+
+Portabilidad: el cálculo es puro, con tablas embebidas y `kotlin.math`. El riesgo principal no es compatibilidad con Kotlin/Native sino recortar correctamente el grafo sin romper precesión/nutación ni el sistema de coordenadas “true equinox of date”.
+
+#### `eclipticGeoMoon(time)`
+
+Dependencias mínimas:
+
+- `MoonContext(time).calcMoon()`.
+- `MoonContext` completo para el algoritmo lunar: variables internas, `PascalArray2`, `longPeriodic`, `solarN`, `planetary`, `addSolarTerms(this)`, `addSol`, `addn`, `term`, `addTheta`.
+- `addSolarTerms(...)`: bloque generado/embebido de términos periódicos lunares solares.
+- Tipos mínimos: `Spherical`, `Vector`, `Ecliptic`.
+- Conversiones: `Spherical.toVector(time)` si se reutiliza parte del flujo; para `eclipticGeoMoon` concreto se construye el vector manualmente.
+- Transformaciones de coordenadas: `earthTilt(time)`, `eclipticToEquatorial(...)`, `nutation(...)`, `rotateEquatorialToEcliptic(...)`, `PrecessDirection.From2000`.
+- Constantes: `PI2`, `RAD2DEG`, `EARTH_EQUATORIAL_RADIUS_AU`, `KM_PER_AU`, y las constantes de nutación/oblicuidad compartidas.
+
+Tablas/coefs necesarios: no depende de VSOP completo para la Luna; usa términos lunares embebidos en `MoonContext`/`addSolarTerms` y algunas correcciones planetarias pequeñas hardcodeadas en `planetary()`.
+
+Portabilidad: parece matemática pura y portable a `commonMain`. No requiere recursos externos. El principal riesgo es precisión/regresión si se omiten términos del algoritmo lunar o si se simplifica la conversión de coordenadas true-of-date.
+
+### Partes de Astronomy Engine que NO serían necesarias
+
+Para el alcance Sol/Luna/sidéreo/Ascendente básico no haría falta portar:
+
+- APIs públicas de planetas distintos de Tierra como target indirecto del Sol: Mercurio, Venus, Marte, Júpiter, Saturno, Urano, Neptuno y Plutón.
+- Simulador gravitatorio de Plutón y baricentro del sistema solar.
+- Cálculo de velocidades (`StateVector`) salvo que alguna helper compartida lo exija y se decida no separarla.
+- Rise/set, culminación, refraction, observers topocéntricos, horizontal coordinates y `terra`/`inverseTerra`.
+- Eclipses, fases lunares, apsides, elongaciones, equinoccios/solsticios como búsquedas, tránsitos y eventos.
+- Magnitudes, elongación visual, libración lunar, orientación de ejes y lunas de Júpiter.
+- Estrellas definidas por usuario y constelaciones.
+- Formateo ISO/string, parsing, helpers Java/JVM (`@JvmStatic`, `@file:JvmName`) y compatibilidad Java.
+- Modelos VSOP de planetas no necesarios para `helioEarthPos`.
+
+### Evaluación de portabilidad KMP
+
+Las rutas inspeccionadas para las cuatro APIs requeridas son mayoritariamente matemáticas puras: `Double`, arrays, enums/data classes simples y `kotlin.math`. No se observaron dependencias de ficheros, red, recursos empaquetados, locale, reflexión JVM ni APIs Android.
+
+Elementos a adaptar para `commonMain`:
+
+- Quitar anotaciones JVM (`@file:JvmName`, `@JvmStatic`) o aislarlas en Android/JVM si se mantiene una API Java.
+- Evitar formatos `String.format` en el subconjunto mínimo o moverlos fuera del core común.
+- Revisar excepciones públicas (`Exception`, `IllegalArgumentException`) y visibilidad para mantener una API interna estable.
+- Mantener comportamiento de `%` con negativos y normalización angular con tests, porque pequeñas diferencias aquí afectan longitudes.
+- Mantener las tablas/coeficientes como código Kotlin común, no como recursos externos.
+
+Conclusión: un port mínimo parece razonable técnicamente para Kotlin/Native porque el grafo usado no depende de JVM en su cálculo astronómico central.
+
+### Estimación de complejidad del port mínimo
+
+Estimación aproximada si se copia/adapta código de Astronomy Engine en vez de reescribir fórmulas desde cero:
+
+- 1 archivo de atribución/licencia bajo `docs/licenses/` o equivalente, más encabezados de atribución en cada archivo derivado.
+- 3 a 6 archivos Kotlin comunes si se separa por responsabilidad:
+  - tiempo/delta-T;
+  - tipos matemáticos mínimos (`Vector`, `Spherical`, `Ecliptic`);
+  - nutación/oblicuidad/sidéreo;
+  - VSOP Tierra/posición solar;
+  - algoritmo lunar;
+  - adaptador interno para `BasicNatalChartCalculator` futuro.
+- Decenas de helpers internos pequeños, pero pocos tipos públicos nuevos si se mantiene encapsulado en `shared/data`.
+- Una tabla VSOP de Tierra y el bloque `addSolarTerms` lunar como principales masas de código/coefs.
+
+Riesgos:
+
+- **Precisión**: medio. El objetivo actual de ATHENA valida con tolerancia `0.25°`, mucho más laxa que ±1 arcminute, pero el Ascendente es sensible al tiempo sidéreo y ubicación. Se deben migrar los casos Madrid/New York/Beijing a `commonTest` y añadir comparaciones Android-vs-common durante la transición.
+- **Recorte accidental**: medio/alto. `sunPosition` y `eclipticGeoMoon` comparten transformaciones de precesión/nutación; recortar “solo lon” sin conservar el sistema true-of-date puede introducir diferencias difíciles de detectar.
+- **Mantenimiento**: medio. Copiar un subconjunto congela la versión y obliga a rastrear fixes upstream manualmente.
+- **Licencia**: bajo si se conserva MIT correctamente. La licencia permite copiar/modificar/sublicenciar, pero exige mantener copyright y texto de permiso en copias o porciones sustanciales.
+- **Tamaño de código**: bajo/medio. Evitar planetas/eventos reduce mucho el alcance; las tablas de Tierra y Luna siguen siendo el mayor volumen.
+
+### Atribución y licencia si se copia código
+
+Si se copia o deriva código de Astronomy Engine, el siguiente cambio funcional debería:
+
+1. Añadir el texto MIT completo de Astronomy Engine en una ruta versionada del repo, por ejemplo `docs/licenses/astronomy-engine-MIT.md`.
+2. Mantener en los archivos derivados un encabezado breve indicando que contienen código adaptado de `cosinekitty/astronomy` tag `v2.1.17`, con copyright original de Don Cross y licencia MIT.
+3. Documentar en el propio archivo o en `docs/technical/natal-engine-capabilities.md` qué partes se portaron y cuáles se omitieron.
+4. Evitar mezclar código derivado con lógica de negocio para que sea auditable y reemplazable.
+
+### Port manual vs otra librería
+
+Recomendación para el alcance actual: **port manual mínimo y encapsulado**, no carta completa ni dependencia nueva inmediata.
+
+Motivos:
+
+- Las cuatro APIs necesarias forman un subconjunto acotado y matemático.
+- La dependencia actual ya está validada en Android con tolerancia funcional de ATHENA.
+- Un adaptador común mantiene igual el resultado público (`NatalChartResult`) y reduce divergencia Android/iOS.
+- Incorporar otra librería KMP requeriría volver a auditar precisión, licencia, tamaño, targets iOS reales y diferencias de coordenadas.
+
+Implementación acotada en esta rama: se explora un motor común aproximado y experimental en `shared/data/src/commonMain`, con tests comunes separados y sin sustituir el runtime Android validado hasta demostrar precisión.
+
+### Siguiente paso recomendado
+
+Continuar en esta rama con un spike de implementación acotado para crear un motor común interno limitado a:
+
+1. `Time` mínimo UTC/TT.
+2. `siderealTime` con nutación/oblicuidad necesarias.
+3. `sunLongitude` basado en VSOP Tierra y transformaciones true-of-date.
+4. `moonLongitude` basado en `MoonContext`/`addSolarTerms` y transformaciones true-of-date.
+5. Reutilización exacta de la fórmula de Ascendente ya validada en Android.
+6. Tests `commonTest` contra los fixtures existentes de Madrid, New York, Beijing y caso sin ubicación.
+
+No se recomienda ampliar este experimento a planetas, casas, aspectos, MC/IC o carta completa en el mismo paso.
+
+
+## 12. Estado del spike común Sol/Luna/Ascendente
+
+Se promovió la implementación común `BasicNatalChartCalculator` en `shared/data/src/commonMain` para calcular únicamente longitud/signo de Sol, longitud/signo de Luna y Ascendente opcional. La API pública se mantiene sin ampliar: `BirthDateTimeUtc`, `BirthLocation` y `NatalChartResult` conservan sus campos actuales.
+
+Android e iOS consumen ahora el mismo runtime común. La implementación Android duplicada basada en Astronomy Engine se retiró de producción; Astronomy Engine queda encapsulado solo en `androidUnitTest` como oráculo de auditoría.
+
+El motor común se documenta como aproximación experimental inspirada por la auditoría técnica, no como port fiel ni adaptación sustancial de Astronomy Engine. Por eso no se añade licencia MIT upstream en esta iteración. Si más adelante se copia o adapta código sustancial de `cosinekitty/astronomy`, deberá añadirse la atribución MIT completa y encabezados por archivo.
+
+No se implementan planetas adicionales, casas, aspectos, rueda natal, economía, Esencia Natal ni cambios de ranking/CSV de ciudades.
+
+## 13. Common engine precision audit
+
+La auditoría Android-only en `shared/data/src/androidUnitTest` compara el runtime común productivo (`BasicNatalChartCalculator`) contra el oráculo test-only `AstronomyEngineNatalChartCalculator` basado en Astronomy Engine. La auditoría es **report-only**: imprime métricas de precisión, mantiene Astronomy Engine fuera de producción y no elimina todavía la dependencia Gradle porque sigue siendo necesaria para validación.
+
+La muestra es reproducible con seed fija `20260630` y combina:
+
+- casos manuales de frontera: cambios de año, equinoccios/solsticios aproximados, horas cercanas a medianoche y longitudes extremas;
+- casos pseudoaleatorios deterministas entre los años 1900 y 2100, latitudes `[-66°, +66°]`, longitudes `[-180°, +180°]`, y hora/minuto/segundo completos.
+
+La auditoría escribe siempre un reporte de archivo en `shared/data/build/reports/natal-engine-precision-report.txt` y reporta por separado Sol, Luna y Ascendente:
+
+- error medio absoluto;
+- p95;
+- p99;
+- máximo;
+- peor caso con fecha/hora UTC completa y ubicación.
+
+La diferencia angular se calcula de forma circular, por lo que `359.9°` frente a `0.1°` se considera un error de `0.2°` y no de `359.8°`.
+
+Uso recomendado:
+
+```bash
+./gradlew :shared:data:natalEnginePrecisionAudit
+```
+
+El comando ejecuta de forma explícita el test Android unitario `com.agc.bwitch.data.astrology.natal.CommonNatalEnginePrecisionAuditTest` y genera el reporte en:
+
+```text
+shared/data/build/reports/natal-engine-precision-report.txt
+```
+
+El reporte declara al inicio la muestra pseudoaleatoria solicitada y la efectiva. Sin propiedad explícita debe indicar `Requested random samples: <default>`, `Effective random samples: 64` y `Samples: 72 (8 manual + 64 random)`.
+
+Para aumentar la muestra sin convertir 1000 comparaciones en requisito permanente de build:
+
+```bash
+./gradlew :shared:data:natalEnginePrecisionAudit -DnatalAuditSampleSize=1000
+```
+
+Umbrales orientativos para interpretar el reporte inicial:
+
+- Sol debería quedar muy cercano al runtime Astronomy Engine.
+- Luna es el mayor riesgo por la simplificación de términos lunares del motor común.
+- Ascendente debe revisarse especialmente por máximos y p99, porque depende de tiempo sidéreo, ubicación y normalización circular.
+
+Esta auditoría queda como red de seguridad para detectar futuras regresiones del runtime común frente a Astronomy Engine mientras se decide en una iteración posterior si retirar el oráculo y su dependencia Gradle.
