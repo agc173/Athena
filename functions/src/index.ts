@@ -31,6 +31,7 @@ export {
   getHoroscopeWeeklyUnlocks,
   getHoroscopeMonthlyUnlocks,
   synastryAuthorize,
+  basicNatalAuthorize,
   pendulumAuthorize,
   claimMoonPackPurchase,
   recoverTimedOutEconomyRequestsScheduled,

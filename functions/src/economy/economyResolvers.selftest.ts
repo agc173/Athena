@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {resolveBirthEssenceDecision} from './birthEssenceEconomy';
+import {resolveBasicNatalDecision} from './basicNatalEconomy';
 import {resolveHoroscopeUnlockDecision} from './horoscopeEconomy';
 import {resolveOracleDecision} from './oracleEconomy';
 import {REWARDED_AD_DAILY_MAX, REWARDED_AD_REWARD} from './rulesCatalog';
@@ -238,4 +239,50 @@ test('synastry rejects on daily hard cap', () => {
   });
   assert.equal(decision.source, 'REJECT');
   assert.equal(decision.reason, 'SYNASTRY_DAILY_LIMIT_REACHED');
+});
+
+
+test('basic natal allows one free weekly calculation', () => {
+  const decision = resolveBasicNatalDecision({
+    isPremium: false,
+    balance: 0,
+    dailyUsage: {},
+    weeklyUsage: {},
+  });
+  assert.equal(decision.source, 'FREE');
+  assert.equal(decision.usageApplied.weeklyCounter, 'basicNatalFreeUsed');
+});
+
+test('basic natal spends one moon after weekly free is exhausted', () => {
+  const decision = resolveBasicNatalDecision({
+    isPremium: false,
+    balance: 1,
+    dailyUsage: {},
+    weeklyUsage: {basicNatalFreeUsed: 1},
+  });
+  assert.equal(decision.source, 'MOON');
+  assert.equal(decision.moonCost, 1);
+  assert.equal(decision.usageApplied.dailyCounter, 'basicNatalMoonUsed');
+});
+
+test('basic natal premium gets ten daily included after weekly free', () => {
+  const decision = resolveBasicNatalDecision({
+    isPremium: true,
+    balance: 0,
+    dailyUsage: {basicNatalPremiumUsed: 9},
+    weeklyUsage: {basicNatalFreeUsed: 1},
+  });
+  assert.equal(decision.source, 'PREMIUM_INCLUDED');
+  assert.equal(decision.usageApplied.dailyCounter, 'basicNatalPremiumUsed');
+});
+
+test('basic natal premium rejects at ten daily calculations', () => {
+  const decision = resolveBasicNatalDecision({
+    isPremium: true,
+    balance: 10,
+    dailyUsage: {basicNatalPremiumUsed: 10},
+    weeklyUsage: {basicNatalFreeUsed: 1},
+  });
+  assert.equal(decision.source, 'REJECT');
+  assert.equal(decision.reason, 'BASIC_NATAL_DAILY_LIMIT_REACHED');
 });

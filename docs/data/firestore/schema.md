@@ -454,7 +454,7 @@ Campos:
 Libro mayor de movimientos de Lunas.
 
 Campos:
-- type: string (`DAILY_LOGIN_CLAIM` | `REWARDED_AD_CLAIM` | `TAROT_1_MOON_SPEND` | `TAROT_3_MOON_SPEND` | `ORACLE_1Q_MOON_SPEND` | `BIRTH_ESSENCE_MOON_SPEND` | `HOROSCOPE_FUTURE_DAY_MOON_SPEND` | `HOROSCOPE_WEEKLY_MOON_SPEND` | `HOROSCOPE_MONTHLY_MOON_SPEND` | `REFUND`)
+- type: string (`DAILY_LOGIN_CLAIM` | `REWARDED_AD_CLAIM` | `TAROT_1_MOON_SPEND` | `TAROT_3_MOON_SPEND` | `ORACLE_1Q_MOON_SPEND` | `BIRTH_ESSENCE_MOON_SPEND` | `BASIC_NATAL_CHART_MOON_SPEND` | `HOROSCOPE_FUTURE_DAY_MOON_SPEND` | `HOROSCOPE_WEEKLY_MOON_SPEND` | `HOROSCOPE_MONTHLY_MOON_SPEND` | `REFUND`)
 - amount: number
 - requestId: string
 - dateIso: string (`YYYY-MM-DD` Europe/Madrid)
@@ -480,6 +480,7 @@ Campos (fase 1):
   - oracleFreeUsed, oraclePremiumUsed, oracleMoonUsed
   - birthEssenceTotalUsed, birthEssenceMoonUsed, birthEssencePremiumExtraMoonUsed
   - birthEssencePremiumIncludedUsed (legacy/compat opcional)
+  - basicNatalPremiumUsed, basicNatalMoonUsed
   - synastryFreeUsed, synastryMoonPacksUsed, synastryPremiumUsed
   - pendulumFreeUsed, pendulumMoonPacksUsed, pendulumPremiumUsed
   - horoscopeFutureDayMoonUsed, horoscopeWeeklyMoonUsed, horoscopeMonthlyMoonUsed
@@ -490,6 +491,7 @@ Uso semanal de economía por usuario.
 
 Campos (fase 1):
 - tarot3FreeUsed: number (opcional)
+- basicNatalFreeUsed: number (opcional)
 
 ### /economyUsageMonthly/{monthKey}/users/{uid}
 Uso mensual de economía por usuario.
@@ -508,7 +510,7 @@ Control de idempotencia para callables de economía.
 
 Campos (fase 6):
 - requestId: string
-- type: string (`CLAIM_DAILY_LOGIN` | `CLAIM_REWARDED_AD` | `TAROT_1` | `TAROT_3` | `ORACLE_1Q` | `BIRTH_ESSENCE` | `HOROSCOPE_UNLOCK_DAY` | `HOROSCOPE_UNLOCK_WEEKLY` | `HOROSCOPE_UNLOCK_MONTHLY`)
+- type: string (`CLAIM_DAILY_LOGIN` | `CLAIM_REWARDED_AD` | `TAROT_1` | `TAROT_3` | `ORACLE_1Q` | `BIRTH_ESSENCE` | `BASIC_NATAL_CHART` | `HOROSCOPE_UNLOCK_DAY` | `HOROSCOPE_UNLOCK_WEEKLY` | `HOROSCOPE_UNLOCK_MONTHLY`)
 - result: string (`CLAIMED` | `DAILY_LIMIT_REACHED` | `ALREADY_CLAIMED` | `RESERVED` | `COMPLETED_SUCCESS` | `REFUNDED` | `FAILED_TIMEOUT` | `FAILED`)
 - status: string opcional (`PROCESSING` | `FAILED` | `COMPLETED_SUCCESS`)
 - decisionSource: string opcional (`FREE` | `PREMIUM_INCLUDED` | `MOON` | `REJECT`)
