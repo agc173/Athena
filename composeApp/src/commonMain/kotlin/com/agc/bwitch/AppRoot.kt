@@ -307,6 +307,7 @@ fun AppRoot() {
                 contentPadding = padding,
                 onOpenStore = { navigator.navigate(Destination.MoonStore) },
                 onOpenCollection = { navigator.navigate(Destination.TarotCollection) },
+                onCalculateBasicNatal = { navigator.navigate(Destination.BirthChart) },
             )
 
             is Destination.HoroscopeDaily -> HoroscopeScreen(
