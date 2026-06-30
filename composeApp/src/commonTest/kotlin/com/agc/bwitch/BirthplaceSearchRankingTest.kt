@@ -36,6 +36,32 @@ class BirthplaceSearchRankingTest {
     }
 
     @Test
+    fun matchesSelectedDisplayNameWithoutCommaAfterReopeningPicker() {
+        val results = rankBirthplaceMatches(
+            query = "Madrid Spain",
+            presets = listOf(
+                birthplace("madrid-co", "Madrid", "Colombia", "CO", "America/Bogota"),
+                birthplace("madrid-es", "Madrid", "Spain", "ES", "Europe/Madrid"),
+            ),
+        )
+
+        assertEquals("madrid-es", results.first().id)
+    }
+
+    @Test
+    fun matchesSelectedDisplayNameWithCountryCodeAfterReopeningPicker() {
+        val results = rankBirthplaceMatches(
+            query = "Madrid, ES",
+            presets = listOf(
+                birthplace("madrid-co", "Madrid", "Colombia", "CO", "America/Bogota"),
+                birthplace("madrid-es", "Madrid", "Spain", "ES", "Europe/Madrid"),
+            ),
+        )
+
+        assertEquals("madrid-es", results.first().id)
+    }
+
+    @Test
     fun ranksTokyoJapanAtTopWhenItAppearsAfterOtherTokyos() {
         val results = rankBirthplaceMatches(
             query = "tokyo",
