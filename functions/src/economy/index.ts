@@ -15,12 +15,14 @@ export * from './tarotEconomy';
 export * from './oracleEconomy';
 export * from './birthEssenceEconomy';
 export * from './synastryEconomy';
+export * from './basicNatalEconomy';
 
 export * from './callables/unlockHoroscopeDay';
 export * from './callables/unlockHoroscopeWeekly';
 export * from './callables/unlockHoroscopeMonthly';
 export * from './callables/getEconomyModulePreviews';
 export * from './callables/synastryAuthorize';
+export * from './callables/basicNatalAuthorize';
 export * from './pendulumEconomy';
 export * from './callables/pendulumAuthorize';
 export * from './callables/claimMoonPackPurchase';

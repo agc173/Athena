@@ -54,6 +54,14 @@ const ECONOMY_RULES: Record<EconomyModule, EconomyModuleRule> = {
     maxTotalDaily: 2,
     notes: 'Premium extras beyond included monthly cost 3 moons',
   },
+  BASIC_NATAL_CHART: {
+    module: 'BASIC_NATAL_CHART',
+    freeWeekly: 1,
+    premiumIncludedDaily: 10,
+    premiumDailyMax: 10,
+    moonCostPerUse: 1,
+    notes: 'Basic natal chart calculates Sun, Moon, and Ascendant only',
+  },
   SYNASTRY: {
     module: 'SYNASTRY',
     freeDaily: 2,

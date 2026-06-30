@@ -201,6 +201,21 @@ data class SynastryAuthorizeResponseDto(
 )
 
 @Serializable
+data class BasicNatalAuthorizeRequestDto(
+    val requestId: String,
+    val languageCode: String? = null,
+)
+
+@Serializable
+data class BasicNatalAuthorizeResponseDto(
+    val authorized: Boolean = false,
+    val status: String? = null,
+    val requestId: String? = null,
+    val source: String? = null,
+    val moonCost: Int = 0,
+)
+
+@Serializable
 data class PendulumAuthorizeRequestDto(
     val requestId: String,
     val languageCode: String? = null,

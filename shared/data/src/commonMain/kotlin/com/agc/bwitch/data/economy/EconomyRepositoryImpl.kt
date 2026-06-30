@@ -5,6 +5,7 @@ import com.agc.bwitch.data.remote.economy.EconomyClaimResultDto
 import com.agc.bwitch.data.remote.economy.EconomyRemoteDataSource
 import com.agc.bwitch.data.remote.economy.EconomyStatusDto
 import com.agc.bwitch.data.remote.economy.EconomyModulePreviewDto
+import com.agc.bwitch.domain.economy.BasicNatalAuthorizationResult
 import com.agc.bwitch.domain.economy.EconomyBalance
 import com.agc.bwitch.domain.economy.EconomyClaimResult
 import com.agc.bwitch.domain.economy.EconomyClaimStatus
@@ -67,6 +68,10 @@ class EconomyRepositoryImpl(
 
     override suspend fun authorizePendulum(requestId: String, languageCode: String?): PendulumAuthorizationResult {
         return remoteDataSource.authorizePendulum(requestId, languageCode).toDomain()
+    }
+
+    override suspend fun authorizeBasicNatal(requestId: String, languageCode: String?): BasicNatalAuthorizationResult {
+        return remoteDataSource.authorizeBasicNatal(requestId, languageCode).toDomain()
     }
 }
 
@@ -163,3 +168,13 @@ private fun com.agc.bwitch.data.remote.economy.PendulumAuthorizeResponseDto.toDo
 
 private fun com.agc.bwitch.data.remote.economy.DeckCardUnlockRewardDto.toDomain(): DeckCardUnlockReward =
     DeckCardUnlockReward(deckId = deckId, trackId = trackId, rewardPoolId = rewardPoolId, cardId = cardId)
+
+
+private fun com.agc.bwitch.data.remote.economy.BasicNatalAuthorizeResponseDto.toDomain(): BasicNatalAuthorizationResult {
+    return BasicNatalAuthorizationResult(
+        authorized = authorized,
+        status = status,
+        source = source,
+        moonCost = moonCost,
+    )
+}

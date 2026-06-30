@@ -27,6 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,6 +46,7 @@ import com.agc.bwitch.domain.astrology.natal.NatalChartResult
 import com.agc.bwitch.domain.astrology.natal.ZodiacSign as NatalZodiacSign
 import com.agc.bwitch.domain.astrology.natal.toUtc
 import com.agc.bwitch.domain.astrology.horoscope.ZodiacSign
+import com.agc.bwitch.domain.economy.EconomyRepository
 import com.agc.bwitch.domain.model.DeckCardUnlockReward
 import com.agc.bwitch.localization.AppStrings
 import com.agc.bwitch.localization.BirthChartStrings
@@ -84,6 +86,9 @@ import com.agc.bwitch.ui.common.designsystem.BWitchCard
 import com.agc.bwitch.ui.common.designsystem.BWitchPrimaryButton
 import com.agc.bwitch.ui.theme.BWitchThemeTokens
 import com.agc.bwitch.ui.tarot.DeckCardUnlockRewardDialog
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
+import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
@@ -146,7 +151,12 @@ fun BirthChartScreen(
             color = extras.textSecondary,
         )
 
-        BasicNatalChartSection(strings = birthChartStrings, appStrings = strings)
+        BasicNatalChartSection(
+            strings = birthChartStrings,
+            appStrings = strings,
+            economyViewModel = economyViewModel,
+            onOpenStore = onOpenStore,
+        )
 
         BWitchCard {
             Text(birthChartStrings.manualEssenceTitle, style = MaterialTheme.typography.titleLarge)
@@ -296,7 +306,13 @@ fun BirthChartScreen(
 }
 
 @Composable
-private fun BasicNatalChartSection(strings: BirthChartStrings, appStrings: AppStrings) {
+private fun BasicNatalChartSection(
+    strings: BirthChartStrings,
+    appStrings: AppStrings,
+    economyViewModel: EconomyViewModel,
+    onOpenStore: () -> Unit,
+    economyRepository: EconomyRepository = koinInject(),
+) {
     val dimens = BWitchThemeTokens.dimens
     val extras = BWitchThemeTokens.extras
     var birthDate by remember { mutableStateOf<LocalDate?>(null) }
@@ -308,6 +324,11 @@ private fun BasicNatalChartSection(strings: BirthChartStrings, appStrings: AppSt
     var result by remember { mutableStateOf<NatalChartResult?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
     var hasAttemptedBasicNatalCalculation by remember { mutableStateOf(false) }
+    var isAuthorizingBasicNatal by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
+    val economyState by economyViewModel.uiState.collectAsState()
+    val basicNatalPreview = economyState.modulePreviews.firstOrNull { it.module == "BASIC_NATAL_CHART" || it.module == "BASIC_NATAL" }
+    val showBasicNatalDailyLimitPaywall = basicNatalPreview.isDailyLimitRejected()
 
     val birthplaceCatalogState by produceState(
         initialValue = BirthplaceCatalogUiState(
@@ -440,6 +461,26 @@ private fun BasicNatalChartSection(strings: BirthChartStrings, appStrings: AppSt
             }
         }
 
+        EconomyGateInfoRow(
+            preview = basicNatalPreview,
+            economyStrings = appStrings.economy,
+            fallbackCost = 1,
+            freeLabelOverride = strings.basicNatalFreeWeeklyLabel,
+        )
+
+        if (showBasicNatalDailyLimitPaywall) {
+            DailyLimitPaywallCard(
+                economyStrings = appStrings.economy,
+                onOpenStore = onOpenStore,
+                module = basicNatalPreview?.module ?: "BASIC_NATAL_CHART",
+                placement = "basic_natal_daily_limit",
+                reason = basicNatalPreview?.reasonIfRejected ?: "daily_limit",
+                hasPremiumBenefit = basicNatalPreview.hasPremiumBenefit(),
+                onPaywallShown = economyViewModel::onDailyLimitPaywallShown,
+                onPaywallActionClicked = economyViewModel::onDailyLimitPaywallActionClicked,
+            )
+        }
+
         BWitchPrimaryButton(
             onClick = {
                 hasAttemptedBasicNatalCalculation = true
@@ -451,31 +492,68 @@ private fun BasicNatalChartSection(strings: BirthChartStrings, appStrings: AppSt
                 val hour = birthHour ?: return@BWitchPrimaryButton
                 val minute = birthMinute ?: return@BWitchPrimaryButton
                 val birthplace = selectedBirthplace ?: return@BWitchPrimaryButton
-                runCatching {
-                    BirthDateTimeLocal(
-                        year = date.year,
-                        month = date.monthNumber,
-                        day = date.dayOfMonth,
-                        hour = hour,
-                        minute = minute,
-                    ).toUtc(birthplace.timezoneId)
-                }.mapCatching { utc ->
-                    BasicNatalChartUiCalculator.calculate(
-                        birthDateTimeUtc = utc,
-                        birthLocation = BirthLocation(
-                            latitudeDegrees = birthplace.latitudeDegrees,
-                            longitudeDegrees = birthplace.longitudeDegrees,
-                        ),
-                    )
-                }.onSuccess { chart ->
-                    result = chart
-                }.onFailure {
-                    error = strings.basicNatalCalculateError
+                val calculateAfterEconomyGate = {
+                    coroutineScope.launch {
+                        isAuthorizingBasicNatal = true
+                        try {
+                            // The local calculator runs only after economy authorization succeeds. If this
+                            // exceptional local step fails afterwards, the reserved free/premium/moon use is
+                            // not refunded here; other local-only economy gates do not have a standard
+                            // refund path, and prior input validation keeps this failure path rare.
+                            val authorization = economyRepository.authorizeBasicNatal(
+                                requestId = newBasicNatalRequestId(),
+                                languageCode = appStrings.languageCode,
+                            )
+                            if (!authorization.authorized) {
+                                error = strings.basicNatalCalculateError
+                                return@launch
+                            }
+                            runCatching {
+                                BirthDateTimeLocal(
+                                    year = date.year,
+                                    month = date.monthNumber,
+                                    day = date.dayOfMonth,
+                                    hour = hour,
+                                    minute = minute,
+                                ).toUtc(birthplace.timezoneId)
+                            }.mapCatching { utc ->
+                                BasicNatalChartUiCalculator.calculate(
+                                    birthDateTimeUtc = utc,
+                                    birthLocation = BirthLocation(
+                                        latitudeDegrees = birthplace.latitudeDegrees,
+                                        longitudeDegrees = birthplace.longitudeDegrees,
+                                    ),
+                                )
+                            }.onSuccess { chart ->
+                                result = chart
+                                economyViewModel.loadEconomy()
+                            }.onFailure {
+                                error = strings.basicNatalCalculateError
+                            }
+                        } catch (throwable: Throwable) {
+                            error = when (throwable.message) {
+                                "insufficient_moons" -> appStrings.economy.notEnoughMoons
+                                "daily_limit" -> appStrings.economy.dailyLimitReached
+                                else -> strings.basicNatalCalculateError
+                            }
+                            economyViewModel.loadEconomy()
+                        } finally {
+                            isAuthorizingBasicNatal = false
+                        }
+                    }
                 }
+                runWithEconomyGate(
+                    preview = basicNatalPreview,
+                    economyViewModel = economyViewModel,
+                    source = "basic_natal",
+                    fallbackCost = 1,
+                    action = calculateAfterEconomyGate,
+                )
             },
+            enabled = !isAuthorizingBasicNatal,
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Text(strings.basicNatalCalculateCta)
+            Text(if (isAuthorizingBasicNatal) strings.basicNatalCalculatingCta else strings.basicNatalCalculateCta)
         }
 
         result?.let { chart ->
@@ -880,3 +958,7 @@ private fun ArchetypeVisual(
         )
     }
 }
+
+
+@OptIn(ExperimentalUuidApi::class)
+private fun newBasicNatalRequestId(): String = "basic-natal-${Uuid.random()}"

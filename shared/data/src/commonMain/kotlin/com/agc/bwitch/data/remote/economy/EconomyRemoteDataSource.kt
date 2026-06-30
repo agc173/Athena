@@ -215,6 +215,21 @@ class EconomyRemoteDataSource(
     }
 
 
+    suspend fun authorizeBasicNatal(requestId: String, languageCode: String?): BasicNatalAuthorizeResponseDto {
+        return when (
+            val result = functionsClient.call(
+                name = BASIC_NATAL_AUTHORIZE_CALLABLE,
+                data = BasicNatalAuthorizeRequestDto(requestId = requestId, languageCode = languageCode),
+                requestSerializer = BasicNatalAuthorizeRequestDto.serializer(),
+                responseSerializer = BasicNatalAuthorizeResponseDto.serializer(),
+            )
+        ) {
+            is ApiResult.Ok -> result.value
+            is ApiResult.Err -> throw result.error.toException()
+        }
+    }
+
+
     suspend fun authorizePendulum(requestId: String, languageCode: String?): PendulumAuthorizeResponseDto {
         return when (
             val result = functionsClient.call(
@@ -243,6 +258,7 @@ class EconomyRemoteDataSource(
         const val GET_ECONOMY_MODULE_PREVIEWS_CALLABLE = "getEconomyModulePreviews"
         const val SYNASTRY_AUTHORIZE_CALLABLE = "synastryAuthorize"
         const val PENDULUM_AUTHORIZE_CALLABLE = "pendulumAuthorize"
+        const val BASIC_NATAL_AUTHORIZE_CALLABLE = "basicNatalAuthorize"
     }
 }
 

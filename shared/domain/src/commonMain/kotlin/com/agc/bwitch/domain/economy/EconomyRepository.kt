@@ -14,7 +14,17 @@ interface EconomyRepository {
     suspend fun getModulePreviews(modules: List<String>): List<EconomyModulePreview>
     suspend fun authorizeSynastry(requestId: String, languageCode: String?): SynastryAuthorizationResult
     suspend fun authorizePendulum(requestId: String, languageCode: String?): PendulumAuthorizationResult
+    suspend fun authorizeBasicNatal(requestId: String, languageCode: String?): BasicNatalAuthorizationResult =
+        BasicNatalAuthorizationResult(authorized = false, status = "NOT_IMPLEMENTED")
 }
+
+data class BasicNatalAuthorizationResult(
+    val authorized: Boolean,
+    val status: String? = null,
+    val source: String? = null,
+    val moonCost: Int = 0,
+)
+
 
 data class PendulumAuthorizationResult(
     val authorized: Boolean,

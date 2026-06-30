@@ -5,6 +5,7 @@ export type EconomyModule =
   | 'TAROT_3'
   | 'ORACLE_1Q'
   | 'BIRTH_ESSENCE'
+  | 'BASIC_NATAL_CHART'
   | 'SYNASTRY'
   | 'PENDULUM'
   | 'HOROSCOPE_FUTURE_DAY'
@@ -36,6 +37,7 @@ export type EconomyLedgerEntryDoc = {
   | 'TAROT_3_MOON_SPEND'
   | 'ORACLE_1Q_MOON_SPEND'
   | 'BIRTH_ESSENCE_MOON_SPEND'
+  | 'BASIC_NATAL_CHART_MOON_SPEND'
   | 'REFUND'
   | 'HOROSCOPE_FUTURE_DAY_MOON_SPEND'
   | 'HOROSCOPE_WEEKLY_MOON_SPEND'
@@ -73,6 +75,7 @@ export type EconomyRequestType =
   | 'TAROT_3'
   | 'ORACLE_1Q'
   | 'BIRTH_ESSENCE'
+  | 'BASIC_NATAL_CHART'
   | 'SYNASTRY'
   | 'PENDULUM'
   | 'HOROSCOPE_UNLOCK_DAY'
@@ -135,6 +138,9 @@ export type EconomyDailyUsageDoc = {
   birthEssencePremiumExtraMoonUsed?: number;
   birthEssenceTotalUsed?: number;
 
+  basicNatalPremiumUsed?: number;
+  basicNatalMoonUsed?: number;
+
   synastryFreeUsed?: number;
   synastryMoonPacksPurchased?: number;
   synastryMoonUsesUsed?: number;
@@ -154,6 +160,7 @@ export type EconomyDailyUsageDoc = {
 
 export type EconomyWeeklyUsageDoc = {
   tarot3FreeUsed?: number;
+  basicNatalFreeUsed?: number;
 };
 
 export type EconomyMonthlyUsageDoc = {

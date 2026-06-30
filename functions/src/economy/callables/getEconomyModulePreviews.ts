@@ -17,6 +17,7 @@ import {resolveTarotDecision} from '../tarotEconomy';
 import {resolveOracleDecision} from '../oracleEconomy';
 import {resolveSynastryDecision} from '../synastryEconomy';
 import {resolvePendulumDecision} from '../pendulumEconomy';
+import {resolveBasicNatalDecision} from '../basicNatalEconomy';
 import {isPendulumEconomyV2Enabled, isSynastryEconomyV2Enabled} from '../runtimeConfig';
 import {RequestType} from '../../oracle/types';
 import type {
@@ -64,6 +65,7 @@ const ALL_MODULES: EconomyModule[] = [
   'TAROT_1',
   'TAROT_3',
   'BIRTH_ESSENCE',
+  'BASIC_NATAL_CHART',
   'SYNASTRY',
   'PENDULUM',
 ];
@@ -75,7 +77,7 @@ function intValue(value: unknown): number {
 
 function normalizeModule(module: unknown): EconomyModule | null {
   if (typeof module !== 'string') return null;
-  const normalized = module === 'NATAL_ESSENCE' ? 'BIRTH_ESSENCE' : module;
+  const normalized = module === 'NATAL_ESSENCE' ? 'BIRTH_ESSENCE' : (module === 'BASIC_NATAL' ? 'BASIC_NATAL_CHART' : module);
   return ALL_MODULES.includes(normalized as EconomyModule) ? normalized as EconomyModule : null;
 }
 
@@ -95,6 +97,7 @@ function normalizeReason(reason: string | undefined): string | undefined {
   if (reason === 'INSUFFICIENT_MOON_BALANCE') return 'insufficient_moons';
   if (reason === 'SYNASTRY_DAILY_LIMIT_REACHED') return 'daily_limit';
   if (reason === 'PENDULUM_DAILY_LIMIT_REACHED') return 'daily_limit';
+  if (reason === 'BASIC_NATAL_DAILY_LIMIT_REACHED') return 'daily_limit';
   if (reason === 'MODULE_NOT_CONFIGURED') return 'module_not_configured';
   if (reason === 'RULE_CONFIGURED_NOT_WIRED') return 'rule_configured_not_wired';
   return reason.toLowerCase();
@@ -206,6 +209,36 @@ export async function getEconomyModulePreviewsCore(uid: string, modulesInput?: u
         balance,
         canExecute: decision.source !== 'REJECT',
         reasonIfRejected: normalizeReason(decision.reason),
+      };
+    }
+
+
+    if (module === 'BASIC_NATAL_CHART') {
+      const decision = resolveBasicNatalDecision({
+        isPremium: premium.isPremium,
+        balance,
+        dailyUsage: daily,
+        weeklyUsage: weekly,
+      });
+      const rule = getEconomyModuleRule(module);
+      const freeUsed = intValue(weekly.basicNatalFreeUsed);
+      const freeWeekly = intValue(rule.freeWeekly);
+      const premiumUsed = intValue(daily.basicNatalPremiumUsed);
+      const premiumIncludedDaily = intValue(rule.premiumIncludedDaily);
+      const moonUsed = intValue(daily.basicNatalMoonUsed);
+      const premiumDailyMax = intValue(rule.premiumDailyMax);
+      const isInsufficientMoonsReject = decision.source === 'REJECT' && decision.reason === 'INSUFFICIENT_MOON_BALANCE';
+      return {
+        module,
+        nextSource: toNextSource(decision.source),
+        cost: decision.source === 'MOON' ? decision.moonCost : (isInsufficientMoonsReject ? (rule.moonCostPerUse ?? 0) : 0),
+        balance,
+        canExecute: decision.source !== 'REJECT',
+        reasonIfRejected: normalizeReason(decision.reason),
+        freeRemaining: Math.max(0, freeWeekly - freeUsed),
+        premiumRemaining: Math.max(0, premiumIncludedDaily - premiumUsed),
+        moonRemaining: premiumDailyMax > 0 ? Math.max(0, premiumDailyMax - premiumUsed - moonUsed) : undefined,
+        dailyCap: premiumDailyMax || undefined,
       };
     }
 
