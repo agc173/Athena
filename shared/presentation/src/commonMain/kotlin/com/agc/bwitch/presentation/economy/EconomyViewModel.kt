@@ -289,7 +289,15 @@ class EconomyViewModel(
             val statusResult = statusDeferred.await()
             val balanceResult = balanceDeferred.await()
             val previewsResult = previewsDeferred.await()
+            val previews = previewsResult.getOrNull()
+            val basicNatalPreview = previews?.firstOrNull { it.module == "BASIC_NATAL_CHART" || it.module == "BASIC_NATAL" }
 
+            println(
+                "BWITCH_ECONOMY_DEBUG getModulePreviews requested=$DEBUG_MONETIZABLE_MODULES " +
+                    "receivedModules=${previews?.map { it.module }} " +
+                    "containsBasicNatal=${basicNatalPreview != null} " +
+                    "basicNatal=${basicNatalPreview?.toDebugLogLine() ?: "missing"}"
+            )
             statusResult.exceptionOrNull()?.let { println("BWITCH_ECONOMY_DEBUG getStatus failed=$it message=${it.message}") }
             balanceResult.exceptionOrNull()?.let { println("BWITCH_ECONOMY_DEBUG getBalance failed=$it message=${it.message}") }
             previewsResult.exceptionOrNull()?.let { println("BWITCH_ECONOMY_DEBUG getModulePreviews failed=$it message=${it.message}") }
@@ -306,7 +314,7 @@ class EconomyViewModel(
                     isPremium = status?.isPremium ?: state.isPremium,
                     dailyLoginClaimed = balance?.dailyLoginClaimed ?: state.dailyLoginClaimed,
                     rewardedAdsRemaining = balance?.rewardedAdsRemaining ?: state.rewardedAdsRemaining,
-                    modulePreviews = previewsResult.getOrNull() ?: state.modulePreviews,
+                    modulePreviews = previews ?: state.modulePreviews,
                     hasLoadedModulePreviews = state.hasLoadedModulePreviews || previewsResult.isSuccess,
                     error = if (statusResult.isFailure && balanceResult.isFailure) {
                         ECONOMY_LOAD_ERROR_KEY
@@ -556,6 +564,11 @@ data class MoonUnlockFlowContext(
     val paywallImpressionId: String? = null,
     val lastPaywallAction: String? = null,
 )
+
+private fun EconomyModulePreview.toDebugLogLine(): String {
+    return "module=$module nextSource=$nextSource cost=$cost canExecute=$canExecute " +
+        "reasonIfRejected=${reasonIfRejected ?: "none"} freeRemaining=${freeRemaining ?: "none"}"
+}
 
 const val ECONOMY_LOAD_ERROR_KEY = "economy.load.error"
 const val ECONOMY_CLAIM_ERROR_KEY = "economy.claim.error"
