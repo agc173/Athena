@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -26,6 +27,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.ContentScale
@@ -306,11 +308,19 @@ private fun BasicNatalChartSection(strings: BirthChartStrings, appStrings: AppSt
     var result by remember { mutableStateOf<NatalChartResult?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
 
-    val birthplacePresets by produceState(initialValue = BirthplacePresets) {
-        value = DefaultBirthplaceCatalogRepository.getBirthplaces()
+    val birthplaceCatalogState by produceState(
+        initialValue = BirthplaceCatalogUiState(
+            presets = BirthplacePresets,
+            isLoadingRuntimeCatalog = true,
+        ),
+    ) {
+        value = BirthplaceCatalogUiState(
+            presets = DefaultBirthplaceCatalogRepository.getBirthplaces(),
+            isLoadingRuntimeCatalog = false,
+        )
     }
-    val matchingBirthplaces = remember(birthplaceQuery, birthplacePresets) {
-        rankBirthplaceMatches(birthplaceQuery, birthplacePresets)
+    val matchingBirthplaces = remember(birthplaceQuery, birthplaceCatalogState.presets) {
+        rankBirthplaceMatches(birthplaceQuery, birthplaceCatalogState.presets)
     }
     val validationMessage = remember(strings, birthDate, birthHour, birthMinute, selectedBirthplace) {
         validateBasicNatalChartInput(
@@ -360,21 +370,50 @@ private fun BasicNatalChartSection(strings: BirthChartStrings, appStrings: AppSt
 
         Column(verticalArrangement = Arrangement.spacedBy(dimens.spacingSm)) {
             Text(strings.basicNatalBirthplaceLabel, style = MaterialTheme.typography.labelLarge)
-            OutlinedButton(
-                onClick = { isBirthplaceDialogOpen = true },
+            Surface(
                 modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.medium,
+                color = if (selectedBirthplace == null) {
+                    MaterialTheme.colorScheme.surface
+                } else {
+                    MaterialTheme.colorScheme.surfaceVariant
+                },
+                tonalElevation = 0.dp,
             ) {
-                Text(
-                    text = selectedBirthplace?.displayName() ?: strings.basicNatalBirthplaceSearchLabel,
-                    modifier = Modifier.fillMaxWidth(),
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
+                Column(
+                    modifier = Modifier.padding(dimens.spacingMd),
+                    verticalArrangement = Arrangement.spacedBy(dimens.spacingXs),
+                ) {
+                    Text(
+                        text = selectedBirthplace?.displayName() ?: strings.basicNatalBirthplacePlaceholder,
+                        style = if (selectedBirthplace == null) MaterialTheme.typography.bodyMedium else MaterialTheme.typography.titleMedium,
+                        color = if (selectedBirthplace == null) extras.textSecondary else MaterialTheme.colorScheme.onSurface,
+                    )
+                    TextButton(
+                        onClick = { isBirthplaceDialogOpen = true },
+                        modifier = Modifier.align(Alignment.Start),
+                        contentPadding = PaddingValues(horizontal = 0.dp, vertical = 0.dp),
+                    ) {
+                        Text(
+                            text = if (selectedBirthplace == null) strings.basicNatalBirthplaceSearchLabel else strings.basicNatalBirthplaceChangeCta,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
             }
             Text(
                 text = strings.basicNatalBirthplaceSearchSupportingText,
                 style = MaterialTheme.typography.bodySmall,
                 color = extras.textSecondary,
             )
+            if (birthplaceCatalogState.isLoadingRuntimeCatalog) {
+                Text(
+                    text = strings.basicNatalBirthplaceLoadingText,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = extras.textSecondary,
+                )
+            }
         }
 
         if (isBirthplaceDialogOpen) {
@@ -382,6 +421,7 @@ private fun BasicNatalChartSection(strings: BirthChartStrings, appStrings: AppSt
                 strings = strings,
                 query = birthplaceQuery,
                 matchingBirthplaces = matchingBirthplaces,
+                isCatalogLoading = birthplaceCatalogState.isLoadingRuntimeCatalog,
                 onQueryChange = { query ->
                     birthplaceQuery = query
                     if (selectedBirthplace != null && !selectedBirthplace!!.matchesBirthplaceQuery(query)) {
@@ -487,6 +527,7 @@ private fun BirthplacePickerDialog(
     strings: BirthChartStrings,
     query: String,
     matchingBirthplaces: List<BirthplacePreset>,
+    isCatalogLoading: Boolean,
     onQueryChange: (String) -> Unit,
     onSelect: (BirthplacePreset) -> Unit,
     onDismiss: () -> Unit,
@@ -506,20 +547,36 @@ private fun BirthplacePickerDialog(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(spacing.spacingMd),
-                verticalArrangement = Arrangement.spacedBy(spacing.spacingSm),
+                verticalArrangement = Arrangement.spacedBy(spacing.spacingMd),
             ) {
                 Text(text = strings.basicNatalBirthplaceLabel, style = MaterialTheme.typography.titleMedium)
                 OutlinedTextField(
                     value = query,
                     onValueChange = onQueryChange,
                     label = { Text(strings.basicNatalBirthplaceSearchLabel) },
+                    supportingText = { Text(strings.basicNatalBirthplaceSearchSupportingText) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
+                if (isCatalogLoading) {
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                    Text(
+                        text = strings.basicNatalBirthplaceLoadingText,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                if (query.isNotBlank() && matchingBirthplaces.isEmpty()) {
+                    Text(
+                        text = strings.basicNatalBirthplaceEmptyResultsText,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(max = 360.dp)
+                        .heightIn(max = 320.dp)
                         .verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(spacing.spacingXs),
                 ) {
@@ -545,6 +602,11 @@ private fun BirthplacePickerDialog(
         }
     }
 }
+
+private data class BirthplaceCatalogUiState(
+    val presets: List<BirthplacePreset>,
+    val isLoadingRuntimeCatalog: Boolean,
+)
 
 private fun validateBasicNatalChartInput(
     strings: BirthChartStrings,
