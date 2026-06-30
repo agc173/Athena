@@ -463,9 +463,9 @@ No se recomienda ampliar este experimento a planetas, casas, aspectos, MC/IC o c
 
 ## 12. Estado del spike común Sol/Luna/Ascendente
 
-Se añadió una implementación común interna **experimental** en `shared/data/src/commonMain` para contrastar únicamente longitud/signo de Sol, longitud/signo de Luna y Ascendente opcional. La API pública se mantiene sin ampliar: `BirthDateTimeUtc`, `BirthLocation` y `NatalChartResult` conservan sus campos actuales.
+Se promovió la implementación común `BasicNatalChartCalculator` en `shared/data/src/commonMain` para calcular únicamente longitud/signo de Sol, longitud/signo de Luna y Ascendente opcional. La API pública se mantiene sin ampliar: `BirthDateTimeUtc`, `BirthLocation` y `NatalChartResult` conservan sus campos actuales.
 
-Esta implementación común no sustituye todavía al runtime validado. Android mantiene `shared/data/src/androidMain/.../BasicNatalChartCalculator.kt` con Astronomy Engine, e iOS mantiene el error explícito Android-only hasta que el motor común quede validado con fixtures y build.
+Android e iOS consumen ahora el mismo runtime común. La implementación Android duplicada basada en Astronomy Engine se retiró de producción; Astronomy Engine queda encapsulado solo en `androidUnitTest` como oráculo de auditoría.
 
 El motor común se documenta como aproximación experimental inspirada por la auditoría técnica, no como port fiel ni adaptación sustancial de Astronomy Engine. Por eso no se añade licencia MIT upstream en esta iteración. Si más adelante se copia o adapta código sustancial de `cosinekitty/astronomy`, deberá añadirse la atribución MIT completa y encabezados por archivo.
 
@@ -473,7 +473,7 @@ No se implementan planetas adicionales, casas, aspectos, rueda natal, economía,
 
 ## 13. Common engine precision audit
 
-Se añade una auditoría Android-only en `shared/data/src/androidUnitTest` para comparar el runtime Android validado (`BasicNatalChartCalculator`, Astronomy Engine) contra el motor común experimental (`ExperimentalCommonNatalChartCalculator`). La auditoría es **report-only**: imprime métricas de precisión y no sustituye el runtime, no habilita iOS y no elimina Astronomy Engine.
+La auditoría Android-only en `shared/data/src/androidUnitTest` compara el runtime común productivo (`BasicNatalChartCalculator`) contra el oráculo test-only `AstronomyEngineNatalChartCalculator` basado en Astronomy Engine. La auditoría es **report-only**: imprime métricas de precisión, mantiene Astronomy Engine fuera de producción y no elimina todavía la dependencia Gradle porque sigue siendo necesaria para validación.
 
 La muestra es reproducible con seed fija `20260630` y combina:
 
@@ -516,4 +516,4 @@ Umbrales orientativos para interpretar el reporte inicial:
 - Luna es el mayor riesgo por la simplificación de términos lunares del motor común.
 - Ascendente debe revisarse especialmente por máximos y p99, porque depende de tiempo sidéreo, ubicación y normalización circular.
 
-Esta auditoría es el paso previo para decidir con datos si el motor común experimental puede promoverse en el futuro para reemplazar Android y activar iOS. Hasta entonces, el runtime permanece intacto: Android sigue usando Astronomy Engine e iOS sigue fallando explícitamente.
+Esta auditoría queda como red de seguridad para detectar futuras regresiones del runtime común frente a Astronomy Engine mientras se decide en una iteración posterior si retirar el oráculo y su dependencia Gradle.
