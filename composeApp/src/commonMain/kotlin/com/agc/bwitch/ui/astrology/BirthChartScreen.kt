@@ -492,7 +492,7 @@ private fun BasicNatalChartSection(
                 val hour = birthHour ?: return@BWitchPrimaryButton
                 val minute = birthMinute ?: return@BWitchPrimaryButton
                 val birthplace = selectedBirthplace ?: return@BWitchPrimaryButton
-                val calculateAfterEconomyGate = {
+                val calculateAfterEconomyGate: () -> Unit = {
                     coroutineScope.launch {
                         isAuthorizingBasicNatal = true
                         try {
@@ -502,7 +502,7 @@ private fun BasicNatalChartSection(
                             // refund path, and prior input validation keeps this failure path rare.
                             val authorization = economyRepository.authorizeBasicNatal(
                                 requestId = newBasicNatalRequestId(),
-                                languageCode = appStrings.languageCode,
+                                languageCode = null,
                             )
                             if (!authorization.authorized) {
                                 error = strings.basicNatalCalculateError
