@@ -1,3 +1,5 @@
+import org.gradle.api.GradleException
+import org.gradle.api.tasks.testing.Test
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -112,4 +114,41 @@ tasks.matching {
     )
 }.configureEach {
     enabled = false
+}
+
+val natalEnginePrecisionReport = layout.buildDirectory.file("reports/natal-engine-precision-report.txt")
+val isNatalEnginePrecisionAuditRequested = provider {
+    gradle.startParameter.taskNames.any { requestedTask ->
+        requestedTask == "natalEnginePrecisionAudit" || requestedTask.endsWith(":natalEnginePrecisionAudit")
+    }
+}
+
+tasks.withType<Test>().configureEach {
+    if (name == "testDebugUnitTest") {
+        systemProperty("natalPrecisionAuditReportPath", natalEnginePrecisionReport.get().asFile.absolutePath)
+        outputs.file(natalEnginePrecisionReport)
+
+        if (isNatalEnginePrecisionAuditRequested.get()) {
+            filter {
+                includeTestsMatching("com.agc.bwitch.data.astrology.natal.CommonNatalEnginePrecisionAuditTest")
+            }
+            doFirst {
+                natalEnginePrecisionReport.get().asFile.delete()
+            }
+        }
+    }
+}
+
+tasks.register("natalEnginePrecisionAudit") {
+    group = "verification"
+    description = "Runs the Android-only common natal engine precision audit and writes its report to build/reports/natal-engine-precision-report.txt."
+    dependsOn("testDebugUnitTest")
+
+    doLast {
+        val reportFile = natalEnginePrecisionReport.get().asFile
+        if (!reportFile.isFile) {
+            throw GradleException("Natal engine precision audit did not create ${reportFile.absolutePath}")
+        }
+        logger.lifecycle("Natal engine precision audit report: ${reportFile.absolutePath}")
+    }
 }

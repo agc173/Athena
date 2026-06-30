@@ -2,6 +2,7 @@ package com.agc.bwitch.data.astrology.natal
 
 import com.agc.bwitch.domain.astrology.natal.BirthDateTimeUtc
 import com.agc.bwitch.domain.astrology.natal.BirthLocation
+import java.io.File
 import java.util.Locale
 import java.util.Random
 import kotlin.math.abs
@@ -15,8 +16,9 @@ import kotlin.test.assertNotNull
  * and the experimental common natal calculator.
  *
  * This intentionally does not replace runtime behavior. Run with a larger sample when needed:
- * ./gradlew :shared:data:testDebugUnitTest --tests '*CommonNatalEnginePrecisionAuditTest' \
- *   -DnatalAuditSampleSize=1000
+ * ./gradlew :shared:data:natalEnginePrecisionAudit -DnatalAuditSampleSize=1000
+ *
+ * The report is always written to build/reports/natal-engine-precision-report.txt.
  */
 class CommonNatalEnginePrecisionAuditTest {
     @Test
@@ -49,7 +51,7 @@ class CommonNatalEnginePrecisionAuditTest {
             )
         }
 
-        println(buildReport(samples = samples, results = results))
+        writeReport(buildReport(samples = samples, results = results))
     }
 
     private fun randomSamples(count: Int): List<AuditSample> {
@@ -104,7 +106,16 @@ class CommonNatalEnginePrecisionAuditTest {
         val errors = results.map(selector).sorted()
         val worst = results.maxBy(selector)
         return "$name: meanAbs=${errors.average().format()}°, p95=${percentile(errors, 95.0).format()}°, " +
-            "p99=${percentile(errors, 99.0).format()}°, max=${selector(worst).format()}°, worst=${worst.sample.describe()}"
+            "p99=${percentile(errors, 99.0).format()}°, max=${selector(worst).format()}°, peor caso=${worst.sample.describe()}"
+    }
+
+    private fun writeReport(report: String) {
+        val reportFile = File(
+            System.getProperty(ReportPathProperty)
+                ?: DefaultReportPath,
+        )
+        reportFile.parentFile?.mkdirs()
+        reportFile.writeText(report)
     }
 
     private fun AuditSample.describe(): String =
@@ -127,6 +138,8 @@ class CommonNatalEnginePrecisionAuditTest {
 
     private companion object {
         const val SampleSizeProperty = "natalAuditSampleSize"
+        const val ReportPathProperty = "natalPrecisionAuditReportPath"
+        const val DefaultReportPath = "build/reports/natal-engine-precision-report.txt"
         const val DefaultRandomSampleSize = 64
         const val DeterministicSeed = 20260630L
         const val MinYear = 1900

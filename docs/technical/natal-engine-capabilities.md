@@ -480,7 +480,7 @@ La muestra es reproducible con seed fija `20260630` y combina:
 - casos manuales de frontera: cambios de año, equinoccios/solsticios aproximados, horas cercanas a medianoche y longitudes extremas;
 - casos pseudoaleatorios deterministas entre los años 1900 y 2100, latitudes `[-66°, +66°]`, longitudes `[-180°, +180°]`, y hora/minuto/segundo completos.
 
-La auditoría reporta por separado Sol, Luna y Ascendente:
+La auditoría escribe siempre un reporte de archivo en `shared/data/build/reports/natal-engine-precision-report.txt` y reporta por separado Sol, Luna y Ascendente:
 
 - error medio absoluto;
 - p95;
@@ -493,13 +493,19 @@ La diferencia angular se calcula de forma circular, por lo que `359.9°` frente 
 Uso recomendado:
 
 ```bash
-./gradlew :shared:data:testDebugUnitTest --tests '*CommonNatalEnginePrecisionAuditTest'
+./gradlew :shared:data:natalEnginePrecisionAudit
+```
+
+El comando ejecuta de forma explícita el test Android unitario `com.agc.bwitch.data.astrology.natal.CommonNatalEnginePrecisionAuditTest` y genera el reporte en:
+
+```text
+shared/data/build/reports/natal-engine-precision-report.txt
 ```
 
 Para aumentar la muestra sin convertir 1000 comparaciones en requisito permanente de build:
 
 ```bash
-./gradlew :shared:data:testDebugUnitTest --tests '*CommonNatalEnginePrecisionAuditTest' -DnatalAuditSampleSize=1000
+./gradlew :shared:data:natalEnginePrecisionAudit -DnatalAuditSampleSize=1000
 ```
 
 Umbrales orientativos para interpretar el reporte inicial:
