@@ -95,6 +95,34 @@ python tools/audit_birthplace_catalog.py --markdown-output docs/reports/birthpla
 
 The suspicious-entry section is read-only: it reports rows that the current generator policy would exclude on the next regeneration, but it does not modify the existing CSV or any runtime code.
 
+
+## Birthplace alternate names audit
+
+`audit_birthplace_alternate_names.py` is a read-only diagnostic tool for evaluating whether GeoNames `alternateNamesV2.txt` would be useful for a future `searchNames` column or sidecar CSV. It does not modify `birthplaces.csv`, runtime lookup, ranking, loaders, repositories, UI, or astronomical calculation.
+
+The audit is intentionally limited to the languages currently supported by ATHENA (`es`, `en`, `fr`, `it`, `pt`, `ru`, `de`). Users in unsupported app languages can still search with one of those localized names.
+
+Download `alternateNamesV2.txt` manually from GeoNames and place it under `tools/geonames/` (ignored by git), then run:
+
+```bash
+python tools/audit_birthplace_alternate_names.py --alternate-names tools/geonames/alternateNamesV2.txt
+```
+
+Optional paths:
+
+```bash
+python tools/audit_birthplace_alternate_names.py --birthplaces-csv composeApp/src/commonMain/composeResources/files/birthplaces.csv --alternate-names tools/geonames/alternateNamesV2.txt
+```
+
+The report includes:
+
+- catalogue cities with at least one useful supported-language alternate name;
+- alias totals per supported language;
+- mean and approximate p50/p75/p90/p95/p99 aliases per city;
+- top cities by alias count;
+- estimated UTF-8 and gzip size for a future `searchNames` CSV column or separate `geonameId,searchNames` CSV;
+- diagnostic query matches for major cities such as Moscow, London, Rome, New York City, Beijing, Munich, Cologne, Vienna, Lisbon, Brussels, and Amsterdam.
+
 ### Legacy options
 
 Legacy compact flags remain available for compatibility when a deliberately small catalogue is needed:
