@@ -27,12 +27,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.unit.dp
@@ -85,6 +87,7 @@ import com.agc.bwitch.ui.common.designsystem.BWitchPrimaryButton
 import com.agc.bwitch.ui.theme.BWitchThemeTokens
 import com.agc.bwitch.ui.tarot.DeckCardUnlockRewardDialog
 import kotlinx.datetime.LocalDate
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 
@@ -103,6 +106,9 @@ fun BirthChartScreen(
     val birthChartStrings = strings.birthChart
     val appName = strings.common.appName
     val state by viewModel.uiState.collectAsState()
+    val scrollState = rememberScrollState()
+    val scrollScope = rememberCoroutineScope()
+    var basicNatalSectionOffset by remember { mutableStateOf(0) }
     val economyState by economyViewModel.uiState.collectAsState()
     val birthEssencePreview = economyState.modulePreviews.firstOrNull {
         it.module == "BIRTH_ESSENCE" || it.module == "NATAL_ESSENCE"
@@ -136,7 +142,7 @@ fun BirthChartScreen(
         modifier = modifier
             .padding(contentPadding)
             .padding(dimens.spacingMd)
-            .verticalScroll(rememberScrollState()),
+            .verticalScroll(scrollState),
         verticalArrangement = Arrangement.spacedBy(dimens.spacingSm + dimens.spacingXs)
     ) {
         Text(
@@ -150,6 +156,21 @@ fun BirthChartScreen(
             style = MaterialTheme.typography.bodyMedium,
             color = extras.textSecondary,
         )
+
+        BasicNatalHelperCard(
+            title = birthChartStrings.basicNatalHelperTitle,
+            body = birthChartStrings.basicNatalHelperBody,
+            cta = birthChartStrings.basicNatalHelperCta,
+            onClick = { scrollScope.launch { scrollState.animateScrollTo(basicNatalSectionOffset) } },
+        )
+
+        Box(
+            modifier = Modifier.onGloballyPositioned { coordinates ->
+                basicNatalSectionOffset = coordinates.positionInParent().y.toInt()
+            }
+        ) {
+            BasicNatalChartSection(strings = birthChartStrings, appStrings = strings)
+        }
 
         SignDropdown(
             label = birthChartStrings.sunSignLabel,
@@ -174,8 +195,6 @@ fun BirthChartScreen(
             enabled = !state.isBusy,
             onSelect = viewModel::onRisingSignChange,
         )
-
-        BasicNatalChartSection(strings = birthChartStrings, appStrings = strings)
 
         EconomyGateInfoRow(
             preview = birthEssencePreview,
@@ -483,6 +502,26 @@ private fun BasicNatalChartSection(strings: BirthChartStrings, appStrings: AppSt
             BasicNatalChartResultCards(chart = chart, strings = strings, appStrings = appStrings)
         }
         error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+    }
+}
+
+@Composable
+private fun BasicNatalHelperCard(
+    title: String,
+    body: String,
+    cta: String,
+    onClick: () -> Unit,
+) {
+    BWitchCard {
+        Text(title, style = MaterialTheme.typography.titleMedium)
+        Text(
+            text = body,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        OutlinedButton(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
+            Text(cta)
+        }
     }
 }
 

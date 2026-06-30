@@ -90,6 +90,7 @@ fun SynastryScreen(
     economyViewModel: EconomyViewModel = koinInject(),
     onOpenStore: () -> Unit = {},
     onOpenCollection: () -> Unit = {},
+    onCalculateBasicNatal: () -> Unit = {},
 ) {
     val state by viewModel.uiState.collectAsState()
     val economyState by economyViewModel.uiState.collectAsState()
@@ -144,6 +145,13 @@ fun SynastryScreen(
             text = synastryStrings.screenSupportingText,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+
+        SynastryBasicNatalHelperCard(
+            title = synastryStrings.basicNatalHelperTitle,
+            body = synastryStrings.basicNatalHelperBody,
+            cta = synastryStrings.basicNatalHelperCta,
+            onClick = onCalculateBasicNatal,
         )
 
         PersonFormCard(
@@ -329,6 +337,26 @@ private fun PersonFormCard(
             onSelectB = onPersonBRisingChange,
             strings = strings,
         )
+    }
+}
+
+@Composable
+private fun SynastryBasicNatalHelperCard(
+    title: String,
+    body: String,
+    cta: String,
+    onClick: () -> Unit,
+) {
+    BWitchCard {
+        Text(title, style = MaterialTheme.typography.titleMedium)
+        Text(
+            text = body,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        OutlinedButton(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
+            Text(cta)
+        }
     }
 }
 
