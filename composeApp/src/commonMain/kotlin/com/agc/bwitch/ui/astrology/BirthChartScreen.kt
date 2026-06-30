@@ -78,7 +78,6 @@ import com.agc.bwitch.ui.common.economy.DailyLimitPaywallCard
 import com.agc.bwitch.ui.common.economy.EconomyGateInfoRow
 import com.agc.bwitch.ui.astrology.birthplace.BirthplacePresets
 import com.agc.bwitch.ui.astrology.birthplace.DefaultBirthplaceCatalogRepository
-import com.agc.bwitch.ui.astrology.birthplace.matchesBirthplaceQuery
 import com.agc.bwitch.ui.astrology.birthplace.rankBirthplaceMatches
 import com.agc.bwitch.ui.common.economy.isDailyLimitRejected
 import com.agc.bwitch.ui.common.economy.hasPremiumBenefit
@@ -391,7 +390,10 @@ private fun BasicNatalChartSection(
         Column(verticalArrangement = Arrangement.spacedBy(dimens.spacingSm)) {
             Text(strings.basicNatalBirthplaceLabel, style = MaterialTheme.typography.labelLarge)
             Surface(
-                onClick = { isBirthplaceDialogOpen = true },
+                onClick = {
+                    birthplaceQuery = selectedBirthplace?.displayName().orEmpty()
+                    isBirthplaceDialogOpen = true
+                },
                 modifier = Modifier.fillMaxWidth(),
                 shape = MaterialTheme.shapes.medium,
                 color = MaterialTheme.colorScheme.surface,
@@ -442,9 +444,6 @@ private fun BasicNatalChartSection(
                 isCatalogLoading = birthplaceCatalogState.isLoadingRuntimeCatalog,
                 onQueryChange = { query ->
                     birthplaceQuery = query
-                    if (selectedBirthplace != null && !selectedBirthplace!!.matchesBirthplaceQuery(query)) {
-                        selectedBirthplace = null
-                    }
                 },
                 onSelect = { preset ->
                     selectedBirthplace = preset
@@ -505,7 +504,11 @@ private fun BasicNatalChartSection(
                                 languageCode = null,
                             )
                             if (!authorization.authorized) {
-                                error = strings.basicNatalCalculateError
+                                error = authorization.status.toBasicNatalEconomyErrorMessage(
+                                    appStrings = appStrings,
+                                    fallback = strings.basicNatalCalculateError,
+                                )
+                                economyViewModel.loadEconomy()
                                 return@launch
                             }
                             runCatching {
@@ -531,11 +534,10 @@ private fun BasicNatalChartSection(
                                 error = strings.basicNatalCalculateError
                             }
                         } catch (throwable: Throwable) {
-                            error = when (throwable.message) {
-                                "insufficient_moons" -> appStrings.economy.notEnoughMoons
-                                "daily_limit" -> appStrings.economy.dailyLimitReached
-                                else -> strings.basicNatalCalculateError
-                            }
+                            error = throwable.message.toBasicNatalEconomyErrorMessage(
+                                appStrings = appStrings,
+                                fallback = strings.generateConnectionError,
+                            )
                             economyViewModel.loadEconomy()
                         } finally {
                             isAuthorizingBasicNatal = false
@@ -714,6 +716,24 @@ private fun String?.isDailyLimitError(): Boolean {
         normalized.contains("daily_limit") ||
         normalized.contains("limit_reached") ||
         normalized.contains("resource_exhausted")
+}
+
+private fun String?.toBasicNatalEconomyErrorMessage(
+    appStrings: AppStrings,
+    fallback: String,
+): String {
+    val normalized = this?.trim()?.lowercase().orEmpty()
+    return when {
+        normalized.contains("insufficient_moons") -> appStrings.economy.notEnoughMoons
+        normalized.isDailyLimitError() -> appStrings.economy.dailyLimitReached
+        normalized.contains("network") ||
+            normalized.contains("connection") ||
+            normalized.contains("offline") ||
+            normalized.contains("unavailable") ||
+            normalized.contains("deadline") ||
+            normalized.contains("timeout") -> appStrings.birthChart.generateConnectionError
+        else -> fallback
+    }
 }
 
 private fun String.toBirthChartUiText(strings: com.agc.bwitch.localization.BirthChartStrings): String {

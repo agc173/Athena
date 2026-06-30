@@ -99,10 +99,14 @@ private fun BirthplacePreset.birthplaceSearchScore(
 ): BirthplaceSearchScore? {
     val normalizedCity = normalizeBirthplaceSearchText(cityName)
     val normalizedCountry = normalizeBirthplaceSearchText(countryName)
+    val normalizedDisplayName = normalizeBirthplaceSearchText("$cityName $countryName")
     val matchTier = when {
         normalizedCity == normalizedQuery -> 0
+        normalizedDisplayName == normalizedQuery -> 0
         normalizedCity.startsWith(normalizedQuery) -> 1
+        normalizedDisplayName.startsWith(normalizedQuery) -> 1
         normalizedCity.contains(normalizedQuery) -> 2
+        normalizedDisplayName.contains(normalizedQuery) -> 2
         matchesSearchName(normalizedQuery) -> 3
         normalizedCountry.contains(normalizedQuery) -> 4
         else -> return null
