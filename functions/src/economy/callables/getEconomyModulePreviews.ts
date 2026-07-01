@@ -97,7 +97,6 @@ function normalizeReason(reason: string | undefined): string | undefined {
   if (reason === 'INSUFFICIENT_MOON_BALANCE') return 'insufficient_moons';
   if (reason === 'SYNASTRY_DAILY_LIMIT_REACHED') return 'daily_limit';
   if (reason === 'PENDULUM_DAILY_LIMIT_REACHED') return 'daily_limit';
-  if (reason === 'BASIC_NATAL_DAILY_LIMIT_REACHED') return 'daily_limit';
   if (reason === 'MODULE_NOT_CONFIGURED') return 'module_not_configured';
   if (reason === 'RULE_CONFIGURED_NOT_WIRED') return 'rule_configured_not_wired';
   return reason.toLowerCase();
@@ -123,8 +122,6 @@ export function buildBasicNatalPreview(params: {
   const freeWeekly = intValue(rule.freeWeekly);
   const premiumUsed = intValue(dailyUsage.basicNatalPremiumUsed);
   const premiumIncludedDaily = intValue(rule.premiumIncludedDaily);
-  const moonUsed = intValue(dailyUsage.basicNatalMoonUsed);
-  const premiumDailyMax = intValue(rule.premiumDailyMax);
   const isInsufficientMoonsReject = decision.source === 'REJECT' && decision.reason === 'INSUFFICIENT_MOON_BALANCE';
   return {
     module: 'BASIC_NATAL_CHART',
@@ -135,8 +132,6 @@ export function buildBasicNatalPreview(params: {
     reasonIfRejected: normalizeReason(decision.reason),
     freeRemaining: Math.max(0, freeWeekly - freeUsed),
     premiumRemaining: Math.max(0, premiumIncludedDaily - premiumUsed),
-    moonRemaining: premiumDailyMax > 0 ? Math.max(0, premiumDailyMax - premiumUsed - moonUsed) : undefined,
-    dailyCap: premiumDailyMax || undefined,
   };
 }
 
