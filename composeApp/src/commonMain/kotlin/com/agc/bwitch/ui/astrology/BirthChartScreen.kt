@@ -327,7 +327,6 @@ private fun BasicNatalChartSection(
     val coroutineScope = rememberCoroutineScope()
     val economyState by economyViewModel.uiState.collectAsState()
     val basicNatalPreview = economyState.modulePreviews.firstOrNull { it.module == "BASIC_NATAL_CHART" }
-    val showBasicNatalDailyLimitPaywall = basicNatalPreview.isDailyLimitRejected()
 
     val birthplaceCatalogState by produceState(
         initialValue = BirthplaceCatalogUiState(
@@ -466,19 +465,6 @@ private fun BasicNatalChartSection(
             fallbackCost = 1,
             freeLabelOverride = null,
         )
-
-        if (showBasicNatalDailyLimitPaywall) {
-            DailyLimitPaywallCard(
-                economyStrings = appStrings.economy,
-                onOpenStore = onOpenStore,
-                module = basicNatalPreview?.module ?: "BASIC_NATAL_CHART",
-                placement = "basic_natal_daily_limit",
-                reason = basicNatalPreview?.reasonIfRejected ?: "daily_limit",
-                hasPremiumBenefit = basicNatalPreview.hasPremiumBenefit(),
-                onPaywallShown = economyViewModel::onDailyLimitPaywallShown,
-                onPaywallActionClicked = economyViewModel::onDailyLimitPaywallActionClicked,
-            )
-        }
 
         BWitchPrimaryButton(
             onClick = {
