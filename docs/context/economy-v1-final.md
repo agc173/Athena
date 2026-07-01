@@ -24,6 +24,7 @@ Este documento define la **única fuente de verdad económica** para backend Fun
 | Tarot 3 | `1/semana` | Extra `3` Lunas; máx con lunas `2/día` | `1/día` incluido y hard cap `3/día` |
 | Oráculo | `1/día` | Extra `3` Lunas; máx con lunas `10/día` | `3/día` incluido y hard cap `15/día` |
 | Péndulo | `8/día` | `1 Luna = +10 usos` | `50/día` (mismo tope técnico) |
+| Carta natal básica | `1/semana` | Extra ilimitado `1` Luna por cálculo; sin hard cap diario para usos con Lunas | `10/día` incluido; después puede seguir con `1` Luna por cálculo |
 
 ## Notas de implementación
 
@@ -31,3 +32,5 @@ Este documento define la **única fuente de verdad económica** para backend Fun
 - Horóscopo premium no consume Lunas para desbloqueos incluidos.
 - No se implementa compra real de packs de Lunas en v1.0.
 - No se toca StoreKit/iOS en esta consolidación.
+
+- Carta natal básica no usa `premiumDailyMax`: al agotar los `10/día` incluidos de Premium, resuelve a `MOON` si hay saldo y a `REJECT` `insufficient_moons` si no lo hay.

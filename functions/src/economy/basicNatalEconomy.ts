@@ -52,19 +52,9 @@ export function resolveBasicNatalDecision(params: {
   }
 
   const premiumUsed = intValue(dailyUsage.basicNatalPremiumUsed);
-  const moonUsed = intValue(dailyUsage.basicNatalMoonUsed);
-  const premiumDailyMax = rule.premiumDailyMax ?? rule.premiumIncludedDaily ?? 0;
-  const totalPremiumDayUsed = premiumUsed + moonUsed;
 
   if (isPremium && premiumUsed < (rule.premiumIncludedDaily ?? 0)) {
-    if (premiumDailyMax === 0 || totalPremiumDayUsed < premiumDailyMax) {
-      return {source: 'PREMIUM_INCLUDED', moonCost: 0, usageApplied: {dailyCounter: 'basicNatalPremiumUsed'}};
-    }
-    return {source: 'REJECT', moonCost: 0, reason: 'BASIC_NATAL_DAILY_LIMIT_REACHED', usageApplied: {}};
-  }
-
-  if (isPremium && premiumDailyMax > 0 && totalPremiumDayUsed >= premiumDailyMax) {
-    return {source: 'REJECT', moonCost: 0, reason: 'BASIC_NATAL_DAILY_LIMIT_REACHED', usageApplied: {}};
+    return {source: 'PREMIUM_INCLUDED', moonCost: 0, usageApplied: {dailyCounter: 'basicNatalPremiumUsed'}};
   }
 
   const moonCost = rule.moonCostPerUse ?? 0;

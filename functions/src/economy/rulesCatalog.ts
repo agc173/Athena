@@ -58,7 +58,6 @@ const ECONOMY_RULES: Record<EconomyModule, EconomyModuleRule> = {
     module: 'BASIC_NATAL_CHART',
     freeWeekly: 1,
     premiumIncludedDaily: 10,
-    premiumDailyMax: 10,
     moonCostPerUse: 1,
     notes: 'Basic natal chart calculates Sun, Moon, and Ascendant only',
   },
